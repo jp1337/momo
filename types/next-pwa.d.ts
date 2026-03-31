@@ -4,7 +4,7 @@
  * manually to satisfy strict TypeScript compilation.
  */
 
-declare module "next-pwa" {
+declare module "@ducanh2912/next-pwa" {
   import type { NextConfig } from "next";
 
   interface PWAConfig {

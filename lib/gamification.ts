@@ -11,8 +11,12 @@
  */
 
 import { db } from "@/lib/db";
+import type { Database } from "@/lib/db";
 import { users, achievements, userAchievements } from "@/lib/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
+
+/** A Drizzle transaction or the base db instance — used for transactional operations */
+type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 // ─── Level System ─────────────────────────────────────────────────────────────
 
@@ -196,12 +200,16 @@ function getTodayString(): string {
  * Always sets streak_last_date = today.
  *
  * @param userId - The user's UUID
+ * @param tx - Optional Drizzle transaction; uses the global db instance if not provided
  * @returns Updated { streakCurrent, streakMax }
  */
 export async function updateStreak(
-  userId: string
+  userId: string,
+  tx?: Tx
 ): Promise<{ streakCurrent: number; streakMax: number }> {
-  const userRows = await db
+  const client = tx ?? db;
+
+  const userRows = await client
     .select({
       streakCurrent: users.streakCurrent,
       streakMax: users.streakMax,
@@ -240,7 +248,7 @@ export async function updateStreak(
 
   const newStreakMax = Math.max(streakMax, newStreakCurrent);
 
-  await db
+  await client
     .update(users)
     .set({
       streakCurrent: newStreakCurrent,
@@ -285,17 +293,20 @@ function getEarnedAchievementKeys(context: AchievementContext): string[] {
  *
  * @param userId - User to check
  * @param context - { totalCompleted, streakCurrent, coins, level, isDailyQuestComplete? }
+ * @param tx - Optional Drizzle transaction; uses the global db instance if not provided
  * @returns Array of newly unlocked achievements (key, title, icon)
  */
 export async function checkAndUnlockAchievements(
   userId: string,
-  context: AchievementContext
+  context: AchievementContext,
+  tx?: Tx
 ): Promise<UnlockedAchievement[]> {
+  const client = tx ?? db;
   const earnedKeys = getEarnedAchievementKeys(context);
   if (earnedKeys.length === 0) return [];
 
   // Look up the achievement IDs for those keys
-  const achievementRows = await db
+  const achievementRows = await client
     .select({ id: achievements.id, key: achievements.key })
     .from(achievements)
     .where(inArray(achievements.key, earnedKeys));
@@ -305,7 +316,7 @@ export async function checkAndUnlockAchievements(
   const achievementIds = achievementRows.map((a) => a.id);
 
   // Find which achievements the user already has
-  const existingRows = await db
+  const existingRows = await client
     .select({ achievementId: userAchievements.achievementId })
     .from(userAchievements)
     .where(
@@ -325,7 +336,7 @@ export async function checkAndUnlockAchievements(
   if (newAchievements.length === 0) return [];
 
   // Insert new user_achievements rows
-  await db.insert(userAchievements).values(
+  await client.insert(userAchievements).values(
     newAchievements.map((a) => ({
       userId,
       achievementId: a.id,

@@ -14,8 +14,12 @@
  */
 
 import { db } from "@/lib/db";
+import type { Database } from "@/lib/db";
 import { tasks, topics, users } from "@/lib/db/schema";
-import { eq, and, isNull, isNotNull, lte, lt, or, ne, inArray } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, lte, lt, or, ne } from "drizzle-orm";
+
+/** A Drizzle transaction or the base db instance */
+type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,47 +104,51 @@ export async function getDailyQuestIncludingCompleted(
 }
 
 /**
- * Selects the daily quest task for a user.
- *
- * Priority order:
- *   1. Oldest overdue task (due_date < today, not completed)
- *   2. High-priority topic subtask (priority = HIGH, has topic_id, not completed)
- *   3. Due recurring task (next_due_date <= today, not completed)
- *   4. Random open task from the pool (not completed, type = DAILY_ELIGIBLE or ONE_TIME)
- *
- * Only selects a new quest if none is active today.
- * Clears the is_daily_quest flag on completed quests from previous days before selecting.
+ * Retrieves the current active daily quest inside a transaction.
+ * Used internally by selectDailyQuest to re-check within the transaction boundary.
  *
  * @param userId - The user's UUID
- * @returns The selected Task (with topic), or null if no eligible tasks exist
+ * @param tx - The active Drizzle transaction
+ * @returns The active daily quest task row, or null
  */
-export async function selectDailyQuest(
-  userId: string
-): Promise<TaskWithTopic | null> {
-  // Step 1: Clear is_daily_quest on tasks that are completed (they're done)
-  await db
-    .update(tasks)
-    .set({ isDailyQuest: false })
+async function getCurrentDailyQuestTx(
+  userId: string,
+  tx: Tx
+): Promise<Task | null> {
+  const rows = await tx
+    .select()
+    .from(tasks)
     .where(
       and(
         eq(tasks.userId, userId),
         eq(tasks.isDailyQuest, true),
-        isNotNull(tasks.completedAt)
+        isNull(tasks.completedAt)
       )
-    );
+    )
+    .limit(1);
 
-  // Step 2: Check if there's already an active quest today — don't reselect
-  const existing = await getCurrentDailyQuest(userId);
-  if (existing) {
-    return existing;
-  }
+  return rows[0] ?? null;
+}
 
+/**
+ * Picks the highest-priority eligible task for the daily quest using the algorithm,
+ * without assigning the flag. All reads go through the provided transaction client.
+ *
+ * Priority order:
+ *   1. Oldest overdue task (due_date < today, not completed, not recurring)
+ *   2. High-priority topic subtask (priority = HIGH, has topic_id, not completed)
+ *   3. Due recurring task (next_due_date <= today)
+ *   4. Random open task from the pool (ONE_TIME or DAILY_ELIGIBLE, not completed)
+ *
+ * @param userId - The user's UUID
+ * @param tx - The active Drizzle transaction
+ * @returns The candidate task row, or null if no eligible task exists
+ */
+async function pickBestTask(userId: string, tx: Tx): Promise<Task | null> {
   const today = getTodayString();
 
-  // Step 3: Run priority algorithm to find the best task
-
-  // Priority 1: Oldest overdue task (due_date < today, not completed, not recurring)
-  const overdueRows = await db
+  // Priority 1: Oldest overdue task
+  const overdueRows = await tx
     .select()
     .from(tasks)
     .where(
@@ -152,15 +160,13 @@ export async function selectDailyQuest(
         ne(tasks.type, "RECURRING")
       )
     )
-    .orderBy(tasks.dueDate) // oldest first
+    .orderBy(tasks.dueDate)
     .limit(1);
 
-  if (overdueRows[0]) {
-    return await assignDailyQuest(overdueRows[0], userId);
-  }
+  if (overdueRows[0]) return overdueRows[0];
 
-  // Priority 2: High-priority topic subtask (has topicId, priority = HIGH, not completed)
-  const highPriorityRows = await db
+  // Priority 2: High-priority topic subtask
+  const highPriorityRows = await tx
     .select()
     .from(tasks)
     .where(
@@ -174,12 +180,10 @@ export async function selectDailyQuest(
     )
     .limit(1);
 
-  if (highPriorityRows[0]) {
-    return await assignDailyQuest(highPriorityRows[0], userId);
-  }
+  if (highPriorityRows[0]) return highPriorityRows[0];
 
-  // Priority 3: Due recurring task (next_due_date <= today, not forcibly completed via completedAt)
-  const recurringRows = await db
+  // Priority 3: Due recurring task
+  const recurringRows = await tx
     .select()
     .from(tasks)
     .where(
@@ -192,33 +196,95 @@ export async function selectDailyQuest(
     )
     .limit(1);
 
-  if (recurringRows[0]) {
-    return await assignDailyQuest(recurringRows[0], userId);
-  }
+  if (recurringRows[0]) return recurringRows[0];
 
-  // Priority 4: Random open task (not completed, ONE_TIME or DAILY_ELIGIBLE)
-  const poolRows = await db
+  // Priority 4: Random open task
+  const poolRows = await tx
     .select()
     .from(tasks)
     .where(
       and(
         eq(tasks.userId, userId),
         isNull(tasks.completedAt),
-        or(
-          eq(tasks.type, "ONE_TIME"),
-          eq(tasks.type, "DAILY_ELIGIBLE")
-        )
+        or(eq(tasks.type, "ONE_TIME"), eq(tasks.type, "DAILY_ELIGIBLE"))
       )
     );
 
   if (poolRows.length > 0) {
-    // Pick a random task from the eligible pool
     const randomIndex = Math.floor(Math.random() * poolRows.length);
-    return await assignDailyQuest(poolRows[randomIndex], userId);
+    return poolRows[randomIndex];
   }
 
-  // No eligible tasks found
   return null;
+}
+
+/**
+ * Selects the daily quest task for a user.
+ *
+ * Priority order:
+ *   1. Oldest overdue task (due_date < today, not completed)
+ *   2. High-priority topic subtask (priority = HIGH, has topic_id, not completed)
+ *   3. Due recurring task (next_due_date <= today, not completed)
+ *   4. Random open task from the pool (not completed, type = DAILY_ELIGIBLE or ONE_TIME)
+ *
+ * Only selects a new quest if none is active today.
+ * Clears the is_daily_quest flag on completed quests from previous days before selecting.
+ *
+ * The entire check-and-set is wrapped in a DB transaction. Inside the transaction the
+ * existing-quest check is re-run to eliminate the TOCTOU race where two concurrent
+ * requests both see "no quest" and both set different tasks as the daily quest.
+ * The UPDATE also includes `.where(eq(tasks.isDailyQuest, false))` as an optimistic
+ * lock — if another request already assigned the flag the update returns 0 rows and
+ * this call returns null gracefully.
+ *
+ * @param userId - The user's UUID
+ * @returns The selected Task (with topic), or null if no eligible tasks exist
+ */
+export async function selectDailyQuest(
+  userId: string
+): Promise<TaskWithTopic | null> {
+  // Clear is_daily_quest on completed quests outside the transaction — this is
+  // idempotent and does not need to be serialised with the assignment below.
+  await db
+    .update(tasks)
+    .set({ isDailyQuest: false })
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        eq(tasks.isDailyQuest, true),
+        isNotNull(tasks.completedAt)
+      )
+    );
+
+  return db.transaction(async (tx) => {
+    // Re-check inside the transaction to close the TOCTOU window
+    const existingTask = await getCurrentDailyQuestTx(userId, tx);
+    if (existingTask) {
+      return enrichTaskWithTopic(existingTask);
+    }
+
+    // Run the priority algorithm using the transaction client
+    const candidate = await pickBestTask(userId, tx);
+    if (!candidate) return null;
+
+    // Assign — the isDailyQuest = false predicate acts as an optimistic lock.
+    // If another concurrent request already set the flag this UPDATE returns 0 rows.
+    const [updated] = await tx
+      .update(tasks)
+      .set({ isDailyQuest: true })
+      .where(
+        and(
+          eq(tasks.id, candidate.id),
+          eq(tasks.userId, userId),
+          eq(tasks.isDailyQuest, false)
+        )
+      )
+      .returning();
+
+    if (!updated) return null;
+
+    return enrichTaskWithTopic(updated);
+  });
 }
 
 /**
