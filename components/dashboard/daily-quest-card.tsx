@@ -17,6 +17,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { triggerConfetti } from "@/components/animations/confetti";
+import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
+import { AchievementToast } from "@/components/animations/achievement-toast";
+import type { AchievementItem } from "@/components/animations/achievement-toast";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -82,9 +86,18 @@ const TYPE_CONFIG = {
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
+/** Response shape from POST /api/tasks/:id/complete */
+interface CompleteResponse {
+  coinsEarned?: number;
+  newLevel?: { level: number; title: string } | null;
+  unlockedAchievements?: AchievementItem[];
+  streakCurrent?: number;
+}
+
 /**
  * Hero card for the daily quest.
  * Manages completing and postponing the quest via API calls.
+ * Triggers confetti, level-up overlay, and achievement toasts on completion.
  */
 export function DailyQuestCard({ quest }: DailyQuestCardProps) {
   const router = useRouter();
@@ -94,9 +107,11 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
     quest?.completedAt !== null && quest?.completedAt !== undefined
   );
   const [coinsEarned, setCoinsEarned] = useState<number | null>(null);
+  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
 
   /**
-   * Calls POST /api/tasks/:id/complete, then switches to celebration state.
+   * Calls POST /api/tasks/:id/complete, then triggers animations and switches to celebration state.
    */
   async function handleComplete() {
     if (!quest || isCompleting || isCompleted) return;
@@ -113,11 +128,27 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
         return;
       }
 
-      const data = (await res.json()) as { coinsEarned?: number };
+      const data = (await res.json()) as CompleteResponse;
       setCoinsEarned(data.coinsEarned ?? quest.coinValue);
       setIsCompleted(true);
-      // Refresh server data for stats update
-      router.refresh();
+
+      // Always fire confetti on quest completion
+      triggerConfetti();
+
+      // Show level-up overlay if user leveled up
+      if (data.newLevel) {
+        setLevelUp(data.newLevel);
+      }
+
+      // Queue achievement toasts
+      if (data.unlockedAchievements && data.unlockedAchievements.length > 0) {
+        setPendingAchievements(data.unlockedAchievements);
+      }
+
+      // Refresh server data for stats update (deferred so animations play first)
+      setTimeout(() => {
+        router.refresh();
+      }, 1500);
     } catch (err) {
       console.error("Error completing quest:", err);
     } finally {
@@ -158,6 +189,24 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
   const typeCfg = quest ? TYPE_CONFIG[quest.type] : null;
 
   return (
+    <>
+    {/* Level-up overlay — shown above all content when user levels up */}
+    {levelUp && (
+      <LevelUpOverlay
+        level={levelUp.level}
+        title={levelUp.title}
+        onDone={() => setLevelUp(null)}
+      />
+    )}
+
+    {/* Achievement toast — shown bottom-right for each unlocked achievement */}
+    {pendingAchievements.length > 0 && (
+      <AchievementToast
+        achievements={pendingAchievements}
+        onAllDone={() => setPendingAchievements([])}
+      />
+    )}
+
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
@@ -355,5 +404,6 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
         </>
       )}
     </motion.div>
+    </>
   );
 }

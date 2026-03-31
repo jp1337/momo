@@ -183,3 +183,26 @@ a {
 a:hover {
   color: var(--text-primary);
 }
+
+/* ─── Gamification Animations ───────────────────────────────────────────────── */
+
+/**
+ * Streak pulse animation — applied to the flame icon when streak > 0.
+ * Gently pulses scale and opacity to draw attention to the active streak.
+ */
+@keyframes streak-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+.streak-pulse {
+  animation: streak-pulse 2s ease-in-out infinite;
+  display: inline-block;
+}

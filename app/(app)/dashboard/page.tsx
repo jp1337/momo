@@ -131,21 +131,25 @@ export default async function DashboardPage() {
               label: "Coins",
               value: String(stats.coins),
               icon: "🪙",
+              pulse: false,
             },
             {
               label: "Streak",
               value: `${stats.streakCurrent}d`,
               icon: "🔥",
+              pulse: stats.streakCurrent > 0,
             },
             {
               label: "Level",
               value: String(stats.level),
               icon: "⭐",
+              pulse: false,
             },
             {
               label: "Completed",
               value: String(totalCompletions),
               icon: "✓",
+              pulse: false,
             },
           ].map((stat) => (
             <div
@@ -167,7 +171,10 @@ export default async function DashboardPage() {
                 >
                   {stat.label}
                 </span>
-                <span className="text-base" aria-hidden="true">
+                <span
+                  className={stat.pulse ? "streak-pulse text-base" : "text-base"}
+                  aria-hidden="true"
+                >
                   {stat.icon}
                 </span>
               </div>
