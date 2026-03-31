@@ -1,57 +1,70 @@
 /**
- * Topics page — placeholder for Phase 2.
- * Will display user-defined project buckets with task grouping.
+ * Topics list page — Phase 2.
+ *
+ * Server component that fetches topics for the current user with task counts.
+ * Renders a grid of TopicCards with create/edit/delete capabilities.
  */
 
 import type { Metadata } from "next";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getUserTopics } from "@/lib/topics";
+import { TopicsGrid } from "@/components/topics/topics-grid";
 
 export const metadata: Metadata = {
-  title: "Topics",
+  title: "Topics — Momo",
 };
 
 /**
  * Topics list page.
- * Topic management will be implemented in Phase 2.
+ * Fetches all topics with task counts for the authenticated user.
  */
-export default function TopicsPage() {
-  return (
-    <div className="max-w-4xl mx-auto">
-      <h1
-        className="text-3xl font-semibold mb-2"
-        style={{
-          fontFamily: "var(--font-display, 'Lora', serif)",
-          color: "var(--text-primary)",
-        }}
-      >
-        Topics
-      </h1>
-      <p
-        className="text-base mb-8"
-        style={{
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          color: "var(--text-muted)",
-        }}
-      >
-        Group your tasks into projects and topics.
-      </p>
+export default async function TopicsPage() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
 
-      <div
-        className="rounded-2xl p-8 text-center"
-        style={{
-          backgroundColor: "var(--bg-surface)",
-          border: "1px solid var(--border)",
-        }}
-      >
+  const topics = await getUserTopics(session.user.id);
+
+  const serializedTopics = topics.map((t) => ({
+    id: t.id,
+    title: t.title,
+    description: t.description ?? null,
+    color: t.color ?? null,
+    icon: t.icon ?? null,
+    priority: t.priority,
+    taskCount: t.taskCount,
+    completedCount: t.completedCount,
+  }));
+
+  return (
+    <div className="max-w-5xl mx-auto">
+      {/* Page header */}
+      <div className="mb-8">
+        <h1
+          className="text-3xl font-semibold mb-2"
+          style={{
+            fontFamily: "var(--font-display, 'Lora', serif)",
+            color: "var(--text-primary)",
+          }}
+        >
+          Topics
+        </h1>
         <p
           className="text-base"
           style={{
-            fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             color: "var(--text-muted)",
           }}
         >
-          Topic management is coming in Phase 2.
+          {topics.length === 0
+            ? "No topics yet — group your tasks into projects."
+            : `${topics.length} topic${topics.length === 1 ? "" : "s"}`}
         </p>
       </div>
+
+      <TopicsGrid initialTopics={serializedTopics} />
     </div>
   );
 }
