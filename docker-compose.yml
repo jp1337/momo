@@ -1,0 +1,77 @@
+# Docker Compose configuration for Momo
+#
+# Services:
+#   db  — PostgreSQL 16 database
+#   app — The Next.js application (built from Dockerfile)
+#
+# Usage:
+#   docker compose up -d          — Start all services
+#   docker compose up db -d       — Start only the database (for local dev)
+#   docker compose exec app sh    — Shell into the app container
+#   docker compose logs -f app    — Follow app logs
+
+services:
+  # ─── PostgreSQL Database ────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: momo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: momo
+      POSTGRES_USER: momo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    volumes:
+      # Named volume — never bind-mount the WSL filesystem
+      - momo_postgres_data:/var/lib/postgresql/data
+    ports:
+      # Expose to host for local development with drizzle-kit
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U momo -d momo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─── Next.js Application ────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: momo-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://momo:${POSTGRES_PASSWORD:-password}@db:5432/momo
+      AUTH_SECRET: ${AUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_CONTACT: ${VAPID_CONTACT:-mailto:admin@example.com}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/auth/session || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+# ─── Volumes ──────────────────────────────────────────────────────────────────
+volumes:
+  momo_postgres_data:
+    driver: local

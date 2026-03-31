@@ -1,0 +1,185 @@
+/**
+ * Momo Global Styles
+ *
+ * Design system CSS variables:
+ *  - Background, surface, border, and text tokens
+ *  - Accent colours (amber, green, red, coin gold)
+ *  - Typography scale via CSS custom properties
+ *  - Font families: Lora (headings), JetBrains Mono (tasks/body), DM Sans (UI)
+ *
+ * Dark mode is the default. Light mode is applied via the [data-theme="light"]
+ * attribute set by next-themes on the <html> element.
+ */
+
+/* ─── Google Fonts ─────────────────────────────────────────────────────────── */
+@import url("https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@300;400;500;600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap");
+
+@import "tailwindcss";
+
+/* ─── Dark Mode (default) ───────────────────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg-primary: #0f1410;
+  --bg-surface: #161d18;
+  --bg-elevated: #1e2922;
+
+  /* Borders */
+  --border: #2e4035;
+
+  /* Text */
+  --text-primary: #ede0c8;
+  --text-muted: #7a907f;
+
+  /* Accent colours */
+  --accent-amber: #f0a500;
+  --accent-green: #4a8c5c;
+  --accent-red: #b85450;
+  --coin-gold: #ffd060;
+
+  /* Semantic tokens */
+  --color-background: var(--bg-primary);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-border: var(--border);
+  --color-text: var(--text-primary);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent-amber);
+  --color-success: var(--accent-green);
+  --color-danger: var(--accent-red);
+  --color-coin: var(--coin-gold);
+
+  /* Shadow tokens */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+/* ─── Light Mode ────────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  /* Backgrounds */
+  --bg-primary: #f7f2e8;
+  --bg-surface: #fdf9f2;
+  --bg-elevated: #ede5d5;
+
+  /* Borders */
+  --border: #d6c9b2;
+
+  /* Text */
+  --text-primary: #1e2922;
+  --text-muted: #6b7d6e;
+
+  /* Accent colours */
+  --accent-amber: #c98a00;
+  --accent-green: #2e7048;
+  --accent-red: #9e3b38;
+  --coin-gold: #b8960a;
+
+  /* Shadow tokens — lighter in light mode */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+/* ─── Tailwind v4 theme bridge ──────────────────────────────────────────────── */
+@theme inline {
+  /* Map CSS variables into Tailwind utility classes */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-border: var(--border);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-accent-amber: var(--accent-amber);
+  --color-accent-green: var(--accent-green);
+  --color-accent-red: var(--accent-red);
+  --color-coin-gold: var(--coin-gold);
+
+  /* Font families */
+  --font-display: "Lora", Georgia, serif;
+  --font-body: "JetBrains Mono", "Courier New", monospace;
+  --font-ui: "DM Sans", system-ui, sans-serif;
+}
+
+/* ─── Base Styles ───────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Smooth theme transitions */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-ui, "DM Sans", system-ui, sans-serif);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Typography ────────────────────────────────────────────────────────────── */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display, "Lora", Georgia, serif);
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+/* Task text uses JetBrains Mono for that "list" feel */
+.task-text {
+  font-family: var(--font-body, "JetBrains Mono", monospace);
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ─── Focus styles ──────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent-amber);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── Selection ─────────────────────────────────────────────────────────────── */
+::selection {
+  background-color: var(--accent-amber);
+  color: var(--bg-primary);
+}
+
+/* ─── Link defaults ─────────────────────────────────────────────────────────── */
+a {
+  color: var(--accent-amber);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--text-primary);
+}
