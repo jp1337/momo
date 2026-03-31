@@ -27,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/tasks", label: "Tasks", icon: "✓" },
   { href: "/topics", label: "Topics", icon: "📁" },
   { href: "/wishlist", label: "Wishlist", icon: "⭐" },
+  { href: "/settings", label: "Settings", icon: "⚙" },
 ];
 
 /**

@@ -9,6 +9,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+**Phase 6 – PWA & Push Notifications**
+
+- `public/manifest.json` — PWA web app manifest (name, short_name, description, start_url, display, theme_color, orientation, icons, shortcuts)
+- `worker/index.js` — Custom service worker push + notificationclick handlers (merged into next-pwa generated SW)
+- `next-pwa` integration — service worker generated at `public/sw.js`, auto-registered at startup, disabled in development
+- `@types/web-push` TypeScript types, `types/next-pwa.d.ts` manual type declaration for next-pwa v5
+- PWA meta tags in root layout: `<link rel="manifest">`, `theme-color`, Apple mobile web app meta tags
+- `lib/push.ts` — server-side VAPID push logic:
+  - `sendPushNotification` — sends to a single subscriber, auto-cleans expired (410) subscriptions
+  - `sendDailyQuestNotifications` — fan-out to all users with notifications enabled
+  - `sendStreakReminders` — fan-out to streak users who haven't completed a task today
+- `app/api/push/subscribe` — `POST` (save subscription + enable notifications) / `DELETE` (remove + disable)
+- `app/api/push/test` — `POST` sends a test push notification to the current user
+- `app/api/cron/daily-quest` — `POST` triggers daily quest notifications (protected by `CRON_SECRET`)
+- `app/api/cron/streak-reminder` — `POST` triggers streak reminder notifications (protected by `CRON_SECRET`)
+- `components/settings/notification-settings.tsx` — client component for full permission/subscribe/unsubscribe flow
+- `app/(app)/settings/page.tsx` — Settings page with Account section (name, avatar, email, provider badge) and Push Notifications section
+- Settings link added to Sidebar navigation
+- `CRON_SECRET` environment variable added to `lib/env.ts` and `.env.example`
+- `docs/environment-variables.md` updated with `CRON_SECRET` documentation
+- `docs/api.md` updated with push notification and cron routes
+- Build script updated to use `--webpack` flag (required for next-pwa compatibility with Next.js 16 + Turbopack default)
+
 **Phase 1 – Foundation**
 
 - Next.js 15 (App Router) + React 19 + TypeScript strict mode project setup

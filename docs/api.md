@@ -138,6 +138,80 @@ Send `null` to remove the budget limit. Response: `{ "success": true }`
 
 ---
 
+### Push Notification Routes
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/push/subscribe` | Yes | Save push subscription + enable notifications |
+| `DELETE` | `/api/push/subscribe` | Yes | Remove subscription + disable notifications |
+| `POST` | `/api/push/test` | Yes | Send a test push notification to the current user |
+
+#### POST /api/push/subscribe
+
+Saves the user's browser push subscription and enables notifications.
+
+Request body:
+```json
+{
+  "subscription": {
+    "endpoint": "https://push.example.com/...",
+    "keys": {
+      "p256dh": "...",
+      "auth": "..."
+    }
+  },
+  "notificationTime": "08:00"
+}
+```
+
+Response: `{ "success": true }`
+
+#### DELETE /api/push/subscribe
+
+Removes the push subscription and disables notifications.
+
+Response: `{ "success": true }`
+
+#### POST /api/push/test
+
+Sends a test push notification to the current user's registered subscription.
+
+Response: `{ "success": true }`
+
+---
+
+### Cron Routes
+
+These routes are protected by `CRON_SECRET` (not by user session). Include the token as:
+`Authorization: Bearer <CRON_SECRET>`
+
+If `CRON_SECRET` is not set, the routes are unprotected.
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/cron/daily-quest` | CRON_SECRET | Send daily quest notifications to all eligible users |
+| `POST` | `/api/cron/streak-reminder` | CRON_SECRET | Send streak reminder notifications |
+
+#### POST /api/cron/daily-quest
+
+Triggers push notifications for all users who have notifications enabled and an active push subscription.
+
+Response:
+```json
+{ "sent": 5, "failed": 0 }
+```
+
+#### POST /api/cron/streak-reminder
+
+Triggers streak reminder notifications for users with an active streak who haven't completed a task today.
+
+Response:
+```json
+{ "sent": 3, "failed": 0 }
+```
+
+---
+
 ## Response Format
 
 All API routes return consistent JSON responses.
