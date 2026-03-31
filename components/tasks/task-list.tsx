@@ -18,6 +18,10 @@ import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TaskItem } from "./task-item";
 import { TaskForm } from "./task-form";
+import { triggerSmallConfetti } from "@/components/animations/confetti";
+import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
+import { AchievementToast } from "@/components/animations/achievement-toast";
+import type { AchievementItem } from "@/components/animations/achievement-toast";
 
 interface Task {
   id: string;
@@ -187,14 +191,25 @@ function EmptyState() {
   );
 }
 
+/** Response shape from POST /api/tasks/:id/complete */
+interface CompleteApiResponse {
+  coinsEarned?: number;
+  newLevel?: { level: number; title: string } | null;
+  unlockedAchievements?: AchievementItem[];
+  streakCurrent?: number;
+}
+
 /**
  * Interactive task list with grouping, completion, and CRUD actions.
  * Manages its own task state after initial server-fetched data.
+ * Triggers confetti, level-up overlay, and achievement toasts on task completion.
  */
 export function TaskList({ initialTasks, topics }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
 
   const editingTask = tasks.find((t) => t.id === editingTaskId);
 
@@ -214,6 +229,21 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
     try {
       const res = await fetch(`/api/tasks/${id}/complete`, { method: "POST" });
       if (res.ok) {
+        const data = (await res.json()) as CompleteApiResponse;
+
+        // Fire a small confetti burst on task completion
+        triggerSmallConfetti();
+
+        // Show level-up overlay if user leveled up
+        if (data.newLevel) {
+          setLevelUp(data.newLevel);
+        }
+
+        // Queue achievement toasts
+        if (data.unlockedAchievements && data.unlockedAchievements.length > 0) {
+          setPendingAchievements((prev) => [...prev, ...data.unlockedAchievements!]);
+        }
+
         await refreshTasks();
       }
     } catch {
@@ -256,6 +286,23 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
 
   return (
     <div>
+      {/* Level-up overlay */}
+      {levelUp && (
+        <LevelUpOverlay
+          level={levelUp.level}
+          title={levelUp.title}
+          onDone={() => setLevelUp(null)}
+        />
+      )}
+
+      {/* Achievement toast notifications */}
+      {pendingAchievements.length > 0 && (
+        <AchievementToast
+          achievements={pendingAchievements}
+          onAllDone={() => setPendingAchievements([])}
+        />
+      )}
+
       {/* New Task button */}
       <div className="flex justify-end mb-6">
         <button

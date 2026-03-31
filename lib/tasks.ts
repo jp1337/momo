@@ -8,8 +8,15 @@
 
 import { db } from "@/lib/db";
 import { tasks, taskCompletions, users } from "@/lib/db/schema";
-import { eq, and, isNull, desc } from "drizzle-orm";
+import { eq, and, isNull, desc, count } from "drizzle-orm";
 import type { CreateTaskInput, UpdateTaskInput } from "@/lib/validators";
+import {
+  updateStreak,
+  checkAndUnlockAchievements,
+  getLevelForCoins,
+  type Level,
+  type UnlockedAchievement,
+} from "@/lib/gamification";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,6 +34,12 @@ export type Task = typeof tasks.$inferSelect;
 export interface CompleteTaskResult {
   task: Task;
   coinsEarned: number;
+  /** Non-null if the user leveled up as a result of this completion */
+  newLevel: Level | null;
+  /** Achievements newly unlocked by this completion */
+  unlockedAchievements: UnlockedAchievement[];
+  /** User's current streak after this completion */
+  streakCurrent: number;
 }
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -251,9 +264,47 @@ export async function completeTask(
 
   // Award coins to the user
   const coinsEarned = task.coinValue;
-  await incrementUserCoins(userId, coinsEarned);
+  const newCoins = await incrementUserCoins(userId, coinsEarned);
 
-  return { task: updatedTask, coinsEarned };
+  // Get level before and after to detect level-up
+  const levelBefore = await getUserLevel(userId, newCoins - coinsEarned);
+  const levelAfter = getLevelForCoins(newCoins);
+  const newLevel = levelAfter.level > levelBefore ? levelAfter : null;
+
+  // Update level in DB if it changed
+  if (newLevel !== null) {
+    await db
+      .update(users)
+      .set({ level: newLevel.level })
+      .where(eq(users.id, userId));
+  }
+
+  // Update streak
+  const { streakCurrent } = await updateStreak(userId);
+
+  // Count total completions for achievement context
+  const completionCountRows = await db
+    .select({ count: count() })
+    .from(taskCompletions)
+    .where(eq(taskCompletions.userId, userId));
+  const totalCompleted = Number(completionCountRows[0]?.count ?? 0);
+
+  // Check and unlock achievements
+  const unlockedAchievements = await checkAndUnlockAchievements(userId, {
+    totalCompleted,
+    streakCurrent,
+    coins: newCoins,
+    level: levelAfter.level,
+    isDailyQuestComplete: task.isDailyQuest,
+  });
+
+  return {
+    task: updatedTask,
+    coinsEarned,
+    newLevel,
+    unlockedAchievements,
+    streakCurrent,
+  };
 }
 
 /**
@@ -323,14 +374,16 @@ export async function uncompleteTask(
 
 /**
  * Increments a user's coin balance by the given amount.
+ * Returns the new coin total.
  *
  * @param userId - The user's UUID
  * @param amount - Number of coins to add
+ * @returns The updated coin balance
  */
 async function incrementUserCoins(
   userId: string,
   amount: number
-): Promise<void> {
+): Promise<number> {
   const userRows = await db
     .select({ coins: users.coins })
     .from(users)
@@ -343,7 +396,21 @@ async function incrementUserCoins(
       .update(users)
       .set({ coins: newCoins })
       .where(eq(users.id, userId));
+    return newCoins;
   }
+  return amount;
+}
+
+/**
+ * Returns the current level number for a user given a specific coin amount.
+ * Used to compare before/after levels to detect level-ups.
+ *
+ * @param _userId - Unused (kept for signature clarity)
+ * @param coins - The coin amount to evaluate level for
+ * @returns The level number for the given coin count
+ */
+async function getUserLevel(_userId: string, coins: number): Promise<number> {
+  return getLevelForCoins(coins).level;
 }
 
 /**

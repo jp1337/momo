@@ -1,8 +1,14 @@
 /**
  * POST /api/tasks/:id/complete
- * Marks a task as completed, awards coins, and records the completion event.
+ * Marks a task as completed, awards coins, updates streak, checks achievements.
  * Requires: authentication
- * Returns: { task: Task, coinsEarned: number }
+ * Returns: {
+ *   task: Task,
+ *   coinsEarned: number,
+ *   newLevel: { level: number; title: string } | null,
+ *   unlockedAchievements: Array<{ key: string; title: string; icon: string }>,
+ *   streakCurrent: number
+ * }
  *
  * DELETE /api/tasks/:id/complete
  * Reverses the completion of a task (undo complete).
@@ -31,7 +37,13 @@ export async function POST(
 
   try {
     const result = await completeTask(id, session.user.id);
-    return Response.json({ task: result.task, coinsEarned: result.coinsEarned });
+    return Response.json({
+      task: result.task,
+      coinsEarned: result.coinsEarned,
+      newLevel: result.newLevel,
+      unlockedAchievements: result.unlockedAchievements,
+      streakCurrent: result.streakCurrent,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to complete task";
