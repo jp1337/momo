@@ -1,57 +1,91 @@
 /**
- * Wishlist page — placeholder for Phase 5.
- * Will display wishlist items with coin-gating and budget tracking.
+ * Wishlist page — Phase 5.
+ *
+ * Server component that fetches wishlist items, budget summary, and user coin
+ * balance for the current user, then passes them to the interactive
+ * WishlistView client component.
  */
 
 import type { Metadata } from "next";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getUserWishlistItems, getBudgetSummary } from "@/lib/wishlist";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { WishlistView } from "@/components/wishlist/wishlist-view";
 
 export const metadata: Metadata = {
-  title: "Wishlist",
+  title: "Wishlist — Momo",
 };
 
 /**
  * Wishlist page.
- * Wishlist functionality will be implemented in Phase 5.
+ * Fetches all wishlist items, budget summary, and user coin balance.
+ * Renders the interactive WishlistView client component.
  */
-export default function WishlistPage() {
-  return (
-    <div className="max-w-4xl mx-auto">
-      <h1
-        className="text-3xl font-semibold mb-2"
-        style={{
-          fontFamily: "var(--font-display, 'Lora', serif)",
-          color: "var(--text-primary)",
-        }}
-      >
-        Wishlist
-      </h1>
-      <p
-        className="text-base mb-8"
-        style={{
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          color: "var(--text-muted)",
-        }}
-      >
-        Track the things you want, and spend more consciously.
-      </p>
+export default async function WishlistPage() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
 
-      <div
-        className="rounded-2xl p-8 text-center"
-        style={{
-          backgroundColor: "var(--bg-surface)",
-          border: "1px solid var(--border)",
-        }}
-      >
+  const userId = session.user.id;
+
+  const [items, budget, userRows] = await Promise.all([
+    getUserWishlistItems(userId),
+    getBudgetSummary(userId),
+    db
+      .select({ coins: users.coins })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1),
+  ]);
+
+  const userCoins = userRows[0]?.coins ?? 0;
+
+  // Serialize items — dates → ISO strings, decimals → strings
+  const serializedItems = items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    price: item.price ?? null,
+    url: item.url ?? null,
+    priority: item.priority,
+    status: item.status,
+    coinUnlockThreshold: item.coinUnlockThreshold ?? null,
+    createdAt: item.createdAt.toISOString(),
+  }));
+
+  return (
+    <div className="max-w-5xl mx-auto">
+      {/* Page header */}
+      <div className="mb-8">
+        <h1
+          className="text-3xl font-semibold mb-2"
+          style={{
+            fontFamily: "var(--font-display, 'Lora', serif)",
+            color: "var(--text-primary)",
+          }}
+        >
+          Wishlist
+        </h1>
         <p
           className="text-base"
           style={{
-            fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             color: "var(--text-muted)",
           }}
         >
-          Wishlist & budget tracking is coming in Phase 5.
+          Track the things you want, and spend more consciously.
         </p>
       </div>
+
+      {/* Interactive wishlist view */}
+      <WishlistView
+        initialItems={serializedItems}
+        initialBudget={budget}
+        userCoins={userCoins}
+      />
     </div>
   );
 }

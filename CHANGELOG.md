@@ -44,3 +44,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `docs/oauth-setup.md` — provider setup guide (GitHub, Discord, Google, OIDC)
 - `docs/api.md` — API route reference (Auth.js routes)
 - `docs/deployment.md` — Docker Compose deployment guide
+
+**Phase 5 – Wishlist & Budget**
+
+- `lib/wishlist.ts` — full wishlist business logic:
+  - `getUserWishlistItems` — list all items (OPEN first by priority, then history)
+  - `createWishlistItem` — create new wishlist item
+  - `updateWishlistItem` — partial update (ownership-gated)
+  - `markAsBought` — set status to BOUGHT (purchase history)
+  - `unmarkAsBought` — revert BOUGHT → OPEN (undo)
+  - `discardWishlistItem` — set status to DISCARDED (archive)
+  - `deleteWishlistItem` — permanent delete (ownership-gated)
+  - `getBudgetSummary` — monthly budget + spent this month + remaining
+  - `updateMonthlyBudget` — update or clear the user's monthly budget
+- Zod validators for wishlist (CreateWishlistItemInputSchema, UpdateWishlistItemInputSchema, UpdateBudgetInputSchema)
+- API routes:
+  - `GET/POST /api/wishlist` — list items + budget / create item
+  - `PATCH/DELETE /api/wishlist/:id` — update / permanently delete item
+  - `POST/DELETE /api/wishlist/:id/buy` — mark bought / undo
+  - `POST /api/wishlist/:id/discard` — archive item
+  - `GET/PATCH /api/settings/budget` — get or update monthly budget
+- UI components:
+  - `WishlistCard` — item card with price, priority badge, affordability indicator, coin-unlock indicator, action buttons
+  - `WishlistForm` — modal for create/edit (title, price, URL, priority, coin threshold)
+  - `BudgetBar` — animated (Framer Motion) budget progress bar with inline edit
+  - `WishlistView` — full interactive page client component managing all state
+- Wishlist page (`/wishlist`) fully implemented, replacing Phase 5 placeholder
+- Affordability indicator (green/red based on remaining monthly budget)
+- Coin-unlock indicator (shows coins needed when threshold is set)
+- Purchase history section (collapsed by default, shows bought + discarded items)
+- Bought items shown with green left border and "Bought" badge
+- Discarded items shown with 50% opacity and strikethrough title
