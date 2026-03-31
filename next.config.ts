@@ -4,12 +4,67 @@
  * Key settings:
  *  - output: 'standalone' — generates a self-contained server bundle for Docker
  *  - images.remotePatterns — allows loading avatars from OAuth providers
+ *  - headers — security headers applied to all responses (CSP, HSTS, X-Frame-Options, etc.)
  *  - next-pwa — Progressive Web App support with offline caching and push notifications
  *    PWA is disabled in development (service worker doesn't run locally).
  */
 
 import type { NextConfig } from "next";
 import withPWA from "next-pwa";
+
+/**
+ * HTTP security headers applied to every route.
+ *
+ * - X-DNS-Prefetch-Control: enables DNS prefetching for performance
+ * - X-Frame-Options: prevents clickjacking by disallowing embedding in iframes (except same origin)
+ * - X-Content-Type-Options: prevents MIME-type sniffing
+ * - Referrer-Policy: only sends origin on cross-origin requests
+ * - Permissions-Policy: disables camera, microphone, and geolocation access
+ * - Strict-Transport-Security: enforces HTTPS for 2 years with preload (HSTS)
+ * - Content-Security-Policy: restricts resource loading to trusted origins
+ *
+ * NOTE: `script-src` includes 'unsafe-eval' and 'unsafe-inline' which are needed by Next.js
+ * in development mode and for certain runtime hydration patterns. For stricter CSP in
+ * production, consider using nonces — see Next.js docs on CSP with nonces.
+ */
+const securityHeaders = [
+  {
+    key: "X-DNS-Prefetch-Control",
+    value: "on",
+  },
+  {
+    key: "X-Frame-Options",
+    value: "SAMEORIGIN",
+  },
+  {
+    key: "X-Content-Type-Options",
+    value: "nosniff",
+  },
+  {
+    key: "Referrer-Policy",
+    value: "strict-origin-when-cross-origin",
+  },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=()",
+  },
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains; preload",
+  },
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https://avatars.githubusercontent.com https://cdn.discordapp.com https://lh3.googleusercontent.com",
+      "connect-src 'self'",
+      "frame-ancestors 'none'",
+    ].join("; "),
+  },
+];
 
 const nextConfig: NextConfig = {
   /**
@@ -41,6 +96,19 @@ const nextConfig: NextConfig = {
         hostname: "lh3.googleusercontent.com",
       },
     ],
+  },
+
+  /**
+   * HTTP security headers applied to all routes.
+   * Includes CSP, HSTS, X-Frame-Options, and more.
+   */
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: securityHeaders,
+      },
+    ];
   },
 };
 

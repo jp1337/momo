@@ -10,6 +10,7 @@
 import { auth } from "@/lib/auth";
 import { postponeDailyQuest } from "@/lib/daily-quest";
 import { z } from "zod";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /** Validation schema for the postpone request body */
 const PostponeBodySchema = z.object({
@@ -25,6 +26,10 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit: 10 postpones per minute per user (intentionally strict)
+  const rateCheck = checkRateLimit(`quest-postpone:${session.user.id}`, 10, 60_000);
+  if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   let body: unknown;
   try {

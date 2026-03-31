@@ -192,8 +192,39 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 | Phase 4 – Gamification | ✅ Done | Coins, Streaks, Animations |
 | Phase 5 – Wishlist | ✅ Done | Wishlist CRUD, Budget tracking, Affordability, Coin-unlock |
 | Phase 6 – PWA & Push | ✅ Done | PWA manifest, Service Worker, VAPID push, Daily quest & streak notifications, Settings page |
-| Phase 7 – Deployment | ⬜ Planned | CI/CD, Hardening, K8s |
+| Phase 7 – Deployment | ✅ Done | Multi-stage Docker, GitHub Actions (GHCR + DockerHub + Quay), Security Headers, Rate Limiting, K8s manifests |
 | Phase 8 – Docs | ⬜ Planned | GitHub Pages documentation |
+
+---
+
+## 🚢 Production Checklist
+
+Before deploying Momo to production, verify all items below:
+
+- [ ] **Generate AUTH_SECRET** — minimum 32 random bytes:
+  ```bash
+  openssl rand -base64 32
+  ```
+- [ ] **Set all required environment variables** — see [Environment Variables](docs/environment-variables.md)
+- [ ] **Generate VAPID keys** for push notifications:
+  ```bash
+  npx web-push generate-vapid-keys
+  ```
+- [ ] **Register OAuth apps** for your production domain with correct callback URLs
+- [ ] **Set CRON_SECRET** to protect cron endpoints:
+  ```bash
+  openssl rand -hex 32
+  ```
+- [ ] **Configure Kubernetes secrets** — copy `deploy/examples/secret.example.yaml`, fill in real values, apply it, then delete the file (never commit real secrets)
+- [ ] **Set up cert-manager** for automatic TLS certificate provisioning
+- [ ] **Run database migrations** after every deployment:
+  ```bash
+  docker compose exec app npx drizzle-kit migrate
+  # or in Kubernetes:
+  kubectl exec -n momo deployment/momo-app -- npx drizzle-kit migrate
+  ```
+
+See the full [Deployment Guide](docs/deployment.md) for AUTH_SECRET rotation procedures and Kubernetes deployment steps.
 
 ---
 

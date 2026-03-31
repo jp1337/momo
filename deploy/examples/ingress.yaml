@@ -1,0 +1,42 @@
+# Ingress for Momo — requires an ingress controller (e.g. ingress-nginx) and
+# cert-manager with a ClusterIssuer named "letsencrypt-prod".
+#
+# Replace "momo.example.com" with your actual domain before applying.
+#
+# Apply:
+#   kubectl apply -f namespace.yaml
+#   kubectl apply -f ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: momo-app
+  namespace: momo
+  labels:
+    app.kubernetes.io/name: momo
+    app.kubernetes.io/component: ingress
+  annotations:
+    # cert-manager: automatically provision a Let's Encrypt certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # ingress-nginx: redirect all HTTP traffic to HTTPS
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Proxy timeouts — increase if you see 504s during DB-heavy operations
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - momo.example.com  # CHANGE THIS to your domain
+      secretName: momo-tls  # cert-manager will create this Secret automatically
+  rules:
+    - host: momo.example.com  # CHANGE THIS to your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: momo-app
+                port:
+                  name: http

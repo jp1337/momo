@@ -77,5 +77,10 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# Health check — hits the /api/health endpoint every 30s
+# wget is available on Alpine; curl is not installed by default
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -qO- http://localhost:3000/api/health || exit 1
+
 # Start the Next.js standalone server
 CMD ["node", "server.js"]

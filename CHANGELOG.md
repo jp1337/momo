@@ -9,6 +9,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+**Phase 7 – Deployment & Hardening**
+
+- `app/api/health/route.ts` — unauthenticated health check endpoint (`GET /api/health`) returning `{ status: "ok", timestamp }` for Docker, Kubernetes, and load balancer probes
+- `lib/rate-limit.ts` — in-memory sliding-window rate limiter (`checkRateLimit`, `rateLimitResponse`) applied to all mutation API routes
+- Rate limiting applied to mutation routes: `POST /api/tasks` (60/min), `POST /api/tasks/:id/complete` (30/min), `POST /api/topics` (30/min), `POST /api/wishlist` (30/min), `POST /api/daily-quest/postpone` (10/min)
+- `next.config.ts` — security headers on all routes: CSP, HSTS (2-year preload), X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+- `.github/workflows/build-and-publish.yml` — GitHub Actions CI/CD pipeline: multi-platform Docker build (amd64 + arm64) with push to GHCR, Docker Hub, and Quay.io on every push to `main` and on version tags
+- `deploy/examples/namespace.yaml` — Kubernetes namespace manifest
+- `deploy/examples/deployment.yaml` — Kubernetes Deployment (2 replicas, liveness/readiness probes, pod anti-affinity, non-root securityContext)
+- `deploy/examples/service.yaml` — ClusterIP Service for the app
+- `deploy/examples/ingress.yaml` — Ingress with TLS placeholder (cert-manager + ingress-nginx)
+- `deploy/examples/secret.example.yaml` — Secret template with all required keys and generation instructions
+- `deploy/examples/postgres-statefulset.yaml` — PostgreSQL 16 StatefulSet with PVC (10Gi) for self-hosted database
+
+### Changed
+
+- `Dockerfile` — added `HEALTHCHECK` instruction hitting `/api/health` every 30s
+- `docker-compose.yml` — updated app healthcheck to use `/api/health` endpoint
+- `docs/deployment.md` — added production checklist, AUTH_SECRET rotation procedure, and Kubernetes deployment steps
+- `README.md` — added Production Checklist section; Phase 7 marked as Done in status table
+
+---
+
 **Phase 6 – PWA & Push Notifications**
 
 - `public/manifest.json` — PWA web app manifest (name, short_name, description, start_url, display, theme_color, orientation, icons, shortcuts)
