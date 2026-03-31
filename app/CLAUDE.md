@@ -16,6 +16,11 @@ Next.js 15 App Router pages and API routes. Thin layer — validates input, call
   login/        → OAuth provider buttons (GitHub, Discord, Google)
 api/
   auth/[...nextauth]/route.ts  → Auth.js v5 handler (GET + POST)
+  tasks/route.ts               → GET (list, ?topicId/type/completed filters), POST (create)
+  tasks/[id]/route.ts          → GET (single), PATCH (update), DELETE
+  tasks/[id]/complete/route.ts → POST (complete + award coins), DELETE (uncomplete + refund)
+  topics/route.ts              → GET (list with task counts), POST (create)
+  topics/[id]/route.ts         → GET (with tasks), PATCH, DELETE
 globals.css     → Design system CSS variables, Tailwind v4, Google Fonts
 layout.tsx      → Root layout: ThemeProvider (next-themes), font variables
 page.tsx        → Redirects / → /dashboard
