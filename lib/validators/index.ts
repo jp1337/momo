@@ -148,3 +148,93 @@ export const UpdateTopicInputSchema = z.object({
 });
 
 export type UpdateTopicInput = z.infer<typeof UpdateTopicInputSchema>;
+
+// ─── Wishlist Validators ───────────────────────────────────────────────────────
+
+/**
+ * Schema for creating a new wishlist item.
+ * Validates title, optional price, optional URL, priority, and optional
+ * coin-unlock threshold.
+ *
+ * Empty strings for url are coerced to undefined so the field is treated
+ * as absent (avoids z.string().url() rejecting empty strings).
+ */
+export const CreateWishlistItemInputSchema = z.object({
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(200, "Title must be 200 characters or less"),
+  price: z
+    .number()
+    .min(0, "Price cannot be negative")
+    .max(999999, "Price is too large")
+    .nullable()
+    .optional(),
+  url: z
+    .preprocess(
+      (val) => (val === "" ? undefined : val),
+      z.string().url("URL must be a valid URL").optional()
+    )
+    .nullable()
+    .optional(),
+  priority: z.enum(["WANT", "NICE_TO_HAVE", "SOMEDAY"]),
+  coinUnlockThreshold: z
+    .number()
+    .int()
+    .min(0, "Coin threshold cannot be negative")
+    .nullable()
+    .optional(),
+});
+
+export type CreateWishlistItemInput = z.infer<
+  typeof CreateWishlistItemInputSchema
+>;
+
+/**
+ * Schema for updating an existing wishlist item.
+ * All fields are optional — only provided fields are updated.
+ */
+export const UpdateWishlistItemInputSchema = z.object({
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(200, "Title must be 200 characters or less")
+    .optional(),
+  price: z
+    .number()
+    .min(0, "Price cannot be negative")
+    .max(999999, "Price is too large")
+    .nullable()
+    .optional(),
+  url: z
+    .preprocess(
+      (val) => (val === "" ? undefined : val),
+      z.string().url("URL must be a valid URL").optional()
+    )
+    .nullable()
+    .optional(),
+  priority: z.enum(["WANT", "NICE_TO_HAVE", "SOMEDAY"]).optional(),
+  coinUnlockThreshold: z
+    .number()
+    .int()
+    .min(0, "Coin threshold cannot be negative")
+    .nullable()
+    .optional(),
+});
+
+export type UpdateWishlistItemInput = z.infer<
+  typeof UpdateWishlistItemInputSchema
+>;
+
+/**
+ * Schema for the budget update endpoint.
+ */
+export const UpdateBudgetInputSchema = z.object({
+  budget: z
+    .number()
+    .min(0, "Budget cannot be negative")
+    .max(9999999, "Budget is too large")
+    .nullable(),
+});
+
+export type UpdateBudgetInput = z.infer<typeof UpdateBudgetInputSchema>;

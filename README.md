@@ -187,10 +187,10 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 | Phase | Status | Description |
 |---|---|---|
 | Phase 1 – Foundation | ✅ Done | Next.js 15 + Auth.js v5 + Drizzle ORM + Design System |
-| Phase 2 – Core Tasks | ⬜ Planned | Task CRUD, Topics, Recurring |
-| Phase 3 – Daily Quest | ⬜ Planned | Quest algorithm, Dashboard |
-| Phase 4 – Gamification | ⬜ Planned | Coins, Streaks, Animations |
-| Phase 5 – Wishlist | ⬜ Planned | Budget tracking |
+| Phase 2 – Core Tasks | ✅ Done | Task CRUD, Topics, Recurring |
+| Phase 3 – Daily Quest | ✅ Done | Quest algorithm, Dashboard |
+| Phase 4 – Gamification | ✅ Done | Coins, Streaks, Animations |
+| Phase 5 – Wishlist | ✅ Done | Wishlist CRUD, Budget tracking, Affordability, Coin-unlock |
 | Phase 6 – PWA & Push | ⬜ Planned | Installable app, Notifications |
 | Phase 7 – Deployment | ⬜ Planned | CI/CD, Hardening, K8s |
 | Phase 8 – Docs | ⬜ Planned | GitHub Pages documentation |
