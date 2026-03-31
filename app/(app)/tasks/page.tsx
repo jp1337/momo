@@ -1,57 +1,94 @@
 /**
- * Tasks page — placeholder for Phase 2.
- * Will display the full task list with create/edit/complete functionality.
+ * Tasks list page — Phase 2.
+ *
+ * Server component that fetches tasks and topics for the current user,
+ * then passes them to the interactive TaskList client component.
+ *
+ * Groups tasks into:
+ *  - Today & Overdue: tasks due today or in the past
+ *  - Upcoming: tasks with future due dates
+ *  - No due date: active tasks without a due date
+ *  - Someday: SOMEDAY priority tasks with no due date
+ *  - Completed: finished tasks
  */
 
 import type { Metadata } from "next";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getUserTasks } from "@/lib/tasks";
+import { getUserTopics } from "@/lib/topics";
+import { TaskList } from "@/components/tasks/task-list";
 
 export const metadata: Metadata = {
-  title: "Tasks",
+  title: "Tasks — Momo",
 };
 
 /**
  * Tasks list page.
- * Task CRUD will be implemented in Phase 2.
+ * Fetches all tasks and topics for the authenticated user, renders the task list.
  */
-export default function TasksPage() {
+export default async function TasksPage() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const [tasks, topics] = await Promise.all([
+    getUserTasks(session.user.id),
+    getUserTopics(session.user.id),
+  ]);
+
+  // Serialize to plain objects for client component
+  const serializedTasks = tasks.map((t) => ({
+    id: t.id,
+    title: t.title,
+    type: t.type,
+    priority: t.priority,
+    completedAt: t.completedAt ? t.completedAt.toISOString() : null,
+    dueDate: t.dueDate ?? null,
+    nextDueDate: t.nextDueDate ?? null,
+    topicId: t.topicId ?? null,
+    coinValue: t.coinValue,
+    createdAt: t.createdAt.toISOString(),
+  }));
+
+  const serializedTopics = topics.map((t) => ({
+    id: t.id,
+    title: t.title,
+    color: t.color ?? null,
+  }));
+
   return (
     <div className="max-w-4xl mx-auto">
-      <h1
-        className="text-3xl font-semibold mb-2"
-        style={{
-          fontFamily: "var(--font-display, 'Lora', serif)",
-          color: "var(--text-primary)",
-        }}
-      >
-        Tasks
-      </h1>
-      <p
-        className="text-base mb-8"
-        style={{
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          color: "var(--text-muted)",
-        }}
-      >
-        All your tasks in one place.
-      </p>
-
-      <div
-        className="rounded-2xl p-8 text-center"
-        style={{
-          backgroundColor: "var(--bg-surface)",
-          border: "1px solid var(--border)",
-        }}
-      >
+      {/* Page header */}
+      <div className="mb-8">
+        <h1
+          className="text-3xl font-semibold mb-2"
+          style={{
+            fontFamily: "var(--font-display, 'Lora', serif)",
+            color: "var(--text-primary)",
+          }}
+        >
+          Tasks
+        </h1>
         <p
           className="text-base"
           style={{
-            fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             color: "var(--text-muted)",
           }}
         >
-          Task management is coming in Phase 2.
+          {tasks.length === 0
+            ? "No tasks yet — let's add your first one."
+            : `${tasks.filter((t) => t.completedAt === null).length} active · ${tasks.filter((t) => t.completedAt !== null).length} completed`}
         </p>
       </div>
+
+      {/* Interactive task list */}
+      <TaskList
+        initialTasks={serializedTasks}
+        topics={serializedTopics}
+      />
     </div>
   );
 }

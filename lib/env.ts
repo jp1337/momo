@@ -6,6 +6,18 @@
 
 import { z } from "zod";
 
+/** Converts empty strings to undefined so optional validators don't fail on blank .env entries */
+const emptyToUndefined = z.preprocess(
+  (val) => (val === "" ? undefined : val),
+  z.string().optional()
+);
+
+/** Like emptyToUndefined but also validates as a URL when present */
+const optionalUrl = z.preprocess(
+  (val) => (val === "" ? undefined : val),
+  z.string().url().optional()
+);
+
 const serverEnvSchema = z.object({
   // Database
   DATABASE_URL: z
@@ -20,55 +32,26 @@ const serverEnvSchema = z.object({
     .describe("Secret used to sign Auth.js JWTs and cookies"),
 
   // GitHub OAuth
-  GITHUB_CLIENT_ID: z
-    .string()
-    .optional()
-    .describe("GitHub OAuth App Client ID"),
-  GITHUB_CLIENT_SECRET: z
-    .string()
-    .optional()
-    .describe("GitHub OAuth App Client Secret"),
+  GITHUB_CLIENT_ID: emptyToUndefined.describe("GitHub OAuth App Client ID"),
+  GITHUB_CLIENT_SECRET: emptyToUndefined.describe("GitHub OAuth App Client Secret"),
 
   // Discord OAuth
-  DISCORD_CLIENT_ID: z
-    .string()
-    .optional()
-    .describe("Discord OAuth App Client ID"),
-  DISCORD_CLIENT_SECRET: z
-    .string()
-    .optional()
-    .describe("Discord OAuth App Client Secret"),
+  DISCORD_CLIENT_ID: emptyToUndefined.describe("Discord OAuth App Client ID"),
+  DISCORD_CLIENT_SECRET: emptyToUndefined.describe("Discord OAuth App Client Secret"),
 
   // Google OAuth
-  GOOGLE_CLIENT_ID: z
-    .string()
-    .optional()
-    .describe("Google OAuth Client ID"),
-  GOOGLE_CLIENT_SECRET: z
-    .string()
-    .optional()
-    .describe("Google OAuth Client Secret"),
+  GOOGLE_CLIENT_ID: emptyToUndefined.describe("Google OAuth Client ID"),
+  GOOGLE_CLIENT_SECRET: emptyToUndefined.describe("Google OAuth Client Secret"),
 
   // OIDC (optional — only enabled when OIDC_ISSUER is set)
-  OIDC_CLIENT_ID: z.string().optional().describe("Generic OIDC Client ID"),
-  OIDC_CLIENT_SECRET: z
-    .string()
-    .optional()
-    .describe("Generic OIDC Client Secret"),
-  OIDC_ISSUER: z
-    .string()
-    .url()
-    .optional()
-    .describe("OIDC Issuer URL (e.g. https://auth.example.com/application/o/momo/)"),
+  OIDC_CLIENT_ID: emptyToUndefined.describe("Generic OIDC Client ID"),
+  OIDC_CLIENT_SECRET: emptyToUndefined.describe("Generic OIDC Client Secret"),
+  OIDC_ISSUER: optionalUrl.describe("OIDC Issuer URL (e.g. https://auth.example.com/application/o/momo/)"),
 
   // Web Push / VAPID
-  VAPID_PRIVATE_KEY: z
-    .string()
-    .optional()
-    .describe("VAPID private key for web push"),
+  VAPID_PRIVATE_KEY: emptyToUndefined.describe("VAPID private key for web push"),
   VAPID_CONTACT: z
-    .string()
-    .optional()
+    .preprocess((val) => (val === "" ? undefined : val), z.string().optional())
     .default("mailto:admin@example.com")
     .describe("VAPID contact email/URL"),
 
@@ -79,13 +62,11 @@ const serverEnvSchema = z.object({
 });
 
 const clientEnvSchema = z.object({
-  NEXT_PUBLIC_VAPID_PUBLIC_KEY: z
-    .string()
-    .optional()
-    .describe("VAPID public key (exposed to client for push subscriptions)"),
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: emptyToUndefined.describe(
+    "VAPID public key (exposed to client for push subscriptions)"
+  ),
   NEXT_PUBLIC_APP_URL: z
-    .string()
-    .url()
+    .preprocess((val) => (val === "" ? undefined : val), z.string().url().optional())
     .default("http://localhost:3000")
     .describe("Public URL of the application"),
 });
