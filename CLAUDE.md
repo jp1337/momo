@@ -261,3 +261,39 @@ A feature is only considered done when ALL of the following are true:
 
 *This file is the source of truth for how this project is developed.*
 *If in doubt: document it, commit it, keep it clean.*
+
+---
+
+## 🗂️ Project Structure (Quick Reference)
+
+```
+app/
+  (app)/          → Authenticated routes: dashboard, tasks, topics, wishlist
+  (auth)/         → Unauthenticated routes: login
+  api/auth/       → Auth.js v5 catch-all handler
+  globals.css     → CSS variables (design system), font imports
+  layout.tsx      → Root layout with ThemeProvider
+
+lib/
+  auth.ts         → Auth.js v5 config (providers, Drizzle adapter)
+  env.ts          → Zod-validated env wrapper — ALL env access goes here
+  db/
+    index.ts      → Drizzle client instance
+    schema.ts     → All DB table definitions + relations
+  validators/     → Zod schemas for API input validation
+
+components/
+  layout/         → Navbar, Sidebar
+  ui/             → shadcn/ui base components
+  theme-toggle.tsx → Dark/Light/System toggle
+
+docs/             → Markdown docs (api, database, deployment, oauth, env vars)
+public/           → Static assets
+```
+
+## 🚫 What to Skip (never read these)
+
+- `node_modules/` — dependencies, never edit
+- `.next/` — build output, generated
+- `package-lock.json` — auto-managed
+- `public/` default SVGs (file.svg, globe.svg, next.svg, vercel.svg, window.svg) — Next.js defaults, not project assets

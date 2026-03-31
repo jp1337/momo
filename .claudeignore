@@ -1,0 +1,27 @@
+# Dependencies — never edit manually
+node_modules/
+
+# Build artifacts
+.next/
+dist/
+build/
+
+# Lock files — auto-managed
+package-lock.json
+
+# Git internals
+.git/
+
+# OS artifacts
+.DS_Store
+*.log
+*.tmp
+
+# Test coverage
+coverage/
+.coverage
+
+# Environment files with real secrets
+.env
+.env.local
+.env.*.local
