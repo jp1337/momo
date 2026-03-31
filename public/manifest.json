@@ -1,0 +1,25 @@
+{
+  "name": "Momo – Steal your time back",
+  "short_name": "Momo",
+  "description": "Task management for people who struggle with procrastination",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0f1410",
+  "theme_color": "#f0a500",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/dashboard",
+      "icons": [{ "src": "/favicon.ico", "sizes": "any" }]
+    },
+    {
+      "name": "Tasks",
+      "url": "/tasks",
+      "icons": [{ "src": "/favicon.ico", "sizes": "any" }]
+    }
+  ]
+}

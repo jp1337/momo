@@ -191,7 +191,7 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 | Phase 3 – Daily Quest | ✅ Done | Quest algorithm, Dashboard |
 | Phase 4 – Gamification | ✅ Done | Coins, Streaks, Animations |
 | Phase 5 – Wishlist | ✅ Done | Wishlist CRUD, Budget tracking, Affordability, Coin-unlock |
-| Phase 6 – PWA & Push | ⬜ Planned | Installable app, Notifications |
+| Phase 6 – PWA & Push | ✅ Done | PWA manifest, Service Worker, VAPID push, Daily quest & streak notifications, Settings page |
 | Phase 7 – Deployment | ⬜ Planned | CI/CD, Hardening, K8s |
 | Phase 8 – Docs | ⬜ Planned | GitHub Pages documentation |
 

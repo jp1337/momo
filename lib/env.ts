@@ -55,6 +55,11 @@ const serverEnvSchema = z.object({
     .default("mailto:admin@example.com")
     .describe("VAPID contact email/URL"),
 
+  // Cron job protection
+  CRON_SECRET: emptyToUndefined.describe(
+    "Bearer token required by cron API routes to prevent unauthorised triggering"
+  ),
+
   // Runtime
   NODE_ENV: z
     .enum(["development", "production", "test"])
