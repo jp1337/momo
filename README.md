@@ -186,7 +186,7 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 
 | Phase | Status | Description |
 |---|---|---|
-| Phase 1 – Foundation | 🔄 In Progress | Next.js setup, Auth, DB schema |
+| Phase 1 – Foundation | ✅ Done | Next.js 15 + Auth.js v5 + Drizzle ORM + Design System |
 | Phase 2 – Core Tasks | ⬜ Planned | Task CRUD, Topics, Recurring |
 | Phase 3 – Daily Quest | ⬜ Planned | Quest algorithm, Dashboard |
 | Phase 4 – Gamification | ⬜ Planned | Coins, Streaks, Animations |
