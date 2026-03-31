@@ -28,6 +28,7 @@ interface Task {
   dueDate: string | null;
   nextDueDate: string | null;
   topicId: string | null;
+  notes: string | null;
   coinValue: number;
   createdAt: string;
 }
@@ -423,7 +424,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                   id: editingTask.id,
                   title: editingTask.title,
                   topicId: editingTask.topicId,
-                  notes: "",
+                  notes: editingTask.notes ?? "",
                   type: editingTask.type,
                   priority: editingTask.priority,
                   recurrenceInterval: editingTask.type === "RECURRING"

@@ -48,6 +48,7 @@ export default async function TasksPage() {
     dueDate: t.dueDate ?? null,
     nextDueDate: t.nextDueDate ?? null,
     topicId: t.topicId ?? null,
+    notes: t.notes ?? null,
     coinValue: t.coinValue,
     createdAt: t.createdAt.toISOString(),
   }));
