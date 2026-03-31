@@ -10,23 +10,19 @@
 import { sendStreakReminders } from "@/lib/push";
 import { serverEnv } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "@/lib/utils/crypto";
 
 /**
  * POST — Fan out streak reminder notifications to all users at risk of losing their streak.
  * Validates the CRON_SECRET bearer token before processing.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // Verify the cron secret if one is configured
+  // Fail-closed: require CRON_SECRET to be set and match
   const cronSecret = serverEnv.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = req.headers.get("Authorization");
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : null;
-
-    if (token !== cronSecret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const authHeader = req.headers.get("Authorization");
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (!cronSecret || !token || !timingSafeEqual(cronSecret, token)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {

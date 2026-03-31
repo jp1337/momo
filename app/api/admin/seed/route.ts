@@ -17,6 +17,10 @@ import { seedAchievements, ACHIEVEMENT_DEFINITIONS } from "@/lib/gamification";
  * Seeds achievements into the database. Idempotent.
  */
 export async function POST() {
+  if (process.env.NODE_ENV !== "development") {
+    return Response.json({ error: "Only available in development" }, { status: 403 });
+  }
+
   const session = await auth();
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

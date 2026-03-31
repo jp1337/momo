@@ -8,7 +8,7 @@
 
 import { db } from "@/lib/db";
 import { tasks, taskCompletions, users } from "@/lib/db/schema";
-import { eq, and, isNull, desc, count } from "drizzle-orm";
+import { eq, and, isNull, desc, count, sql } from "drizzle-orm";
 import type { CreateTaskInput, UpdateTaskInput } from "@/lib/validators";
 import {
   updateStreak,
@@ -207,6 +207,10 @@ export async function deleteTask(
  *  - RECURRING: records completion, recalculates next_due_date (now + interval days),
  *    keeps completed_at null (task stays active), awards coins
  *
+ * All DB operations run inside a single Drizzle transaction so partial failures
+ * cannot leave the database in an inconsistent state. Coins are incremented with
+ * an atomic SQL expression to prevent read-modify-write races under concurrency.
+ *
  * @param taskId - The task's UUID
  * @param userId - The authenticated user's UUID
  * @returns The updated task and the number of coins earned
@@ -216,7 +220,7 @@ export async function completeTask(
   taskId: string,
   userId: string
 ): Promise<CompleteTaskResult> {
-  // Fetch task first to verify ownership and get type/coinValue
+  // Fetch task outside the transaction to fail fast before acquiring a connection
   const task = await getTaskById(taskId, userId);
   if (!task) {
     throw new Error("Task not found or access denied");
@@ -227,90 +231,111 @@ export async function completeTask(
     throw new Error("Task is already completed");
   }
 
-  const now = new Date();
-  let updatedTask: Task;
+  return db.transaction(async (tx) => {
+    const now = new Date();
+    let updatedTask: Task;
 
-  if (task.type === "RECURRING") {
-    // Calculate next due date: today + recurrenceInterval days
-    const intervalDays = task.recurrenceInterval ?? 1;
-    const nextDue = new Date(now);
-    nextDue.setDate(nextDue.getDate() + intervalDays);
-    const nextDueStr = nextDue.toISOString().split("T")[0]; // YYYY-MM-DD
+    if (task.type === "RECURRING") {
+      // Calculate next due date: today + recurrenceInterval days
+      const intervalDays = task.recurrenceInterval ?? 1;
+      const nextDue = new Date(now);
+      nextDue.setDate(nextDue.getDate() + intervalDays);
+      const nextDueStr = nextDue.toISOString().split("T")[0]; // YYYY-MM-DD
 
-    const rows = await db
-      .update(tasks)
-      .set({ nextDueDate: nextDueStr })
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-      .returning();
+      const rows = await tx
+        .update(tasks)
+        .set({ nextDueDate: nextDueStr })
+        .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+        .returning();
 
-    updatedTask = rows[0];
-  } else {
-    // ONE_TIME or DAILY_ELIGIBLE — mark as done
-    const rows = await db
-      .update(tasks)
-      .set({ completedAt: now })
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-      .returning();
+      updatedTask = rows[0];
+    } else {
+      // ONE_TIME or DAILY_ELIGIBLE — mark as done
+      const rows = await tx
+        .update(tasks)
+        .set({ completedAt: now })
+        .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+        .returning();
 
-    updatedTask = rows[0];
-  }
+      updatedTask = rows[0];
+    }
 
-  // Record the completion event
-  await db.insert(taskCompletions).values({
-    taskId,
-    userId,
-    completedAt: now,
-  });
+    // Record the completion event
+    await tx.insert(taskCompletions).values({
+      taskId,
+      userId,
+      completedAt: now,
+    });
 
-  // Award coins to the user
-  const coinsEarned = task.coinValue;
-  const newCoins = await incrementUserCoins(userId, coinsEarned);
-
-  // Get level before and after to detect level-up
-  const levelBefore = await getUserLevel(userId, newCoins - coinsEarned);
-  const levelAfter = getLevelForCoins(newCoins);
-  const newLevel = levelAfter.level > levelBefore ? levelAfter : null;
-
-  // Update level in DB if it changed
-  if (newLevel !== null) {
-    await db
+    // Award coins atomically — avoids read-modify-write race under concurrency
+    const coinsEarned = task.coinValue;
+    await tx
       .update(users)
-      .set({ level: newLevel.level })
+      .set({ coins: sql`${users.coins} + ${coinsEarned}` })
       .where(eq(users.id, userId));
-  }
 
-  // Update streak
-  const { streakCurrent } = await updateStreak(userId);
+    // Read the updated balance once to compute level detection
+    const [updatedUser] = await tx
+      .select({ coins: users.coins, level: users.level })
+      .from(users)
+      .where(eq(users.id, userId));
 
-  // Count total completions for achievement context
-  const completionCountRows = await db
-    .select({ count: count() })
-    .from(taskCompletions)
-    .where(eq(taskCompletions.userId, userId));
-  const totalCompleted = Number(completionCountRows[0]?.count ?? 0);
+    const newCoins = updatedUser?.coins ?? coinsEarned;
+    const coinsBeforeCompletion = newCoins - coinsEarned;
 
-  // Check and unlock achievements
-  const unlockedAchievements = await checkAndUnlockAchievements(userId, {
-    totalCompleted,
-    streakCurrent,
-    coins: newCoins,
-    level: levelAfter.level,
-    isDailyQuestComplete: task.isDailyQuest,
+    // Detect level-up
+    const levelBefore = getLevelForCoins(coinsBeforeCompletion).level;
+    const levelAfter = getLevelForCoins(newCoins);
+    const newLevel = levelAfter.level > levelBefore ? levelAfter : null;
+
+    // Update level in DB if it changed
+    if (newLevel !== null) {
+      await tx
+        .update(users)
+        .set({ level: newLevel.level })
+        .where(eq(users.id, userId));
+    }
+
+    // Update streak inside the transaction
+    const { streakCurrent } = await updateStreak(userId, tx);
+
+    // Count total completions for achievement context
+    const completionCountRows = await tx
+      .select({ count: count() })
+      .from(taskCompletions)
+      .where(eq(taskCompletions.userId, userId));
+    const totalCompleted = Number(completionCountRows[0]?.count ?? 0);
+
+    // Check and unlock achievements inside the transaction
+    const unlockedAchievements = await checkAndUnlockAchievements(
+      userId,
+      {
+        totalCompleted,
+        streakCurrent,
+        coins: newCoins,
+        level: levelAfter.level,
+        isDailyQuestComplete: task.isDailyQuest,
+      },
+      tx
+    );
+
+    return {
+      task: updatedTask,
+      coinsEarned,
+      newLevel,
+      unlockedAchievements,
+      streakCurrent,
+    };
   });
-
-  return {
-    task: updatedTask,
-    coinsEarned,
-    newLevel,
-    unlockedAchievements,
-    streakCurrent,
-  };
 }
 
 /**
  * Reverses the completion of a task (undo complete).
  * Only works for ONE_TIME and DAILY_ELIGIBLE tasks.
- * Deletes the most recent completion record and subtracts coins.
+ * Deletes the most recent completion record and subtracts coins atomically.
+ *
+ * All DB operations run inside a single Drizzle transaction. Coins are decremented
+ * with an atomic SQL GREATEST expression to prevent negative balances and races.
  *
  * @param taskId - The task's UUID
  * @param userId - The authenticated user's UUID
@@ -334,106 +359,46 @@ export async function uncompleteTask(
     throw new Error("Task is not completed");
   }
 
-  // Clear the completion timestamp
-  const rows = await db
-    .update(tasks)
-    .set({ completedAt: null })
-    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-    .returning();
+  return db.transaction(async (tx) => {
+    // Clear the completion timestamp
+    const rows = await tx
+      .update(tasks)
+      .set({ completedAt: null })
+      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+      .returning();
 
-  if (!rows[0]) {
-    throw new Error("Task not found or access denied");
-  }
+    if (!rows[0]) {
+      throw new Error("Task not found or access denied");
+    }
 
-  // Delete the most recent completion record
-  const completions = await db
-    .select()
-    .from(taskCompletions)
-    .where(
-      and(
-        eq(taskCompletions.taskId, taskId),
-        eq(taskCompletions.userId, userId)
+    // Delete the most recent completion record
+    const completions = await tx
+      .select()
+      .from(taskCompletions)
+      .where(
+        and(
+          eq(taskCompletions.taskId, taskId),
+          eq(taskCompletions.userId, userId)
+        )
       )
-    )
-    .orderBy(desc(taskCompletions.completedAt))
-    .limit(1);
+      .orderBy(desc(taskCompletions.completedAt))
+      .limit(1);
 
-  if (completions[0]) {
-    await db
-      .delete(taskCompletions)
-      .where(eq(taskCompletions.id, completions[0].id));
-  }
+    if (completions[0]) {
+      await tx
+        .delete(taskCompletions)
+        .where(eq(taskCompletions.id, completions[0].id));
+    }
 
-  // Subtract coins — clamp to 0 to avoid negative balances
-  await decrementUserCoins(userId, task.coinValue);
-
-  return rows[0];
-}
-
-// ─── Internal helpers ─────────────────────────────────────────────────────────
-
-/**
- * Increments a user's coin balance by the given amount.
- * Returns the new coin total.
- *
- * @param userId - The user's UUID
- * @param amount - Number of coins to add
- * @returns The updated coin balance
- */
-async function incrementUserCoins(
-  userId: string,
-  amount: number
-): Promise<number> {
-  const userRows = await db
-    .select({ coins: users.coins })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  if (userRows[0]) {
-    const newCoins = userRows[0].coins + amount;
-    await db
+    // Subtract coins atomically — GREATEST clamps the result to 0
+    await tx
       .update(users)
-      .set({ coins: newCoins })
+      .set({
+        coins: sql`GREATEST(${users.coins} - ${task.coinValue}, 0)`,
+      })
       .where(eq(users.id, userId));
-    return newCoins;
-  }
-  return amount;
+
+    return rows[0];
+  });
 }
 
-/**
- * Returns the current level number for a user given a specific coin amount.
- * Used to compare before/after levels to detect level-ups.
- *
- * @param _userId - Unused (kept for signature clarity)
- * @param coins - The coin amount to evaluate level for
- * @returns The level number for the given coin count
- */
-async function getUserLevel(_userId: string, coins: number): Promise<number> {
-  return getLevelForCoins(coins).level;
-}
-
-/**
- * Decrements a user's coin balance, clamping to a minimum of 0.
- *
- * @param userId - The user's UUID
- * @param amount - Number of coins to subtract
- */
-async function decrementUserCoins(
-  userId: string,
-  amount: number
-): Promise<void> {
-  const userRows = await db
-    .select({ coins: users.coins })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  if (userRows[0]) {
-    const newCoins = Math.max(0, userRows[0].coins - amount);
-    await db
-      .update(users)
-      .set({ coins: newCoins })
-      .where(eq(users.id, userId));
-  }
-}

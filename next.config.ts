@@ -5,12 +5,12 @@
  *  - output: 'standalone' — generates a self-contained server bundle for Docker
  *  - images.remotePatterns — allows loading avatars from OAuth providers
  *  - headers — security headers applied to all responses (CSP, HSTS, X-Frame-Options, etc.)
- *  - next-pwa — Progressive Web App support with offline caching and push notifications
+ *  - @ducanh2912/next-pwa — Progressive Web App support with offline caching and push notifications
  *    PWA is disabled in development (service worker doesn't run locally).
  */
 
 import type { NextConfig } from "next";
-import withPWA from "next-pwa";
+import withPWA from "@ducanh2912/next-pwa";
 
 /**
  * HTTP security headers applied to every route.
@@ -113,7 +113,7 @@ const nextConfig: NextConfig = {
 };
 
 /**
- * Wraps the Next.js config with next-pwa.
+ * Wraps the Next.js config with @ducanh2912/next-pwa.
  * Generates a service worker at public/sw.js that:
  *  - Caches static assets and pages for offline use
  *  - Merges the custom push/notification handler from worker/index.js
