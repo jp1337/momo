@@ -1,0 +1,42 @@
+title: Momo
+description: Task management for people who struggle with procrastination
+baseurl: "/momo"
+url: "https://jp1337.github.io"
+
+author:
+  name: jp1337
+
+theme: null
+layouts_dir: _layouts
+
+markdown: kramdown
+highlighter: rouge
+
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+plugins:
+  - jekyll-seo-tag
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+
+nav:
+  - title: Home
+    url: /momo/
+  - title: Getting Started
+    url: /momo/getting-started
+  - title: Deployment
+    url: /momo/deployment
+  - title: Environment Variables
+    url: /momo/environment-variables
+  - title: OAuth Setup
+    url: /momo/oauth-setup
+  - title: Kubernetes
+    url: /momo/kubernetes
+  - title: Contributing
+    url: /momo/contributing

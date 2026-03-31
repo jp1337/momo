@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if page.title %}{{ page.title }} – {% endif %}{{ site.title }}</title>
+  <meta name="description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  {% seo %}
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav-container">
+      <a href="{{ '/' | relative_url }}" class="site-logo">🪶 Momo</a>
+      <div class="nav-links">
+        {% for item in site.nav %}
+          <a href="{{ item.url }}" class="nav-link {% if page.url == item.url %}active{% endif %}">{{ item.title }}</a>
+        {% endfor %}
+      </div>
+      <a href="https://github.com/jp1337/momo" class="github-link" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <div class="content-wrapper">
+      {{ content }}
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <p>Momo – <em>Steal your time back.</em> · MIT License · <a href="https://github.com/jp1337/momo">GitHub</a></p>
+      <p class="footer-quote">Named after Momo, by Michael Ende. For everyone whose Grey Gentlemen have been stealing their time.</p>
+    </div>
+  </footer>
+</body>
+</html>
