@@ -277,6 +277,8 @@ app/
 lib/
   auth.ts         → Auth.js v5 config (providers, Drizzle adapter)
   env.ts          → Zod-validated env wrapper — ALL env access goes here
+  tasks.ts        → Task business logic (CRUD, complete/uncomplete, coin award)
+  topics.ts       → Topic business logic (CRUD, task counts)
   db/
     index.ts      → Drizzle client instance
     schema.ts     → All DB table definitions + relations
@@ -286,6 +288,8 @@ components/
   layout/         → Navbar, Sidebar
   ui/             → shadcn/ui base components
   theme-toggle.tsx → Dark/Light/System toggle
+  tasks/          → TaskItem, TaskForm, TaskList
+  topics/         → TopicCard, TopicForm, TopicsGrid, TopicDetailView
 
 docs/             → Markdown docs (api, database, deployment, oauth, env vars)
 public/           → Static assets
