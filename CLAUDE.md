@@ -11,7 +11,7 @@ Every AI agent working on this codebase **must** follow these guidelines without
 - **Repository:** `github.com/jp1337/momo`
 - **Developer:** jp1337
 - **Development environment:** WSL (Windows Subsystem for Linux), VS Code
-- **Active branch:** `dev` (all development happens here; `main` is for stable releases)
+- **Active branch:** `main` (all development happens directly on main)
 - **Language:** TypeScript throughout. No JavaScript files unless absolutely unavoidable.
 - **Package manager:** npm
 
@@ -22,11 +22,10 @@ Every AI agent working on this codebase **must** follow these guidelines without
 ### Branch Strategy
 
 ```
-main        ← stable, production-ready releases only
-dev         ← all active development (default working branch)
+main        ← all development and releases happen here
 ```
 
-**Always work on the `dev` branch.** Never commit directly to `main`.
+**Always commit directly to `main`.** No feature branches needed.
 
 ### Commit After Every Meaningful Change
 

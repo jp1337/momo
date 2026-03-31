@@ -6,6 +6,9 @@
 
 Momo is a task management app built for people who struggle with avoidance, procrastination, and the overwhelming weight of everyday tasks. Not a power-user productivity suite — a quiet, daily companion that asks only one thing of you: *one small step, today.*
 
+🌐 **Live version:** [momotask.app](https://momotask.app)  
+📖 **Documentation:** [jp1337.github.io/momo](https://jp1337.github.io/momo)
+
 ---
 
 ## ✨ The Name
@@ -33,8 +36,23 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **Wishlist & Budget** — Track things you want to buy, with a monthly budget indicator to spend more consciously.
 - **Push Notifications** — Daily reminders via browser push. No third-party service, no subscription.
 - **PWA** — Install on your phone like a native app. Works offline.
-- **Dark & Light Mode** — Because the right theme for an evening task is different from a morning one.
+- **Dark & Light Mode** — Cozy warm tones in both themes. Because productivity shouldn't feel clinical.
 - **Open Source & Self-Hostable** — Your data, your server, your rules.
+
+---
+
+## 🔐 Authentication
+
+Sign in with the account you already have. No new password to forget.
+
+| Provider | Live (momotask.app) | Self-hosted |
+|---|---|---|
+| **GitHub** | ✅ | ✅ (own OAuth App) |
+| **Discord** | ✅ | ✅ (own OAuth App) |
+| **Google** | ✅ | ✅ (own OAuth App) |
+| **OIDC** (Authentik, Keycloak, …) | — | ✅ |
+
+See [OAuth Setup Guide](docs/oauth-setup.md) for configuration instructions.
 
 ---
 
@@ -42,15 +60,28 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | Next.js 15 (App Router), TypeScript, Tailwind CSS v4 |
+| **Frontend** | Next.js 15 (App Router) + React 19, TypeScript, Tailwind CSS v4 |
 | **Animations** | Framer Motion |
-| **Auth** | Auth.js v5 (GitHub, Discord, OIDC) |
+| **Auth** | Auth.js v5 (GitHub, Discord, Google, OIDC) |
 | **Database** | PostgreSQL 16 + Drizzle ORM |
 | **Push Notifications** | Web Push API (VAPID, no third-party) |
 | **Container** | Docker |
 | **Orchestration** | Kubernetes |
 | **CI/CD** | GitHub Actions |
 | **Image Registries** | GHCR, Docker Hub, Quay.io |
+
+> **Note for React developers:** Next.js is a React framework. All UI is written in React — Next.js adds routing, server-side rendering, API routes, and PWA support on top.
+
+---
+
+## 🎨 Design
+
+Momo is intentionally cozy. Both the dark and light themes use warm, earthy tones — no harsh whites, no cold blues, no sterile greys. The goal is an app you *want* to open, not one that feels like a spreadsheet.
+
+- **Dark theme:** Deep forest greens and near-blacks with warm amber accents
+- **Light theme:** Soft parchment whites and warm sand tones
+- **Typography:** Lora (headings) · JetBrains Mono (tasks) · DM Sans (UI)
+- **Animations:** Subtle, purposeful — a small celebration when you finish something, not a distraction
 
 ---
 
