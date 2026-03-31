@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: momo
+  labels:
+    app.kubernetes.io/name: momo
+    app.kubernetes.io/managed-by: kubectl

@@ -19,6 +19,7 @@
 
 import { auth } from "@/lib/auth";
 import { completeTask, uncompleteTask } from "@/lib/tasks";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * POST /api/tasks/:id/complete
@@ -32,6 +33,10 @@ export async function POST(
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit: 30 completions per minute per user
+  const rateCheck = checkRateLimit(`tasks-complete:${session.user.id}`, 30, 60_000);
+  if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   const { id } = await params;
 

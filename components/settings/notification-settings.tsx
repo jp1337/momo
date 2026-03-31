@@ -120,8 +120,18 @@ export function NotificationSettings({
         return;
       }
 
-      // Step 2: Wait for the service worker to be ready
-      const registration = await navigator.serviceWorker.ready;
+      // Step 2: Wait for the service worker to be ready (with timeout)
+      // In development, next-pwa disables the SW — detect this early.
+      const swTimeout = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Service worker not available. Push notifications require a production build (run npm run build && npm start).")),
+          5000
+        )
+      );
+      const registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        swTimeout,
+      ]);
 
       // Step 3: Subscribe to push
       const vapidKey = clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY;

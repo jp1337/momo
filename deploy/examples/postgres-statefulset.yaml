@@ -1,0 +1,118 @@
+# PostgreSQL 16 StatefulSet for Momo
+#
+# This provides a single-replica PostgreSQL instance suitable for small self-hosted
+# deployments. For high-availability, consider managed PostgreSQL (e.g. CloudNativePG,
+# Crunchy Data Postgres Operator, or a cloud-managed database).
+#
+# Prerequisites:
+#   - A StorageClass that supports ReadWriteOnce (most clusters have a default)
+#   - The momo namespace already created (apply namespace.yaml first)
+#   - A Secret named "momo-postgres-secret" with key POSTGRES_PASSWORD
+#
+# Create the password secret first:
+#   kubectl create secret generic momo-postgres-secret \
+#     --from-literal=POSTGRES_PASSWORD=CHANGE_ME \
+#     -n momo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: momo-postgres
+  namespace: momo
+  labels:
+    app.kubernetes.io/name: momo-postgres
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service for StatefulSet DNS
+  selector:
+    app: momo-postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: momo-postgres
+  namespace: momo
+  labels:
+    app.kubernetes.io/name: momo-postgres
+    app.kubernetes.io/component: database
+spec:
+  serviceName: momo-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: momo-postgres
+  template:
+    metadata:
+      labels:
+        app: momo-postgres
+        app.kubernetes.io/name: momo-postgres
+        app.kubernetes.io/component: database
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              value: momo
+            - name: POSTGRES_USER
+              value: momo
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: momo-postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "momo", "-d", "momo"]
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "momo", "-d", "momo"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 70  # postgres user in Alpine
+            runAsGroup: 70
+            allowPrivilegeEscalation: false
+
+  # Persistent volume claim — data survives pod restarts and rescheduling
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+        labels:
+          app.kubernetes.io/name: momo-postgres
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 10Gi
+        # Remove storageClassName to use the cluster default, or specify one explicitly:
+        # storageClassName: standard

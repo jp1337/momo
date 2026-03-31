@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: momo-app
+  namespace: momo
+  labels:
+    app.kubernetes.io/name: momo
+    app.kubernetes.io/component: app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: momo
+  template:
+    metadata:
+      labels:
+        app: momo
+        app.kubernetes.io/name: momo
+        app.kubernetes.io/component: app
+    spec:
+      # Prevent two replicas from running on the same node
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: [momo]
+                topologyKey: kubernetes.io/hostname
+
+      containers:
+        - name: momo
+          image: ghcr.io/jp1337/momo:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+
+          # All secrets are injected from the momo-secrets Secret object.
+          # See secret.example.yaml for required keys.
+          envFrom:
+            - secretRef:
+                name: momo-secrets
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          # Liveness probe — restarts the container if it stops responding
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          # Readiness probe — removes pod from service if it can't handle traffic
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          # Read-only root filesystem for additional security
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false # Next.js standalone needs write access for cache
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+
+      securityContext:
+        fsGroup: 1001

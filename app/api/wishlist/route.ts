@@ -18,6 +18,7 @@ import {
   getBudgetSummary,
 } from "@/lib/wishlist";
 import { CreateWishlistItemInputSchema } from "@/lib/validators";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * GET /api/wishlist
@@ -50,6 +51,10 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit: 30 wishlist item creations per minute per user
+  const rateCheck = checkRateLimit(`wishlist-create:${session.user.id}`, 30, 60_000);
+  if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   let body: unknown;
   try {

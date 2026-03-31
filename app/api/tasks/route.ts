@@ -15,6 +15,7 @@
 import { auth } from "@/lib/auth";
 import { getUserTasks, createTask } from "@/lib/tasks";
 import { CreateTaskInputSchema } from "@/lib/validators";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * GET /api/tasks
@@ -70,6 +71,10 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit: 60 task creations per minute per user
+  const rateCheck = checkRateLimit(`tasks-create:${session.user.id}`, 60, 60_000);
+  if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   let body: unknown;
   try {
