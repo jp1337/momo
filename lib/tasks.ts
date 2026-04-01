@@ -129,6 +129,11 @@ export async function createTask(
       priority: input.priority ?? "NORMAL",
       recurrenceInterval: input.recurrenceInterval ?? null,
       dueDate: input.dueDate ?? null,
+      // For RECURRING tasks, set nextDueDate to dueDate (or today) so the task is
+      // immediately visible to the daily quest algorithm.
+      nextDueDate: input.type === "RECURRING"
+        ? (input.dueDate ?? new Date().toISOString().split("T")[0])
+        : null,
       coinValue: input.coinValue ?? 1,
     })
     .returning();

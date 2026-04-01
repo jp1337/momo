@@ -13,7 +13,8 @@
 
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getDailyQuestIncludingCompleted, selectDailyQuest, getUserStats } from "@/lib/daily-quest";
+import { getDailyQuestIncludingCompleted, selectDailyQuest } from "@/lib/daily-quest";
+import { getUserStats } from "@/lib/gamification";
 import { db } from "@/lib/db";
 import { taskCompletions } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";

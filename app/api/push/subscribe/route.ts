@@ -63,6 +63,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const { subscription, notificationTime } = parsed.data;
 
+  // Validate endpoint is a legitimate push service URL (prevent SSRF)
+  const allowedPushHosts = [
+    "fcm.googleapis.com",
+    "updates.push.services.mozilla.com",
+    "notify.windows.com",
+    "push.apple.com",
+    "web.push.apple.com",
+  ];
+  try {
+    const endpointUrl = new URL(subscription.endpoint);
+    if (endpointUrl.protocol !== "https:") {
+      return NextResponse.json({ error: "Invalid push endpoint" }, { status: 400 });
+    }
+    const isAllowed = allowedPushHosts.some(
+      (host) =>
+        endpointUrl.hostname === host ||
+        endpointUrl.hostname.endsWith(`.${host}`)
+    );
+    if (!isAllowed) {
+      return NextResponse.json({ error: "Invalid push endpoint" }, { status: 400 });
+    }
+  } catch {
+    return NextResponse.json({ error: "Invalid push endpoint URL" }, { status: 400 });
+  }
+
   try {
     await db
       .update(users)

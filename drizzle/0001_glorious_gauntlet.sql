@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "user_achievements_user_id_achievement_id_unique" ON "user_achievements" USING btree ("user_id","achievement_id");

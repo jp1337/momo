@@ -25,6 +25,7 @@ import {
   decimal,
   jsonb,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -318,20 +319,30 @@ export const achievements = pgTable("achievements", {
 
 /**
  * Junction table tracking which achievements each user has earned.
+ * The unique index on (user_id, achievement_id) prevents duplicate awards.
  */
-export const userAchievements = pgTable("user_achievements", {
-  id: uuid("id").primaryKey().defaultRandom(),
+export const userAchievements = pgTable(
+  "user_achievements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
 
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
 
-  achievementId: uuid("achievement_id")
-    .notNull()
-    .references(() => achievements.id, { onDelete: "cascade" }),
+    achievementId: uuid("achievement_id")
+      .notNull()
+      .references(() => achievements.id, { onDelete: "cascade" }),
 
-  earnedAt: timestamp("earned_at").notNull().defaultNow(),
-});
+    earnedAt: timestamp("earned_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("user_achievements_user_id_achievement_id_unique").on(
+      table.userId,
+      table.achievementId
+    ),
+  ]
+);
 
 // ─── Relations ────────────────────────────────────────────────────────────────
 
