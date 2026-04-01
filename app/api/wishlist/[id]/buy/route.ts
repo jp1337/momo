@@ -61,12 +61,12 @@ export async function DELETE(
     return Response.json({ item });
   } catch (error) {
     console.error("[DELETE /api/wishlist/:id/buy]", error);
-    const isNotFound =
-      error instanceof Error &&
-      (error.message.includes("not found") || error.message.includes("not marked"));
-    return Response.json(
-      { error: isNotFound ? "Item not found" : "Internal server error" },
-      { status: isNotFound ? 404 : 500 }
-    );
+    if (error instanceof Error && error.message.includes("not found")) {
+      return Response.json({ error: "Item not found" }, { status: 404 });
+    }
+    if (error instanceof Error && error.message.includes("not marked")) {
+      return Response.json({ error: "Item is not marked as bought" }, { status: 409 });
+    }
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

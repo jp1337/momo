@@ -9,6 +9,9 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    # Explicitly limit token permissions — lint only needs read access
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,6 +41,7 @@ jobs:
             runner: ubuntu-24.04-arm
 
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
 
     steps:
       - name: Checkout repository
@@ -93,11 +97,12 @@ jobs:
           name: digests-${{ steps.platform.outputs.suffix }}
           path: /tmp/digests/*
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
 
   # After both platform builds succeed, pull the two digests from GHCR and
   # create a multi-arch manifest list with proper semver/branch/sha tags
-  # in all three registries simultaneously.
+  # in all three registries. Each registry is pushed separately so a failure
+  # in one does not prevent the others from completing.
   merge:
     needs: build
     runs-on: ubuntu-latest
@@ -140,6 +145,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
+        if: ${{ secrets.DOCKERHUB_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           registry: docker.io
@@ -147,17 +153,35 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Log in to Quay.io
+        if: ${{ secrets.QUAY_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_TOKEN }}
 
-      # imagetools create reads the two single-platform images from GHCR by digest
-      # and writes a multi-arch manifest list to all three registries in one step.
-      - name: Create and push multi-arch manifest
+      # Push multi-arch manifest to GHCR (always — uses built-in GITHUB_TOKEN)
+      - name: Push manifest to GHCR
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create \
-            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(jq -cr '.tags | map(select(startswith("ghcr.io")) | "-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/jp1337/momo@sha256:%s ' *)
+
+      # Push to Docker Hub only if credentials are available
+      - name: Push manifest to Docker Hub
+        if: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map(select(startswith("docker.io")) | "-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/jp1337/momo@sha256:%s ' *)
+
+      # Push to Quay.io only if credentials are available
+      - name: Push manifest to Quay.io
+        if: ${{ secrets.QUAY_TOKEN != '' }}
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map(select(startswith("quay.io")) | "-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf 'ghcr.io/jp1337/momo@sha256:%s ' *)
