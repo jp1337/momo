@@ -10,8 +10,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -19,53 +19,108 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm run lint
 
+  # Build each platform natively in parallel to avoid slow QEMU emulation.
+  # amd64 runs on a standard GitHub-hosted runner, arm64 on a native ARM runner.
+  # Each job pushes the image by digest (no tag) to GHCR as a staging area,
+  # then exports the digest as an artifact for the merge job.
   build:
     needs: lint
-    runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write # Required to push to GHCR
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      # Buildx enables multi-platform builds (amd64 + arm64)
+      # Derive a safe artifact/cache suffix from the platform name (e.g. linux-amd64)
+      - name: Prepare platform suffix
+        id: platform
+        run: echo "suffix=$(echo '${{ matrix.platform }}' | tr '/' '-')" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v3
 
-      # Authenticate with GitHub Container Registry using the automatic GITHUB_TOKEN
+      # Authenticate with GitHub Container Registry — used as staging area for digests
       - name: Log in to GHCR
-        uses: docker/login-action@v4
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Authenticate with Docker Hub — requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN secrets
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v4
+      # OCI labels (e.g. org.opencontainers.image.*) are attached at build time
+      - name: Extract metadata (labels)
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          images: ghcr.io/jp1337/momo
 
-      # Authenticate with Quay.io — requires QUAY_USERNAME + QUAY_TOKEN secrets
-      - name: Log in to Quay.io
-        uses: docker/login-action@v4
+      # Build a single-platform image and push it by digest (no tag yet).
+      # GHA cache is scoped per platform so the layers don't mix.
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
         with:
-          registry: quay.io
-          username: ${{ secrets.QUAY_USERNAME }}
-          password: ${{ secrets.QUAY_TOKEN }}
+          context: .
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=ghcr.io/jp1337/momo,push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ steps.platform.outputs.suffix }}
+          cache-to: type=gha,mode=max,scope=${{ steps.platform.outputs.suffix }}
 
-      # Generate image tags and OCI labels from Git metadata
-      # Tags produced:
-      #   - branch name (e.g. "main")
-      #   - semver from tag (e.g. "1.2.3" and "1.2" from tag "v1.2.3")
-      #   - short SHA prefix (e.g. "sha-abc1234")
+      # Write an empty file named after the digest (without the "sha256:" prefix)
+      # so the merge job can reconstruct the full digest reference.
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ steps.platform.outputs.suffix }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # After both platform builds succeed, pull the two digests from GHCR and
+  # create a multi-arch manifest list with proper semver/branch/sha tags
+  # in all three registries simultaneously.
+  merge:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Download both digest artifacts into the same directory
+      - name: Download digest artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Generate the final tags for all three registries
       - name: Extract metadata (tags and labels)
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@v5
         with:
           images: |
             ghcr.io/jp1337/momo
@@ -77,15 +132,32 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=sha-
 
-      # Build multi-platform image and push to GHCR, Docker Hub, and Quay.io.
-      # GitHub Actions cache is used to speed up subsequent builds.
-      - name: Build and push
-        uses: docker/build-push-action@v7
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to Quay.io
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_TOKEN }}
+
+      # imagetools create reads the two single-platform images from GHCR by digest
+      # and writes a multi-arch manifest list to all three registries in one step.
+      - name: Create and push multi-arch manifest
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/jp1337/momo@sha256:%s ' *)
