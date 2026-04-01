@@ -32,11 +32,12 @@ export async function POST(
     const item = await markAsBought(id, session.user.id);
     return Response.json({ item });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to mark item as bought";
-    const status = message.includes("not found") ? 404 : 500;
     console.error("[POST /api/wishlist/:id/buy]", error);
-    return Response.json({ error: message }, { status });
+    const isNotFound = error instanceof Error && error.message.includes("not found");
+    return Response.json(
+      { error: isNotFound ? "Item not found" : "Internal server error" },
+      { status: isNotFound ? 404 : 500 }
+    );
   }
 }
 
@@ -59,12 +60,13 @@ export async function DELETE(
     const item = await unmarkAsBought(id, session.user.id);
     return Response.json({ item });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to revert item status";
-    const status = message.includes("not found") || message.includes("not marked")
-      ? 404
-      : 500;
     console.error("[DELETE /api/wishlist/:id/buy]", error);
-    return Response.json({ error: message }, { status });
+    const isNotFound =
+      error instanceof Error &&
+      (error.message.includes("not found") || error.message.includes("not marked"));
+    return Response.json(
+      { error: isNotFound ? "Item not found" : "Internal server error" },
+      { status: isNotFound ? 404 : 500 }
+    );
   }
 }
