@@ -24,6 +24,10 @@
     "web-push": "^3.6.7",
     "zod": "^4.3.6"
   },
+  "overrides": {
+    "serialize-javascript": ">=7.0.5",
+    "esbuild": ">=0.25.0"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",
