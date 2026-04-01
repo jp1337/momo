@@ -15,6 +15,15 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `topics/topic-form.tsx` — Create/edit modal with emoji-picker-react picker + color swatches
 - `topics/topics-grid.tsx` — Responsive grid (1/2/3 cols), handles topic CRUD state
 - `topics/topic-detail-view.tsx` — Scoped task list for a single topic with Add subtask button
+- `dashboard/daily-quest-card.tsx` — Hero card showing today's quest task with postpone action
+- `wishlist/wishlist-card.tsx` — Single wishlist item: name, price, coin cost, buy/discard actions
+- `wishlist/wishlist-form.tsx` — Create/edit wishlist item modal
+- `wishlist/wishlist-view.tsx` — Full wishlist page with budget bar + item grid
+- `wishlist/budget-bar.tsx` — Progress bar showing coins spent vs. monthly budget
+- `settings/notification-settings.tsx` — Push notification enable/disable + test button
+- `animations/confetti.tsx` — Confetti burst on task completion / level-up
+- `animations/achievement-toast.tsx` — Toast overlay when an achievement is unlocked
+- `animations/level-up-overlay.tsx` — Full-screen overlay animation on level-up
 
 ## Patterns
 - Use CSS variables from `globals.css` for all colors (never hardcode hex)

@@ -14,13 +14,27 @@ Next.js 15 App Router pages and API routes. Thin layer — validates input, call
 (auth)/         → Route group: unauthenticated
   layout.tsx    → Centered layout for auth pages
   login/        → OAuth provider buttons (GitHub, Discord, Google)
+  settings/  → Notification and budget settings
 api/
-  auth/[...nextauth]/route.ts  → Auth.js v5 handler (GET + POST)
-  tasks/route.ts               → GET (list, ?topicId/type/completed filters), POST (create)
-  tasks/[id]/route.ts          → GET (single), PATCH (update), DELETE
-  tasks/[id]/complete/route.ts → POST (complete + award coins), DELETE (uncomplete + refund)
-  topics/route.ts              → GET (list with task counts), POST (create)
-  topics/[id]/route.ts         → GET (with tasks), PATCH, DELETE
+  auth/[...nextauth]/route.ts        → Auth.js v5 handler (GET + POST)
+  tasks/route.ts                     → GET (list, ?topicId/type/completed filters), POST (create)
+  tasks/[id]/route.ts                → GET (single), PATCH (update), DELETE
+  tasks/[id]/complete/route.ts       → POST (complete + award coins), DELETE (uncomplete + refund)
+  topics/route.ts                    → GET (list with task counts), POST (create)
+  topics/[id]/route.ts               → GET (with tasks), PATCH, DELETE
+  daily-quest/route.ts               → GET (fetch today's quest), POST (postpone/reassign)
+  daily-quest/postpone/route.ts      → POST (postpone quest to next day)
+  wishlist/route.ts                  → GET (list), POST (create)
+  wishlist/[id]/route.ts             → PATCH, DELETE
+  wishlist/[id]/buy/route.ts         → POST (mark purchased, deduct coins)
+  wishlist/[id]/discard/route.ts     → POST (discard item)
+  settings/budget/route.ts           → GET/PATCH (monthly coin budget)
+  push/subscribe/route.ts            → POST (save Web Push subscription)
+  push/test/route.ts                 → POST (send test push notification)
+  cron/daily-quest/route.ts          → POST (daily quest reset cron — protected by CRON_SECRET)
+  cron/streak-reminder/route.ts      → POST (streak reminder push cron — protected by CRON_SECRET)
+  health/route.ts                    → GET (liveness probe, returns 200 OK)
+  admin/seed/route.ts                → POST (seed demo data — dev/staging only)
 globals.css     → Design system CSS variables, Tailwind v4, Google Fonts
 layout.tsx      → Root layout: ThemeProvider (next-themes), font variables
 page.tsx        → Redirects / → /dashboard
