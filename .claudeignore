@@ -25,3 +25,22 @@ coverage/
 .env
 .env.local
 .env.*.local
+
+# Drizzle migration snapshots — auto-generated, use _journal.json to understand history
+drizzle/meta/
+
+# CI/CD agent reports — historical, not relevant to coding tasks
+.claude/reports/
+
+# Documentation site build artifacts
+docs-site/assets/css/
+
+# Large project plan (reference only, not needed for most tasks)
+MOMO_PROJEKT_PLAN.md
+
+# Default Next.js public assets — not project assets
+public/file.svg
+public/globe.svg
+public/next.svg
+public/vercel.svg
+public/window.svg
