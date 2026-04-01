@@ -15,6 +15,7 @@ import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Discord from "next-auth/providers/discord";
 import Google from "next-auth/providers/google";
+import Keycloak from "next-auth/providers/keycloak";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/lib/db";
 import { accounts, sessions, users, verificationTokens } from "@/lib/db/schema";
@@ -58,8 +59,6 @@ function buildProviders() {
     serverEnv.OIDC_CLIENT_ID &&
     serverEnv.OIDC_CLIENT_SECRET
   ) {
-    // Dynamic import to avoid loading provider code when OIDC is not configured
-    const { default: Keycloak } = require("next-auth/providers/keycloak");
     providers.push(
       Keycloak({
         clientId: serverEnv.OIDC_CLIENT_ID,

@@ -15,7 +15,7 @@
  */
 
 import { useState, useCallback } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { TaskItem } from "./task-item";
 import { TaskForm } from "./task-form";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
