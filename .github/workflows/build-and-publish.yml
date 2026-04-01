@@ -113,7 +113,7 @@ jobs:
     steps:
       # Download both digest artifacts into the same directory
       - name: Download digest artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: /tmp/digests
           pattern: digests-*
