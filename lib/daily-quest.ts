@@ -15,7 +15,7 @@
 
 import { db } from "@/lib/db";
 import type { Database } from "@/lib/db";
-import { tasks, topics, users } from "@/lib/db/schema";
+import { tasks, topics } from "@/lib/db/schema";
 import { eq, and, isNull, isNotNull, lte, lt, or, ne } from "drizzle-orm";
 
 /** A Drizzle transaction or the base db instance */
@@ -496,30 +496,3 @@ async function enrichTaskWithTopic(task: Task): Promise<TaskWithTopic> {
   return { ...task, topic: topicRows[0] ?? null };
 }
 
-/**
- * Returns dashboard stats for a user: coin balance, streak, level, and total completions.
- *
- * @param userId - The user's UUID
- * @returns Object with coins, streakCurrent, level fields (or defaults if user not found)
- */
-export async function getUserStats(userId: string): Promise<{
-  coins: number;
-  streakCurrent: number;
-  level: number;
-}> {
-  const userRows = await db
-    .select({
-      coins: users.coins,
-      streakCurrent: users.streakCurrent,
-      level: users.level,
-    })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  if (!userRows[0]) {
-    return { coins: 0, streakCurrent: 0, level: 1 };
-  }
-
-  return userRows[0];
-}

@@ -1,12 +1,11 @@
 /**
- * Simple in-memory rate limiter using a sliding window.
+ * Simple in-memory rate limiter using a fixed window algorithm.
  *
  * Resets automatically per window — suitable for single-instance deployments.
  *
- * IMPORTANT: This is an in-memory store. In a multi-replica deployment (e.g. Kubernetes
- * with replicas > 1), each pod has its own store, so the effective limit is multiplied
- * by the number of replicas. For true multi-replica rate limiting, replace this
- * with a Redis-based implementation (e.g. using ioredis + a sliding window Lua script).
+ * NOTE: This is an in-memory store. In multi-replica deployments (e.g. Kubernetes
+ * with replicas > 1), each pod enforces limits independently. For strict
+ * cross-replica rate limiting, replace with a Redis-backed implementation.
  */
 
 /** Internal per-key rate limit state */
@@ -50,6 +49,12 @@ export function checkRateLimit(
   }
 
   entry.count += 1;
+
+  // Prune expired entries after every update to prevent unbounded map growth
+  const now2 = Date.now();
+  for (const [k, v] of store.entries()) {
+    if (v.resetAt <= now2) store.delete(k);
+  }
 
   if (entry.count > limit) {
     return { limited: true, remaining: 0, resetAt: entry.resetAt };

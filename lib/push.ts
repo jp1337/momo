@@ -17,8 +17,8 @@
 
 import webpush from "web-push";
 import { db } from "@/lib/db";
-import { users, tasks, taskCompletions } from "@/lib/db/schema";
-import { eq, and, isNull, isNotNull, gt } from "drizzle-orm";
+import { users, taskCompletions } from "@/lib/db/schema";
+import { eq, and, isNotNull, gt, gte } from "drizzle-orm";
 import { serverEnv } from "@/lib/env";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -258,24 +258,20 @@ export async function sendStreakReminders(): Promise<{
 
   for (const user of eligibleUsers) {
     try {
-      // Check whether the user has already completed a task today
+      // Check whether the user has already completed a task today — filter in DB
       const completionsToday = await db
         .select({ id: taskCompletions.id })
         .from(taskCompletions)
         .where(
           and(
             eq(taskCompletions.userId, user.id),
-            // completedAt >= start of today
-            isNotNull(taskCompletions.completedAt)
+            gte(taskCompletions.completedAt, todayStart)
           )
         )
         .limit(1);
 
       // Skip if they've already done something today
-      // (We use a simple check — the actual today filter is done via raw comparison)
-      const hasCompletedToday = completionsToday.length > 0
-        ? await checkCompletedToday(user.id, todayStart)
-        : false;
+      const hasCompletedToday = completionsToday.length > 0;
 
       if (hasCompletedToday) continue;
 
@@ -299,37 +295,3 @@ export async function sendStreakReminders(): Promise<{
   return { sent, failed };
 }
 
-/**
- * Checks whether a user has completed at least one task since the start of today.
- *
- * @param userId - The user's UUID
- * @param todayStart - Date object set to 00:00:00 UTC today
- * @returns true if a completion exists today
- */
-async function checkCompletedToday(
-  userId: string,
-  todayStart: Date
-): Promise<boolean> {
-  const rows = await db
-    .select({ id: taskCompletions.id })
-    .from(taskCompletions)
-    .where(
-      and(
-        eq(taskCompletions.userId, userId),
-        isNotNull(taskCompletions.completedAt)
-      )
-    );
-
-  // Filter in JS because Drizzle date comparison varies by driver
-  return rows.length > 0 &&
-    (await db
-      .select({ id: taskCompletions.id, completedAt: taskCompletions.completedAt })
-      .from(taskCompletions)
-      .where(
-        and(
-          eq(taskCompletions.userId, userId),
-          isNotNull(taskCompletions.completedAt)
-        )
-      )
-    ).some((r) => r.completedAt !== null && new Date(r.completedAt) >= todayStart);
-}

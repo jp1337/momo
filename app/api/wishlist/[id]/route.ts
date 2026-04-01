@@ -52,11 +52,13 @@ export async function PATCH(
     const item = await updateWishlistItem(id, session.user.id, parsed.data);
     return Response.json({ item });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to update wishlist item";
-    const status = message.includes("not found") ? 404 : 500;
     console.error("[PATCH /api/wishlist/:id]", error);
-    return Response.json({ error: message }, { status });
+    const isNotFound =
+      error instanceof Error && error.message.includes("not found");
+    if (isNotFound) {
+      return Response.json({ error: "Wishlist item not found" }, { status: 404 });
+    }
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -79,10 +81,12 @@ export async function DELETE(
     await deleteWishlistItem(id, session.user.id);
     return Response.json({ success: true });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to delete wishlist item";
-    const status = message.includes("not found") ? 404 : 500;
     console.error("[DELETE /api/wishlist/:id]", error);
-    return Response.json({ error: message }, { status });
+    const isNotFound =
+      error instanceof Error && error.message.includes("not found");
+    if (isNotFound) {
+      return Response.json({ error: "Wishlist item not found" }, { status: 404 });
+    }
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

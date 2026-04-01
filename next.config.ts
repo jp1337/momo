@@ -23,10 +23,12 @@ import withPWA from "@ducanh2912/next-pwa";
  * - Strict-Transport-Security: enforces HTTPS for 2 years with preload (HSTS)
  * - Content-Security-Policy: restricts resource loading to trusted origins
  *
- * NOTE: `script-src` includes 'unsafe-eval' and 'unsafe-inline' which are needed by Next.js
- * in development mode and for certain runtime hydration patterns. For stricter CSP in
- * production, consider using nonces — see Next.js docs on CSP with nonces.
+ * NOTE: `script-src` includes 'unsafe-eval' and 'unsafe-inline' only in development.
+ * In production these are omitted for a stricter CSP. If Next.js inline scripts break
+ * in production, consider using nonces — see Next.js docs on CSP with nonces.
  */
+const isDev = process.env.NODE_ENV === "development";
+
 const securityHeaders = [
   {
     key: "X-DNS-Prefetch-Control",
@@ -56,7 +58,8 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+      `script-src 'self'${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ""}`,
+      // unsafe-inline is needed for Next.js injected styles even in production
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https://avatars.githubusercontent.com https://cdn.discordapp.com https://lh3.googleusercontent.com",

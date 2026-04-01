@@ -11,16 +11,21 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { sendPushNotification, type PushSubscriptionData } from "@/lib/push";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
 /**
  * POST — Sends a test push notification to the current user's registered subscription.
  */
-export async function POST(): Promise<NextResponse> {
+export async function POST(): Promise<NextResponse | Response> {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit: 3 test notifications per minute per user
+  const rateCheck = checkRateLimit(`push-test:${session.user.id}`, 3, 60_000);
+  if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   try {
     const userRows = await db

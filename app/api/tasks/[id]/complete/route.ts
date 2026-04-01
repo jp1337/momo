@@ -50,15 +50,16 @@ export async function POST(
       streakCurrent: result.streakCurrent,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to complete task";
-    const status = message.includes("not found")
-      ? 404
-      : message.includes("already completed")
-      ? 409
-      : 500;
     console.error("[POST /api/tasks/:id/complete]", error);
-    return Response.json({ error: message }, { status });
+    if (error instanceof Error) {
+      if (error.message.includes("not found")) {
+        return Response.json({ error: "Task not found" }, { status: 404 });
+      }
+      if (error.message.includes("already completed")) {
+        return Response.json({ error: "Task already completed" }, { status: 409 });
+      }
+    }
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -81,14 +82,18 @@ export async function DELETE(
     const task = await uncompleteTask(id, session.user.id);
     return Response.json({ task });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to uncomplete task";
-    const status = message.includes("not found")
-      ? 404
-      : message.includes("not completed") || message.includes("cannot be uncompleted")
-      ? 409
-      : 500;
     console.error("[DELETE /api/tasks/:id/complete]", error);
-    return Response.json({ error: message }, { status });
+    if (error instanceof Error) {
+      if (error.message.includes("not found")) {
+        return Response.json({ error: "Task not found" }, { status: 404 });
+      }
+      if (
+        error.message.includes("not completed") ||
+        error.message.includes("cannot be uncompleted")
+      ) {
+        return Response.json({ error: "Task cannot be uncompleted" }, { status: 409 });
+      }
+    }
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

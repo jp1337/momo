@@ -8,6 +8,13 @@
       "when": 1774986527277,
       "tag": "0000_curious_marvel_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775025595828,
+      "tag": "0001_glorious_gauntlet",
+      "breakpoints": true
     }
   ]
 }

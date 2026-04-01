@@ -50,10 +50,12 @@ export async function POST(request: Request) {
     await postponeDailyQuest(parsed.data.taskId, session.user.id);
     return Response.json({ ok: true });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to postpone daily quest";
-    const status = message.includes("not found") ? 404 : 500;
     console.error("[POST /api/daily-quest/postpone]", error);
-    return Response.json({ error: message }, { status });
+    const isNotFound =
+      error instanceof Error && error.message.includes("not found");
+    if (isNotFound) {
+      return Response.json({ error: "Daily quest task not found" }, { status: 404 });
+    }
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
