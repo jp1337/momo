@@ -69,7 +69,7 @@ jobs:
         with:
           images: |
             ghcr.io/jp1337/momo
-            docker.io/jp1337/momo
+            docker.io/kermit1337/momo
             quay.io/jp1337/momo
           tags: |
             type=ref,event=branch
