@@ -107,8 +107,11 @@ export function AchievementToast({
     achievements[0] ?? null
   );
 
-  // Sync queue when new achievements are passed
+  // Sync queue when new achievements are passed.
+  // Direct setState calls here are intentional: we reset the display state whenever
+  // a new batch of achievements arrives from the parent, which is the expected use case.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setQueue(achievements);
     setCurrent(achievements[0] ?? null);
   }, [achievements]);

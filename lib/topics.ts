@@ -8,7 +8,7 @@
 
 import { db } from "@/lib/db";
 import { topics, tasks } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import type { CreateTopicInput, UpdateTopicInput } from "@/lib/validators";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

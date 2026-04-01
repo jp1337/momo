@@ -13,6 +13,7 @@
 
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getDailyQuestIncludingCompleted, selectDailyQuest } from "@/lib/daily-quest";
 import { getUserStats } from "@/lib/gamification";
 import { db } from "@/lib/db";
@@ -205,7 +206,7 @@ export default async function DashboardPage() {
           Navigate
         </h2>
         <div className="flex flex-wrap gap-3">
-          <a
+          <Link
             href="/tasks"
             className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
             style={{
@@ -216,8 +217,8 @@ export default async function DashboardPage() {
             }}
           >
             View all tasks →
-          </a>
-          <a
+          </Link>
+          <Link
             href="/topics"
             className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
             style={{
@@ -228,7 +229,7 @@ export default async function DashboardPage() {
             }}
           >
             View topics →
-          </a>
+          </Link>
         </div>
       </section>
     </div>
