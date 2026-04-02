@@ -16,6 +16,46 @@ Managed by Auth.js v5. These routes are handled internally by the framework.
 
 ## Application Routes
 
+### Task Action Routes
+
+| Method | Path | Auth | Rate Limit | Description |
+|---|---|---|---|---|
+| `POST` | `/api/tasks/:id/promote-to-topic` | Yes | 10/min | Promote a standalone task to a new topic |
+
+#### POST /api/tasks/:id/promote-to-topic
+
+Promotes a standalone task (no `topicId`) to a new topic in a single atomic transaction.
+The task's `title`, `notes`, and `priority` are mapped to the new topic.
+The task is re-associated as the first subtask (`topicId` set to new topic's UUID).
+
+Returns `409 Conflict` if the task already belongs to a topic.
+
+Response (201 Created):
+```json
+{
+  "topic": {
+    "id": "uuid",
+    "userId": "uuid",
+    "title": "Hochbeet bauen",
+    "description": "optional notes from the original task",
+    "color": null,
+    "icon": null,
+    "priority": "NORMAL",
+    "archived": false,
+    "createdAt": "2026-04-02T10:00:00Z"
+  }
+}
+```
+
+Error responses:
+- `401` Unauthorized
+- `404` Task not found
+- `409` Task already belongs to a topic
+- `429` Rate limit exceeded
+- `500` Internal server error
+
+---
+
 ### Wishlist Routes
 
 | Method | Path | Auth | Description |

@@ -15,6 +15,7 @@
  */
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { TaskItem } from "./task-item";
 import { TaskForm } from "./task-form";
@@ -205,6 +206,7 @@ interface CompleteApiResponse {
  * Triggers confetti, level-up overlay, and achievement toasts on task completion.
  */
 export function TaskList({ initialTasks, topics }: TaskListProps) {
+  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -280,6 +282,23 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
     await refreshTasks();
   }, [refreshTasks]);
 
+  const handlePromote = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/tasks/${id}/promote-to-topic`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json() as { topic: { id: string } };
+        router.push(`/topics/${data.topic.id}`);
+      }
+      // 409: task already has topic — shouldn't be reachable via UI, ignore silently
+    } catch {
+      // silent fail — task unchanged
+    }
+  }, [router]);
+
+  const handleGoToTopic = useCallback((topicId: string) => {
+    router.push(`/topics/${topicId}`);
+  }, [router]);
+
   const topicMap = new Map(topics.map((t) => [t.id, t]));
   const grouped = groupTasks(tasks);
   const hasAnyTasks = tasks.length > 0;
@@ -339,11 +358,14 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                 nextDueDate={task.nextDueDate}
                 topicTitle={topic?.title}
                 topicColor={topic?.color}
+                topicId={task.topicId}
                 coinValue={task.coinValue}
                 onComplete={handleComplete}
                 onUncomplete={handleUncomplete}
                 onEdit={setEditingTaskId}
                 onDelete={handleDelete}
+                onPromote={handlePromote}
+                onGoToTopic={handleGoToTopic}
               />
             );
           })}

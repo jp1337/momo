@@ -7,7 +7,7 @@
  */
 
 import { db } from "@/lib/db";
-import { tasks, taskCompletions, users } from "@/lib/db/schema";
+import { tasks, taskCompletions, users, topics } from "@/lib/db/schema";
 import { eq, and, isNull, desc, count, sql } from "drizzle-orm";
 import type { CreateTaskInput, UpdateTaskInput } from "@/lib/validators";
 import {
@@ -29,6 +29,17 @@ export interface GetUserTasksFilters {
 
 /** A task row as returned from the database */
 export type Task = typeof tasks.$inferSelect;
+
+/** A topic row as returned from the database */
+export type Topic = typeof topics.$inferSelect;
+
+/** Result from promoting a task to a topic */
+export interface PromoteTaskResult {
+  /** The newly created topic */
+  topic: Topic;
+  /** The original task, now updated with topicId pointing to the new topic */
+  task: Task;
+}
 
 /** Result from completing a task */
 export interface CompleteTaskResult {
@@ -407,3 +418,64 @@ export async function uncompleteTask(
   });
 }
 
+/**
+ * Promotes a standalone task to a new topic in a single atomic transaction.
+ *
+ * Maps the task's title, notes (→ description), and priority to the new topic.
+ * The task itself becomes the first subtask by setting its topicId to the
+ * new topic's UUID. All other task fields (dueDate, coinValue, type, etc.)
+ * are preserved unchanged.
+ *
+ * @param taskId - The task's UUID
+ * @param userId - The authenticated user's UUID (ownership check)
+ * @returns The new topic and the updated task
+ * @throws Error if task is not found, not owned by user, or already in a topic
+ */
+export async function promoteTaskToTopic(
+  taskId: string,
+  userId: string
+): Promise<PromoteTaskResult> {
+  return db.transaction(async (tx) => {
+    // 1. Verify ownership and existence
+    const taskRows = await tx
+      .select()
+      .from(tasks)
+      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+      .limit(1);
+
+    if (!taskRows[0]) {
+      throw new Error("Task not found or access denied");
+    }
+
+    const task = taskRows[0];
+
+    // 2. Guard: task must be standalone (no topic)
+    if (task.topicId !== null) {
+      throw new Error("Task already belongs to a topic");
+    }
+
+    // 3. Create the new topic from task data
+    const topicRows = await tx
+      .insert(topics)
+      .values({
+        userId,
+        title: task.title,
+        description: task.notes ?? null,
+        priority: task.priority,
+        color: null,
+        icon: null,
+      })
+      .returning();
+
+    const newTopic = topicRows[0];
+
+    // 4. Re-associate the task as the first subtask
+    const updatedTaskRows = await tx
+      .update(tasks)
+      .set({ topicId: newTopic.id })
+      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+      .returning();
+
+    return { topic: newTopic, task: updatedTaskRows[0] };
+  });
+}
