@@ -17,6 +17,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { clientEnv } from "@/lib/env";
 
 type NotificationStatus =
@@ -46,6 +47,7 @@ export function NotificationSettings({
   initialEnabled,
   initialTime,
 }: NotificationSettingsProps) {
+  const t = useTranslations("settings");
   const [status, setStatus] = useState<NotificationStatus>("loading");
   const [notificationTime, setNotificationTime] = useState(
     initialTime || "08:00"
@@ -113,9 +115,7 @@ export function NotificationSettings({
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setStatus("denied");
-        setMessage(
-          "Notification permission denied. Please enable it in your browser settings."
-        );
+        setMessage(t("notif_err_denied"));
         setIsSaving(false);
         return;
       }
@@ -124,7 +124,7 @@ export function NotificationSettings({
       // In development, next-pwa disables the SW — detect this early.
       const swTimeout = new Promise<never>((_, reject) =>
         setTimeout(
-          () => reject(new Error("Service worker not available. Push notifications require a production build (run npm run build && npm start).")),
+          () => reject(new Error(t("notif_err_no_sw"))),
           5000
         )
       );
@@ -136,7 +136,7 @@ export function NotificationSettings({
       // Step 3: Subscribe to push
       const vapidKey = clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidKey) {
-        setMessage("Push notifications are not configured on this server.");
+        setMessage(t("notif_err_not_configured"));
         setIsSaving(false);
         return;
       }
@@ -163,15 +163,15 @@ export function NotificationSettings({
 
       if (!res.ok) {
         const data = await res.json() as { error?: string };
-        throw new Error(data.error ?? "Failed to save subscription");
+        throw new Error(data.error ?? t("notif_err_save"));
       }
 
       setStatus("active");
-      setMessage("Notifications enabled successfully.");
+      setMessage(t("notif_success_enabled"));
     } catch (err) {
       console.error("[NotificationSettings] Enable failed:", err);
       setMessage(
-        err instanceof Error ? err.message : "Failed to enable notifications."
+        err instanceof Error ? err.message : t("notif_err_enable")
       );
       setStatus("default");
     } finally {
@@ -189,15 +189,15 @@ export function NotificationSettings({
 
       if (!res.ok) {
         const data = await res.json() as { error?: string };
-        throw new Error(data.error ?? "Failed to remove subscription");
+        throw new Error(data.error ?? t("notif_err_disable"));
       }
 
       setStatus("default");
-      setMessage("Notifications disabled.");
+      setMessage(t("notif_success_disabled"));
     } catch (err) {
       console.error("[NotificationSettings] Disable failed:", err);
       setMessage(
-        err instanceof Error ? err.message : "Failed to disable notifications."
+        err instanceof Error ? err.message : t("notif_err_disable")
       );
     } finally {
       setIsSaving(false);
@@ -238,12 +238,12 @@ export function NotificationSettings({
       const data = await res.json() as { success?: boolean; error?: string };
 
       if (data.success) {
-        setMessage("Test notification sent! Check your device.");
+        setMessage(t("notif_test_sent"));
       } else {
-        setMessage(data.error ?? "Failed to send test notification.");
+        setMessage(data.error ?? t("notif_test_failed"));
       }
     } catch {
-      setMessage("Failed to send test notification.");
+      setMessage(t("notif_test_failed"));
     } finally {
       setIsSaving(false);
     }
@@ -264,7 +264,7 @@ export function NotificationSettings({
           className="text-sm"
           style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
         >
-          Push notifications are not supported by your browser.
+          {t("notif_not_supported")}
         </p>
       </div>
     );
@@ -283,8 +283,7 @@ export function NotificationSettings({
           className="text-sm"
           style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
         >
-          Push notifications are not configured on this server. Set
-          NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY to enable them.
+          {t("notif_not_configured")}
         </p>
       </div>
     );
@@ -319,10 +318,10 @@ export function NotificationSettings({
             }}
           >
             {status === "active"
-              ? "Notifications active"
+              ? t("notif_active")
               : status === "denied"
-              ? "Permission denied"
-              : "Notifications not enabled"}
+              ? t("notif_denied")
+              : t("notif_not_enabled")}
           </span>
         </span>
       </div>
@@ -335,7 +334,7 @@ export function NotificationSettings({
             htmlFor="notification-time"
             style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
           >
-            Remind me daily at
+            {t("notif_daily_at")}
           </label>
           <input
             id="notification-time"
@@ -368,7 +367,7 @@ export function NotificationSettings({
                 fontFamily: "var(--font-ui)",
               }}
             >
-              Send test
+              {t("notif_send_test")}
             </button>
             <button
               onClick={handleDisable}
@@ -381,7 +380,7 @@ export function NotificationSettings({
                 fontFamily: "var(--font-ui)",
               }}
             >
-              {isSaving ? "Disabling..." : "Disable notifications"}
+              {isSaving ? t("notif_disabling") : t("notif_disable")}
             </button>
           </>
         ) : status === "denied" ? (
@@ -389,8 +388,7 @@ export function NotificationSettings({
             className="text-sm"
             style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
           >
-            Notifications are blocked. Open your browser&apos;s site settings to
-            allow them.
+            {t("notif_blocked")}
           </p>
         ) : (
           <button
@@ -403,7 +401,7 @@ export function NotificationSettings({
               fontFamily: "var(--font-ui)",
             }}
           >
-            {isSaving ? "Enabling..." : "Enable notifications"}
+            {isSaving ? t("notif_enabling") : t("notif_enable")}
           </button>
         )}
       </div>
@@ -414,8 +412,8 @@ export function NotificationSettings({
           className="text-sm"
           style={{
             color:
-              message.toLowerCase().includes("success") ||
-              message.toLowerCase().includes("sent")
+              message.toLowerCase().includes("erfolgreich") ||
+              message.toLowerCase().includes("gesendet")
                 ? "var(--accent-green)"
                 : "var(--text-muted)",
             fontFamily: "var(--font-ui)",

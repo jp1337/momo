@@ -14,6 +14,7 @@
 
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 interface LevelUpOverlayProps {
   /** The new level number (e.g. 3) */
@@ -29,6 +30,8 @@ interface LevelUpOverlayProps {
  * Auto-dismisses after 3 seconds.
  */
 export function LevelUpOverlay({ level, title, onDone }: LevelUpOverlayProps) {
+  const t = useTranslations("animations");
+
   useEffect(() => {
     const timer = setTimeout(onDone, 3200);
     return () => clearTimeout(timer);
@@ -50,7 +53,7 @@ export function LevelUpOverlay({ level, title, onDone }: LevelUpOverlayProps) {
         onClick={onDone}
         aria-modal="true"
         role="dialog"
-        aria-label="Level up notification"
+        aria-label={t("levelup_aria")}
       >
         <motion.div
           initial={{ scale: 0.7, opacity: 0, y: 24 }}
@@ -86,7 +89,7 @@ export function LevelUpOverlay({ level, title, onDone }: LevelUpOverlayProps) {
                 color: "var(--accent-amber)",
               }}
             >
-              Level Up!
+              {t("levelup_title")}
             </p>
             <p
               className="text-5xl font-bold"
@@ -115,7 +118,7 @@ export function LevelUpOverlay({ level, title, onDone }: LevelUpOverlayProps) {
               color: "var(--text-muted)",
             }}
           >
-            Tap anywhere to dismiss
+            {t("levelup_dismiss")}
           </p>
         </motion.div>
       </motion.div>

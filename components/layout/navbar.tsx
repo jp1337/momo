@@ -13,6 +13,7 @@
 
 import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CoinCounter } from "@/components/layout/coin-counter";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -23,6 +24,8 @@ interface NavbarProps {
   userImage?: string | null;
   /** Current user's email (used as fallback for avatar) */
   userEmail?: string | null;
+  /** Initial coin balance fetched server-side */
+  initialCoins?: number;
 }
 
 /**
@@ -32,7 +35,7 @@ interface NavbarProps {
  * @param userImage - User's avatar URL from the OAuth provider
  * @param userEmail - User's email (fallback for UI)
  */
-export function Navbar({ userName, userImage, userEmail }: NavbarProps) {
+export function Navbar({ userName, userImage, userEmail, initialCoins = 0 }: NavbarProps) {
   /** Derives initials from user name for the fallback avatar */
   const initials = userName
     ? userName
@@ -70,6 +73,7 @@ export function Navbar({ userName, userImage, userEmail }: NavbarProps) {
 
       {/* Right-side actions */}
       <div className="flex items-center gap-3">
+        <CoinCounter initialCoins={initialCoins} />
         <ThemeToggle />
 
         {/* User section */}

@@ -12,6 +12,7 @@
  */
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 interface TopicCardProps {
   id: string;
@@ -26,25 +27,10 @@ interface TopicCardProps {
   onDelete: (id: string) => void;
 }
 
-const PRIORITY_CONFIG = {
-  HIGH: {
-    label: "High",
-    style: { color: "var(--accent-red)", backgroundColor: "rgba(184,84,80,0.12)" },
-  },
-  NORMAL: {
-    label: "Normal",
-    style: {
-      color: "var(--accent-amber)",
-      backgroundColor: "rgba(240,165,0,0.12)",
-    },
-  },
-  SOMEDAY: {
-    label: "Someday",
-    style: {
-      color: "var(--text-muted)",
-      backgroundColor: "rgba(122,144,127,0.12)",
-    },
-  },
+const PRIORITY_STYLES = {
+  HIGH: { color: "var(--accent-red)", backgroundColor: "rgba(184,84,80,0.12)" },
+  NORMAL: { color: "var(--accent-amber)", backgroundColor: "rgba(240,165,0,0.12)" },
+  SOMEDAY: { color: "var(--text-muted)", backgroundColor: "rgba(122,144,127,0.12)" },
 } as const;
 
 /**
@@ -62,9 +48,18 @@ export function TopicCard({
   onEdit,
   onDelete,
 }: TopicCardProps) {
+  const t = useTranslations("topics");
+
+  const PRIORITY_LABELS: Record<"HIGH" | "NORMAL" | "SOMEDAY", string> = {
+    HIGH: t("priority_high"),
+    NORMAL: t("priority_normal"),
+    SOMEDAY: t("priority_someday"),
+  };
+
   const progressPercent =
     taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0;
-  const priorityCfg = PRIORITY_CONFIG[priority];
+  const priorityStyle = PRIORITY_STYLES[priority];
+  const priorityLabel = PRIORITY_LABELS[priority];
   const accentColor = color ?? "var(--accent-amber)";
 
   return (
@@ -120,8 +115,8 @@ export function TopicCard({
             onClick={() => onEdit(id)}
             className="p-1.5 rounded-lg transition-colors"
             style={{ color: "var(--text-muted)" }}
-            aria-label="Edit topic"
-            title="Edit"
+            aria-label={t("aria_edit")}
+            title={t("aria_edit")}
           >
             ✎
           </button>
@@ -129,8 +124,8 @@ export function TopicCard({
             onClick={() => onDelete(id)}
             className="p-1.5 rounded-lg transition-colors"
             style={{ color: "var(--text-muted)" }}
-            aria-label="Delete topic"
-            title="Delete"
+            aria-label={t("aria_delete")}
+            title={t("aria_delete")}
           >
             ✕
           </button>
@@ -147,7 +142,7 @@ export function TopicCard({
               color: "var(--text-muted)",
             }}
           >
-            {completedCount}/{taskCount} tasks
+            {t("task_progress", { completed: completedCount, total: taskCount })}
           </span>
           <span
             className="text-xs font-medium"
@@ -183,10 +178,10 @@ export function TopicCard({
           className="text-xs px-2 py-0.5 rounded-full font-medium"
           style={{
             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            ...priorityCfg.style,
+            ...priorityStyle,
           }}
         >
-          {priorityCfg.label}
+          {priorityLabel}
         </span>
 
         {/* View link */}
@@ -199,7 +194,7 @@ export function TopicCard({
             border: `1px solid ${accentColor}44`,
           }}
         >
-          View →
+          {t("view")}
         </Link>
       </div>
     </div>

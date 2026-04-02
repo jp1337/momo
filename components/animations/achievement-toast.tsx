@@ -15,6 +15,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 export interface AchievementItem {
   key: string;
@@ -39,6 +40,8 @@ function SingleToast({
   achievement: AchievementItem;
   onDone: () => void;
 }) {
+  const t = useTranslations("animations");
+
   useEffect(() => {
     const timer = setTimeout(onDone, 4000);
     return () => clearTimeout(timer);
@@ -78,7 +81,7 @@ function SingleToast({
             color: "var(--accent-amber)",
           }}
         >
-          Achievement unlocked!
+          {t("achievement_title")}
         </span>
         <span
           className="text-sm font-medium truncate"

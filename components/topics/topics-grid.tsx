@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { TopicCard } from "./topic-card";
 import { TopicForm } from "./topic-form";
 
@@ -30,6 +31,7 @@ interface TopicsGridProps {
  * Empty state for when the user has no topics.
  */
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const t = useTranslations("topics");
   return (
     <div
       className="rounded-2xl p-12 text-center"
@@ -48,7 +50,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
           color: "var(--text-primary)",
         }}
       >
-        No topics yet
+        {t("page_subtitle_empty")}
       </p>
       <p
         className="text-sm mb-4"
@@ -57,7 +59,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
           color: "var(--text-muted)",
         }}
       >
-        Group your tasks into topics like &quot;Tax Return&quot;, &quot;Moving&quot;, or &quot;Health&quot;.
+        {t("empty_hint")}
       </p>
       <button
         onClick={onAdd}
@@ -68,7 +70,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
           color: "var(--bg-primary)",
         }}
       >
-        Create first topic
+        {t("create_first")}
       </button>
     </div>
   );
@@ -78,11 +80,12 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
  * Interactive grid of topic cards with CRUD functionality.
  */
 export function TopicsGrid({ initialTopics }: TopicsGridProps) {
+  const t = useTranslations("topics");
   const [topics, setTopics] = useState<Topic[]>(initialTopics);
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const editingTopic = topics.find((t) => t.id === editingTopicId);
+  const editingTopic = topics.find((topic) => topic.id === editingTopicId);
 
   const refreshTopics = useCallback(async () => {
     try {
@@ -98,17 +101,17 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm("Delete this topic? Tasks will become standalone.")) return;
+      if (!window.confirm(t("confirm_delete"))) return;
       try {
         const res = await fetch(`/api/topics/${id}`, { method: "DELETE" });
         if (res.ok) {
-          setTopics((prev) => prev.filter((t) => t.id !== id));
+          setTopics((prev) => prev.filter((topic) => topic.id !== id));
         }
       } catch {
         // silent fail
       }
     },
-    []
+    [t]
   );
 
   const handleFormSuccess = useCallback(async () => {
@@ -130,7 +133,7 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
             color: "var(--bg-primary)",
           }}
         >
-          + New Topic
+          {t("new_topic")}
         </button>
       </div>
 

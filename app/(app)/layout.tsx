@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { getUserStats } from "@/lib/gamification";
 
 /**
  * App shell layout — requires an authenticated session.
@@ -28,6 +29,7 @@ export default async function AppLayout({
   }
 
   const { user } = session;
+  const { coins } = await getUserStats(user.id!);
 
   return (
     <div className="flex flex-col h-screen" style={{ backgroundColor: "var(--bg-primary)" }}>
@@ -36,6 +38,7 @@ export default async function AppLayout({
         userName={user.name}
         userImage={user.image}
         userEmail={user.email}
+        initialCoins={coins}
       />
 
       {/* Body: sidebar + page content */}
