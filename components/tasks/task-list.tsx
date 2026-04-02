@@ -152,9 +152,37 @@ function SectionHeader({
 }
 
 /**
- * Empty state message for when there are no tasks.
+ * Time-aware empty state shown when there are no tasks.
+ * Displays different motivating messages based on the current hour.
  */
 function EmptyState() {
+  const hour = new Date().getHours();
+  let emoji: string;
+  let headline: string;
+  let sub: string;
+
+  if (hour < 5) {
+    emoji = "🌙";
+    headline = "Noch keine Aufgaben";
+    sub = "Leg morgen früh los — du hast noch Zeit.";
+  } else if (hour < 12) {
+    emoji = "☀️";
+    headline = "Guten Morgen!";
+    sub = "Starte den Tag mit deiner ersten Aufgabe.";
+  } else if (hour < 17) {
+    emoji = "🌿";
+    headline = "Alles erledigt?";
+    sub = "Füge neue Aufgaben hinzu oder genieße die Ruhe.";
+  } else if (hour < 22) {
+    emoji = "🎉";
+    headline = "Perfekt, nichts mehr für heute!";
+    sub = "Du hast alles geschafft. Gönn dir eine Pause.";
+  } else {
+    emoji = "🌙";
+    headline = "Für heute reicht's";
+    sub = "Morgen geht's weiter — gute Nacht.";
+  }
+
   return (
     <div
       className="rounded-2xl p-12 text-center"
@@ -163,12 +191,8 @@ function EmptyState() {
         border: "1px dashed var(--border)",
       }}
     >
-      <p
-        className="text-2xl mb-3"
-        role="img"
-        aria-label="Seedling"
-      >
-        🌱
+      <p className="text-2xl mb-3" role="img" aria-label={headline}>
+        {emoji}
       </p>
       <p
         className="text-base font-medium mb-1"
@@ -177,7 +201,7 @@ function EmptyState() {
           color: "var(--text-primary)",
         }}
       >
-        No tasks yet
+        {headline}
       </p>
       <p
         className="text-sm"
@@ -186,7 +210,7 @@ function EmptyState() {
           color: "var(--text-muted)",
         }}
       >
-        Add your first task to get started — one step at a time.
+        {sub}
       </p>
     </div>
   );
@@ -235,6 +259,13 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
 
         // Fire a small confetti burst on task completion
         triggerSmallConfetti();
+
+        // Notify CoinCounter in the navbar about earned coins
+        if (data.coinsEarned && data.coinsEarned > 0) {
+          window.dispatchEvent(
+            new CustomEvent("coinsEarned", { detail: { delta: data.coinsEarned } })
+          );
+        }
 
         // Show level-up overlay if user leveled up
         if (data.newLevel) {
@@ -298,6 +329,23 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
   const handleGoToTopic = useCallback((topicId: string) => {
     router.push(`/topics/${topicId}`);
   }, [router]);
+
+  const handleInlineEdit = useCallback(async (id: string, newTitle: string) => {
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTitle }),
+      });
+      if (res.ok) {
+        setTasks((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, title: newTitle } : t))
+        );
+      }
+    } catch {
+      // silent fail — title reverts to original on the next refresh
+    }
+  }, []);
 
   const topicMap = new Map(topics.map((t) => [t.id, t]));
   const grouped = groupTasks(tasks);
@@ -364,6 +412,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                 onUncomplete={handleUncomplete}
                 onEdit={setEditingTaskId}
                 onDelete={handleDelete}
+                onInlineEdit={handleInlineEdit}
                 onPromote={handlePromote}
                 onGoToTopic={handleGoToTopic}
               />
@@ -389,11 +438,15 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               nextDueDate={task.nextDueDate}
               topicTitle={topic?.title}
               topicColor={topic?.color}
+              topicId={task.topicId}
               coinValue={task.coinValue}
               onComplete={handleComplete}
               onUncomplete={handleUncomplete}
               onEdit={setEditingTaskId}
               onDelete={handleDelete}
+              onInlineEdit={handleInlineEdit}
+              onPromote={handlePromote}
+              onGoToTopic={handleGoToTopic}
             />
           );
         })}
@@ -416,11 +469,15 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               nextDueDate={task.nextDueDate}
               topicTitle={topic?.title}
               topicColor={topic?.color}
+              topicId={task.topicId}
               coinValue={task.coinValue}
               onComplete={handleComplete}
               onUncomplete={handleUncomplete}
               onEdit={setEditingTaskId}
               onDelete={handleDelete}
+              onInlineEdit={handleInlineEdit}
+              onPromote={handlePromote}
+              onGoToTopic={handleGoToTopic}
             />
           );
         })}
@@ -443,11 +500,15 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               nextDueDate={task.nextDueDate}
               topicTitle={topic?.title}
               topicColor={topic?.color}
+              topicId={task.topicId}
               coinValue={task.coinValue}
               onComplete={handleComplete}
               onUncomplete={handleUncomplete}
               onEdit={setEditingTaskId}
               onDelete={handleDelete}
+              onInlineEdit={handleInlineEdit}
+              onPromote={handlePromote}
+              onGoToTopic={handleGoToTopic}
             />
           );
         })}
@@ -472,11 +533,15 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                   nextDueDate={task.nextDueDate}
                   topicTitle={topic?.title}
                   topicColor={topic?.color}
+                  topicId={task.topicId}
                   coinValue={task.coinValue}
                   onComplete={handleComplete}
                   onUncomplete={handleUncomplete}
                   onEdit={setEditingTaskId}
                   onDelete={handleDelete}
+                  onInlineEdit={handleInlineEdit}
+                  onPromote={handlePromote}
+                  onGoToTopic={handleGoToTopic}
                 />
               );
             })}
