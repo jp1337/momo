@@ -27,10 +27,15 @@ interface TaskItemProps {
   topicTitle?: string | null;
   topicColor?: string | null;
   coinValue: number;
+  topicId?: string | null;
   onComplete: (id: string) => void;
   onUncomplete: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  /** Called when the user promotes a standalone task to a topic (topicId === null) */
+  onPromote?: (id: string) => void;
+  /** Called when the user wants to navigate to the task's existing topic (topicId !== null) */
+  onGoToTopic?: (topicId: string) => void;
 }
 
 /**
@@ -105,11 +110,14 @@ export function TaskItem({
   nextDueDate,
   topicTitle,
   topicColor,
+  topicId,
   coinValue,
   onComplete,
   onUncomplete,
   onEdit,
   onDelete,
+  onPromote,
+  onGoToTopic,
 }: TaskItemProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const isCompleted = completedAt !== null;
@@ -282,6 +290,36 @@ export function TaskItem({
       <div
         className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0"
       >
+        {/* Promote to topic — only for standalone tasks (no topicId) */}
+        {topicId === null && onPromote && (
+          <button
+            onClick={() => onPromote(id)}
+            className="p-1.5 rounded transition-colors text-xs"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            }}
+            aria-label="Promote to topic"
+            title="Promote to topic"
+          >
+            ⤴
+          </button>
+        )}
+        {/* Go to topic — for tasks that already belong to a topic */}
+        {topicId && onGoToTopic && (
+          <button
+            onClick={() => onGoToTopic(topicId)}
+            className="p-1.5 rounded transition-colors text-xs"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            }}
+            aria-label="Go to topic"
+            title="Go to topic"
+          >
+            →
+          </button>
+        )}
         <button
           onClick={() => onEdit(id)}
           className="p-1.5 rounded transition-colors text-xs"
