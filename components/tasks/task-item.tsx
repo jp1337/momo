@@ -5,16 +5,18 @@
  *
  * Features:
  * - Checkbox to complete/uncomplete the task (with animated strikethrough)
+ * - Double-click on title for inline editing (Enter/blur saves, Escape cancels)
  * - Priority badge (HIGH = red, NORMAL = amber, SOMEDAY = muted)
  * - Topic tag (if task belongs to a topic)
  * - Due date display (overdue dates in red)
  * - Recurring task indicator icon
- * - Edit and delete action buttons
+ * - Edit and delete action buttons (larger, easier to hit)
  * - Framer Motion fade animation on completion
  */
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 interface TaskItemProps {
   id: string;
@@ -32,6 +34,8 @@ interface TaskItemProps {
   onUncomplete: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  /** Called after inline title edit is saved */
+  onInlineEdit?: (id: string, newTitle: string) => void;
   /** Called when the user promotes a standalone task to a topic (topicId === null) */
   onPromote?: (id: string) => void;
   /** Called when the user wants to navigate to the task's existing topic (topicId !== null) */
@@ -39,66 +43,8 @@ interface TaskItemProps {
 }
 
 /**
- * Priority badge label and style mappings.
- */
-const PRIORITY_CONFIG = {
-  HIGH: {
-    label: "High",
-    style: { color: "var(--accent-red)", backgroundColor: "rgba(184,84,80,0.12)" },
-  },
-  NORMAL: {
-    label: "Normal",
-    style: {
-      color: "var(--accent-amber)",
-      backgroundColor: "rgba(240,165,0,0.12)",
-    },
-  },
-  SOMEDAY: {
-    label: "Someday",
-    style: {
-      color: "var(--text-muted)",
-      backgroundColor: "rgba(122,144,127,0.12)",
-    },
-  },
-} as const;
-
-/**
- * Formats a YYYY-MM-DD date string for display.
- * Returns "Overdue" styling data if the date is in the past.
- */
-function formatDueDate(dateStr: string): { text: string; overdue: boolean } {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dateStr + "T00:00:00");
-
-  if (due < today) {
-    const diffDays = Math.floor(
-      (today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    return {
-      text: diffDays === 1 ? "Yesterday" : `${diffDays}d overdue`,
-      overdue: true,
-    };
-  }
-
-  if (due.getTime() === today.getTime()) {
-    return { text: "Today", overdue: false };
-  }
-
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (due.getTime() === tomorrow.getTime()) {
-    return { text: "Tomorrow", overdue: false };
-  }
-
-  return {
-    text: due.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    overdue: false,
-  };
-}
-
-/**
  * Single task row with checkbox, title, badges, and action buttons.
+ * Double-clicking the title enters inline edit mode.
  */
 export function TaskItem({
   id,
@@ -116,14 +62,81 @@ export function TaskItem({
   onUncomplete,
   onEdit,
   onDelete,
+  onInlineEdit,
   onPromote,
   onGoToTopic,
 }: TaskItemProps) {
-  const [isAnimating, setIsAnimating] = useState(false);
-  const isCompleted = completedAt !== null;
-  const priorityCfg = PRIORITY_CONFIG[priority];
+  const t = useTranslations("tasks");
 
-  // For recurring tasks, show the next due date
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(title);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const isCompleted = completedAt !== null;
+
+  /**
+   * Priority badge label and style mappings.
+   * Defined inside the component so labels are resolved through t().
+   */
+  const PRIORITY_CONFIG = {
+    HIGH: {
+      label: t("priority_high"),
+      style: { color: "var(--accent-red)", backgroundColor: "rgba(184,84,80,0.12)" },
+    },
+    NORMAL: {
+      label: t("priority_normal"),
+      style: {
+        color: "var(--accent-amber)",
+        backgroundColor: "rgba(240,165,0,0.12)",
+      },
+    },
+    SOMEDAY: {
+      label: t("priority_someday"),
+      style: {
+        color: "var(--text-muted)",
+        backgroundColor: "rgba(122,144,127,0.12)",
+      },
+    },
+  } as const;
+
+  /**
+   * Formats a YYYY-MM-DD date string for display.
+   * Returns "Overdue" styling data if the date is in the past.
+   * Defined inside the component so it can use t() for translated labels.
+   */
+  function formatDueDate(dateStr: string): { text: string; overdue: boolean } {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dateStr + "T00:00:00");
+
+    if (due < today) {
+      const diffDays = Math.floor(
+        (today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return {
+        text: diffDays === 1 ? t("date_yesterday") : t("date_overdue", { days: diffDays }),
+        overdue: true,
+      };
+    }
+
+    if (due.getTime() === today.getTime()) {
+      return { text: t("date_today"), overdue: false };
+    }
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (due.getTime() === tomorrow.getTime()) {
+      return { text: t("date_tomorrow"), overdue: false };
+    }
+
+    return {
+      text: due.toLocaleDateString("de-DE", { month: "short", day: "numeric" }),
+      overdue: false,
+    };
+  }
+
+  const priorityCfg = PRIORITY_CONFIG[priority];
   const displayDate = type === "RECURRING" ? nextDueDate : dueDate;
 
   const handleCheckboxChange = async () => {
@@ -132,11 +145,35 @@ export function TaskItem({
       return;
     }
     setIsAnimating(true);
-    // Brief delay before calling complete to let animation play
     setTimeout(() => {
       onComplete(id);
       setIsAnimating(false);
     }, 300);
+  };
+
+  const handleTitleDoubleClick = () => {
+    if (isCompleted || !onInlineEdit) return;
+    setEditValue(title);
+    setIsEditing(true);
+    // Focus input on next tick after render
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
+  const commitInlineEdit = () => {
+    const trimmed = editValue.trim();
+    if (trimmed && trimmed !== title) {
+      onInlineEdit?.(id, trimmed);
+    }
+    setIsEditing(false);
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      commitInlineEdit();
+    } else if (e.key === "Escape") {
+      setEditValue(title);
+      setIsEditing(false);
+    }
   };
 
   return (
@@ -147,9 +184,7 @@ export function TaskItem({
       transition={{ duration: 0.25 }}
       className="group flex items-start gap-3 px-4 py-3 rounded-lg transition-colors"
       style={{
-        backgroundColor: isCompleted
-          ? "transparent"
-          : "var(--bg-surface)",
+        backgroundColor: isCompleted ? "transparent" : "var(--bg-surface)",
         border: "1px solid var(--border)",
         opacity: isCompleted ? 0.6 : 1,
       }}
@@ -160,11 +195,9 @@ export function TaskItem({
         className="mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer"
         style={{
           borderColor: isCompleted ? "var(--accent-green)" : "var(--border)",
-          backgroundColor: isCompleted
-            ? "var(--accent-green)"
-            : "transparent",
+          backgroundColor: isCompleted ? "var(--accent-green)" : "transparent",
         }}
-        aria-label={isCompleted ? "Mark as incomplete" : "Mark as complete"}
+        aria-label={isCompleted ? t("aria_uncomplete") : t("aria_complete")}
       >
         {isCompleted && (
           <svg
@@ -188,24 +221,44 @@ export function TaskItem({
       {/* Main content */}
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Title */}
-          <span
-            className="text-sm task-text transition-all duration-200"
-            style={{
-              color: isCompleted ? "var(--text-muted)" : "var(--text-primary)",
-              textDecoration: isCompleted ? "line-through" : "none",
-              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-            }}
-          >
-            {title}
-          </span>
+          {/* Title — double-click to edit inline */}
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={commitInlineEdit}
+              onKeyDown={handleInputKeyDown}
+              className="text-sm rounded px-1 py-0.5 outline-none min-w-0 w-full"
+              style={{
+                fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+                color: "var(--text-primary)",
+                backgroundColor: "var(--bg-elevated)",
+                border: "1px solid var(--accent-amber)",
+              }}
+              autoFocus
+            />
+          ) : (
+            <span
+              className="text-sm task-text transition-all duration-200 cursor-text"
+              title={onInlineEdit && !isCompleted ? t("inline_hint") : undefined}
+              onDoubleClick={handleTitleDoubleClick}
+              style={{
+                color: isCompleted ? "var(--text-muted)" : "var(--text-primary)",
+                textDecoration: isCompleted ? "line-through" : "none",
+                fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+              }}
+            >
+              {title}
+            </span>
+          )}
 
           {/* Recurring indicator */}
           {type === "RECURRING" && (
             <span
               className="text-xs"
-              title="Recurring task"
-              aria-label="Recurring task"
+              title={t("aria_recurring")}
+              aria-label={t("aria_recurring")}
               style={{ color: "var(--text-muted)" }}
             >
               ↺
@@ -216,8 +269,8 @@ export function TaskItem({
           {type === "DAILY_ELIGIBLE" && (
             <span
               className="text-xs"
-              title="Daily quest eligible"
-              aria-label="Daily quest eligible"
+              title={t("aria_daily_eligible")}
+              aria-label={t("aria_daily_eligible")}
               style={{ color: "var(--accent-amber)" }}
             >
               ★
@@ -266,7 +319,7 @@ export function TaskItem({
                   color: overdue ? "var(--accent-red)" : "var(--text-muted)",
                 }}
               >
-                {type === "RECURRING" ? `Next: ${text}` : text}
+                {type === "RECURRING" ? t("date_next", { date: text }) : text}
               </span>
             );
           })()}
@@ -286,21 +339,19 @@ export function TaskItem({
         </div>
       </div>
 
-      {/* Action buttons — visible on hover */}
-      <div
-        className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0"
-      >
-        {/* Promote to topic — only for standalone tasks (no topicId) */}
+      {/* Action buttons — visible on hover, larger touch targets */}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0">
+        {/* Promote to topic — only for standalone tasks */}
         {topicId === null && onPromote && (
           <button
             onClick={() => onPromote(id)}
-            className="p-1.5 rounded transition-colors text-xs"
+            className="p-2 rounded-lg transition-colors"
             style={{
               color: "var(--text-muted)",
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             }}
-            aria-label="Promote to topic"
-            title="Promote to topic"
+            aria-label={t("aria_promote")}
+            title={t("aria_promote")}
           >
             ⤴
           </button>
@@ -309,38 +360,38 @@ export function TaskItem({
         {topicId && onGoToTopic && (
           <button
             onClick={() => onGoToTopic(topicId)}
-            className="p-1.5 rounded transition-colors text-xs"
+            className="p-2 rounded-lg transition-colors"
             style={{
               color: "var(--text-muted)",
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             }}
-            aria-label="Go to topic"
-            title="Go to topic"
+            aria-label={t("aria_go_topic")}
+            title={t("aria_go_topic")}
           >
             →
           </button>
         )}
         <button
           onClick={() => onEdit(id)}
-          className="p-1.5 rounded transition-colors text-xs"
+          className="p-2 rounded-lg transition-colors"
           style={{
             color: "var(--text-muted)",
             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
           }}
-          aria-label="Edit task"
-          title="Edit"
+          aria-label={t("aria_edit")}
+          title={t("aria_edit")}
         >
           ✎
         </button>
         <button
           onClick={() => onDelete(id)}
-          className="p-1.5 rounded transition-colors text-xs"
+          className="p-2 rounded-lg transition-colors"
           style={{
             color: "var(--text-muted)",
             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
           }}
-          aria-label="Delete task"
-          title="Delete"
+          aria-label={t("aria_delete")}
+          title={t("aria_delete")}
         >
           ✕
         </button>

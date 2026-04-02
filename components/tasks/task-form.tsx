@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 interface TopicOption {
   id: string;
@@ -65,6 +66,9 @@ export function TaskForm({
   onSuccess,
   onCancel,
 }: TaskFormProps) {
+  const t = useTranslations("tasks");
+  const tc = useTranslations("common");
+
   const isEditing = !!initialData?.id;
 
   const [formData, setFormData] = useState<TaskFormData>({
@@ -98,12 +102,12 @@ export function TaskForm({
     setError(null);
 
     if (!formData.title.trim()) {
-      setError("Title is required");
+      setError(t("form_error_title"));
       return;
     }
 
     if (formData.type === "RECURRING" && !formData.recurrenceInterval) {
-      setError("Recurrence interval is required for recurring tasks");
+      setError(t("form_error_interval"));
       return;
     }
 
@@ -136,13 +140,13 @@ export function TaskForm({
 
       if (!res.ok) {
         const data = await res.json() as { error?: string };
-        setError(data.error ?? "Failed to save task");
+        setError(data.error ?? tc("error_network"));
         return;
       }
 
       onSuccess();
     } catch {
-      setError("Network error — please try again");
+      setError(tc("error_network"));
     } finally {
       setIsSubmitting(false);
     }
@@ -198,13 +202,13 @@ export function TaskForm({
               color: "var(--text-primary)",
             }}
           >
-            {isEditing ? "Edit Task" : "New Task"}
+            {isEditing ? t("form_title_edit") : t("form_title_new")}
           </h2>
           <button
             onClick={onCancel}
             className="p-1 rounded-lg transition-colors"
             style={{ color: "var(--text-muted)" }}
-            aria-label="Close"
+            aria-label={tc("close")}
           >
             ✕
           </button>
@@ -229,7 +233,7 @@ export function TaskForm({
           {/* Title */}
           <div>
             <label htmlFor="task-title" style={labelStyle}>
-              Title <span style={{ color: "var(--accent-red)" }}>*</span>
+              {t("form_label_title")} <span style={{ color: "var(--accent-red)" }}>*</span>
             </label>
             <input
               id="task-title"
@@ -237,7 +241,7 @@ export function TaskForm({
               type="text"
               value={formData.title}
               onChange={handleChange}
-              placeholder="What needs to be done?"
+              placeholder={t("form_placeholder_title")}
               autoFocus
               style={{
                 ...inputStyle,
@@ -251,7 +255,7 @@ export function TaskForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="task-type" style={labelStyle}>
-                Type
+                {t("form_label_type")}
               </label>
               <select
                 id="task-type"
@@ -260,15 +264,15 @@ export function TaskForm({
                 onChange={handleChange}
                 style={inputStyle}
               >
-                <option value="ONE_TIME">One-time</option>
-                <option value="RECURRING">Recurring</option>
-                <option value="DAILY_ELIGIBLE">Daily Quest</option>
+                <option value="ONE_TIME">{t("form_type_onetime")}</option>
+                <option value="RECURRING">{t("form_type_recurring")}</option>
+                <option value="DAILY_ELIGIBLE">{t("form_type_daily")}</option>
               </select>
             </div>
 
             <div>
               <label htmlFor="task-priority" style={labelStyle}>
-                Priority
+                {t("form_label_priority")}
               </label>
               <select
                 id="task-priority"
@@ -277,9 +281,9 @@ export function TaskForm({
                 onChange={handleChange}
                 style={inputStyle}
               >
-                <option value="HIGH">High</option>
-                <option value="NORMAL">Normal</option>
-                <option value="SOMEDAY">Someday</option>
+                <option value="HIGH">{t("priority_high")}</option>
+                <option value="NORMAL">{t("priority_normal")}</option>
+                <option value="SOMEDAY">{t("priority_someday")}</option>
               </select>
             </div>
           </div>
@@ -288,7 +292,7 @@ export function TaskForm({
           {formData.type === "RECURRING" && (
             <div>
               <label htmlFor="task-recurrence" style={labelStyle}>
-                Repeat every (days){" "}
+                {t("form_label_interval")}{" "}
                 <span style={{ color: "var(--accent-red)" }}>*</span>
               </label>
               <input
@@ -307,7 +311,7 @@ export function TaskForm({
           {/* Topic */}
           <div>
             <label htmlFor="task-topic" style={labelStyle}>
-              Topic
+              {t("form_label_topic")}
             </label>
             <select
               id="task-topic"
@@ -321,10 +325,10 @@ export function TaskForm({
               }
               style={inputStyle}
             >
-              <option value="">No topic</option>
-              {topics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.title}
+              <option value="">{t("form_no_topic")}</option>
+              {topics.map((topic) => (
+                <option key={topic.id} value={topic.id}>
+                  {topic.title}
                 </option>
               ))}
             </select>
@@ -333,7 +337,7 @@ export function TaskForm({
           {/* Due date */}
           <div>
             <label htmlFor="task-due" style={labelStyle}>
-              Due date
+              {t("form_label_due")}
             </label>
             <input
               id="task-due"
@@ -348,7 +352,7 @@ export function TaskForm({
           {/* Coin value */}
           <div>
             <label htmlFor="task-coins" style={labelStyle}>
-              Coin reward (1–10)
+              {t("form_label_coins")}
             </label>
             <input
               id="task-coins"
@@ -365,7 +369,7 @@ export function TaskForm({
           {/* Notes */}
           <div>
             <label htmlFor="task-notes" style={labelStyle}>
-              Notes
+              {t("form_label_notes")}
             </label>
             <textarea
               id="task-notes"
@@ -373,7 +377,7 @@ export function TaskForm({
               value={formData.notes}
               onChange={handleChange}
               rows={3}
-              placeholder="Optional notes..."
+              placeholder={t("form_placeholder_notes")}
               style={{
                 ...inputStyle,
                 resize: "vertical",
@@ -395,7 +399,7 @@ export function TaskForm({
                 backgroundColor: "transparent",
               }}
             >
-              Cancel
+              {tc("cancel")}
             </button>
             <button
               type="submit"
@@ -410,10 +414,10 @@ export function TaskForm({
               }}
             >
               {isSubmitting
-                ? "Saving..."
+                ? t("form_saving")
                 : isEditing
-                ? "Save changes"
-                : "Create task"}
+                ? t("form_save")
+                : t("form_create")}
             </button>
           </div>
         </form>

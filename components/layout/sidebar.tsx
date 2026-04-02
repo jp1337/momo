@@ -14,6 +14,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface NavItem {
   href: string;
@@ -21,21 +22,22 @@ interface NavItem {
   icon: string;
 }
 
-/** Main navigation items */
-const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: "🏠" },
-  { href: "/tasks", label: "Tasks", icon: "✓" },
-  { href: "/topics", label: "Topics", icon: "📁" },
-  { href: "/wishlist", label: "Wishlist", icon: "⭐" },
-  { href: "/settings", label: "Settings", icon: "⚙" },
-];
-
 /**
  * Sidebar navigation for the authenticated app shell.
  * Renders a vertical list of navigation links with active state highlighting.
  */
 export function Sidebar() {
   const pathname = usePathname();
+  const t = useTranslations("nav");
+
+  /** Main navigation items — built inside the component so labels are translated */
+  const NAV_ITEMS: NavItem[] = [
+    { href: "/dashboard", label: t("dashboard"), icon: "🏠" },
+    { href: "/tasks", label: t("tasks"), icon: "✓" },
+    { href: "/topics", label: t("topics"), icon: "📁" },
+    { href: "/wishlist", label: t("wishlist"), icon: "⭐" },
+    { href: "/settings", label: t("settings"), icon: "⚙" },
+  ];
 
   return (
     <aside
