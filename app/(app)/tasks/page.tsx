@@ -18,6 +18,7 @@ import { redirect } from "next/navigation";
 import { getUserTasks } from "@/lib/tasks";
 import { getUserTopics } from "@/lib/topics";
 import { TaskList } from "@/components/tasks/task-list";
+import { DueTodayBanner } from "@/components/tasks/due-today-banner";
 
 export const metadata: Metadata = {
   title: "Tasks — Momo",
@@ -37,6 +38,16 @@ export default async function TasksPage() {
     getUserTasks(session.user.id),
     getUserTopics(session.user.id),
   ]);
+
+  // Count tasks that are due today or overdue (for the greeting banner)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueTodayCount = tasks.filter((t) => {
+    if (t.completedAt !== null) return false;
+    const effectiveDate = t.type === "RECURRING" ? t.nextDueDate : t.dueDate;
+    if (!effectiveDate) return false;
+    return new Date(effectiveDate + "T00:00:00") <= today;
+  }).length;
 
   // Serialize to plain objects for client component
   const serializedTasks = tasks.map((t) => ({
@@ -84,6 +95,9 @@ export default async function TasksPage() {
             : `${tasks.filter((t) => t.completedAt === null).length} active · ${tasks.filter((t) => t.completedAt !== null).length} completed`}
         </p>
       </div>
+
+      {/* Due today / overdue greeting banner */}
+      <DueTodayBanner dueTodayCount={dueTodayCount} />
 
       {/* Interactive task list */}
       <TaskList
