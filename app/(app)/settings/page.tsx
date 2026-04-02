@@ -4,9 +4,11 @@
  * Sections:
  *  - Account: displays name, avatar, email, and OAuth provider badge
  *  - Push Notifications: enable/disable push, configure daily reminder time
+ *  - Language: switch the UI language
  *
  * This is a Server Component that fetches the current user's settings from the DB.
  * Interactive notification controls are in the NotificationSettings client component.
+ * Language switching is handled by the LanguageSwitcher client component.
  */
 
 import { auth } from "@/lib/auth";
@@ -16,6 +18,8 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Image from "next/image";
 import { NotificationSettings } from "@/components/settings/notification-settings";
+import { LanguageSwitcher } from "@/components/settings/language-switcher";
+import { getTranslations, getLocale } from "next-intl/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -30,6 +34,9 @@ export default async function SettingsPage() {
   if (!session?.user?.id) {
     redirect("/login");
   }
+
+  const t = await getTranslations("settings");
+  const locale = await getLocale();
 
   // Fetch user preferences from the DB
   const userRows = await db
@@ -70,7 +77,7 @@ export default async function SettingsPage() {
             color: "var(--text-primary)",
           }}
         >
-          Settings
+          {t("page_title")}
         </h1>
         <p
           className="mt-1 text-sm"
@@ -79,7 +86,7 @@ export default async function SettingsPage() {
             fontFamily: "var(--font-ui)",
           }}
         >
-          Manage your account preferences and notifications.
+          {t("page_subtitle")}
         </p>
       </div>
 
@@ -98,7 +105,7 @@ export default async function SettingsPage() {
             color: "var(--text-primary)",
           }}
         >
-          Account
+          {t("section_account")}
         </h2>
 
         <div className="flex items-center gap-4">
@@ -134,7 +141,7 @@ export default async function SettingsPage() {
                 fontFamily: "var(--font-ui)",
               }}
             >
-              {user.name ?? "Anonymous"}
+              {user.name ?? t("account_anonymous")}
             </span>
             <span
               className="text-sm"
@@ -177,7 +184,7 @@ export default async function SettingsPage() {
               color: "var(--text-primary)",
             }}
           >
-            Push Notifications
+            {t("section_notifications")}
           </h2>
           <p
             className="text-sm"
@@ -186,7 +193,7 @@ export default async function SettingsPage() {
               fontFamily: "var(--font-ui)",
             }}
           >
-            Get a daily quest reminder and streak alerts sent to your device.
+            {t("notifications_hint")}
           </p>
         </div>
 
@@ -194,6 +201,38 @@ export default async function SettingsPage() {
           initialEnabled={user.notificationEnabled}
           initialTime={user.notificationTime ?? "08:00"}
         />
+      </section>
+
+      {/* Language section */}
+      <section
+        className="rounded-xl p-6 flex flex-col gap-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            className="text-base font-semibold"
+            style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("section_language")}
+          </h2>
+          <p
+            className="text-sm"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui)",
+            }}
+          >
+            {t("language_hint")}
+          </p>
+        </div>
+
+        <LanguageSwitcher currentLocale={locale} />
       </section>
     </div>
   );

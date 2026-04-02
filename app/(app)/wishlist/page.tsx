@@ -14,6 +14,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { WishlistView } from "@/components/wishlist/wishlist-view";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
   title: "Wishlist — Momo",
@@ -31,6 +32,7 @@ export default async function WishlistPage() {
   }
 
   const userId = session.user.id;
+  const t = await getTranslations("wishlist");
 
   const [items, budget, userRows] = await Promise.all([
     getUserWishlistItems(userId),
@@ -67,7 +69,7 @@ export default async function WishlistPage() {
             color: "var(--text-primary)",
           }}
         >
-          Wishlist
+          {t("page_title")}
         </h1>
         <p
           className="text-base"
@@ -76,7 +78,7 @@ export default async function WishlistPage() {
             color: "var(--text-muted)",
           }}
         >
-          Track the things you want, and spend more consciously.
+          {t("page_subtitle")}
         </p>
       </div>
 
