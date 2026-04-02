@@ -20,11 +20,25 @@ import { db } from "@/lib/db";
 import { taskCompletions } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
+import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Dashboard",
 };
+
+/**
+ * Returns the translation key for the time-of-day greeting.
+ *
+ * @param hour - Current hour (0–23)
+ * @returns One of: "greeting_night" | "greeting_morning" | "greeting_afternoon" | "greeting_evening"
+ */
+function getGreetingKey(hour: number): string {
+  if (hour < 5) return "greeting_night";
+  if (hour < 12) return "greeting_morning";
+  if (hour < 17) return "greeting_afternoon";
+  return "greeting_evening";
+}
 
 /**
  * Dashboard page — loads the daily quest and user stats, then renders the UI.
@@ -38,6 +52,8 @@ export default async function DashboardPage() {
   const userId = session.user.id;
   const userName = session.user?.name ?? "there";
   const firstName = userName.split(" ")[0];
+
+  const t = await getTranslations("dashboard");
 
   // Fetch quest, stats, and completion count in parallel
   const [rawQuest, stats, completionCountRows] = await Promise.all([
@@ -71,8 +87,15 @@ export default async function DashboardPage() {
 
   // Determine greeting based on time of day
   const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greeting = t(getGreetingKey(hour) as Parameters<typeof t>[0]);
+
+  // Determine subtitle based on quest state
+  const subtitle =
+    quest && quest.completedAt === null
+      ? t("subtitle_quest")
+      : quest && quest.completedAt !== null
+      ? t("subtitle_done")
+      : t("subtitle_empty");
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-8">
@@ -94,11 +117,7 @@ export default async function DashboardPage() {
             color: "var(--text-muted)",
           }}
         >
-          {quest && quest.completedAt === null
-            ? "Your quest awaits. One task at a time."
-            : quest && quest.completedAt !== null
-            ? "Quest complete — you did the thing today."
-            : "Add some tasks and Momo will find your quest."}
+          {subtitle}
         </p>
       </div>
 
@@ -111,7 +130,7 @@ export default async function DashboardPage() {
             color: "var(--text-muted)",
           }}
         >
-          Daily Quest
+          {t("section_quest")}
         </h2>
         <DailyQuestCard quest={quest} />
       </section>
@@ -125,30 +144,30 @@ export default async function DashboardPage() {
             color: "var(--text-muted)",
           }}
         >
-          Overview
+          {t("section_overview")}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             {
-              label: "Coins",
+              label: t("stat_coins"),
               value: String(stats.coins),
               icon: "🪙",
               pulse: false,
             },
             {
-              label: "Streak",
+              label: t("stat_streak"),
               value: `${stats.streakCurrent}d`,
               icon: "🔥",
               pulse: stats.streakCurrent > 0,
             },
             {
-              label: "Level",
+              label: t("stat_level"),
               value: String(stats.level),
               icon: "⭐",
               pulse: false,
             },
             {
-              label: "Completed",
+              label: t("stat_completed"),
               value: String(totalCompletions),
               icon: "✓",
               pulse: false,
@@ -203,7 +222,7 @@ export default async function DashboardPage() {
             color: "var(--text-muted)",
           }}
         >
-          Navigate
+          {t("navigate")}
         </h2>
         <div className="flex flex-wrap gap-3">
           <Link
@@ -216,7 +235,7 @@ export default async function DashboardPage() {
               color: "var(--text-primary)",
             }}
           >
-            View all tasks →
+            {t("all_tasks")}
           </Link>
           <Link
             href="/topics"
@@ -228,7 +247,7 @@ export default async function DashboardPage() {
               color: "var(--text-primary)",
             }}
           >
-            View topics →
+            {t("all_topics")}
           </Link>
         </div>
       </section>

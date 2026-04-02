@@ -19,6 +19,7 @@ import { getUserTasks } from "@/lib/tasks";
 import { getUserTopics } from "@/lib/topics";
 import { TaskList } from "@/components/tasks/task-list";
 import { DueTodayBanner } from "@/components/tasks/due-today-banner";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
   title: "Tasks — Momo",
@@ -33,6 +34,8 @@ export default async function TasksPage() {
   if (!session?.user?.id) {
     redirect("/login");
   }
+
+  const t = await getTranslations("tasks");
 
   const [tasks, topics] = await Promise.all([
     getUserTasks(session.user.id),
@@ -70,6 +73,14 @@ export default async function TasksPage() {
     color: t.color ?? null,
   }));
 
+  const activeTasks = tasks.filter((task) => task.completedAt === null).length;
+  const completedTasks = tasks.filter((task) => task.completedAt !== null).length;
+
+  const subtitle =
+    tasks.length === 0
+      ? t("page_subtitle_empty")
+      : t("page_subtitle", { active: activeTasks, completed: completedTasks });
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Page header */}
@@ -81,7 +92,7 @@ export default async function TasksPage() {
             color: "var(--text-primary)",
           }}
         >
-          Tasks
+          {t("page_title")}
         </h1>
         <p
           className="text-base"
@@ -90,9 +101,7 @@ export default async function TasksPage() {
             color: "var(--text-muted)",
           }}
         >
-          {tasks.length === 0
-            ? "No tasks yet — let's add your first one."
-            : `${tasks.filter((t) => t.completedAt === null).length} active · ${tasks.filter((t) => t.completedAt !== null).length} completed`}
+          {subtitle}
         </p>
       </div>
 

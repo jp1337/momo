@@ -14,6 +14,7 @@
 import { auth, signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -61,6 +62,8 @@ export default async function LoginPage() {
     redirect("/dashboard");
   }
 
+  const t = await getTranslations("auth");
+
   // Determine which providers are configured
   const enabledProviders = PROVIDERS.filter(
     (p) => !!process.env[p.envKey]
@@ -88,7 +91,7 @@ export default async function LoginPage() {
             color: "var(--text-primary)",
           }}
         >
-          🪶 Momo
+          {t("app_name")}
         </h1>
         <p
           className="text-lg italic"
@@ -97,7 +100,7 @@ export default async function LoginPage() {
             color: "var(--text-muted)",
           }}
         >
-          &ldquo;Steal your time back.&rdquo;
+          {t("tagline")}
         </p>
         <p
           className="mt-4 text-sm"
@@ -106,7 +109,7 @@ export default async function LoginPage() {
             color: "var(--text-muted)",
           }}
         >
-          Sign in to start your daily quest.
+          {t("subtitle")}
         </p>
       </div>
 
@@ -126,7 +129,7 @@ export default async function LoginPage() {
             color: "var(--text-muted)",
           }}
         >
-          Sign in with
+          {t("sign_in_with")}
         </p>
 
         {/* Provider buttons */}
@@ -153,7 +156,7 @@ export default async function LoginPage() {
                 <span className="text-xl" aria-hidden="true">
                   {provider.icon}
                 </span>
-                Continue with {provider.name}
+                {t("continue_with", { name: provider.name })}
               </button>
             </form>
           ))
@@ -162,8 +165,7 @@ export default async function LoginPage() {
             className="text-sm text-center py-4"
             style={{ color: "var(--text-muted)" }}
           >
-            No OAuth providers configured. Please set up at least one provider
-            in your environment variables.
+            {t("no_providers")}
           </p>
         )}
 
@@ -189,7 +191,7 @@ export default async function LoginPage() {
               <span className="text-xl" aria-hidden="true">
                 🔐
               </span>
-              Continue with SSO
+              {t("sso")}
             </button>
           </form>
         )}
@@ -203,7 +205,7 @@ export default async function LoginPage() {
           color: "var(--text-muted)",
         }}
       >
-        By signing in, you agree that your data is stored on this server.
+        {t("disclaimer")}
         <br />
         Momo is{" "}
         <a
@@ -212,7 +214,7 @@ export default async function LoginPage() {
           rel="noopener noreferrer"
           style={{ color: "var(--accent-amber)" }}
         >
-          open source
+          {t("open_source")}
         </a>
         .
       </p>

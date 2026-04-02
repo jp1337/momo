@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getUserTopics } from "@/lib/topics";
 import { TopicsGrid } from "@/components/topics/topics-grid";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
   title: "Topics — Momo",
@@ -25,6 +26,8 @@ export default async function TopicsPage() {
     redirect("/login");
   }
 
+  const t = await getTranslations("topics");
+
   const topics = await getUserTopics(session.user.id);
 
   const serializedTopics = topics.map((t) => ({
@@ -38,6 +41,11 @@ export default async function TopicsPage() {
     completedCount: t.completedCount,
   }));
 
+  const subtitle =
+    topics.length === 0
+      ? t("page_subtitle_empty")
+      : t("page_subtitle", { count: topics.length });
+
   return (
     <div className="max-w-5xl mx-auto">
       {/* Page header */}
@@ -49,7 +57,7 @@ export default async function TopicsPage() {
             color: "var(--text-primary)",
           }}
         >
-          Topics
+          {t("page_title")}
         </h1>
         <p
           className="text-base"
@@ -58,9 +66,7 @@ export default async function TopicsPage() {
             color: "var(--text-muted)",
           }}
         >
-          {topics.length === 0
-            ? "No topics yet — group your tasks into projects."
-            : `${topics.length} topic${topics.length === 1 ? "" : "s"}`}
+          {subtitle}
         </p>
       </div>
 
