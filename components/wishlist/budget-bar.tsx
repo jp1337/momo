@@ -13,6 +13,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 interface BudgetBarProps {
   monthlyBudget: number | null;
@@ -50,6 +51,8 @@ export function BudgetBar({
   remaining,
   onBudgetUpdate,
 }: BudgetBarProps) {
+  const t = useTranslations("wishlist");
+  const tc = useTranslations("common");
   const [isEditing, setIsEditing] = useState(false);
   const [budgetInput, setBudgetInput] = useState(
     monthlyBudget !== null ? String(monthlyBudget) : ""
@@ -72,7 +75,7 @@ export function BudgetBar({
       budgetInput.trim() === "" ? null : parseFloat(budgetInput);
 
     if (parsed !== null && (isNaN(parsed) || parsed < 0)) {
-      setSaveError("Please enter a valid positive number");
+      setSaveError(t("budget_error_invalid"));
       return;
     }
 
@@ -86,14 +89,14 @@ export function BudgetBar({
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setSaveError(data.error ?? "Failed to update budget");
+        setSaveError(data.error ?? t("budget_error_invalid"));
         return;
       }
 
       onBudgetUpdate(parsed);
       setIsEditing(false);
     } catch {
-      setSaveError("Network error — please try again");
+      setSaveError(tc("error_network"));
     } finally {
       setIsSaving(false);
     }
@@ -129,7 +132,7 @@ export function BudgetBar({
               color: "var(--text-muted)",
             }}
           >
-            No monthly budget set
+            {t("budget_no_budget")}
           </p>
           <p
             className="text-xs mt-0.5"
@@ -138,7 +141,7 @@ export function BudgetBar({
               color: "var(--text-muted)",
             }}
           >
-            Set a budget to track your spending this month.
+            {t("budget_no_budget_hint")}
           </p>
         </div>
         <button
@@ -150,7 +153,7 @@ export function BudgetBar({
             color: "var(--bg-primary)",
           }}
         >
-          Set budget
+          {t("budget_set")}
         </button>
       </div>
     );
@@ -174,7 +177,7 @@ export function BudgetBar({
               color: "var(--text-muted)",
             }}
           >
-            Budget this month:
+            {t("budget_this_month")}
           </span>
           <span
             className="font-semibold"
@@ -201,7 +204,9 @@ export function BudgetBar({
                   remaining < 0 ? "var(--accent-red)" : "var(--text-muted)",
               }}
             >
-              ({remaining < 0 ? "over budget" : `€${formatCurrency(remaining)} left`})
+              ({remaining < 0
+                ? t("budget_over")
+                : t("budget_left", { amount: `€${formatCurrency(remaining)}` })})
             </span>
           )}
         </div>
@@ -218,7 +223,7 @@ export function BudgetBar({
               color: "var(--text-muted)",
             }}
           >
-            Edit budget
+            {t("budget_edit")}
           </button>
         )}
       </div>
@@ -250,14 +255,14 @@ export function BudgetBar({
               color: "var(--text-muted)",
             }}
           >
-            Monthly budget (€):
+            {t("budget_label")}
           </label>
           <input
             id="budget-input"
             type="number"
             value={budgetInput}
             onChange={(e) => setBudgetInput(e.target.value)}
-            placeholder="e.g. 500"
+            placeholder={t("budget_placeholder")}
             min={0}
             step="0.01"
             style={inputStyle}
@@ -279,7 +284,7 @@ export function BudgetBar({
               cursor: isSaving ? "not-allowed" : "pointer",
             }}
           >
-            {isSaving ? "Saving..." : "Save"}
+            {isSaving ? tc("saving") : tc("save")}
           </button>
           <button
             onClick={() => setIsEditing(false)}
@@ -289,7 +294,7 @@ export function BudgetBar({
               color: "var(--text-muted)",
             }}
           >
-            Cancel
+            {tc("cancel")}
           </button>
           {saveError && (
             <p

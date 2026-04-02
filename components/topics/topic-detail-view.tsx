@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { TaskItem } from "@/components/tasks/task-item";
 import { TaskForm } from "@/components/tasks/task-form";
 
@@ -41,11 +42,12 @@ export function TopicDetailView({
   initialTasks,
   topicColor,
 }: TopicDetailViewProps) {
+  const t = useTranslations("topics");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const editingTask = tasks.find((t) => t.id === editingTaskId);
+  const editingTask = tasks.find((task) => task.id === editingTaskId);
 
   const refreshTasks = useCallback(async () => {
     try {
@@ -84,14 +86,14 @@ export function TopicDetailView({
   );
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!window.confirm("Delete this task?")) return;
+    if (!window.confirm(t("detail_confirm_delete"))) return;
     try {
       const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-      if (res.ok) setTasks((prev) => prev.filter((t) => t.id !== id));
+      if (res.ok) setTasks((prev) => prev.filter((task) => task.id !== id));
     } catch {
       // silent fail
     }
-  }, []);
+  }, [t]);
 
   const handleFormSuccess = useCallback(async () => {
     setEditingTaskId(null);
@@ -99,8 +101,8 @@ export function TopicDetailView({
     await refreshTasks();
   }, [refreshTasks]);
 
-  const activeTasks = tasks.filter((t) => t.completedAt === null);
-  const completedTasks = tasks.filter((t) => t.completedAt !== null);
+  const activeTasks = tasks.filter((task) => task.completedAt === null);
+  const completedTasks = tasks.filter((task) => task.completedAt !== null);
 
   return (
     <div>
@@ -113,7 +115,7 @@ export function TopicDetailView({
             color: "var(--text-primary)",
           }}
         >
-          Tasks
+          {t("detail_tasks")}
         </h2>
         <button
           onClick={() => setShowCreateForm(true)}
@@ -124,7 +126,7 @@ export function TopicDetailView({
             color: "var(--bg-primary)",
           }}
         >
-          + Add subtask
+          {t("detail_add")}
         </button>
       </div>
 
@@ -144,7 +146,7 @@ export function TopicDetailView({
               color: "var(--text-muted)",
             }}
           >
-            No tasks in this topic yet. Add your first subtask above.
+            {t("detail_empty")}
           </p>
         </div>
       )}
@@ -184,7 +186,7 @@ export function TopicDetailView({
               color: "var(--text-muted)",
             }}
           >
-            Completed ({completedTasks.length})
+            {t("detail_completed", { count: completedTasks.length })}
           </h3>
           <div className="flex flex-col gap-2">
             {completedTasks.map((task) => (

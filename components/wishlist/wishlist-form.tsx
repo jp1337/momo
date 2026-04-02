@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 interface WishlistFormData {
   title: string;
@@ -47,6 +48,8 @@ export function WishlistForm({
   onSuccess,
   onCancel,
 }: WishlistFormProps) {
+  const t = useTranslations("wishlist");
+  const tc = useTranslations("common");
   const isEditing = !!initialData?.id;
 
   const [formData, setFormData] = useState<WishlistFormData>({
@@ -73,7 +76,7 @@ export function WishlistForm({
     setError(null);
 
     if (!formData.title.trim()) {
-      setError("Title is required");
+      setError(t("form_error_title"));
       return;
     }
 
@@ -82,7 +85,7 @@ export function WishlistForm({
       try {
         new URL(formData.url.trim());
       } catch {
-        setError("URL must be a valid URL (e.g. https://example.com)");
+        setError(t("form_error_url"));
         return;
       }
     }
@@ -92,7 +95,7 @@ export function WishlistForm({
       : null;
 
     if (priceValue !== null && (isNaN(priceValue) || priceValue < 0)) {
-      setError("Price must be a valid non-negative number");
+      setError(t("form_error_price"));
       return;
     }
 
@@ -101,7 +104,7 @@ export function WishlistForm({
       : null;
 
     if (coinThreshold !== null && (isNaN(coinThreshold) || coinThreshold < 0)) {
-      setError("Coin threshold must be a valid non-negative integer");
+      setError(t("form_error_coins"));
       return;
     }
 
@@ -128,13 +131,13 @@ export function WishlistForm({
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setError(data.error ?? "Failed to save item");
+        setError(data.error ?? t("form_error_title"));
         return;
       }
 
       onSuccess();
     } catch {
-      setError("Network error — please try again");
+      setError(tc("error_network"));
     } finally {
       setIsSubmitting(false);
     }
@@ -190,13 +193,13 @@ export function WishlistForm({
               color: "var(--text-primary)",
             }}
           >
-            {isEditing ? "Edit Wishlist Item" : "Add to Wishlist"}
+            {isEditing ? t("form_title_edit") : t("form_title_new")}
           </h2>
           <button
             onClick={onCancel}
             className="p-1 rounded-lg transition-colors"
             style={{ color: "var(--text-muted)" }}
-            aria-label="Close"
+            aria-label={tc("close")}
           >
             ✕
           </button>
@@ -221,7 +224,7 @@ export function WishlistForm({
           {/* Title */}
           <div>
             <label htmlFor="wishlist-title" style={labelStyle}>
-              Title <span style={{ color: "var(--accent-red)" }}>*</span>
+              {t("form_label_title")} <span style={{ color: "var(--accent-red)" }}>*</span>
             </label>
             <input
               id="wishlist-title"
@@ -229,7 +232,7 @@ export function WishlistForm({
               type="text"
               value={formData.title}
               onChange={handleChange}
-              placeholder="What do you want?"
+              placeholder={t("form_placeholder_title")}
               autoFocus
               style={{
                 ...inputStyle,
@@ -243,7 +246,7 @@ export function WishlistForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="wishlist-price" style={labelStyle}>
-                Price (€)
+                {t("form_label_price")}
               </label>
               <input
                 id="wishlist-price"
@@ -251,7 +254,7 @@ export function WishlistForm({
                 type="number"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="0.00"
+                placeholder={t("form_placeholder_price")}
                 min={0}
                 max={999999}
                 step="0.01"
@@ -261,7 +264,7 @@ export function WishlistForm({
 
             <div>
               <label htmlFor="wishlist-priority" style={labelStyle}>
-                Priority
+                {t("form_label_priority")}
               </label>
               <select
                 id="wishlist-priority"
@@ -270,9 +273,9 @@ export function WishlistForm({
                 onChange={handleChange}
                 style={inputStyle}
               >
-                <option value="WANT">Want</option>
-                <option value="NICE_TO_HAVE">Nice to have</option>
-                <option value="SOMEDAY">Someday</option>
+                <option value="WANT">{t("priority_want")}</option>
+                <option value="NICE_TO_HAVE">{t("priority_nice")}</option>
+                <option value="SOMEDAY">{t("priority_someday")}</option>
               </select>
             </div>
           </div>
@@ -280,7 +283,7 @@ export function WishlistForm({
           {/* URL */}
           <div>
             <label htmlFor="wishlist-url" style={labelStyle}>
-              Product URL (optional)
+              {t("form_label_url")}
             </label>
             <input
               id="wishlist-url"
@@ -288,7 +291,7 @@ export function WishlistForm({
               type="url"
               value={formData.url}
               onChange={handleChange}
-              placeholder="https://example.com/product"
+              placeholder={t("form_placeholder_url")}
               style={inputStyle}
             />
           </div>
@@ -296,7 +299,7 @@ export function WishlistForm({
           {/* Coin unlock threshold */}
           <div>
             <label htmlFor="wishlist-coins" style={labelStyle}>
-              Coin unlock threshold (optional)
+              {t("form_label_coins")}
             </label>
             <input
               id="wishlist-coins"
@@ -304,7 +307,7 @@ export function WishlistForm({
               type="number"
               value={formData.coinUnlockThreshold}
               onChange={handleChange}
-              placeholder="e.g. 100"
+              placeholder={t("form_placeholder_coins")}
               min={0}
               step={1}
               style={inputStyle}
@@ -316,7 +319,7 @@ export function WishlistForm({
                 fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
               }}
             >
-              You must have this many coins before buying this item.
+              {t("form_help_coins")}
             </p>
           </div>
 
@@ -334,7 +337,7 @@ export function WishlistForm({
                 backgroundColor: "transparent",
               }}
             >
-              Cancel
+              {tc("cancel")}
             </button>
             <button
               type="submit"
@@ -349,10 +352,10 @@ export function WishlistForm({
               }}
             >
               {isSubmitting
-                ? "Saving..."
+                ? t("form_saving")
                 : isEditing
-                ? "Save changes"
-                : "Add to wishlist"}
+                ? t("form_save")
+                : t("form_create")}
             </button>
           </div>
         </form>

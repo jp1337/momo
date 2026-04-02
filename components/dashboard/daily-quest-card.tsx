@@ -17,6 +17,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { triggerConfetti } from "@/components/animations/confetti";
 import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
@@ -49,39 +50,21 @@ interface DailyQuestCardProps {
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 /**
- * Priority badge visual config.
+ * Priority badge visual styles (labels are computed inside component with i18n).
  */
-const PRIORITY_CONFIG = {
+const PRIORITY_STYLES = {
   HIGH: {
-    label: "High",
-    style: {
-      backgroundColor: "var(--accent-red)",
-      color: "white",
-    },
+    backgroundColor: "var(--accent-red)",
+    color: "white",
   },
   NORMAL: {
-    label: "Normal",
-    style: {
-      backgroundColor: "var(--accent-amber)",
-      color: "black",
-    },
+    backgroundColor: "var(--accent-amber)",
+    color: "black",
   },
   SOMEDAY: {
-    label: "Someday",
-    style: {
-      backgroundColor: "var(--bg-elevated)",
-      color: "var(--text-muted)",
-    },
+    backgroundColor: "var(--bg-elevated)",
+    color: "var(--text-muted)",
   },
-} as const;
-
-/**
- * Task type badge visual config.
- */
-const TYPE_CONFIG = {
-  ONE_TIME: { label: "One-time" },
-  RECURRING: { label: "Recurring" },
-  DAILY_ELIGIBLE: { label: "Quest eligible" },
 } as const;
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -100,6 +83,7 @@ interface CompleteResponse {
  * Triggers confetti, level-up overlay, and achievement toasts on completion.
  */
 export function DailyQuestCard({ quest }: DailyQuestCardProps) {
+  const t = useTranslations("dashboard");
   const router = useRouter();
   const [isCompleting, setIsCompleting] = useState(false);
   const [isPostponing, setIsPostponing] = useState(false);
@@ -109,6 +93,18 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
   const [coinsEarned, setCoinsEarned] = useState<number | null>(null);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
+
+  const PRIORITY_LABELS: Record<"HIGH" | "NORMAL" | "SOMEDAY", string> = {
+    HIGH: t("quest_label_high"),
+    NORMAL: t("quest_label_normal"),
+    SOMEDAY: t("quest_label_someday"),
+  };
+
+  const TYPE_LABELS: Record<"ONE_TIME" | "RECURRING" | "DAILY_ELIGIBLE", string> = {
+    ONE_TIME: t("quest_label_onetime"),
+    RECURRING: t("quest_label_recurring"),
+    DAILY_ELIGIBLE: t("quest_label_eligible"),
+  };
 
   /**
    * Calls POST /api/tasks/:id/complete, then triggers animations and switches to celebration state.
@@ -185,8 +181,9 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
     }
   }
 
-  const priorityCfg = quest ? PRIORITY_CONFIG[quest.priority] : null;
-  const typeCfg = quest ? TYPE_CONFIG[quest.type] : null;
+  const priorityStyle = quest ? PRIORITY_STYLES[quest.priority] : null;
+  const priorityLabel = quest ? PRIORITY_LABELS[quest.priority] : null;
+  const typeLabel = quest ? TYPE_LABELS[quest.type] : null;
 
   return (
     <>
@@ -229,7 +226,7 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
               color: "var(--text-muted)",
             }}
           >
-            ✦ No quest for today yet.
+            {t("quest_no_quest")}
           </p>
           <p
             className="text-sm"
@@ -238,11 +235,9 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
               color: "var(--text-muted)",
             }}
           >
-            Head to{" "}
             <a href="/tasks" style={{ color: "var(--accent-amber)" }}>
-              Tasks
-            </a>{" "}
-            to add your first task — Momo will pick one for you each day.
+              {t("quest_no_quest_hint")}
+            </a>
           </p>
         </div>
       )}
@@ -257,7 +252,7 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
               color: "var(--text-primary)",
             }}
           >
-            Quest complete! ✨
+            {t("quest_done")}
           </p>
           <p
             className="text-sm"
@@ -277,7 +272,7 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
                 color: "var(--coin-gold)",
               }}
             >
-              +{coinsEarned} ◎ earned — come back tomorrow.
+              {t("quest_done_hint", { coins: coinsEarned })}
             </p>
           )}
           {coinsEarned === null && (
@@ -288,7 +283,7 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
                 color: "var(--text-muted)",
               }}
             >
-              Come back tomorrow for your next quest.
+              {t("quest_comeback")}
             </p>
           )}
         </div>
@@ -331,20 +326,20 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
             {/* Badges row */}
             <div className="flex flex-wrap items-center gap-2">
               {/* Priority badge */}
-              {priorityCfg && (
+              {priorityStyle && priorityLabel && (
                 <span
                   className="text-xs px-2 py-0.5 rounded font-medium"
                   style={{
                     fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    ...priorityCfg.style,
+                    ...priorityStyle,
                   }}
                 >
-                  {priorityCfg.label}
+                  {priorityLabel}
                 </span>
               )}
 
               {/* Type badge */}
-              {typeCfg && (
+              {typeLabel && (
                 <span
                   className="text-xs px-2 py-0.5 rounded"
                   style={{
@@ -353,7 +348,7 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
                     backgroundColor: "var(--bg-elevated)",
                   }}
                 >
-                  {typeCfg.label}
+                  {typeLabel}
                 </span>
               )}
 
@@ -383,7 +378,7 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
                 color: "white",
               }}
             >
-              {isCompleting ? "Completing…" : "✓ Complete"}
+              {isCompleting ? t("quest_completing") : t("quest_complete_btn")}
             </button>
 
             {/* Not today button */}
@@ -398,7 +393,7 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
                 border: "1px solid var(--border)",
               }}
             >
-              {isPostponing ? "Postponing…" : "Not today →"}
+              {isPostponing ? t("quest_postponing") : t("quest_postpone_btn")}
             </button>
           </div>
         </>

@@ -13,6 +13,7 @@
  */
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { BudgetBar } from "@/components/wishlist/budget-bar";
 import { WishlistCard } from "@/components/wishlist/wishlist-card";
 import { WishlistForm } from "@/components/wishlist/wishlist-form";
@@ -51,6 +52,7 @@ export function WishlistView({
   initialBudget,
   userCoins,
 }: WishlistViewProps) {
+  const t = useTranslations("wishlist");
   const [items, setItems] = useState<SerializedWishlistItem[]>(initialItems);
   const [budget, setBudget] = useState<SerializedBudgetSummary>(initialBudget);
   const [showForm, setShowForm] = useState(false);
@@ -111,7 +113,7 @@ export function WishlistView({
 
   /** Permanently delete an item */
   const handleDelete = async (id: string) => {
-    if (!confirm("Permanently delete this item?")) return;
+    if (!confirm(t("view_confirm_delete"))) return;
     try {
       await fetch(`/api/wishlist/${id}`, { method: "DELETE" });
       setItems((prev) => prev.filter((i) => i.id !== id));
@@ -204,7 +206,7 @@ export function WishlistView({
             color: "var(--bg-primary)",
           }}
         >
-          + Add item
+          {t("view_add")}
         </button>
       </div>
 
@@ -224,7 +226,7 @@ export function WishlistView({
               color: "var(--text-muted)",
             }}
           >
-            Your wishlist is empty. Add something you want!
+            {t("view_empty")}
           </p>
         </div>
       ) : (
@@ -277,7 +279,7 @@ export function WishlistView({
             >
               ▶
             </span>
-            History ({historyItems.length} item{historyItems.length !== 1 ? "s" : ""})
+            {t("view_history")} ({t("view_history_count", { count: historyItems.length })})
           </button>
 
           {showHistory && (

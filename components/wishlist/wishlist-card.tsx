@@ -15,6 +15,7 @@
  */
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface WishlistCardProps {
   id: string;
@@ -38,29 +39,20 @@ interface WishlistCardProps {
 }
 
 /**
- * Priority badge config for wishlist items.
+ * Priority badge visual styles for wishlist items (labels computed in component with i18n).
  */
-const PRIORITY_CONFIG = {
+const PRIORITY_STYLES = {
   WANT: {
-    label: "Want",
-    style: {
-      color: "var(--accent-red)",
-      backgroundColor: "rgba(184,84,80,0.12)",
-    },
+    color: "var(--accent-red)",
+    backgroundColor: "rgba(184,84,80,0.12)",
   },
   NICE_TO_HAVE: {
-    label: "Nice to have",
-    style: {
-      color: "var(--accent-amber)",
-      backgroundColor: "rgba(240,165,0,0.12)",
-    },
+    color: "var(--accent-amber)",
+    backgroundColor: "rgba(240,165,0,0.12)",
   },
   SOMEDAY: {
-    label: "Someday",
-    style: {
-      color: "var(--text-muted)",
-      backgroundColor: "rgba(122,144,127,0.12)",
-    },
+    color: "var(--text-muted)",
+    backgroundColor: "rgba(122,144,127,0.12)",
   },
 } as const;
 
@@ -84,14 +76,22 @@ export function WishlistCard({
   onEdit,
   onDelete,
 }: WishlistCardProps) {
+  const t = useTranslations("wishlist");
   const [isLoading, setIsLoading] = useState(false);
+
+  const PRIORITY_LABELS: Record<"WANT" | "NICE_TO_HAVE" | "SOMEDAY", string> = {
+    WANT: t("priority_want"),
+    NICE_TO_HAVE: t("priority_nice"),
+    SOMEDAY: t("priority_someday"),
+  };
 
   const isBought = status === "BOUGHT";
   const isDiscarded = status === "DISCARDED";
   const isOpen = status === "OPEN";
 
   const numericPrice = price !== null ? Number(price) : null;
-  const priorityCfg = PRIORITY_CONFIG[priority];
+  const priorityStyle = PRIORITY_STYLES[priority];
+  const priorityLabel = PRIORITY_LABELS[priority];
 
   // Affordability: only relevant for OPEN items with a price and budget
   let affordability: "affordable" | "over" | "no-budget" | null = null;
@@ -153,7 +153,7 @@ export function WishlistCard({
             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
           }}
         >
-          Bought
+          {t("card_bought")}
         </div>
       )}
 
@@ -199,7 +199,7 @@ export function WishlistCard({
               color: "var(--text-muted)",
             }}
           >
-            No price
+            {t("card_no_price")}
           </span>
         )}
       </div>
@@ -211,10 +211,10 @@ export function WishlistCard({
           className="text-xs px-1.5 py-0.5 rounded font-medium"
           style={{
             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            ...priorityCfg.style,
+            ...priorityStyle,
           }}
         >
-          {priorityCfg.label}
+          {priorityLabel}
         </span>
 
         {/* Affordability indicator */}
@@ -226,7 +226,7 @@ export function WishlistCard({
               color: "var(--accent-green)",
             }}
           >
-            ✓ Affordable
+            {t("card_affordable")}
           </span>
         )}
         {affordability === "over" && (
@@ -237,7 +237,7 @@ export function WishlistCard({
               color: "var(--accent-red)",
             }}
           >
-            ✗ Over budget
+            {t("card_over_budget")}
           </span>
         )}
         {affordability === "no-budget" && (
@@ -260,9 +260,9 @@ export function WishlistCard({
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
               color: "var(--coin-gold)",
             }}
-            title={`Need ${coinsNeeded} more coins to unlock`}
+            title={t("card_locked", { coins: coinsNeeded })}
           >
-            🔒 Need {coinsNeeded} more coins
+            {t("card_locked", { coins: coinsNeeded })}
           </span>
         )}
       </div>
@@ -305,7 +305,7 @@ export function WishlistCard({
                   cursor: isLoading ? "not-allowed" : "pointer",
                 }}
               >
-                ✓ Bought
+                {t("card_btn_bought")}
               </button>
               <button
                 onClick={() => handleAction(() => onDiscard(id))}
@@ -319,7 +319,7 @@ export function WishlistCard({
                   cursor: isLoading ? "not-allowed" : "pointer",
                 }}
               >
-                × Discard
+                {t("card_btn_discard")}
               </button>
               <button
                 onClick={() => onEdit(id)}
@@ -330,7 +330,7 @@ export function WishlistCard({
                   border: "1px solid var(--border)",
                 }}
               >
-                ✎ Edit
+                {t("card_btn_edit")}
               </button>
             </>
           )}
@@ -346,7 +346,7 @@ export function WishlistCard({
                 cursor: isLoading ? "not-allowed" : "pointer",
               }}
             >
-              ↩ Undo
+              {t("card_btn_undo")}
             </button>
           )}
         </div>
@@ -367,7 +367,7 @@ export function WishlistCard({
               cursor: isLoading ? "not-allowed" : "pointer",
             }}
           >
-            Delete permanently
+            {t("card_btn_delete")}
           </button>
         </div>
       )}

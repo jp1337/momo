@@ -10,6 +10,7 @@
 import { useState, useEffect, useRef } from "react";
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 
 interface TopicFormData {
   title: string;
@@ -56,6 +57,8 @@ export function TopicForm({
   onSuccess,
   onCancel,
 }: TopicFormProps) {
+  const t = useTranslations("topics");
+  const tc = useTranslations("common");
   const isEditing = !!initialData?.id;
 
   const [formData, setFormData] = useState<TopicFormData>({
@@ -98,7 +101,7 @@ export function TopicForm({
     setError(null);
 
     if (!formData.title.trim()) {
-      setError("Title is required");
+      setError(t("form_error_title"));
       return;
     }
 
@@ -125,13 +128,13 @@ export function TopicForm({
 
       if (!res.ok) {
         const data = await res.json() as { error?: string };
-        setError(data.error ?? "Failed to save topic");
+        setError(data.error ?? t("form_error_title"));
         return;
       }
 
       onSuccess();
     } catch {
-      setError("Network error — please try again");
+      setError(tc("error_network"));
     } finally {
       setIsSubmitting(false);
     }
@@ -185,13 +188,13 @@ export function TopicForm({
               color: "var(--text-primary)",
             }}
           >
-            {isEditing ? "Edit Topic" : "New Topic"}
+            {isEditing ? t("form_title_edit") : t("form_title_new")}
           </h2>
           <button
             onClick={onCancel}
             className="p-1 rounded-lg"
             style={{ color: "var(--text-muted)" }}
-            aria-label="Close"
+            aria-label={tc("close")}
           >
             ✕
           </button>
@@ -216,7 +219,7 @@ export function TopicForm({
           {/* Title */}
           <div>
             <label htmlFor="topic-title" style={labelStyle}>
-              Title <span style={{ color: "var(--accent-red)" }}>*</span>
+              {t("form_label_title")} <span style={{ color: "var(--accent-red)" }}>*</span>
             </label>
             <input
               id="topic-title"
@@ -224,7 +227,7 @@ export function TopicForm({
               type="text"
               value={formData.title}
               onChange={handleChange}
-              placeholder="e.g. Tax Return, Moving, Health"
+              placeholder={t("form_placeholder_title")}
               autoFocus
               style={inputStyle}
               maxLength={100}
@@ -234,7 +237,7 @@ export function TopicForm({
           {/* Icon + Color row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label style={labelStyle}>Icon (emoji)</label>
+              <label style={labelStyle}>{t("form_label_icon")}</label>
               <div ref={emojiPickerRef} style={{ position: "relative" }}>
                 <button
                   type="button"
@@ -250,7 +253,7 @@ export function TopicForm({
                     gap: "0.4rem",
                     width: "100%",
                   }}
-                  title="Pick an emoji"
+                  title={t("form_pick_emoji")}
                 >
                   <span>{formData.icon || "📁"}</span>
                   <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>▾</span>
@@ -276,7 +279,7 @@ export function TopicForm({
 
             <div>
               <label htmlFor="topic-priority" style={labelStyle}>
-                Priority
+                {t("form_label_priority")}
               </label>
               <select
                 id="topic-priority"
@@ -285,16 +288,16 @@ export function TopicForm({
                 onChange={handleChange}
                 style={inputStyle}
               >
-                <option value="HIGH">High</option>
-                <option value="NORMAL">Normal</option>
-                <option value="SOMEDAY">Someday</option>
+                <option value="HIGH">{t("priority_high")}</option>
+                <option value="NORMAL">{t("priority_normal")}</option>
+                <option value="SOMEDAY">{t("priority_someday")}</option>
               </select>
             </div>
           </div>
 
           {/* Color picker */}
           <div>
-            <label style={labelStyle}>Color</label>
+            <label style={labelStyle}>{t("form_label_color")}</label>
             <div className="flex flex-wrap gap-2">
               {COLOR_PRESETS.map((preset) => (
                 <button
@@ -314,7 +317,7 @@ export function TopicForm({
                         : "none",
                     outlineOffset: "2px",
                   }}
-                  aria-label={`Select color ${preset}`}
+                  aria-label={t("form_aria_color_preset", { color: preset })}
                   title={preset}
                 />
               ))}
@@ -326,8 +329,8 @@ export function TopicForm({
                 }
                 className="w-7 h-7 rounded-full cursor-pointer border-0"
                 style={{ padding: 0 }}
-                title="Custom color"
-                aria-label="Custom color picker"
+                title={t("form_aria_colorpicker")}
+                aria-label={t("form_aria_colorpicker")}
               />
             </div>
           </div>
@@ -335,7 +338,7 @@ export function TopicForm({
           {/* Description */}
           <div>
             <label htmlFor="topic-description" style={labelStyle}>
-              Description
+              {t("form_label_description")}
             </label>
             <textarea
               id="topic-description"
@@ -343,7 +346,7 @@ export function TopicForm({
               value={formData.description}
               onChange={handleChange}
               rows={2}
-              placeholder="Optional description..."
+              placeholder={t("form_placeholder_desc")}
               style={{ ...inputStyle, resize: "vertical" }}
             />
           </div>
@@ -362,7 +365,7 @@ export function TopicForm({
                 backgroundColor: "transparent",
               }}
             >
-              Cancel
+              {tc("cancel")}
             </button>
             <button
               type="submit"
@@ -377,10 +380,10 @@ export function TopicForm({
               }}
             >
               {isSubmitting
-                ? "Saving..."
+                ? t("form_saving")
                 : isEditing
-                ? "Save changes"
-                : "Create topic"}
+                ? t("form_save")
+                : t("form_create")}
             </button>
           </div>
         </form>
