@@ -17,6 +17,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { TaskItem } from "./task-item";
 import { TaskForm } from "./task-form";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
@@ -156,6 +157,7 @@ function SectionHeader({
  * Displays different motivating messages based on the current hour.
  */
 function EmptyState() {
+  const t = useTranslations("tasks");
   const hour = new Date().getHours();
   let emoji: string;
   let headline: string;
@@ -163,24 +165,24 @@ function EmptyState() {
 
   if (hour < 5) {
     emoji = "🌙";
-    headline = "Noch keine Aufgaben";
-    sub = "Leg morgen früh los — du hast noch Zeit.";
+    headline = t("empty_night");
+    sub = t("empty_night_sub");
   } else if (hour < 12) {
     emoji = "☀️";
-    headline = "Guten Morgen!";
-    sub = "Starte den Tag mit deiner ersten Aufgabe.";
+    headline = t("empty_morning");
+    sub = t("empty_morning_sub");
   } else if (hour < 17) {
     emoji = "🌿";
-    headline = "Alles erledigt?";
-    sub = "Füge neue Aufgaben hinzu oder genieße die Ruhe.";
+    headline = t("empty_afternoon");
+    sub = t("empty_afternoon_sub");
   } else if (hour < 22) {
     emoji = "🎉";
-    headline = "Perfekt, nichts mehr für heute!";
-    sub = "Du hast alles geschafft. Gönn dir eine Pause.";
+    headline = t("empty_evening");
+    sub = t("empty_evening_sub");
   } else {
     emoji = "🌙";
-    headline = "Für heute reicht's";
-    sub = "Morgen geht's weiter — gute Nacht.";
+    headline = t("empty_latenight");
+    sub = t("empty_latenight_sub");
   }
 
   return (
@@ -231,6 +233,7 @@ interface CompleteApiResponse {
  */
 export function TaskList({ initialTasks, topics }: TaskListProps) {
   const router = useRouter();
+  const t = useTranslations("tasks");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -296,16 +299,16 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
   }, [refreshTasks]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!window.confirm("Delete this task?")) return;
+    if (!window.confirm(t("confirm_delete"))) return;
     try {
       const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
       if (res.ok) {
-        setTasks((prev) => prev.filter((t) => t.id !== id));
+        setTasks((prev) => prev.filter((task) => task.id !== id));
       }
     } catch {
       // silent fail
     }
-  }, []);
+  }, [t]);
 
   const handleFormSuccess = useCallback(async () => {
     setEditingTaskId(null);
@@ -381,7 +384,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
             color: "var(--bg-primary)",
           }}
         >
-          + New Task
+          {t("new_task")}
         </button>
       </div>
 
@@ -389,7 +392,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
       {!hasAnyTasks && <EmptyState />}
 
       {/* Today */}
-      <SectionHeader title="Today & Overdue" count={grouped.today.length} />
+      <SectionHeader title={t("section_today")} count={grouped.today.length} />
       <AnimatePresence>
         <div className="flex flex-col gap-2">
           {grouped.today.map((task) => {
@@ -422,7 +425,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
       </AnimatePresence>
 
       {/* Upcoming */}
-      <SectionHeader title="Upcoming" count={grouped.upcoming.length} />
+      <SectionHeader title={t("section_upcoming")} count={grouped.upcoming.length} />
       <div className="flex flex-col gap-2">
         {grouped.upcoming.map((task) => {
           const topic = task.topicId ? topicMap.get(task.topicId) : null;
@@ -453,7 +456,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
       </div>
 
       {/* No date */}
-      <SectionHeader title="No due date" count={grouped.noDate.length} />
+      <SectionHeader title={t("section_no_date")} count={grouped.noDate.length} />
       <div className="flex flex-col gap-2">
         {grouped.noDate.map((task) => {
           const topic = task.topicId ? topicMap.get(task.topicId) : null;
@@ -484,7 +487,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
       </div>
 
       {/* Someday */}
-      <SectionHeader title="Someday" count={grouped.someday.length} />
+      <SectionHeader title={t("section_someday")} count={grouped.someday.length} />
       <div className="flex flex-col gap-2">
         {grouped.someday.map((task) => {
           const topic = task.topicId ? topicMap.get(task.topicId) : null;
@@ -517,7 +520,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
       {/* Completed */}
       {grouped.completed.length > 0 && (
         <>
-          <SectionHeader title="Completed" count={grouped.completed.length} />
+          <SectionHeader title={t("section_completed")} count={grouped.completed.length} />
           <div className="flex flex-col gap-2">
             {grouped.completed.map((task) => {
               const topic = task.topicId ? topicMap.get(task.topicId) : null;
