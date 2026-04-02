@@ -11,11 +11,9 @@
 
 import { getRequestConfig } from "next-intl/server";
 import { cookies, headers } from "next/headers";
-
-/** All supported locale codes. Add new ones here + a matching messages/XX.json. */
-export const LOCALES = ["de", "en", "fr"] as const;
-export type Locale = (typeof LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = "de";
+import { LOCALES, DEFAULT_LOCALE, type Locale } from "./locales";
+export type { Locale } from "./locales";
+export { LOCALES, DEFAULT_LOCALE } from "./locales";
 
 /**
  * Extracts the best-matching locale from an Accept-Language header value.

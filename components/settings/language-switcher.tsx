@@ -9,8 +9,8 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { LOCALES } from "@/i18n/request";
-import type { Locale } from "@/i18n/request";
+import { LOCALES } from "@/i18n/locales";
+import type { Locale } from "@/i18n/locales";
 
 interface LanguageSwitcherProps {
   currentLocale: string;
