@@ -11,6 +11,9 @@
 
 import type { NextConfig } from "next";
 import withPWA from "@ducanh2912/next-pwa";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 /**
  * HTTP security headers applied to every route.
@@ -132,4 +135,4 @@ const pwaConfig = withPWA({
   customWorkerDir: "worker",
 });
 
-export default pwaConfig(nextConfig);
+export default withNextIntl(pwaConfig(nextConfig));
