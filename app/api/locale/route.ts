@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { LOCALES } from "@/i18n/request";
+import { LOCALES } from "@/i18n/locales";
 
 export async function POST(req: NextRequest) {
   let body: unknown;
