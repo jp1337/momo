@@ -178,7 +178,7 @@ async function isMigrationAppliedInDb(client, sqlContent) {
 }
 
 // ---------------------------------------------------------------------------
-// Main: seed already-applied migrations, then run migrate()
+// Main: reconcile migration tracking, then run migrate()
 // ---------------------------------------------------------------------------
 
 const client = await pool.connect();
@@ -194,18 +194,35 @@ try {
     const sqlContent = readFileSync(sqlPath, "utf8");
     const hash = createHash("sha256").update(sqlContent).digest("hex");
 
-    // Skip if Drizzle already tracks this migration
-    if (await isMigrationTracked(client, hash)) continue;
+    const tracked = await isMigrationTracked(client, hash);
+    const appliedInDb = await isMigrationAppliedInDb(client, sqlContent);
 
-    // Check if the migration's DB objects actually exist
-    if (await isMigrationAppliedInDb(client, sqlContent)) {
-      await seedOneMigration(client, entry, sqlContent);
-      seededAny = true;
-    } else {
-      // First migration whose objects are missing — stop here.
-      // migrate() will apply this one and everything after it.
+    if (tracked && !appliedInDb) {
+      // Stale tracking entry: migration was recorded as applied but its DB
+      // objects are missing (e.g. a previous buggy seed run). Remove it so
+      // that migrate() will actually run the migration.
+      await client.query(
+        `DELETE FROM drizzle."__drizzle_migrations" WHERE hash = $1`,
+        [hash]
+      );
+      console.log(`[migrate] Removed stale tracking entry: ${entry.tag}`);
+      // Stop here — migrate() will (re-)apply this and all subsequent entries.
       break;
     }
+
+    if (!tracked && appliedInDb) {
+      // Schema exists but not tracked — seed so migrate() won't re-run it.
+      await seedOneMigration(client, entry, sqlContent);
+      seededAny = true;
+      continue;
+    }
+
+    if (!tracked && !appliedInDb) {
+      // First genuinely pending migration — let migrate() handle it.
+      break;
+    }
+
+    // tracked && appliedInDb — already in sync, nothing to do.
   }
 
   if (seededAny) {
