@@ -7,10 +7,9 @@
  * Submits to POST /api/topics or PATCH /api/topics/:id.
  */
 
-import { useState, useEffect, useRef } from "react";
-import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
-import { useTheme } from "next-themes";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { IconPicker } from "@/components/topics/icon-picker";
 
 interface TopicFormData {
   title: string;
@@ -33,7 +32,7 @@ const DEFAULT_FORM: TopicFormData = {
   title: "",
   description: "",
   color: "#4a8c5c",
-  icon: "📁",
+  icon: "folder",
   priority: "NORMAL",
 };
 
@@ -67,21 +66,6 @@ export function TopicForm({
   });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const { resolvedTheme } = useTheme();
-
-  // Close picker when clicking outside
-  useEffect(() => {
-    if (!showEmojiPicker) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
-        setShowEmojiPicker(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showEmojiPicker]);
 
   useEffect(() => {
     setFormData({ ...DEFAULT_FORM, ...initialData });
@@ -238,43 +222,10 @@ export function TopicForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label style={labelStyle}>{t("form_label_icon")}</label>
-              <div ref={emojiPickerRef} style={{ position: "relative" }}>
-                <button
-                  type="button"
-                  onClick={() => setShowEmojiPicker((v) => !v)}
-                  style={{
-                    ...inputStyle,
-                    fontSize: "1.5rem",
-                    cursor: "pointer",
-                    textAlign: "center",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "0.4rem",
-                    width: "100%",
-                  }}
-                  title={t("form_pick_emoji")}
-                >
-                  <span>{formData.icon || "📁"}</span>
-                  <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>▾</span>
-                </button>
-                {showEmojiPicker && (
-                  <div style={{ position: "absolute", zIndex: 1000, top: "calc(100% + 4px)", left: 0 }}>
-                    <EmojiPicker
-                      theme={resolvedTheme === "dark" ? Theme.DARK : Theme.LIGHT}
-                      onEmojiClick={(data: EmojiClickData) => {
-                        setFormData((prev) => ({ ...prev, icon: data.emoji }));
-                        setShowEmojiPicker(false);
-                      }}
-                      width={300}
-                      height={380}
-                      searchDisabled={false}
-                      skinTonesDisabled
-                      lazyLoadEmojis={false}
-                    />
-                  </div>
-                )}
-              </div>
+              <IconPicker
+                value={formData.icon}
+                onChange={(key) => setFormData((prev) => ({ ...prev, icon: key }))}
+              />
             </div>
 
             <div>

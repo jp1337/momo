@@ -12,6 +12,8 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getTopicById } from "@/lib/topics";
 import { TopicDetailView } from "@/components/topics/topic-detail-view";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { resolveTopicIcon } from "@/lib/topic-icons";
 
 export const metadata: Metadata = {
   title: "Topic — Momo",
@@ -91,7 +93,14 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
             }}
             aria-hidden="true"
           >
-            {topic.icon ?? "📁"}
+            <FontAwesomeIcon
+              icon={resolveTopicIcon(topic.icon)}
+              style={{
+                width: "1.1rem",
+                height: "1.1rem",
+                color: topic.color ?? "var(--accent-amber)",
+              }}
+            />
           </div>
           <div>
             <h1

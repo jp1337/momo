@@ -67,15 +67,12 @@ const securityHeaders = [
       // Without it, all client components fail silently (no dropdowns, no buttons).
       `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
       // 'self' required for the PWA Service Worker (sw.js served from origin).
-      // blob: required for emoji-picker-react — it creates a Web Worker via
-      // URL.createObjectURL(). Without worker-src blob:, the worker is blocked
-      // and emoji data never loads (only category headers appear).
-      "worker-src 'self' blob:",
+      "worker-src 'self'",
       // unsafe-inline is needed for Next.js injected styles even in production
       // Fonts are self-hosted via next/font — no external font CDN needed
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self'",
-      "img-src 'self' data: https://avatars.githubusercontent.com https://cdn.discordapp.com https://lh3.googleusercontent.com https://cdn.jsdelivr.net",
+      "img-src 'self' data: https://avatars.githubusercontent.com https://cdn.discordapp.com https://lh3.googleusercontent.com",
       "connect-src 'self'",
       "frame-ancestors 'none'",
     ].join("; "),
