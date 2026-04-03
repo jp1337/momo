@@ -50,7 +50,7 @@ jobs:
       # Derive a safe artifact/cache suffix from the platform name (e.g. linux-amd64)
       - name: Prepare platform suffix
         id: platform
-        run: echo "suffix=$(echo '${{ matrix.platform }}' | tr '/' '-')" >> $GITHUB_OUTPUT
+        run: echo "suffix=$(echo '${{ matrix.platform }}' | tr '/' '-')" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -109,6 +109,12 @@ jobs:
     permissions:
       contents: read
       packages: write
+    # Map secrets to env vars — secrets context is not available in step `if` expressions,
+    # but env context is. This is the only supported way to conditionally skip steps
+    # based on whether a secret is configured.
+    env:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
 
     steps:
       # Download both digest artifacts into the same directory
@@ -145,7 +151,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        if: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+        if: env.DOCKERHUB_TOKEN != ''
         uses: docker/login-action@v4
         with:
           registry: docker.io
@@ -153,7 +159,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Log in to Quay.io
-        if: ${{ secrets.QUAY_TOKEN != '' }}
+        if: env.QUAY_TOKEN != ''
         uses: docker/login-action@v4
         with:
           registry: quay.io
@@ -164,24 +170,27 @@ jobs:
       - name: Push manifest to GHCR
         working-directory: /tmp/digests
         run: |
+          # shellcheck disable=SC2046
           docker buildx imagetools create \
             $(jq -cr '.tags | map(select(startswith("ghcr.io")) | "-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf 'ghcr.io/jp1337/momo@sha256:%s ' *)
 
       # Push to Docker Hub only if credentials are available
       - name: Push manifest to Docker Hub
-        if: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+        if: env.DOCKERHUB_TOKEN != ''
         working-directory: /tmp/digests
         run: |
+          # shellcheck disable=SC2046
           docker buildx imagetools create \
             $(jq -cr '.tags | map(select(startswith("docker.io")) | "-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf 'ghcr.io/jp1337/momo@sha256:%s ' *)
 
       # Push to Quay.io only if credentials are available
       - name: Push manifest to Quay.io
-        if: ${{ secrets.QUAY_TOKEN != '' }}
+        if: env.QUAY_TOKEN != ''
         working-directory: /tmp/digests
         run: |
+          # shellcheck disable=SC2046
           docker buildx imagetools create \
             $(jq -cr '.tags | map(select(startswith("quay.io")) | "-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf 'ghcr.io/jp1337/momo@sha256:%s ' *)
