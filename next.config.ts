@@ -86,6 +86,20 @@ const nextConfig: NextConfig = {
   output: "standalone",
 
   /**
+   * Expose NEXT_PUBLIC_* variables at runtime so they can be injected via
+   * Docker environment variables without rebuilding the image.
+   * Next.js normally inlines these at build time; listing them here makes
+   * Next.js read them from process.env at server startup instead.
+   */
+  env: {
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "",
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "",
+    NEXT_PUBLIC_IMPRINT_NAME: process.env.NEXT_PUBLIC_IMPRINT_NAME ?? "",
+    NEXT_PUBLIC_IMPRINT_ADDRESS: process.env.NEXT_PUBLIC_IMPRINT_ADDRESS ?? "",
+    NEXT_PUBLIC_IMPRINT_EMAIL: process.env.NEXT_PUBLIC_IMPRINT_EMAIL ?? "",
+  },
+
+  /**
    * Allow loading images from OAuth provider CDNs.
    * GitHub, Discord, and Google all host user avatars on their own domains.
    */
