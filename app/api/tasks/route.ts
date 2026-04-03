@@ -12,7 +12,7 @@
  * Returns: { task: Task }
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { getUserTasks, createTask } from "@/lib/tasks";
 import { CreateTaskInputSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
@@ -22,10 +22,8 @@ import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
  * Returns all tasks for the authenticated user with optional filters.
  */
 export async function GET(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const topicIdParam = searchParams.get("topicId");
@@ -54,7 +52,7 @@ export async function GET(request: Request) {
   if (completedParam === "false") filters.completed = false;
 
   try {
-    const userTasks = await getUserTasks(session.user.id, filters);
+    const userTasks = await getUserTasks(user.userId, filters);
     return Response.json({ tasks: userTasks });
   } catch (error) {
     console.error("[GET /api/tasks]", error);
@@ -67,13 +65,12 @@ export async function GET(request: Request) {
  * Creates a new task for the authenticated user.
  */
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   // Rate limit: 60 task creations per minute per user
-  const rateCheck = checkRateLimit(`tasks-create:${session.user.id}`, 60, 60_000);
+  const rateCheck = checkRateLimit(`tasks-create:${user.userId}`, 60, 60_000);
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   let body: unknown;
@@ -92,7 +89,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const task = await createTask(session.user.id, parsed.data);
+    const task = await createTask(user.userId, parsed.data);
     return Response.json({ task }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/tasks]", error);

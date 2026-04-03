@@ -10,7 +10,7 @@
  * Returns: { item: WishlistItem }
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { markAsBought, unmarkAsBought } from "@/lib/wishlist";
 
 /**
@@ -18,18 +18,17 @@ import { markAsBought, unmarkAsBought } from "@/lib/wishlist";
  * Marks the specified wishlist item as bought.
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   const { id } = await params;
 
   try {
-    const item = await markAsBought(id, session.user.id);
+    const item = await markAsBought(id, user.userId);
     return Response.json({ item });
   } catch (error) {
     console.error("[POST /api/wishlist/:id/buy]", error);
@@ -46,18 +45,17 @@ export async function POST(
  * Reverts a bought item back to OPEN status.
  */
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   const { id } = await params;
 
   try {
-    const item = await unmarkAsBought(id, session.user.id);
+    const item = await unmarkAsBought(id, user.userId);
     return Response.json({ item });
   } catch (error) {
     console.error("[DELETE /api/wishlist/:id/buy]", error);

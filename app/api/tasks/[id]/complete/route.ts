@@ -17,7 +17,7 @@
  * Returns: { task: Task }
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { completeTask, uncompleteTask } from "@/lib/tasks";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
@@ -26,22 +26,21 @@ import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
  * Completes a task and awards coins to the user.
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   // Rate limit: 30 completions per minute per user
-  const rateCheck = checkRateLimit(`tasks-complete:${session.user.id}`, 30, 60_000);
+  const rateCheck = checkRateLimit(`tasks-complete:${user.userId}`, 30, 60_000);
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   const { id } = await params;
 
   try {
-    const result = await completeTask(id, session.user.id);
+    const result = await completeTask(id, user.userId);
     return Response.json({
       task: result.task,
       coinsEarned: result.coinsEarned,
@@ -68,18 +67,17 @@ export async function POST(
  * Uncompletes a task (reverts completion for ONE_TIME and DAILY_ELIGIBLE tasks).
  */
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   const { id } = await params;
 
   try {
-    const task = await uncompleteTask(id, session.user.id);
+    const task = await uncompleteTask(id, user.userId);
     return Response.json({ task });
   } catch (error) {
     console.error("[DELETE /api/tasks/:id/complete]", error);

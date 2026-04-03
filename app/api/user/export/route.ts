@@ -15,18 +15,16 @@
  * objects (internal/sensitive, not portable personal data).
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser } from "@/lib/api-auth";
 import { exportUserData } from "@/lib/export";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(request: Request) {
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { limited, resetAt } = checkRateLimit(
-    `export-data:${session.user.id}`,
+    `export-data:${user.userId}`,
     5,
     60 * 60 * 1_000 // 1 hour
   );
@@ -35,7 +33,7 @@ export async function GET() {
   }
 
   try {
-    const data = await exportUserData(session.user.id);
+    const data = await exportUserData(user.userId);
     const filename = `momo-export-${new Date().toISOString().slice(0, 10)}.json`;
 
     return new Response(JSON.stringify(data, null, 2), {

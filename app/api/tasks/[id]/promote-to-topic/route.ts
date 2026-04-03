@@ -13,7 +13,7 @@
  *   500 — Internal server error
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { promoteTaskToTopic } from "@/lib/tasks";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
@@ -22,22 +22,21 @@ import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
  * Promotes a standalone task to a new topic in a single atomic transaction.
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   // Rate limit: 10 promotions per minute per user
-  const rateCheck = checkRateLimit(`tasks-promote:${session.user.id}`, 10, 60_000);
+  const rateCheck = checkRateLimit(`tasks-promote:${user.userId}`, 10, 60_000);
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   const { id } = await params;
 
   try {
-    const result = await promoteTaskToTopic(id, session.user.id);
+    const result = await promoteTaskToTopic(id, user.userId);
     return Response.json({ topic: result.topic }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/tasks/:id/promote-to-topic]", error);

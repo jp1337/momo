@@ -11,7 +11,7 @@
  * Returns: { topic: Topic }
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { getUserTopics, createTopic } from "@/lib/topics";
 import { CreateTopicInputSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
@@ -20,14 +20,12 @@ import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
  * GET /api/topics
  * Returns all topics with task count statistics.
  */
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(request: Request) {
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const userTopics = await getUserTopics(session.user.id);
+    const userTopics = await getUserTopics(user.userId);
     return Response.json({ topics: userTopics });
   } catch (error) {
     console.error("[GET /api/topics]", error);
@@ -40,13 +38,12 @@ export async function GET() {
  * Creates a new topic.
  */
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   // Rate limit: 30 topic creations per minute per user
-  const rateCheck = checkRateLimit(`topics-create:${session.user.id}`, 30, 60_000);
+  const rateCheck = checkRateLimit(`topics-create:${user.userId}`, 30, 60_000);
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   let body: unknown;
@@ -65,7 +62,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const topic = await createTopic(session.user.id, parsed.data);
+    const topic = await createTopic(user.userId, parsed.data);
     return Response.json({ topic }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/topics]", error);

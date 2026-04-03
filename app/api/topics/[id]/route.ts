@@ -16,7 +16,7 @@
  * Returns: { success: true }
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { getTopicById, updateTopic, deleteTopic } from "@/lib/topics";
 import { UpdateTopicInputSchema } from "@/lib/validators";
 
@@ -25,18 +25,16 @@ import { UpdateTopicInputSchema } from "@/lib/validators";
  * Returns a single topic with all its tasks.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
 
   try {
-    const topic = await getTopicById(id, session.user.id);
+    const topic = await getTopicById(id, user.userId);
     if (!topic) {
       return Response.json({ error: "Topic not found" }, { status: 404 });
     }
@@ -55,10 +53,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   const { id } = await params;
 
@@ -78,7 +75,7 @@ export async function PATCH(
   }
 
   try {
-    const topic = await updateTopic(id, session.user.id, parsed.data);
+    const topic = await updateTopic(id, user.userId, parsed.data);
     return Response.json({ topic });
   } catch (error) {
     console.error("[PATCH /api/topics/:id]", error);
@@ -96,18 +93,17 @@ export async function PATCH(
  * Deletes the topic and reassigns its tasks to no topic.
  */
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   const { id } = await params;
 
   try {
-    await deleteTopic(id, session.user.id);
+    await deleteTopic(id, user.userId);
     return Response.json({ success: true });
   } catch (error) {
     console.error("[DELETE /api/topics/:id]", error);

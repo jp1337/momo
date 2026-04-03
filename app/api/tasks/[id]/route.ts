@@ -16,7 +16,7 @@
  * Returns: { success: true }
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { getTaskById, updateTask, deleteTask } from "@/lib/tasks";
 import { UpdateTaskInputSchema } from "@/lib/validators";
 
@@ -25,18 +25,16 @@ import { UpdateTaskInputSchema } from "@/lib/validators";
  * Returns a single task by ID.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
 
   try {
-    const task = await getTaskById(id, session.user.id);
+    const task = await getTaskById(id, user.userId);
     if (!task) {
       return Response.json({ error: "Task not found" }, { status: 404 });
     }
@@ -55,10 +53,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   const { id } = await params;
 
@@ -78,7 +75,7 @@ export async function PATCH(
   }
 
   try {
-    const task = await updateTask(id, session.user.id, parsed.data);
+    const task = await updateTask(id, user.userId, parsed.data);
     return Response.json({ task });
   } catch (error) {
     console.error("[PATCH /api/tasks/:id]", error);
@@ -96,18 +93,17 @@ export async function PATCH(
  * Permanently deletes a task.
  */
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   const { id } = await params;
 
   try {
-    await deleteTask(id, session.user.id);
+    await deleteTask(id, user.userId);
     return Response.json({ success: true });
   } catch (error) {
     console.error("[DELETE /api/tasks/:id]", error);

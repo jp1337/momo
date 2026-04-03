@@ -11,7 +11,7 @@
  * Returns: { success: true }
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { updateWishlistItem, deleteWishlistItem } from "@/lib/wishlist";
 import { UpdateWishlistItemInputSchema } from "@/lib/validators";
 
@@ -23,10 +23,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   const { id } = await params;
 
@@ -49,7 +48,7 @@ export async function PATCH(
   }
 
   try {
-    const item = await updateWishlistItem(id, session.user.id, parsed.data);
+    const item = await updateWishlistItem(id, user.userId, parsed.data);
     return Response.json({ item });
   } catch (error) {
     console.error("[PATCH /api/wishlist/:id]", error);
@@ -67,18 +66,17 @@ export async function PATCH(
  * Permanently deletes a wishlist item.
  */
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   const { id } = await params;
 
   try {
-    await deleteWishlistItem(id, session.user.id);
+    await deleteWishlistItem(id, user.userId);
     return Response.json({ success: true });
   } catch (error) {
     console.error("[DELETE /api/wishlist/:id]", error);
