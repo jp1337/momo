@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoins } from "@fortawesome/free-solid-svg-icons";
+import { resolveTopicIcon } from "@/lib/topic-icons";
 import { triggerConfetti } from "@/components/animations/confetti";
 import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
@@ -326,7 +327,13 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit }: DailyQu
                   border: `1px solid ${quest.topic.color ?? "var(--border)"}44`,
                 }}
               >
-                {quest.topic.icon ? `${quest.topic.icon} ` : ""}
+                {quest.topic.icon && (
+                  <FontAwesomeIcon
+                    icon={resolveTopicIcon(quest.topic.icon)}
+                    className="w-3 h-3 mr-1"
+                    aria-hidden="true"
+                  />
+                )}
                 {quest.topic.title}
               </span>
             )}
