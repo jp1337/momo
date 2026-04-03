@@ -56,6 +56,14 @@ npx web-push generate-vapid-keys
 | `NEXTAUTH_URL` | string (URL) | `http://localhost:3000` | Base URL used by Auth.js to construct OAuth callback URLs. Must match the **Homepage URL** / **Authorized redirect URI** set in each OAuth provider app. In production: `https://yourdomain.com` |
 | `NODE_ENV` | `development` \| `production` \| `test` | `development` | Runtime environment. **Set to `production` in production deployments** — this enables stricter CSP headers and disables the PWA service worker in dev. |
 
+## Admin Access
+
+| Variable | Type | Default | Description |
+|---|---|---|---|
+| `ADMIN_USER_IDS` | string (comma-separated UUIDs) | — | Comma-separated list of user UUIDs that have access to the `/admin` statistics page. If unset or empty, the admin page shows "Zugriff verweigert" for everyone. Example: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx,yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy` |
+
+Find a user's UUID in the database: `SELECT id, email FROM users;`
+
 ## Legal Pages (DSGVO / § 5 TMG)
 
 Required for publicly accessible deployments. These values are rendered on `/impressum` and `/datenschutz`.

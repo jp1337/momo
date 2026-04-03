@@ -21,12 +21,16 @@ import {
   faGear,
   faKey,
   faRightFromBracket,
+  faChartBar,
+  faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface UserMenuProps {
   userName?: string | null;
   userImage?: string | null;
   userEmail?: string | null;
+  /** If true, an Admin link is shown in the menu */
+  isAdmin?: boolean;
 }
 
 /**
@@ -35,8 +39,9 @@ interface UserMenuProps {
  * @param userName  - Display name from the session
  * @param userImage - Avatar URL from the OAuth provider
  * @param userEmail - Email address (shown in the menu header)
+ * @param isAdmin   - If true, shows the Admin link in the menu
  */
-export function UserMenu({ userName, userImage, userEmail }: UserMenuProps) {
+export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -145,6 +150,33 @@ export function UserMenu({ userName, userImage, userEmail }: UserMenuProps) {
           {/* Navigation items */}
           <div className="py-1">
             <Link
+              href="/stats"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100 no-underline"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-primary)",
+              }}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLElement).style.backgroundColor =
+                  "var(--bg-surface)")
+              }
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLElement).style.backgroundColor =
+                  "transparent")
+              }
+            >
+              <FontAwesomeIcon
+                icon={faChartBar}
+                className="w-4 h-4 flex-shrink-0"
+                style={{ color: "var(--text-muted)" }}
+                aria-hidden="true"
+              />
+              Statistiken
+            </Link>
+
+            <Link
               href="/settings"
               role="menuitem"
               onClick={() => setOpen(false)}
@@ -197,6 +229,35 @@ export function UserMenu({ userName, userImage, userEmail }: UserMenuProps) {
               />
               API Keys
             </Link>
+
+            {isAdmin && (
+              <Link
+                href="/admin"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100 no-underline"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--accent-amber)",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLElement).style.backgroundColor =
+                    "var(--bg-surface)")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLElement).style.backgroundColor =
+                    "transparent")
+                }
+              >
+                <FontAwesomeIcon
+                  icon={faShieldHalved}
+                  className="w-4 h-4 flex-shrink-0"
+                  style={{ color: "var(--accent-amber)" }}
+                  aria-hidden="true"
+                />
+                Admin
+              </Link>
+            )}
           </div>
 
           {/* Divider */}
