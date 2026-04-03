@@ -39,8 +39,16 @@ export async function POST(
 
   const { id } = await params;
 
+  let timezone: string | null = null;
   try {
-    const result = await completeTask(id, user.userId);
+    const body = await request.json() as { timezone?: string | null };
+    if (typeof body?.timezone === "string") timezone = body.timezone;
+  } catch {
+    // body is optional — timezone defaults to null (UTC fallback)
+  }
+
+  try {
+    const result = await completeTask(id, user.userId, timezone);
     return Response.json({
       task: result.task,
       coinsEarned: result.coinsEarned,

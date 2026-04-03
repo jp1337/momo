@@ -258,7 +258,12 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
 
   const handleComplete = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`/api/tasks/${id}/complete`, { method: "POST" });
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const res = await fetch(`/api/tasks/${id}/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timezone }),
+      });
       if (res.ok) {
         const data = (await res.json()) as CompleteApiResponse;
 
@@ -293,6 +298,13 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
     try {
       const res = await fetch(`/api/tasks/${id}/complete`, { method: "DELETE" });
       if (res.ok) {
+        const data = (await res.json()) as { task?: { coinValue?: number } };
+        const refunded = data.task?.coinValue ?? 0;
+        if (refunded > 0) {
+          window.dispatchEvent(
+            new CustomEvent("coinsEarned", { detail: { delta: -refunded } })
+          );
+        }
         await refreshTasks();
       }
     } catch {

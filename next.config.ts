@@ -67,7 +67,8 @@ const securityHeaders = [
       // Without it, all client components fail silently (no dropdowns, no buttons).
       `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
       // 'self' required for the PWA Service Worker (sw.js served from origin).
-      "worker-src 'self'",
+      // 'blob:' required for the canvas-confetti library which spawns a Web Worker from a blob URL.
+      "worker-src 'self' blob:",
       // unsafe-inline is needed for Next.js injected styles even in production
       // Fonts are self-hosted via next/font — no external font CDN needed
       "style-src 'self' 'unsafe-inline'",

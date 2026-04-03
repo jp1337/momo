@@ -76,6 +76,28 @@ async function indexExists(client, name) {
   return r.rowCount > 0;
 }
 
+async function columnExists(client, table, column) {
+  const r = await client.query(
+    `SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2`,
+    [table, column]
+  );
+  return r.rowCount > 0;
+}
+
+/**
+ * Extracts { table, column } pairs from ALTER TABLE ... ADD COLUMN statements.
+ */
+function parseAlterAddColumns(sql) {
+  const pairs = [];
+  // Matches: ALTER TABLE "table" ADD COLUMN "column" ... or without quotes
+  const re = /ALTER TABLE\s+"?(\w+)"?\s+ADD COLUMN(?:\s+IF NOT EXISTS)?\s+"?(\w+)"?/gi;
+  for (const m of sql.matchAll(re)) {
+    pairs.push({ table: m[1], column: m[2] });
+  }
+  return pairs;
+}
+
 /**
  * Returns true if the given migration is already recorded in
  * drizzle.__drizzle_migrations (Drizzle's tracking schema).
@@ -161,8 +183,9 @@ function parseCreatedIndexes(sql) {
 async function isMigrationAppliedInDb(client, sqlContent) {
   const tables = parseCreatedTables(sqlContent);
   const indexes = parseCreatedIndexes(sqlContent);
+  const columns = parseAlterAddColumns(sqlContent);
 
-  if (tables.length === 0 && indexes.length === 0) {
+  if (tables.length === 0 && indexes.length === 0 && columns.length === 0) {
     // Cannot verify — let migrate() handle it
     return false;
   }
@@ -172,6 +195,9 @@ async function isMigrationAppliedInDb(client, sqlContent) {
   }
   for (const index of indexes) {
     if (!(await indexExists(client, index))) return false;
+  }
+  for (const { table, column } of columns) {
+    if (!(await columnExists(client, table, column))) return false;
   }
 
   return true;
