@@ -30,10 +30,11 @@ const pushSubscriptionSchema = z.object({
 /** Zod schema for the POST request body */
 const subscribeBodySchema = z.object({
   subscription: pushSubscriptionSchema,
-  /** Preferred notification time in HH:MM 24h format */
+  /** Preferred notification time in HH:MM or HH:MM:SS 24h format (PostgreSQL returns HH:MM:SS) */
   notificationTime: z
     .string()
-    .regex(/^\d{2}:\d{2}$/, "Must be HH:MM format")
+    .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
+    .transform((v) => v.slice(0, 5))
     .optional(),
 });
 

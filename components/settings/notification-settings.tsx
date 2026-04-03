@@ -55,8 +55,9 @@ export function NotificationSettings({
 }: NotificationSettingsProps) {
   const t = useTranslations("settings");
   const [status, setStatus] = useState<NotificationStatus>("loading");
+  // Normalize to HH:MM — PostgreSQL time columns return "HH:MM:SS"
   const [notificationTime, setNotificationTime] = useState(
-    initialTime || "08:00"
+    (initialTime || "08:00").slice(0, 5)
   );
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
