@@ -37,6 +37,8 @@ interface Task {
   notes: string | null;
   coinValue: number;
   createdAt: string;
+  postponeCount?: number;
+  estimatedMinutes?: number | null;
 }
 
 interface TopicOption {
@@ -333,6 +335,11 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
     router.push(`/topics/${topicId}`);
   }, [router]);
 
+  const handleBreakdown = useCallback(async (id: string) => {
+    // Task was deleted during breakdown — remove from local state and refresh
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   const handleInlineEdit = useCallback(async (id: string, newTitle: string) => {
     try {
       const res = await fetch(`/api/tasks/${id}`, {
@@ -418,6 +425,9 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                 onInlineEdit={handleInlineEdit}
                 onPromote={handlePromote}
                 onGoToTopic={handleGoToTopic}
+                postponeCount={task.postponeCount}
+                estimatedMinutes={task.estimatedMinutes}
+                onBreakdown={handleBreakdown}
               />
             );
           })}
