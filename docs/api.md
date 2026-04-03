@@ -14,63 +14,240 @@ Managed by Auth.js v5. These routes are handled internally by the framework.
 | `POST` | `/api/auth/signout` | Signs the user out |
 | `GET` | `/api/auth/csrf` | Returns a CSRF token |
 
-## Application Routes
+---
 
-### Task Action Routes
+## System Routes
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/health` | No | Liveness probe — returns `{ status: "ok" }` or `503` on DB error |
+| `POST` | `/api/locale` | No | Set UI language preference cookie |
+
+### POST /api/locale
+
+Sets the `locale` cookie used by next-intl for language selection.
+
+Request body:
+```json
+{ "locale": "de" }
+```
+
+Valid values: `"de"`, `"en"`, `"fr"`. Response: `{ "success": true }`
+
+---
+
+## Task Routes
 
 | Method | Path | Auth | Rate Limit | Description |
 |---|---|---|---|---|
-| `POST` | `/api/tasks/:id/promote-to-topic` | Yes | 10/min | Promote a standalone task to a new topic |
+| `GET` | `/api/tasks` | Yes | — | List all tasks (with optional filters) |
+| `POST` | `/api/tasks` | Yes | 60/min | Create a new task |
+| `GET` | `/api/tasks/:id` | Yes | — | Get a single task |
+| `PATCH` | `/api/tasks/:id` | Yes | — | Partially update a task |
+| `DELETE` | `/api/tasks/:id` | Yes | — | Delete a task |
+| `POST` | `/api/tasks/:id/complete` | Yes | 30/min | Mark task as complete + award coins |
+| `DELETE` | `/api/tasks/:id/complete` | Yes | — | Undo task completion + refund coins |
+| `POST` | `/api/tasks/:id/promote-to-topic` | Yes | 10/min | Promote standalone task to a new topic |
 
-#### POST /api/tasks/:id/promote-to-topic
+### GET /api/tasks
+
+Optional query parameters:
+
+| Parameter | Type | Description |
+|---|---|---|
+| `topicId` | UUID or `"none"` | Filter by topic (`"none"` returns tasks without a topic) |
+| `type` | `ONE_TIME` \| `RECURRING` \| `DAILY_ELIGIBLE` | Filter by task type |
+| `completed` | `true` \| `false` | Filter by completion status |
+
+Response:
+```json
+{
+  "tasks": [
+    {
+      "id": "uuid",
+      "userId": "uuid",
+      "topicId": null,
+      "title": "Buy groceries",
+      "notes": null,
+      "type": "ONE_TIME",
+      "priority": "NORMAL",
+      "recurrenceInterval": null,
+      "dueDate": "2026-04-05",
+      "nextDueDate": null,
+      "completedAt": null,
+      "coinValue": 1,
+      "isDailyQuest": false,
+      "createdAt": "2026-04-01T08:00:00Z"
+    }
+  ]
+}
+```
+
+### POST /api/tasks
+
+Request body:
+```json
+{
+  "title": "Buy groceries",
+  "type": "ONE_TIME",
+  "priority": "NORMAL",
+  "dueDate": "2026-04-05",
+  "coinValue": 2,
+  "notes": "Optional notes",
+  "topicId": "uuid-or-null",
+  "recurrenceInterval": null
+}
+```
+
+`type` is required. For `RECURRING` tasks, `recurrenceInterval` (integer, days) is required. Response: `{ "task": Task }` — Status `201`
+
+### PATCH /api/tasks/:id
+
+All fields optional. Same shape as POST body. Response: `{ "task": Task }`
+
+### POST /api/tasks/:id/complete
+
+Awards `coinValue` coins to the user, updates the daily streak, checks achievements.
+For `RECURRING` tasks: advances `nextDueDate` by `recurrenceInterval` days and resets `completedAt`.
+
+Response: `{ "task": Task, "coinsAwarded": 2 }`
+
+### DELETE /api/tasks/:id/complete
+
+Refunds the `coinValue` coins, resets `completedAt` to null.
+
+Response: `{ "task": Task }`
+
+### POST /api/tasks/:id/promote-to-topic
 
 Promotes a standalone task (no `topicId`) to a new topic in a single atomic transaction.
 The task's `title`, `notes`, and `priority` are mapped to the new topic.
-The task is re-associated as the first subtask (`topicId` set to new topic's UUID).
+The task is re-associated as the first subtask.
 
 Returns `409 Conflict` if the task already belongs to a topic.
 
 Response (201 Created):
 ```json
 {
-  "topic": {
-    "id": "uuid",
-    "userId": "uuid",
-    "title": "Hochbeet bauen",
-    "description": "optional notes from the original task",
-    "color": null,
-    "icon": null,
-    "priority": "NORMAL",
-    "archived": false,
-    "createdAt": "2026-04-02T10:00:00Z"
-  }
+  "topic": { "id": "uuid", "title": "Hochbeet bauen", ... }
 }
 ```
 
-Error responses:
-- `401` Unauthorized
-- `404` Task not found
-- `409` Task already belongs to a topic
-- `429` Rate limit exceeded
-- `500` Internal server error
+---
+
+## Topic Routes
+
+| Method | Path | Auth | Rate Limit | Description |
+|---|---|---|---|---|
+| `GET` | `/api/topics` | Yes | — | List all topics with task counts |
+| `POST` | `/api/topics` | Yes | 30/min | Create a new topic |
+| `GET` | `/api/topics/:id` | Yes | — | Get topic with all its tasks |
+| `PATCH` | `/api/topics/:id` | Yes | — | Partially update a topic |
+| `DELETE` | `/api/topics/:id` | Yes | — | Delete topic (tasks become standalone) |
+
+### GET /api/topics
+
+Response:
+```json
+{
+  "topics": [
+    {
+      "id": "uuid",
+      "title": "Tax Return",
+      "description": null,
+      "color": "#52a06e",
+      "icon": "📂",
+      "priority": "HIGH",
+      "archived": false,
+      "createdAt": "2026-03-01T10:00:00Z",
+      "taskCount": 5,
+      "completedCount": 2
+    }
+  ]
+}
+```
+
+### POST /api/topics
+
+Request body:
+```json
+{
+  "title": "Tax Return",
+  "description": "All documents and tasks for this year's return",
+  "color": "#52a06e",
+  "icon": "📂",
+  "priority": "HIGH"
+}
+```
+
+`title` is required. Response: `{ "topic": Topic }` — Status `201`
+
+### GET /api/topics/:id
+
+Returns the topic with its full task list (both open and completed tasks).
+
+Response: `{ "topic": Topic & { tasks: Task[] } }`
+
+### PATCH /api/topics/:id
+
+All fields optional. Same shape as POST body. Response: `{ "topic": Topic }`
+
+### DELETE /api/topics/:id
+
+Deletes the topic. All associated tasks have their `topicId` set to `null` (they become standalone tasks, not deleted).
+
+Response: `{ "success": true }`
 
 ---
 
-### Wishlist Routes
+## Daily Quest Routes
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `GET` | `/api/wishlist` | Yes | List all wishlist items + budget summary |
-| `POST` | `/api/wishlist` | Yes | Create a new wishlist item |
-| `PATCH` | `/api/wishlist/:id` | Yes | Update a wishlist item (partial) |
-| `DELETE` | `/api/wishlist/:id` | Yes | Permanently delete a wishlist item |
-| `POST` | `/api/wishlist/:id/buy` | Yes | Mark item as bought (status → BOUGHT) |
-| `DELETE` | `/api/wishlist/:id/buy` | Yes | Revert bought item to OPEN |
-| `POST` | `/api/wishlist/:id/discard` | Yes | Mark item as discarded (status → DISCARDED) |
+| Method | Path | Auth | Rate Limit | Description |
+|---|---|---|---|---|
+| `GET` | `/api/daily-quest` | Yes | — | Get today's quest (auto-selects if none active) |
+| `POST` | `/api/daily-quest` | Yes | — | Force a new quest selection |
+| `POST` | `/api/daily-quest/postpone` | Yes | 10/min | Postpone today's quest to tomorrow |
 
-#### GET /api/wishlist
+### GET /api/daily-quest
 
-Returns all wishlist items for the user plus the budget summary.
+Returns the active daily quest. If no quest is currently selected, one is automatically chosen using the priority algorithm:
+
+1. Oldest overdue task
+2. High-priority topic subtask
+3. Due recurring task
+4. Random open task from pool
+
+Response:
+```json
+{
+  "task": { ... },
+  "alreadyCompleted": false
+}
+```
+
+Returns `{ "task": null }` if no eligible tasks exist.
+
+### POST /api/daily-quest/postpone
+
+Marks today's quest as postponed and selects a new one for tomorrow.
+
+Response: `{ "success": true }`
+
+---
+
+## Wishlist Routes
+
+| Method | Path | Auth | Rate Limit | Description |
+|---|---|---|---|---|
+| `GET` | `/api/wishlist` | Yes | — | List all wishlist items + budget summary |
+| `POST` | `/api/wishlist` | Yes | 30/min | Create a new wishlist item |
+| `PATCH` | `/api/wishlist/:id` | Yes | — | Update a wishlist item (partial) |
+| `DELETE` | `/api/wishlist/:id` | Yes | — | Permanently delete a wishlist item |
+| `POST` | `/api/wishlist/:id/buy` | Yes | — | Mark item as bought (status → BOUGHT) |
+| `DELETE` | `/api/wishlist/:id/buy` | Yes | — | Revert bought item to OPEN |
+| `POST` | `/api/wishlist/:id/discard` | Yes | — | Mark item as discarded (status → DISCARDED) |
+
+### GET /api/wishlist
 
 Response:
 ```json
@@ -78,7 +255,6 @@ Response:
   "items": [
     {
       "id": "uuid",
-      "userId": "uuid",
       "title": "New headphones",
       "price": "149.99",
       "url": "https://example.com",
@@ -96,9 +272,7 @@ Response:
 }
 ```
 
-#### POST /api/wishlist
-
-Creates a new wishlist item.
+### POST /api/wishlist
 
 Request body:
 ```json
@@ -111,50 +285,40 @@ Request body:
 }
 ```
 
-Response: `{ "item": WishlistItem }` — Status `201`
+`title` and `priority` are required. Response: `{ "item": WishlistItem }` — Status `201`
 
-#### PATCH /api/wishlist/:id
+### PATCH /api/wishlist/:id
 
-Partially updates a wishlist item. All fields optional.
+All fields optional. Same shape as POST body. Response: `{ "item": WishlistItem }`
 
-Request body: Same fields as POST, all optional.
+### DELETE /api/wishlist/:id
 
-Response: `{ "item": WishlistItem }`
+Permanently deletes the item. Response: `{ "success": true }`
 
-#### DELETE /api/wishlist/:id
+### POST /api/wishlist/:id/buy
 
-Permanently deletes a wishlist item.
+Sets item status to `BOUGHT`. Response: `{ "item": WishlistItem }`
 
-Response: `{ "success": true }`
+### DELETE /api/wishlist/:id/buy
 
-#### POST /api/wishlist/:id/buy
-
-Marks the item as bought.
+Reverts a `BOUGHT` item back to `OPEN`. Returns `409` if item is not in `BOUGHT` state.
 
 Response: `{ "item": WishlistItem }`
 
-#### DELETE /api/wishlist/:id/buy
+### POST /api/wishlist/:id/discard
 
-Reverts a bought item back to OPEN.
-
-Response: `{ "item": WishlistItem }`
-
-#### POST /api/wishlist/:id/discard
-
-Archives the item as discarded.
-
-Response: `{ "item": WishlistItem }`
+Sets item status to `DISCARDED`. Response: `{ "item": WishlistItem }`
 
 ---
 
-### Settings Routes
+## Settings Routes
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | `GET` | `/api/settings/budget` | Yes | Get current monthly budget + spending summary |
 | `PATCH` | `/api/settings/budget` | Yes | Update monthly budget |
 
-#### GET /api/settings/budget
+### GET /api/settings/budget
 
 Response:
 ```json
@@ -167,9 +331,8 @@ Response:
 }
 ```
 
-#### PATCH /api/settings/budget
+### PATCH /api/settings/budget
 
-Request body:
 ```json
 { "budget": 500 }
 ```
@@ -178,7 +341,7 @@ Send `null` to remove the budget limit. Response: `{ "success": true }`
 
 ---
 
-### Push Notification Routes
+## Push Notification Routes
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
@@ -186,19 +349,14 @@ Send `null` to remove the budget limit. Response: `{ "success": true }`
 | `DELETE` | `/api/push/subscribe` | Yes | Remove subscription + disable notifications |
 | `POST` | `/api/push/test` | Yes | Send a test push notification to the current user |
 
-#### POST /api/push/subscribe
-
-Saves the user's browser push subscription and enables notifications.
+### POST /api/push/subscribe
 
 Request body:
 ```json
 {
   "subscription": {
     "endpoint": "https://push.example.com/...",
-    "keys": {
-      "p256dh": "...",
-      "auth": "..."
-    }
+    "keys": { "p256dh": "...", "auth": "..." }
   },
   "notificationTime": "08:00"
 }
@@ -206,107 +364,47 @@ Request body:
 
 Response: `{ "success": true }`
 
-#### DELETE /api/push/subscribe
-
-Removes the push subscription and disables notifications.
-
-Response: `{ "success": true }`
-
-#### POST /api/push/test
-
-Sends a test push notification to the current user's registered subscription.
-
-Response: `{ "success": true }`
-
 ---
 
-### Cron Routes
+## Cron Routes
 
-These routes are protected by `CRON_SECRET` (not by user session). Include the token as:
+Protected by `CRON_SECRET` (not by user session). Pass as:
 `Authorization: Bearer <CRON_SECRET>`
 
-If `CRON_SECRET` is not set, the routes are unprotected.
+If `CRON_SECRET` is not set, these routes are unprotected — set it in production.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/api/cron/daily-quest` | CRON_SECRET | Send daily quest notifications to all eligible users |
-| `POST` | `/api/cron/streak-reminder` | CRON_SECRET | Send streak reminder notifications |
+| `POST` | `/api/cron/daily-quest` | CRON_SECRET | Send daily quest push notifications to all eligible users |
+| `POST` | `/api/cron/streak-reminder` | CRON_SECRET | Send streak reminder push notifications |
 
-#### POST /api/cron/daily-quest
-
-Triggers push notifications for all users who have notifications enabled and an active push subscription.
-
-Response:
-```json
-{ "sent": 5, "failed": 0 }
-```
-
-#### POST /api/cron/streak-reminder
-
-Triggers streak reminder notifications for users with an active streak who haven't completed a task today.
-
-Response:
-```json
-{ "sent": 3, "failed": 0 }
-```
-
----
-
-## Response Format
-
-All API routes return consistent JSON responses.
-
-### Success
-```json
-{
-  "data": { ... }
-}
-```
-
-### Error
-```json
-{
-  "error": "Human-readable error message",
-  "code": "MACHINE_READABLE_CODE"
-}
-```
+Response format for both: `{ "sent": 5, "failed": 0 }`
 
 ---
 
 ## User Routes
 
+| Method | Path | Auth | Rate Limit | Description |
+|---|---|---|---|---|
+| `DELETE` | `/api/user` | Yes | 5/hour | Permanently delete account + all data |
+| `GET` | `/api/user/export` | Yes | 5/hour | Download all personal data as JSON |
+
 ### DELETE /api/user
 
-Permanently deletes the authenticated user's account and all associated data.
-The cascade is handled by PostgreSQL FK constraints — all tasks, topics, wishlist items,
-sessions, OAuth accounts, achievements, and task completions are removed automatically.
-
-| Field | Value |
-|---|---|
-| Auth | Required |
-| Rate Limit | 5 per hour |
-| Body | none |
-| Response | `{ "success": true }` |
+Permanently deletes the authenticated user's account. All associated data is removed via `ON DELETE CASCADE` PostgreSQL constraints (tasks, topics, wishlist items, sessions, OAuth accounts, achievements, task completions).
 
 After a successful response the client calls `signOut()` and redirects to `/login`.
 
----
+Response: `{ "success": true }`
 
 ### GET /api/user/export
 
-Exports all personal data for the authenticated user as a downloadable JSON file.
-Implements DSGVO Art. 15 (right of access) and Art. 20 (data portability).
+Returns all personal data as a downloadable JSON file. Implements DSGVO Art. 15 (right of access) and Art. 20 (data portability).
 
-| Field | Value |
-|---|---|
-| Auth | Required |
-| Rate Limit | 5 per hour |
-| Body | none |
-| Response | JSON file attachment (`momo-export-YYYY-MM-DD.json`) |
+Response: JSON file attachment — `momo-export-YYYY-MM-DD.json`
 
-**Included in export:** profile, topics, tasks, task completions, wishlist items, earned achievements.
-
-**Excluded from export:** OAuth tokens, session tokens, push subscription objects (internal/sensitive).
+**Included:** profile, topics, tasks, task completions, wishlist items, earned achievements.
+**Excluded:** OAuth tokens, session tokens, push subscription (internal/sensitive).
 
 ```json
 {
@@ -323,15 +421,34 @@ Implements DSGVO Art. 15 (right of access) and Art. 20 (data portability).
 
 ---
 
+## Response Format
+
+All routes return consistent JSON. On error, `error` is always a human-readable string.
+
+**Success:**
+```json
+{ "task": { ... } }
+```
+*(field name varies by resource — `task`, `topic`, `item`, `success`, etc.)*
+
+**Error:**
+```json
+{ "error": "Task not found" }
+```
+
+**Rate limit exceeded (429):**
+```json
+{ "error": "Rate limit exceeded" }
+```
+Includes `Retry-After` header with seconds until reset.
+
+---
+
 ## Authentication
 
-All application API routes require a valid session. The session is validated using Auth.js `auth()` at the start of every handler.
+All application API routes (except `/api/health`, `/api/locale`, and `/api/auth/*`) require a valid session cookie. The session is validated using Auth.js `auth()` at the start of every handler.
 
-Unauthenticated requests return:
+Unauthenticated requests return `401`:
 ```json
-{
-  "error": "Unauthorized",
-  "code": "UNAUTHORIZED"
-}
+{ "error": "Unauthorized" }
 ```
-Status: `401`

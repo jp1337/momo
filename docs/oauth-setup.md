@@ -82,6 +82,7 @@ OIDC login is activated automatically when `OIDC_ISSUER` is set.
    ```
    http://localhost:3000/api/auth/callback/keycloak
    ```
+   > **Note:** The path segment `keycloak` is Auth.js's internal identifier for the generic OIDC provider — it does not mean you must use Keycloak. Use this exact path regardless of which OIDC provider you choose (Authentik, Zitadel, etc.).
 3. Copy the **Client ID**, **Client Secret**, and **Issuer URL**
 4. Add to `.env.local`:
    ```env

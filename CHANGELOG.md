@@ -19,8 +19,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - "Daten exportieren" button in Settings page (section above Danger Zone)
 - "Konto löschen" two-step confirmation in Settings page Danger Zone
 - `docs/gdpr.md` — DSGVO compliance guide for operators
-- `NEXT_PUBLIC_IMPRINT_*` environment variables documented in `.env.example` and `docs/environment-variables.md`
+- `NEXT_PUBLIC_IMPRINT_*` environment variables added to `.env.example` and all docs
 - CSP headers updated: `fonts.googleapis.com` and `fonts.gstatic.com` removed (no longer needed)
+
+**Multilingual Support (2026-04-03)**
+
+- `next-intl` integration — cookie-based locale detection, no URL prefix changes
+- Three supported languages: German (`de`, default), English (`en`), French (`fr`)
+- All UI strings extracted into `messages/de.json`, `messages/en.json`, `messages/fr.json`
+- Language switcher in Settings (🇩🇪 / 🇬🇧 / 🇫🇷 buttons)
+- `POST /api/locale` — sets the `locale` cookie
+- Locale resolution order: cookie → `Accept-Language` header → default `de`
+- Adding new languages requires only a `messages/XX.json` file — no code changes
+
+**Dark Mode Redesign — "Warme Dämmerung" (2026-04-03)**
+
+- Background lightness raised from L 7–14% to L 12–20% — no longer oppressively dark
+- Improved layer separation: `bg-primary` / `bg-surface` / `bg-elevated` now clearly distinguishable
+- Border opacity increased (L 22% → L 30%) for better visibility
+- Shadow opacity reduced (0.40–0.60 → 0.30–0.45) for a softer feel
+- Light mode unchanged
 
 **CI/CD Improvements (2026-04-01)**
 
