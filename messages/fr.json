@@ -251,6 +251,8 @@
     "section_data": "Vos données",
     "data_hint": "Téléchargez une copie de toutes vos données personnelles (RGPD Art. 15/20).",
     "export_download_btn": "Exporter les données (JSON)",
+    "section_linked_accounts": "Comptes connectés",
+    "linked_accounts_hint": "Connectez-vous avec n'importe quel compte lié. Vous pouvez associer d'autres fournisseurs OAuth à votre compte.",
     "section_danger": "Zone dangereuse",
     "danger_hint": "Ces actions sont irréversibles.",
     "delete_account_btn": "Supprimer le compte",
