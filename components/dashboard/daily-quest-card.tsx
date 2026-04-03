@@ -136,8 +136,16 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit }: DailyQu
       }
 
       const data = (await res.json()) as CompleteResponse;
-      setCoinsEarned(data.coinsEarned ?? quest.coinValue);
+      const earned = data.coinsEarned ?? quest.coinValue;
+      setCoinsEarned(earned);
       setIsCompleted(true);
+
+      // Notify CoinCounter in the navbar about earned coins
+      if (earned > 0) {
+        window.dispatchEvent(
+          new CustomEvent("coinsEarned", { detail: { delta: earned } })
+        );
+      }
 
       // Always fire confetti on quest completion
       triggerConfetti();

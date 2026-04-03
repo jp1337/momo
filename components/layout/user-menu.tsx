@@ -89,7 +89,7 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
         aria-haspopup="true"
         aria-expanded={open}
         aria-label="User menu"
-        className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium flex-shrink-0 transition-opacity hover:opacity-80"
+        className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium flex-shrink-0 transition-opacity hover:opacity-80"
         style={{
           backgroundColor: "var(--accent-green)",
           color: "var(--bg-primary)",
