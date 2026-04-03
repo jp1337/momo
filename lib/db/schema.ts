@@ -10,6 +10,8 @@
  *  - wishlist_items     Items a user wants to buy, with optional coin gating
  *  - achievements       Master list of available achievements (seeded)
  *  - user_achievements  Junction: which achievements a user has earned
+ *  - api_keys           Personal Access Tokens for programmatic API access
+ *  - linking_requests   Short-lived tokens for OAuth account linking flow
  */
 
 import {
@@ -344,6 +346,81 @@ export const userAchievements = pgTable(
   ]
 );
 
+/**
+ * Personal Access Tokens (API Keys) for programmatic access to the Momo API.
+ *
+ * Each key is stored as a SHA-256 hash of the plaintext token — the plaintext
+ * is only ever shown once at creation time and never persisted.
+ *
+ * Key format (256-bit entropy): `momo_live_<44 chars base64url(32 random bytes)>`
+ *
+ * Fields:
+ *  - keyHash    SHA-256(plaintext key) — used for O(1) lookup at auth time
+ *  - keyPrefix  First 16 chars of the plaintext + "..." for display in the UI
+ *  - readonly   If true, the key may only be used for GET requests
+ *  - expiresAt  NULL = never expires; otherwise refused after this timestamp
+ *  - revokedAt  NULL = active; set to revoke the key immediately
+ *  - lastUsedAt Updated on each successful auth — useful for activity tracking
+ */
+export const apiKeys = pgTable("api_keys", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  /** User-defined label (e.g. "Claude MCP", "Home automation") */
+  name: text("name").notNull(),
+
+  /** SHA-256 hash of the plaintext API key — indexed, O(1) lookup */
+  keyHash: text("key_hash").notNull().unique(),
+
+  /** Display prefix: first 16 chars of plaintext + "..." (never the full key) */
+  keyPrefix: text("key_prefix").notNull(),
+
+  /** If true, key may only be used for GET requests (read-only access) */
+  readonly: boolean("readonly").notNull().default(false),
+
+  /** NULL = never expires */
+  expiresAt: timestamp("expires_at"),
+
+  /** Timestamp of last successful authentication — NULL if never used */
+  lastUsedAt: timestamp("last_used_at"),
+
+  /** Set when the key is revoked — NULL means the key is still active */
+  revokedAt: timestamp("revoked_at"),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/**
+ * Short-lived tokens used during the OAuth account linking flow.
+ *
+ * When a logged-in user wants to connect an additional OAuth provider, Momo:
+ *  1. Creates a linking_request record with the user's ID and target provider
+ *  2. Redirects the user through the OAuth flow
+ *  3. In the OAuth callback, reads this token to find the original user and
+ *     merge the new OAuth account onto them
+ *
+ * Tokens expire after 5 minutes to limit the attack surface.
+ */
+export const linkingRequests = pgTable("linking_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  /** The user who initiated the linking request */
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  /** Target OAuth provider (e.g. "github", "discord", "google", "keycloak") */
+  provider: text("provider").notNull(),
+
+  /** Tokens expire after 5 minutes */
+  expiresAt: timestamp("expires_at").notNull(),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -354,6 +431,16 @@ export const usersRelations = relations(users, ({ many }) => ({
   taskCompletions: many(taskCompletions),
   wishlistItems: many(wishlistItems),
   userAchievements: many(userAchievements),
+  apiKeys: many(apiKeys),
+  linkingRequests: many(linkingRequests),
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  user: one(users, { fields: [apiKeys.userId], references: [users.id] }),
+}));
+
+export const linkingRequestsRelations = relations(linkingRequests, ({ one }) => ({
+  user: one(users, { fields: [linkingRequests.userId], references: [users.id] }),
 }));
 
 export const topicsRelations = relations(topics, ({ one, many }) => ({
