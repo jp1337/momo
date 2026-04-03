@@ -48,7 +48,7 @@ export function CoinCounter({ initialCoins }: CoinCounterProps) {
   return (
     <span
       ref={nodeRef}
-      className="flex items-center gap-1.5 text-sm font-medium px-2.5 py-1 rounded-lg"
+      className="flex items-center gap-1.5 text-sm font-medium px-2.5 rounded-lg h-9"
       style={{
         fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
         color: "var(--coin-gold)",
