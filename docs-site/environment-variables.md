@@ -18,6 +18,7 @@ These must be set for the application to start.
 |---|---|---|
 | `DATABASE_URL` | string (URL) | PostgreSQL connection string — `postgresql://user:pass@host:port/db` |
 | `AUTH_SECRET` | string (min 32 chars) | Secret for signing Auth.js JWTs and cookies. Generate with `openssl rand -base64 32` |
+| `AUTH_TRUST_HOST` | `true` \| `false` | **Required in production behind a reverse proxy.** Auth.js v5 rejects requests from hosts it doesn't recognise unless this is `true`. Must be set for Docker Compose + Caddy/nginx and all Kubernetes deployments. Leave `false` for local development without a proxy. |
 
 ---
 
@@ -149,6 +150,7 @@ POSTGRES_PASSWORD=strongpassword
 
 # Auth
 AUTH_SECRET=your-32-byte-base64-secret
+AUTH_TRUST_HOST=true  # Required behind a reverse proxy or in Kubernetes
 
 # OAuth
 GITHUB_CLIENT_ID=your-github-client-id

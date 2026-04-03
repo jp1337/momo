@@ -60,9 +60,11 @@ app:
 ## Dockerfile Notes
 
 - Multi-stage build: `deps` → `builder` → `runner`
+- Base image: `node:22-alpine` (Node.js 22 LTS, supported until April 2027)
 - Runs as non-root user (`nextjs:1001`)
 - Uses `output: standalone` for a minimal production bundle
 - No dev dependencies in the final image
+- Drizzle migration files (`drizzle/` + `drizzle.config.ts`) are included in the runner stage so `npx drizzle-kit migrate` works inside the container
 - HEALTHCHECK hits `/api/health` every 30 seconds
 
 ---
@@ -75,6 +77,7 @@ Before going live, complete all items below:
   ```bash
   openssl rand -base64 32
   ```
+- [ ] **Set AUTH_TRUST_HOST=true** — required when the app runs behind any reverse proxy (nginx, Caddy, Traefik) or in Kubernetes. Auth.js v5 rejects requests from unrecognised hosts unless this is set.
 - [ ] **Set all required environment variables** — see [Environment Variables](./environment-variables.md)
 - [ ] **Generate VAPID keys** for push notifications:
   ```bash
