@@ -5,6 +5,11 @@
  * Next.js server starts. Uses drizzle-orm's built-in migrate() function
  * instead of drizzle-kit CLI, which hangs in non-interactive shells.
  *
+ * Handles pre-existing databases (schema applied outside of Drizzle) by
+ * seeding the __drizzle_migrations tracking table when tables already exist
+ * but no migrations are recorded. This prevents "already exists" errors on
+ * container restarts or first-time deploys of existing databases.
+ *
  * Exits with code 1 on failure so the container does not start with a
  * stale or broken schema.
  */
@@ -12,6 +17,8 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
+import { createHash } from "crypto";
+import { readFileSync, readdirSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
@@ -36,6 +43,83 @@ const pool = new Pool({
 console.log("[migrate] Connecting to database...");
 
 const db = drizzle(pool);
+
+/**
+ * Returns true if the given table exists in the public schema.
+ */
+async function tableExists(client, tableName) {
+  const res = await client.query(
+    `SELECT 1 FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = $1`,
+    [tableName]
+  );
+  return res.rowCount > 0;
+}
+
+/**
+ * Returns the number of rows in __drizzle_migrations (0 if table doesn't exist).
+ */
+async function countTrackedMigrations(client) {
+  const exists = await tableExists(client, "__drizzle_migrations");
+  if (!exists) return 0;
+  const res = await client.query('SELECT COUNT(*) FROM "__drizzle_migrations"');
+  return parseInt(res.rows[0].count, 10);
+}
+
+/**
+ * Pre-populates __drizzle_migrations with all SQL files found in the
+ * migrations folder. Drizzle uses SHA-256(file content) as the hash.
+ * Only call this when the schema is already applied but not yet tracked.
+ */
+async function seedMigrationHistory(client, folder) {
+  const files = readdirSync(folder)
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
+
+  // Ensure tracking table exists (drizzle-orm creates it, but we may run before it)
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
+      id SERIAL PRIMARY KEY,
+      hash text NOT NULL,
+      created_at bigint
+    )
+  `);
+
+  for (const file of files) {
+    const sql = readFileSync(join(folder, file), "utf8");
+    const hash = createHash("sha256").update(sql).digest("hex");
+
+    // Skip if already recorded (idempotent)
+    const res = await client.query(
+      'SELECT 1 FROM "__drizzle_migrations" WHERE hash = $1',
+      [hash]
+    );
+    if (res.rowCount === 0) {
+      await client.query(
+        'INSERT INTO "__drizzle_migrations" (hash, created_at) VALUES ($1, $2)',
+        [hash, Date.now()]
+      );
+      console.log(`[migrate] Seeded migration history: ${file}`);
+    }
+  }
+}
+
+const client = await pool.connect();
+try {
+  // Detect pre-existing database: users table exists but no migration records
+  const usersExist = await tableExists(client, "users");
+  const trackedCount = await countTrackedMigrations(client);
+
+  if (usersExist && trackedCount === 0) {
+    console.log(
+      "[migrate] Detected pre-existing schema without migration history — seeding tracking table..."
+    );
+    await seedMigrationHistory(client, migrationsFolder);
+    console.log("[migrate] Migration history seeded.");
+  }
+} finally {
+  client.release();
+}
 
 try {
   console.log("[migrate] Applying pending migrations from", migrationsFolder);
