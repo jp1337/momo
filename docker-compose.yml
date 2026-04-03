@@ -62,6 +62,7 @@ services:
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_CONTACT: ${VAPID_CONTACT:-mailto:admin@example.com}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
     ports:
       - "3000:3000"
     healthcheck:
