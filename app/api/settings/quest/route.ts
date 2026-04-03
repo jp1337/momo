@@ -1,0 +1,61 @@
+/**
+ * PATCH /api/settings/quest
+ * Updates the user's daily quest postpone limit.
+ * Requires: authentication
+ * Body: { postponeLimit: number } (1–5)
+ * Returns: { success: true }
+ */
+
+import { resolveApiUser } from "@/lib/api-auth";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { NextRequest, NextResponse } from "next/server";
+
+const QuestSettingsSchema = z.object({
+  postponeLimit: z
+    .number()
+    .int()
+    .min(1, "Minimum 1 postponement per day")
+    .max(5, "Maximum 5 postponements per day"),
+});
+
+/**
+ * PATCH — Update the user's daily quest postpone limit.
+ */
+export async function PATCH(req: NextRequest): Promise<NextResponse> {
+  const user = await resolveApiUser(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return NextResponse.json(
+    { error: "Forbidden", message: "This API key is read-only." },
+    { status: 403 }
+  );
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = QuestSettingsSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request body", details: parsed.error.flatten() },
+      { status: 422 }
+    );
+  }
+
+  try {
+    await db
+      .update(users)
+      .set({ questPostponeLimit: parsed.data.postponeLimit })
+      .where(eq(users.id, user.userId));
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[PATCH /api/settings/quest]", err);
+    return NextResponse.json({ error: "Failed to update settings" }, { status: 500 });
+  }
+}

@@ -119,6 +119,15 @@ export const users = pgTable("users", {
   /** User's preferred colour theme */
   theme: themeEnum("theme").notNull().default("system"),
 
+  /** How many times the user has postponed their daily quest today */
+  questPostponesToday: integer("quest_postpones_today").notNull().default(0),
+
+  /** Date on which questPostponesToday was last incremented — used for daily reset */
+  questPostponedDate: date("quest_postponed_date"),
+
+  /** Maximum number of daily quest postponements allowed per day (1–5, default 3) */
+  questPostponeLimit: integer("quest_postpone_limit").notNull().default(3),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -250,6 +259,12 @@ export const tasks = pgTable("tasks", {
 
   /** Whether this task is currently selected as the daily quest */
   isDailyQuest: boolean("is_daily_quest").notNull().default(false),
+
+  /** How many times this task has been postponed as a daily quest (across all days) */
+  postponeCount: integer("postpone_count").notNull().default(0),
+
+  /** Estimated time to complete this task in minutes (5 / 15 / 30 / 60 / null = unknown) */
+  estimatedMinutes: integer("estimated_minutes"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
