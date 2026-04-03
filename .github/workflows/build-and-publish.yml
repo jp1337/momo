@@ -13,10 +13,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - run: npm ci
       - run: npx tsc --noEmit
@@ -45,7 +45,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       # Derive a safe artifact/cache suffix from the platform name (e.g. linux-amd64)
       - name: Prepare platform suffix
@@ -66,7 +66,7 @@ jobs:
       # OCI labels (e.g. org.opencontainers.image.*) are attached at build time
       - name: Extract metadata (labels)
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/jp1337/momo
 
@@ -113,7 +113,7 @@ jobs:
     steps:
       # Download both digest artifacts into the same directory
       - name: Download digest artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           path: /tmp/digests
           pattern: digests-*
@@ -125,7 +125,7 @@ jobs:
       # Generate the final tags for all three registries
       - name: Extract metadata (tags and labels)
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@v5
         with:
           images: |
             ghcr.io/jp1337/momo
