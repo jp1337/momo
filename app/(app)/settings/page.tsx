@@ -21,6 +21,7 @@ import { NotificationSettings } from "@/components/settings/notification-setting
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
 import { DeleteAccount } from "@/components/settings/delete-account";
 import { LinkedAccounts } from "@/components/settings/linked-accounts";
+import { QuestSettings } from "@/components/settings/quest-settings";
 import { serverEnv } from "@/lib/env";
 import { getTranslations, getLocale } from "next-intl/server";
 import { Suspense } from "react";
@@ -52,6 +53,7 @@ export default async function SettingsPage() {
         providerId: users.providerId,
         notificationEnabled: users.notificationEnabled,
         notificationTime: users.notificationTime,
+        questPostponeLimit: users.questPostponeLimit,
       })
       .from(users)
       .where(eq(users.id, session.user.id))
@@ -221,6 +223,38 @@ export default async function SettingsPage() {
           initialTime={user.notificationTime ?? "08:00"}
           vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
         />
+      </section>
+
+      {/* Quest Settings section */}
+      <section
+        className="rounded-xl p-6 flex flex-col gap-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            className="text-base font-semibold"
+            style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("section_quest_settings")}
+          </h2>
+          <p
+            className="text-sm"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui)",
+            }}
+          >
+            {t("quest_settings_hint")}
+          </p>
+        </div>
+
+        <QuestSettings initialPostponeLimit={user.questPostponeLimit} />
       </section>
 
       {/* Language section */}

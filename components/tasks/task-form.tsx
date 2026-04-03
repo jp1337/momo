@@ -26,6 +26,7 @@ interface TaskFormData {
   recurrenceInterval: string;
   dueDate: string;
   coinValue: string;
+  estimatedMinutes: 5 | 15 | 30 | 60 | null;
 }
 
 interface TaskFormProps {
@@ -53,6 +54,7 @@ const DEFAULT_FORM: TaskFormData = {
   recurrenceInterval: "7",
   dueDate: "",
   coinValue: "1",
+  estimatedMinutes: null,
 };
 
 /**
@@ -123,6 +125,7 @@ export function TaskForm({
           : null,
       dueDate: formData.dueDate || null,
       coinValue: parseInt(formData.coinValue, 10) || 1,
+      estimatedMinutes: formData.estimatedMinutes,
     };
 
     setIsSubmitting(true);
@@ -364,6 +367,38 @@ export function TaskForm({
               max={10}
               style={inputStyle}
             />
+          </div>
+
+          {/* Time estimate */}
+          <div>
+            <label style={labelStyle}>{t("form_label_duration")}</label>
+            <div className="flex gap-2 flex-wrap">
+              {([null, 5, 15, 30, 60] as const).map((min) => {
+                const isSelected = formData.estimatedMinutes === min;
+                return (
+                  <button
+                    key={String(min)}
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, estimatedMinutes: min }))
+                    }
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150"
+                    style={{
+                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                      border: isSelected
+                        ? "1px solid var(--accent-amber)"
+                        : "1px solid var(--border)",
+                      backgroundColor: isSelected
+                        ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-elevated))"
+                        : "var(--bg-elevated)",
+                      color: isSelected ? "var(--accent-amber)" : "var(--text-muted)",
+                    }}
+                  >
+                    {min === null ? t("duration_unknown") : `${min} min`}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Notes */}

@@ -41,12 +41,17 @@ interface QuestTask {
   type: "ONE_TIME" | "RECURRING" | "DAILY_ELIGIBLE";
   coinValue: number;
   completedAt: string | null;
+  postponeCount: number;
   topic: Topic | null;
 }
 
 interface DailyQuestCardProps {
   /** The current daily quest task, or null if none exists */
   quest: QuestTask | null;
+  /** How many times the user has postponed their quest today */
+  postponesToday: number;
+  /** The user's configured daily postpone limit */
+  postponeLimit: number;
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -84,11 +89,14 @@ interface CompleteResponse {
  * Manages completing and postponing the quest via API calls.
  * Triggers confetti, level-up overlay, and achievement toasts on completion.
  */
-export function DailyQuestCard({ quest }: DailyQuestCardProps) {
+export function DailyQuestCard({ quest, postponesToday, postponeLimit }: DailyQuestCardProps) {
   const t = useTranslations("dashboard");
   const router = useRouter();
   const [isCompleting, setIsCompleting] = useState(false);
   const [isPostponing, setIsPostponing] = useState(false);
+  const [localPostponesToday, setLocalPostponesToday] = useState(postponesToday);
+  const postponesLeft = postponeLimit - localPostponesToday;
+  const isPostponeLimitReached = postponesLeft <= 0;
   const [isCompleted, setIsCompleted] = useState(
     quest?.completedAt !== null && quest?.completedAt !== undefined
   );
@@ -158,7 +166,7 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
    * Calls POST /api/daily-quest/postpone, then refreshes the page.
    */
   async function handleNotToday() {
-    if (!quest || isPostponing || isCompleted) return;
+    if (!quest || isPostponing || isCompleted || isPostponeLimitReached) return;
     setIsPostponing(true);
 
     try {
@@ -170,8 +178,17 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        console.error("Failed to postpone quest:", data.error);
+        if (data.error === "LIMIT_REACHED") {
+          setLocalPostponesToday(postponeLimit);
+        } else {
+          console.error("Failed to postpone quest:", data.error);
+        }
         return;
+      }
+
+      const data = (await res.json()) as { postponesToday?: number };
+      if (data.postponesToday !== undefined) {
+        setLocalPostponesToday(data.postponesToday);
       }
 
       // Refresh to show the new (empty) quest state
@@ -354,21 +371,36 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
                 </span>
               )}
 
-              {/* Coin value */}
+              {/* Coin value — show ×2 bonus badge if task was often postponed */}
               <span
-                className="text-xs"
+                className="text-xs inline-flex items-center gap-1"
                 style={{
                   fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
                   color: "var(--coin-gold)",
                 }}
               >
-                +{quest.coinValue} <FontAwesomeIcon icon={faCoins} className="w-3 h-3" aria-hidden="true" />
+                {quest.postponeCount >= 3
+                  ? `+${quest.coinValue * 2}`
+                  : `+${quest.coinValue}`}{" "}
+                <FontAwesomeIcon icon={faCoins} className="w-3 h-3" aria-hidden="true" />
+                {quest.postponeCount >= 3 && (
+                  <span
+                    className="ml-1 px-1.5 py-0.5 rounded text-xs font-semibold"
+                    style={{
+                      backgroundColor: "color-mix(in srgb, var(--accent-amber) 20%, transparent)",
+                      color: "var(--accent-amber)",
+                      border: "1px solid color-mix(in srgb, var(--accent-amber) 40%, transparent)",
+                    }}
+                  >
+                    {t("quest_bonus_coins")}
+                  </span>
+                )}
               </span>
             </div>
           </div>
 
           {/* Action buttons */}
-          <div className="flex flex-wrap gap-3 pt-2">
+          <div className="flex flex-wrap gap-3 pt-2 items-center">
             {/* Complete button */}
             <button
               onClick={handleComplete}
@@ -383,20 +415,48 @@ export function DailyQuestCard({ quest }: DailyQuestCardProps) {
               {isCompleting ? t("quest_completing") : t("quest_complete_btn")}
             </button>
 
-            {/* Not today button */}
-            <button
-              onClick={handleNotToday}
-              disabled={isCompleting || isPostponing}
-              className="px-5 py-2.5 rounded-xl text-sm transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-                backgroundColor: "var(--bg-elevated)",
-                border: "1px solid var(--border)",
-              }}
-            >
-              {isPostponing ? t("quest_postponing") : t("quest_postpone_btn")}
-            </button>
+            {/* Not today button — disabled when limit reached */}
+            {!isPostponeLimitReached ? (
+              <button
+                onClick={handleNotToday}
+                disabled={isCompleting || isPostponing}
+                className="px-5 py-2.5 rounded-xl text-sm transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--text-muted)",
+                  backgroundColor: "var(--bg-elevated)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                {isPostponing ? t("quest_postponing") : t("quest_postpone_btn")}
+              </button>
+            ) : (
+              <span
+                className="text-xs px-3 py-1.5 rounded-lg"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--accent-red)",
+                  backgroundColor: "color-mix(in srgb, var(--accent-red) 10%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--accent-red) 30%, transparent)",
+                }}
+              >
+                {t("quest_postpones_none")}
+              </span>
+            )}
+
+            {/* Postpone counter hint */}
+            {!isPostponeLimitReached && (
+              <span
+                className="text-xs ml-1"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--text-muted)",
+                  opacity: 0.7,
+                }}
+              >
+                {t("quest_postpones_left", { count: postponesLeft })}
+              </span>
+            )}
           </div>
         </>
       )}
