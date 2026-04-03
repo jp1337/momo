@@ -26,9 +26,10 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
  * - Strict-Transport-Security: enforces HTTPS for 2 years with preload (HSTS)
  * - Content-Security-Policy: restricts resource loading to trusted origins
  *
- * NOTE: `script-src` includes 'unsafe-eval' and 'unsafe-inline' only in development.
- * In production these are omitted for a stricter CSP. If Next.js inline scripts break
- * in production, consider using nonces — see Next.js docs on CSP with nonces.
+ * NOTE: `script-src` requires 'unsafe-inline' in production because Next.js App Router
+ * flushes RSC payloads as inline <script> tags (self.__next_f.push) needed for hydration.
+ * Without it, React cannot hydrate client components and all interactive features break.
+ * 'unsafe-eval' is added only in development for hot-module replacement.
  */
 const isDev = process.env.NODE_ENV === "development";
 
@@ -61,7 +62,10 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      `script-src 'self'${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ""}`,
+      // 'unsafe-inline' required in production: Next.js App Router injects RSC
+      // payloads as inline <script> tags (self.__next_f.push) needed for hydration.
+      // Without it, all client components fail silently (no dropdowns, no buttons).
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
       // unsafe-inline is needed for Next.js injected styles even in production
       // Fonts are self-hosted via next/font — no external font CDN needed
       "style-src 'self' 'unsafe-inline'",
