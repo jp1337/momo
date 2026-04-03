@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { getUserStats } from "@/lib/gamification";
 
 /**
@@ -45,14 +46,17 @@ export default async function AppLayout({
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <Sidebar />
 
-        {/* Main content area */}
+        {/* Main content area — pb-16 prevents content hiding behind mobile bottom nav */}
         <main
-          className="flex-1 overflow-y-auto p-6"
+          className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6"
           style={{ backgroundColor: "var(--bg-primary)" }}
         >
           {children}
         </main>
       </div>
+
+      {/* Bottom tab bar — mobile only (hidden on md+) */}
+      <MobileNav />
     </div>
   );
 }
