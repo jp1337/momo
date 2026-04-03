@@ -16,7 +16,7 @@
 import { db } from "@/lib/db";
 import type { Database } from "@/lib/db";
 import { tasks, users, topics } from "@/lib/db/schema";
-import { eq, and, isNull, isNotNull, lte, lt, or, ne, sql } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, lte, lt, gte, or, ne, sql } from "drizzle-orm";
 
 /** A Drizzle transaction or the base db instance */
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -243,8 +243,30 @@ async function pickBestTask(userId: string, tx: Tx): Promise<Task | null> {
 export async function selectDailyQuest(
   userId: string
 ): Promise<TaskWithTopic | null> {
-  // Clear is_daily_quest on completed quests outside the transaction — this is
-  // idempotent and does not need to be serialised with the assignment below.
+  const today = getTodayString();
+  const todayStart = new Date(`${today}T00:00:00`);
+
+  // If the user already completed a quest today, return it for the celebration
+  // state. One quest per day is the intent — don't pick a new one.
+  const completedTodayRows = await db
+    .select()
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        eq(tasks.isDailyQuest, true),
+        isNotNull(tasks.completedAt),
+        gte(tasks.completedAt, todayStart)
+      )
+    )
+    .limit(1);
+
+  if (completedTodayRows[0]) {
+    return enrichTaskWithTopic(completedTodayRows[0]);
+  }
+
+  // Clear is_daily_quest on quests completed on PREVIOUS days — idempotent,
+  // no need to serialise with the assignment below.
   await db
     .update(tasks)
     .set({ isDailyQuest: false })
@@ -252,7 +274,8 @@ export async function selectDailyQuest(
       and(
         eq(tasks.userId, userId),
         eq(tasks.isDailyQuest, true),
-        isNotNull(tasks.completedAt)
+        isNotNull(tasks.completedAt),
+        lt(tasks.completedAt, todayStart)
       )
     );
 
