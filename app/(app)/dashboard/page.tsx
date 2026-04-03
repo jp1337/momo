@@ -21,6 +21,9 @@ import { taskCompletions } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { getTranslations } from "next-intl/server";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCoins, faFire, faTrophy, faCircleCheck } from "@fortawesome/free-solid-svg-icons";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -108,7 +111,7 @@ export default async function DashboardPage() {
             color: "var(--text-primary)",
           }}
         >
-          {greeting}, {firstName}. 🪶
+          {greeting}, {firstName}.
         </h1>
         <p
           className="mt-1 text-base"
@@ -147,32 +150,34 @@ export default async function DashboardPage() {
           {t("section_overview")}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[
-            {
-              label: t("stat_coins"),
-              value: String(stats.coins),
-              icon: "🪙",
-              pulse: false,
-            },
-            {
-              label: t("stat_streak"),
-              value: `${stats.streakCurrent}d`,
-              icon: "🔥",
-              pulse: stats.streakCurrent > 0,
-            },
-            {
-              label: t("stat_level"),
-              value: String(stats.level),
-              icon: "⭐",
-              pulse: false,
-            },
-            {
-              label: t("stat_completed"),
-              value: String(totalCompletions),
-              icon: "✓",
-              pulse: false,
-            },
-          ].map((stat) => (
+          {(
+            [
+              {
+                label: t("stat_coins"),
+                value: String(stats.coins),
+                icon: faCoins as IconDefinition,
+                pulse: false,
+              },
+              {
+                label: t("stat_streak"),
+                value: `${stats.streakCurrent}d`,
+                icon: faFire as IconDefinition,
+                pulse: stats.streakCurrent > 0,
+              },
+              {
+                label: t("stat_level"),
+                value: String(stats.level),
+                icon: faTrophy as IconDefinition,
+                pulse: false,
+              },
+              {
+                label: t("stat_completed"),
+                value: String(totalCompletions),
+                icon: faCircleCheck as IconDefinition,
+                pulse: false,
+              },
+            ] as { label: string; value: string; icon: IconDefinition; pulse: boolean }[]
+          ).map((stat) => (
             <div
               key={stat.label}
               className="rounded-xl p-5 flex flex-col gap-2"
@@ -192,12 +197,12 @@ export default async function DashboardPage() {
                 >
                   {stat.label}
                 </span>
-                <span
-                  className={stat.pulse ? "streak-pulse text-base" : "text-base"}
+                <FontAwesomeIcon
+                  icon={stat.icon}
+                  className={stat.pulse ? "streak-pulse w-4 h-4" : "w-4 h-4"}
+                  style={{ color: "var(--text-muted)" }}
                   aria-hidden="true"
-                >
-                  {stat.icon}
-                </span>
+                />
               </div>
               <span
                 className="text-2xl font-semibold"

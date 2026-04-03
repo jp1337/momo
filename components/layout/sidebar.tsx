@@ -8,6 +8,7 @@
  *  - Tasks
  *  - Topics
  *  - Wishlist
+ *  - Settings
  *
  * Highlights the active route using the pathname.
  */
@@ -15,11 +16,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faHouse,
+  faListCheck,
+  faFolderOpen,
+  faStar,
+  faGear,
+} from "@fortawesome/free-solid-svg-icons";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 interface NavItem {
   href: string;
   label: string;
-  icon: string;
+  icon: IconDefinition;
 }
 
 /**
@@ -32,11 +42,11 @@ export function Sidebar() {
 
   /** Main navigation items — built inside the component so labels are translated */
   const NAV_ITEMS: NavItem[] = [
-    { href: "/dashboard", label: t("dashboard"), icon: "🏠" },
-    { href: "/tasks", label: t("tasks"), icon: "✓" },
-    { href: "/topics", label: t("topics"), icon: "📁" },
-    { href: "/wishlist", label: t("wishlist"), icon: "⭐" },
-    { href: "/settings", label: t("settings"), icon: "⚙" },
+    { href: "/dashboard", label: t("dashboard"), icon: faHouse },
+    { href: "/tasks", label: t("tasks"), icon: faListCheck },
+    { href: "/topics", label: t("topics"), icon: faFolderOpen },
+    { href: "/wishlist", label: t("wishlist"), icon: faStar },
+    { href: "/settings", label: t("settings"), icon: faGear },
   ];
 
   return (
@@ -68,9 +78,11 @@ export function Sidebar() {
                   : "2px solid transparent",
               }}
             >
-              <span className="text-base w-5 text-center" aria-hidden="true">
-                {item.icon}
-              </span>
+              <FontAwesomeIcon
+                icon={item.icon}
+                className="w-4 h-4 flex-shrink-0"
+                aria-hidden="true"
+              />
               {item.label}
             </Link>
           );

@@ -15,6 +15,11 @@ import { auth, signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getTranslations } from "next-intl/server";
+import Image from "next/image";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faKey } from "@fortawesome/free-solid-svg-icons";
+import { faGithub, faDiscord, faGoogle } from "@fortawesome/free-brands-svg-icons";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -25,7 +30,7 @@ export const metadata: Metadata = {
 interface ProviderConfig {
   id: string;
   name: string;
-  icon: string;
+  icon: IconDefinition;
   envKey: string;
 }
 
@@ -33,19 +38,19 @@ const PROVIDERS: ProviderConfig[] = [
   {
     id: "github",
     name: "GitHub",
-    icon: "🐙",
+    icon: faGithub,
     envKey: "GITHUB_CLIENT_ID",
   },
   {
     id: "discord",
     name: "Discord",
-    icon: "💬",
+    icon: faDiscord,
     envKey: "DISCORD_CLIENT_ID",
   },
   {
     id: "google",
     name: "Google",
-    icon: "🔍",
+    icon: faGoogle,
     envKey: "GOOGLE_CLIENT_ID",
   },
 ];
@@ -83,16 +88,15 @@ export default async function LoginPage() {
       </div>
 
       {/* Header */}
-      <div className="text-center">
-        <h1
-          className="text-5xl font-semibold mb-3"
-          style={{
-            fontFamily: "var(--font-display, 'Lora', serif)",
-            color: "var(--text-primary)",
-          }}
-        >
-          {t("app_name")}
-        </h1>
+      <div className="text-center flex flex-col items-center">
+        <Image
+          src="/logo.svg"
+          alt="Momo"
+          width={200}
+          height={50}
+          priority
+          className="mb-1"
+        />
         <p
           className="text-lg italic"
           style={{
@@ -153,9 +157,11 @@ export default async function LoginPage() {
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
-                <span className="text-xl" aria-hidden="true">
-                  {provider.icon}
-                </span>
+                <FontAwesomeIcon
+                  icon={provider.icon}
+                  className="w-5 h-5"
+                  aria-hidden="true"
+                />
                 {t("continue_with", { name: provider.name })}
               </button>
             </form>
@@ -188,9 +194,11 @@ export default async function LoginPage() {
                 boxShadow: "var(--shadow-sm)",
               }}
             >
-              <span className="text-xl" aria-hidden="true">
-                🔐
-              </span>
+              <FontAwesomeIcon
+                icon={faKey}
+                className="w-5 h-5"
+                aria-hidden="true"
+              />
               {t("sso")}
             </button>
           </form>

@@ -60,6 +60,14 @@ export function Navbar({ userName, userImage, userEmail, initialCoins = 0 }: Nav
         href="/dashboard"
         className="flex items-center gap-2 no-underline group"
       >
+        <Image
+          src="/icon.svg"
+          alt=""
+          width={28}
+          height={28}
+          priority
+          aria-hidden="true"
+        />
         <span
           className="text-2xl font-semibold tracking-tight transition-colors duration-150"
           style={{
@@ -67,7 +75,7 @@ export function Navbar({ userName, userImage, userEmail, initialCoins = 0 }: Nav
             color: "var(--text-primary)",
           }}
         >
-          🪶 Momo
+          momo
         </span>
       </Link>
 
