@@ -251,6 +251,8 @@
     "section_data": "Your Data",
     "data_hint": "Download a copy of all your personal data (GDPR Art. 15/20).",
     "export_download_btn": "Export data (JSON)",
+    "section_linked_accounts": "Connected Accounts",
+    "linked_accounts_hint": "Sign in with any connected account. You can link additional OAuth providers to your account.",
     "section_danger": "Danger Zone",
     "danger_hint": "These actions cannot be undone.",
     "delete_account_btn": "Delete account",

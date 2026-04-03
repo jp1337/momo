@@ -251,6 +251,8 @@
     "section_data": "Deine Daten",
     "data_hint": "Lade eine Kopie all deiner persönlichen Daten herunter (DSGVO Art. 15/20).",
     "export_download_btn": "Daten exportieren (JSON)",
+    "section_linked_accounts": "Verbundene Konten",
+    "linked_accounts_hint": "Melde dich mit jedem verknüpften Konto an. Du kannst weitere OAuth-Anbieter mit deinem Konto verbinden.",
     "section_danger": "Gefahrenzone",
     "danger_hint": "Diese Aktionen können nicht rückgängig gemacht werden.",
     "delete_account_btn": "Konto löschen",

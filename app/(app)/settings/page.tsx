@@ -14,13 +14,16 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, accounts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Image from "next/image";
 import { NotificationSettings } from "@/components/settings/notification-settings";
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
 import { DeleteAccount } from "@/components/settings/delete-account";
+import { LinkedAccounts } from "@/components/settings/linked-accounts";
+import { serverEnv } from "@/lib/env";
 import { getTranslations, getLocale } from "next-intl/server";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -39,19 +42,25 @@ export default async function SettingsPage() {
   const t = await getTranslations("settings");
   const locale = await getLocale();
 
-  // Fetch user preferences from the DB
-  const userRows = await db
-    .select({
-      name: users.name,
-      email: users.email,
-      image: users.image,
-      providerId: users.providerId,
-      notificationEnabled: users.notificationEnabled,
-      notificationTime: users.notificationTime,
-    })
-    .from(users)
-    .where(eq(users.id, session.user.id))
-    .limit(1);
+  // Fetch user preferences and linked accounts from the DB
+  const [userRows, linkedAccountRows] = await Promise.all([
+    db
+      .select({
+        name: users.name,
+        email: users.email,
+        image: users.image,
+        providerId: users.providerId,
+        notificationEnabled: users.notificationEnabled,
+        notificationTime: users.notificationTime,
+      })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1),
+    db
+      .select({ provider: accounts.provider })
+      .from(accounts)
+      .where(eq(accounts.userId, session.user.id)),
+  ]);
 
   const user = userRows[0];
   if (!user) {
@@ -66,6 +75,15 @@ export default async function SettingsPage() {
 
   const providerBadgeLabel =
     providerLabel.charAt(0).toUpperCase() + providerLabel.slice(1);
+
+  // Determine which providers are linked and which are configured on the server
+  const linkedProviders = linkedAccountRows.map((row) => row.provider);
+
+  const configuredProviders: string[] = [];
+  if (serverEnv.GITHUB_CLIENT_ID && serverEnv.GITHUB_CLIENT_SECRET) configuredProviders.push("github");
+  if (serverEnv.DISCORD_CLIENT_ID && serverEnv.DISCORD_CLIENT_SECRET) configuredProviders.push("discord");
+  if (serverEnv.GOOGLE_CLIENT_ID && serverEnv.GOOGLE_CLIENT_SECRET) configuredProviders.push("google");
+  if (serverEnv.OIDC_ISSUER && serverEnv.OIDC_CLIENT_ID && serverEnv.OIDC_CLIENT_SECRET) configuredProviders.push("keycloak");
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-8">
@@ -279,6 +297,43 @@ export default async function SettingsPage() {
         >
           {t("export_download_btn")}
         </a>
+      </section>
+
+      {/* Linked accounts section */}
+      <section
+        className="rounded-xl p-6 flex flex-col gap-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            className="text-base font-semibold"
+            style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("section_linked_accounts")}
+          </h2>
+          <p
+            className="text-sm"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui)",
+            }}
+          >
+            {t("linked_accounts_hint")}
+          </p>
+        </div>
+
+        <Suspense>
+          <LinkedAccounts
+            linkedProviders={linkedProviders}
+            configuredProviders={configuredProviders}
+          />
+        </Suspense>
       </section>
 
       {/* Danger Zone */}
