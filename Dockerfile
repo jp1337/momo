@@ -13,7 +13,8 @@
 # Build: docker build -t momo .
 # Run:   docker run -p 3000:3000 --env-file .env.local momo
 
-FROM node:20-alpine AS base
+# Node 22 LTS — fewer known CVEs than 20-alpine, supported until April 2027
+FROM node:22-alpine AS base
 
 # ─── Stage 1: Install dependencies ──────────────────────────────────────────
 FROM base AS deps
@@ -67,6 +68,12 @@ RUN mkdir .next && chown nextjs:nodejs .next
 # Copy the standalone server output (requires output: 'standalone' in next.config.ts)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy Drizzle migration files so `npx drizzle-kit migrate` works inside the container.
+# Migrations must be run once after initial deployment and after every schema change:
+#   docker compose exec app npx drizzle-kit migrate
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
 
 # Switch to non-root user
 USER nextjs

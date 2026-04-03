@@ -49,6 +49,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXTAUTH_URL=http://localhost:3000
 ```
 
+> **Production / reverse proxy:** If you deploy behind nginx, Caddy, or any Kubernetes ingress, also set `AUTH_TRUST_HOST=true`. Auth.js v5 requires this to accept proxied requests.
+
 See the [Environment Variables reference](/momo/environment-variables) for all available options.
 
 ### Step 3 — Generate a secret
