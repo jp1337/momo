@@ -14,6 +14,7 @@ import { db } from "@/lib/db";
 import type { Database } from "@/lib/db";
 import { users, achievements, userAchievements } from "@/lib/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
+import { getLocalDateString, getLocalYesterdayString } from "@/lib/date-utils";
 
 // ─── User Stats ───────────────────────────────────────────────────────────────
 
@@ -210,32 +211,26 @@ export interface AchievementContext {
 // ─── Streak Logic ─────────────────────────────────────────────────────────────
 
 /**
- * Returns today's date as a YYYY-MM-DD string in local time.
- */
-function getTodayString(): string {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-/**
  * Updates user streak after task completion.
  *
- * Logic:
- *  - If streak_last_date is today: no change (already updated today)
- *  - If streak_last_date is yesterday: increment streak_current, update streak_max if needed
- *  - Otherwise: reset streak_current to 1
- * Always sets streak_last_date = today.
+ * Uses the user's local timezone so a completion at 23:50 in UTC+2 is
+ * credited to the correct local day, not the next UTC day.
  *
- * @param userId - The user's UUID
- * @param tx - Optional Drizzle transaction; uses the global db instance if not provided
+ * Logic:
+ *  - If streak_last_date is today (in user's timezone): no change
+ *  - If streak_last_date is yesterday (in user's timezone): increment streak
+ *  - Otherwise: reset streak to 1
+ * Always sets streak_last_date = today in the user's timezone.
+ *
+ * @param userId   - The user's UUID
+ * @param tx       - Optional Drizzle transaction
+ * @param timezone - IANA timezone (e.g. "Europe/Berlin"). Falls back to UTC.
  * @returns Updated { streakCurrent, streakMax }
  */
 export async function updateStreak(
   userId: string,
-  tx?: Tx
+  tx?: Tx,
+  timezone?: string | null
 ): Promise<{ streakCurrent: number; streakMax: number }> {
   const client = tx ?? db;
 
@@ -254,25 +249,21 @@ export async function updateStreak(
   }
 
   const { streakCurrent, streakMax, streakLastDate } = userRows[0];
-  const today = getTodayString();
+  const today = getLocalDateString(timezone);
+  const yesterday = getLocalYesterdayString(timezone);
 
-  // Already updated streak today — no change
+  // Already updated streak today (in user's timezone) — no change
   if (streakLastDate === today) {
     return { streakCurrent, streakMax };
   }
 
-  // Calculate yesterday's date string
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
-
   let newStreakCurrent: number;
 
-  if (streakLastDate === yesterdayStr) {
+  if (streakLastDate === yesterday) {
     // Continuing streak from yesterday
     newStreakCurrent = streakCurrent + 1;
   } else {
-    // Streak broken or first time — reset to 1
+    // Streak broken or first completion — reset to 1
     newStreakCurrent = 1;
   }
 
