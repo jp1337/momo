@@ -32,6 +32,10 @@ export const metadata: Metadata = {
   title: "Admin — Momo",
 };
 
+// Force dynamic rendering so process.env.ADMIN_USER_IDS is read at request
+// time, not baked in at build time (where it would be empty).
+export const dynamic = "force-dynamic";
+
 /**
  * Admin page. Shows platform-wide stats.
  * Renders an access denied message if the user is not in ADMIN_USER_IDS.

@@ -4,6 +4,10 @@
  * Redirects unauthenticated users to the login page.
  */
 
+// Force dynamic rendering so runtime env vars (e.g. ADMIN_USER_IDS) are read
+// fresh on every request rather than being evaluated once at build time.
+export const dynamic = "force-dynamic";
+
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
