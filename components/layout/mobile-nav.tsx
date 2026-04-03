@@ -17,7 +17,6 @@ import {
   faListCheck,
   faFolderOpen,
   faStar,
-  faGear,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
@@ -32,7 +31,6 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/tasks",     labelKey: "tasks",     icon: faListCheck },
   { href: "/topics",    labelKey: "topics",    icon: faFolderOpen },
   { href: "/wishlist",  labelKey: "wishlist",  icon: faStar },
-  { href: "/settings",  labelKey: "settings",  icon: faGear },
 ];
 
 /**
