@@ -169,21 +169,25 @@ export function NotificationSettings({
 
       // Step 4: Serialize and send to server
       const subscriptionJSON = subscription.toJSON();
+      console.log("[Push] Subscription JSON:", JSON.stringify(subscriptionJSON));
+
+      const payload = {
+        subscription: {
+          endpoint: subscriptionJSON.endpoint,
+          keys: subscriptionJSON.keys,
+        },
+        notificationTime,
+      };
 
       const res = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subscription: {
-            endpoint: subscriptionJSON.endpoint,
-            keys: subscriptionJSON.keys,
-          },
-          notificationTime,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        const data = await res.json() as { error?: string };
+        const data = await res.json() as { error?: string; details?: unknown };
+        console.error("[Push] Subscribe API error:", JSON.stringify(data));
         throw new Error(data.error ?? t("notif_err_save"));
       }
 
