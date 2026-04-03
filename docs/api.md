@@ -134,7 +134,23 @@ All fields optional. Same shape as POST body. Response: `{ "task": Task }`
 Awards `coinValue` coins to the user, updates the daily streak, checks achievements.
 For `RECURRING` tasks: advances `nextDueDate` by `recurrenceInterval` days and resets `completedAt`.
 
-Response: `{ "task": Task, "coinsAwarded": 2 }`
+Optional request body (JSON):
+```json
+{ "timezone": "Europe/Berlin" }
+```
+The `timezone` field (IANA timezone string) is used for timezone-aware streak calculation.
+If omitted, the server falls back to UTC.
+
+Response:
+```json
+{
+  "task": Task,
+  "coinsEarned": 2,
+  "newLevel": { "level": 3, "title": "Alltagsmeister" } | null,
+  "unlockedAchievements": [{ "key": "first_task", "title": "Erster Schritt", "icon": "🌱" }],
+  "streakCurrent": 5
+}
+```
 
 ### DELETE /api/tasks/:id/complete
 
@@ -253,9 +269,17 @@ Returns `{ "task": null }` if no eligible tasks exist.
 
 ### POST /api/daily-quest/postpone
 
-Marks today's quest as postponed and selects a new one for tomorrow.
+Postpones today's quest: clears `isDailyQuest`, sets `dueDate` to tomorrow (in the user's
+local timezone), increments `postponeCount` on the task and the user's daily postpone counter.
+Returns `429 LIMIT_REACHED` if the user has exhausted their daily postpone budget.
 
-Response: `{ "success": true }`
+Request body:
+```json
+{ "taskId": "uuid", "timezone": "Europe/Berlin" }
+```
+`timezone` is optional — omit to use UTC.
+
+Response: `{ "ok": true, "postponesToday": 2, "postponeLimit": 3 }`
 
 ---
 
