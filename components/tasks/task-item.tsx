@@ -17,6 +17,8 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCoins } from "@fortawesome/free-solid-svg-icons";
 
 interface TaskItemProps {
   id: string;
@@ -333,7 +335,7 @@ export function TaskItem({
                 color: "var(--coin-gold)",
               }}
             >
-              +{coinValue} ◎
+              +{coinValue} <FontAwesomeIcon icon={faCoins} className="w-3 h-3" aria-hidden="true" />
             </span>
           )}
         </div>
