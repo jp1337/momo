@@ -18,7 +18,8 @@ import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCoins } from "@fortawesome/free-solid-svg-icons";
+import { faCoins, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
+import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
 
 interface TaskItemProps {
   id: string;
@@ -32,6 +33,8 @@ interface TaskItemProps {
   topicColor?: string | null;
   coinValue: number;
   topicId?: string | null;
+  postponeCount?: number;
+  estimatedMinutes?: number | null;
   onComplete: (id: string) => void;
   onUncomplete: (id: string) => void;
   onEdit: (id: string) => void;
@@ -42,6 +45,8 @@ interface TaskItemProps {
   onPromote?: (id: string) => void;
   /** Called when the user wants to navigate to the task's existing topic (topicId !== null) */
   onGoToTopic?: (topicId: string) => void;
+  /** Called after a successful task breakdown (task is deleted) */
+  onBreakdown?: (id: string) => void;
 }
 
 /**
@@ -60,6 +65,8 @@ export function TaskItem({
   topicColor,
   topicId,
   coinValue,
+  postponeCount = 0,
+  estimatedMinutes,
   onComplete,
   onUncomplete,
   onEdit,
@@ -67,12 +74,14 @@ export function TaskItem({
   onInlineEdit,
   onPromote,
   onGoToTopic,
+  onBreakdown,
 }: TaskItemProps) {
   const t = useTranslations("tasks");
 
   const [isAnimating, setIsAnimating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(title);
+  const [showBreakdownModal, setShowBreakdownModal] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isCompleted = completedAt !== null;
@@ -329,17 +338,60 @@ export function TaskItem({
           {/* Coin value */}
           {coinValue > 1 && (
             <span
-              className="text-xs"
+              className="text-xs inline-flex items-center gap-1"
               style={{
                 fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--coin-gold)",
+                color: postponeCount >= 3 ? "var(--accent-amber)" : "var(--coin-gold)",
               }}
             >
-              +{coinValue} <FontAwesomeIcon icon={faCoins} className="w-3 h-3" aria-hidden="true" />
+              {postponeCount >= 3 ? `+${coinValue * 2}` : `+${coinValue}`}{" "}
+              <FontAwesomeIcon icon={faCoins} className="w-3 h-3" aria-hidden="true" />
+            </span>
+          )}
+
+          {/* Time estimate badge */}
+          {estimatedMinutes !== null && estimatedMinutes !== undefined && (
+            <span
+              className="text-xs px-1.5 py-0.5 rounded"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--accent-green)",
+                backgroundColor: "color-mix(in srgb, var(--accent-green) 10%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--accent-green) 20%, transparent)",
+              }}
+            >
+              {estimatedMinutes} min
+            </span>
+          )}
+
+          {/* Often postponed badge */}
+          {postponeCount >= 3 && (
+            <span
+              className="text-xs px-1.5 py-0.5 rounded"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--accent-red)",
+                backgroundColor: "color-mix(in srgb, var(--accent-red) 10%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--accent-red) 20%, transparent)",
+              }}
+            >
+              {t("badge_postponed")}
             </span>
           )}
         </div>
       </div>
+
+      {/* Breakdown modal */}
+      {showBreakdownModal && (
+        <TaskBreakdownModal
+          task={{ id, title }}
+          onCancel={() => setShowBreakdownModal(false)}
+          onSuccess={() => {
+            setShowBreakdownModal(false);
+            onBreakdown?.(id);
+          }}
+        />
+      )}
 
       {/* Action buttons — visible on hover, larger touch targets */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0">
@@ -371,6 +423,21 @@ export function TaskItem({
             title={t("aria_go_topic")}
           >
             →
+          </button>
+        )}
+        {/* Breakdown button — only for non-completed tasks */}
+        {!isCompleted && onBreakdown && (
+          <button
+            onClick={() => setShowBreakdownModal(true)}
+            className="p-2 rounded-lg transition-colors"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            }}
+            aria-label={t("breakdown_btn")}
+            title={t("breakdown_btn")}
+          >
+            <FontAwesomeIcon icon={faLayerGroup} className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         )}
         <button
