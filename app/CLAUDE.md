@@ -22,11 +22,12 @@ api/
   auth/[...nextauth]/route.ts        → Auth.js v5 handler (GET + POST)
   tasks/route.ts                     → GET (list, ?topicId/type/completed filters), POST (create)
   tasks/[id]/route.ts                → GET (single), PATCH (update), DELETE
-  tasks/[id]/complete/route.ts       → POST (complete + award coins), DELETE (uncomplete + refund)
+  tasks/[id]/complete/route.ts       → POST (complete + award coins, body: {timezone?}), DELETE (uncomplete + refund)
+  tasks/[id]/breakdown/route.ts      → POST (split task into subtasks under new topic)
   topics/route.ts                    → GET (list with task counts), POST (create)
   topics/[id]/route.ts               → GET (with tasks), PATCH, DELETE
-  daily-quest/route.ts               → GET (fetch today's quest), POST (postpone/reassign)
-  daily-quest/postpone/route.ts      → POST (postpone quest to next day)
+  daily-quest/route.ts               → GET (fetch today's quest, returns completed quest all day), POST (force new quest)
+  daily-quest/postpone/route.ts      → POST (postpone quest, body: {taskId, timezone?}, enforces daily limit)
   wishlist/route.ts                  → GET (list), POST (create)
   wishlist/[id]/route.ts             → PATCH, DELETE
   wishlist/[id]/buy/route.ts         → POST (mark purchased, deduct coins)
@@ -43,9 +44,11 @@ api/
   user/export/route.ts               → GET (GDPR data export as JSON download)
   user/delete/route.ts               → DELETE (full account deletion)
   locale/route.ts                    → POST (set UI locale cookie)
+  settings/quest/route.ts            → PATCH (save quest postpone limit)
+  openapi.json/route.ts              → GET (OpenAPI 3.1.0 spec, public)
 globals.css     → Design system CSS variables, Tailwind v4, Google Fonts
 layout.tsx      → Root layout: ThemeProvider (next-themes), font variables
-page.tsx        → Redirects / → /dashboard
+page.tsx        → Landing page (unauthenticated) or redirect to /dashboard (authenticated)
 ```
 
 ## Patterns
