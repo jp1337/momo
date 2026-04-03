@@ -76,7 +76,7 @@ export default async function AdminPage() {
             Zugriff verweigert
           </h1>
           <p
-            className="text-sm"
+            className="text-sm mb-4"
             style={{
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
               color: "var(--text-muted)",
@@ -84,6 +84,20 @@ export default async function AdminPage() {
           >
             Du hast keine Berechtigung, diese Seite aufzurufen.
           </p>
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
+            Setze diese User-ID in <code>ADMIN_USER_IDS</code>:
+          </p>
+          <code
+            className="block text-xs px-3 py-2 rounded-lg select-all"
+            style={{
+              backgroundColor: "var(--bg-elevated)",
+              color: "var(--accent-amber)",
+              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            {session.user.id}
+          </code>
         </div>
       </div>
     );
