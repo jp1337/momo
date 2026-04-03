@@ -92,23 +92,6 @@ export function NotificationSettings({
   }, [initialEnabled, vapidPublicKey]);
 
   /**
-   * Converts a URL-safe base64 string to a Uint8Array.
-   * Required for the applicationServerKey when subscribing to push.
-   */
-  function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
-    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding)
-      .replace(/-/g, "+")
-      .replace(/_/g, "/");
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(new ArrayBuffer(rawData.length));
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  }
-
-  /**
    * Requests notification permission, subscribes to push,
    * and saves the subscription to the server.
    */
@@ -147,10 +130,22 @@ export function NotificationSettings({
       }
       // Trim whitespace/newlines that can be introduced by env var storage
       const vapidKey = vapidPublicKey.trim();
+      console.debug("[Push] VAPID key length:", vapidKey.length, "chars");
 
+      // Unsubscribe any stale existing subscription before creating a new one.
+      // A leftover subscription (e.g. from a previous SW registration) can cause
+      // Chrome to throw AbortError: Registration failed - push service error.
+      const existingSubscription = await registration.pushManager.getSubscription();
+      if (existingSubscription) {
+        await existingSubscription.unsubscribe();
+      }
+
+      // Pass the VAPID public key as a base64url string directly (Chrome 67+).
+      // This is the modern recommended approach and avoids Uint8Array conversion
+      // issues that can cause AbortError on some Chrome versions.
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+        applicationServerKey: vapidKey,
       });
 
       // Step 4: Serialize and send to server

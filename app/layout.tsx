@@ -98,7 +98,8 @@ export default async function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         {/* PWA theme colour for the browser chrome */}
         <meta name="theme-color" content="#f0a500" />
-        {/* iOS PWA meta tags */}
+        {/* PWA installable on Android/Chrome (standard) and iOS (Apple-specific) */}
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
           name="apple-mobile-web-app-status-bar-style"
