@@ -11,6 +11,10 @@ import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { TaskItem } from "@/components/tasks/task-item";
 import { TaskForm } from "@/components/tasks/task-form";
+import { triggerSmallConfetti } from "@/components/animations/confetti";
+import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
+import { AchievementToast } from "@/components/animations/achievement-toast";
+import type { AchievementItem } from "@/components/animations/achievement-toast";
 
 interface Task {
   id: string;
@@ -46,6 +50,8 @@ export function TopicDetailView({
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
 
   const editingTask = tasks.find((task) => task.id === editingTaskId);
 
@@ -64,8 +70,33 @@ export function TopicDetailView({
   const handleComplete = useCallback(
     async (id: string) => {
       try {
-        const res = await fetch(`/api/tasks/${id}/complete`, { method: "POST" });
-        if (res.ok) await refreshTasks();
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const res = await fetch(`/api/tasks/${id}/complete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ timezone }),
+        });
+        if (res.ok) {
+          const data = await res.json() as {
+            coinsEarned?: number;
+            newLevel?: { level: number; title: string } | null;
+            unlockedAchievements?: AchievementItem[];
+          };
+
+          triggerSmallConfetti();
+
+          if (data.coinsEarned && data.coinsEarned > 0) {
+            window.dispatchEvent(
+              new CustomEvent("coinsEarned", { detail: { delta: data.coinsEarned } })
+            );
+          }
+          if (data.newLevel) setLevelUp(data.newLevel);
+          if (data.unlockedAchievements && data.unlockedAchievements.length > 0) {
+            setPendingAchievements((prev) => [...prev, ...data.unlockedAchievements!]);
+          }
+
+          await refreshTasks();
+        }
       } catch {
         // silent fail
       }
@@ -77,7 +108,16 @@ export function TopicDetailView({
     async (id: string) => {
       try {
         const res = await fetch(`/api/tasks/${id}/complete`, { method: "DELETE" });
-        if (res.ok) await refreshTasks();
+        if (res.ok) {
+          const data = await res.json() as { task?: { coinValue?: number } };
+          const refunded = data.task?.coinValue ?? 0;
+          if (refunded > 0) {
+            window.dispatchEvent(
+              new CustomEvent("coinsEarned", { detail: { delta: -refunded } })
+            );
+          }
+          await refreshTasks();
+        }
       } catch {
         // silent fail
       }
@@ -106,6 +146,23 @@ export function TopicDetailView({
 
   return (
     <div>
+      {/* Level-up overlay */}
+      {levelUp && (
+        <LevelUpOverlay
+          level={levelUp.level}
+          title={levelUp.title}
+          onDone={() => setLevelUp(null)}
+        />
+      )}
+
+      {/* Achievement toast notifications */}
+      {pendingAchievements.length > 0 && (
+        <AchievementToast
+          achievements={pendingAchievements}
+          onAllDone={() => setPendingAchievements([])}
+        />
+      )}
+
       {/* Header row */}
       <div className="flex items-center justify-between mb-4">
         <h2
