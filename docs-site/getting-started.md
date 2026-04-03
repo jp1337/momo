@@ -71,15 +71,11 @@ This starts:
 - **app** — the Momo Next.js application on port 3000
 - **db** — PostgreSQL 18 on port 5432
 
-### Step 5 — Run database migrations
-
-```bash
-docker compose exec app npx drizzle-kit migrate
-```
-
-### Step 6 — Open Momo
+### Step 5 — Open Momo
 
 Visit [http://localhost:3000](http://localhost:3000) in your browser and sign in with your OAuth provider.
+
+> **Migrations run automatically.** The container applies all pending database migrations before the server starts — no manual step needed.
 
 ---
 
