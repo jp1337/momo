@@ -247,7 +247,19 @@
     "notif_err_disable": "Benachrichtigungen konnten nicht deaktiviert werden.",
     "notif_err_save": "Abonnement konnte nicht gespeichert werden",
     "notif_test_sent": "Test-Benachrichtigung gesendet! Überprüfe dein Gerät.",
-    "notif_test_failed": "Test-Benachrichtigung konnte nicht gesendet werden."
+    "notif_test_failed": "Test-Benachrichtigung konnte nicht gesendet werden.",
+    "section_danger": "Gefahrenzone",
+    "danger_hint": "Diese Aktionen können nicht rückgängig gemacht werden.",
+    "delete_account_btn": "Konto löschen",
+    "delete_confirm_text": "Bist du sicher? Folgende Daten werden dauerhaft gelöscht:",
+    "delete_warn_tasks": "Alle deine Aufgaben und Erledigungen",
+    "delete_warn_topics": "Alle deine Themen",
+    "delete_warn_wishlist": "Alle Wunschlisten-Artikel",
+    "delete_warn_coins": "Deine Münzen, Streak und Achievements",
+    "delete_confirm_btn": "Ja, alles löschen",
+    "delete_confirming": "Lösche...",
+    "delete_cancel_btn": "Abbrechen",
+    "delete_err_generic": "Konto konnte nicht gelöscht werden — bitte erneut versuchen."
   },
   "animations": {
     "achievement_title": "Achievement freigeschaltet!",

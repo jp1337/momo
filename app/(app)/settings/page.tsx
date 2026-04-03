@@ -19,6 +19,7 @@ import { eq } from "drizzle-orm";
 import Image from "next/image";
 import { NotificationSettings } from "@/components/settings/notification-settings";
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
+import { DeleteAccount } from "@/components/settings/delete-account";
 import { getTranslations, getLocale } from "next-intl/server";
 import type { Metadata } from "next";
 
@@ -234,6 +235,9 @@ export default async function SettingsPage() {
 
         <LanguageSwitcher currentLocale={locale} />
       </section>
+
+      {/* Danger Zone */}
+      <DeleteAccount />
     </div>
   );
 }

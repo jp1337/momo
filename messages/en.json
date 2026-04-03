@@ -247,7 +247,19 @@
     "notif_err_disable": "Failed to disable notifications.",
     "notif_err_save": "Failed to save subscription",
     "notif_test_sent": "Test notification sent! Check your device.",
-    "notif_test_failed": "Failed to send test notification."
+    "notif_test_failed": "Failed to send test notification.",
+    "section_danger": "Danger Zone",
+    "danger_hint": "These actions cannot be undone.",
+    "delete_account_btn": "Delete account",
+    "delete_confirm_text": "Are you sure? The following data will be permanently deleted:",
+    "delete_warn_tasks": "All your tasks and completions",
+    "delete_warn_topics": "All your topics",
+    "delete_warn_wishlist": "All wishlist items",
+    "delete_warn_coins": "Your coins, streak and achievements",
+    "delete_confirm_btn": "Yes, delete everything",
+    "delete_confirming": "Deleting...",
+    "delete_cancel_btn": "Cancel",
+    "delete_err_generic": "Failed to delete account — please try again."
   },
   "animations": {
     "achievement_title": "Achievement unlocked!",
