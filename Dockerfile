@@ -77,6 +77,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts/migrate.mjs ./scripts/mig
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x docker-entrypoint.sh
 
+# drizzle-orm/node-postgres/migrator is not traced by Next.js standalone (migrate.mjs
+# is outside the app build). Copy drizzle-orm explicitly from the deps stage.
+# drizzle-orm has zero runtime dependencies, so a single copy is sufficient.
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+
 # Switch to non-root user
 USER nextjs
 

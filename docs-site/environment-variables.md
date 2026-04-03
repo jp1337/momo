@@ -18,7 +18,7 @@ These must be set for the application to start.
 |---|---|---|
 | `DATABASE_URL` | string (URL) | PostgreSQL connection string — `postgresql://user:pass@host:port/db` |
 | `AUTH_SECRET` | string (min 32 chars) | Secret for signing Auth.js JWTs and cookies. Generate with `openssl rand -base64 32` |
-| `AUTH_TRUST_HOST` | `true` \| `false` | **Required in production behind a reverse proxy.** Auth.js v5 rejects requests from hosts it doesn't recognise unless this is `true`. Must be set for Docker Compose + Caddy/nginx and all Kubernetes deployments. Leave `false` for local development without a proxy. |
+| `AUTH_TRUST_HOST` | `true` \| `false` | **Required in production behind a reverse proxy.** Auth.js v5 rejects requests from hosts it doesn't recognise unless this is `true`. Set for all Docker Compose + Caddy/nginx deployments and all Kubernetes clusters. Leave `false` for local development without a proxy. |
 
 ---
 
@@ -34,7 +34,7 @@ At least one provider must be configured for login to work.
 | `DISCORD_CLIENT_SECRET` | Optional | Discord Application Client Secret |
 | `GOOGLE_CLIENT_ID` | Optional | Google OAuth 2.0 Client ID |
 | `GOOGLE_CLIENT_SECRET` | Optional | Google OAuth 2.0 Client Secret |
-| `OIDC_CLIENT_ID` | Optional | Generic OIDC Client ID (Authentik, Keycloak, etc.) |
+| `OIDC_CLIENT_ID` | Optional | Generic OIDC Client ID (Authentik, Keycloak, Zitadel, etc.) |
 | `OIDC_CLIENT_SECRET` | Optional | Generic OIDC Client Secret |
 | `OIDC_ISSUER` | Optional | OIDC Issuer URL. Setting this activates the OIDC login button. |
 
@@ -97,9 +97,9 @@ curl -X POST https://your-domain.com/api/cron/daily-quest \
 
 | Variable | Default | Description |
 |---|---|---|
-| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | Public URL of the application (used for links in notifications) |
-| `NEXTAUTH_URL` | `http://localhost:3000` | Auth.js callback base URL. Must match your domain exactly. |
-| `NODE_ENV` | `development` | Runtime environment: `development`, `production`, or `test` |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | Public URL of the application (used for links in notifications and PWA) |
+| `NEXTAUTH_URL` | `http://localhost:3000` | Auth.js callback base URL. Must exactly match the Homepage URL and Authorized redirect URI configured in each OAuth provider app. In production: `https://your-domain.com` |
+| `NODE_ENV` | `development` | Runtime environment: `development`, `production`, or `test`. Set to `production` in all production deployments. |
 
 In production, set both `NEXT_PUBLIC_APP_URL` and `NEXTAUTH_URL` to your public HTTPS domain:
 
@@ -110,13 +110,24 @@ NEXTAUTH_URL=https://momo.example.com
 
 ---
 
+## Legal Pages (DSGVO / § 5 TMG)
+
+Required for publicly accessible deployments in Germany and recommended everywhere. These values are rendered on `/impressum` and `/datenschutz`. If unset, those pages show a configuration warning instead of legal content.
+
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_IMPRINT_NAME` | Public deployments | Full legal name of the operator (§ 5 TMG) |
+| `NEXT_PUBLIC_IMPRINT_ADDRESS` | Public deployments | Street address, postcode, city |
+| `NEXT_PUBLIC_IMPRINT_EMAIL` | Public deployments | Contact / data protection email address |
+| `NEXT_PUBLIC_IMPRINT_PHONE` | Optional | Phone number (recommended for § 5 TMG) |
+
+---
+
 ## Docker Compose
 
 | Variable | Default | Description |
 |---|---|---|
-| `POSTGRES_PASSWORD` | `password` | PostgreSQL password used by `docker-compose.yml` for the `db` service |
-
-This variable is only needed when using the included `docker-compose.yml`. Make sure it matches the password in `DATABASE_URL`.
+| `POSTGRES_PASSWORD` | `password` | PostgreSQL password used by `docker-compose.yml` for the `db` service. Must match the password in `DATABASE_URL`. |
 
 ---
 
@@ -131,6 +142,7 @@ POSTGRES_PASSWORD=password
 
 # Auth
 AUTH_SECRET=replace-this-with-openssl-rand-base64-32-output
+AUTH_TRUST_HOST=false
 
 # GitHub OAuth
 GITHUB_CLIENT_ID=your-github-client-id
@@ -141,7 +153,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXTAUTH_URL=http://localhost:3000
 ```
 
-A production `.env.local` with all features enabled:
+A production `.env.local` with all features enabled (behind a reverse proxy):
 
 ```env
 # Database
@@ -150,7 +162,7 @@ POSTGRES_PASSWORD=strongpassword
 
 # Auth
 AUTH_SECRET=your-32-byte-base64-secret
-AUTH_TRUST_HOST=true  # Required behind a reverse proxy or in Kubernetes
+AUTH_TRUST_HOST=true
 
 # OAuth
 GITHUB_CLIENT_ID=your-github-client-id
@@ -170,4 +182,10 @@ CRON_SECRET=your-hex-cron-secret
 NEXT_PUBLIC_APP_URL=https://momo.example.com
 NEXTAUTH_URL=https://momo.example.com
 NODE_ENV=production
+
+# Legal pages (required for public deployments in Germany)
+NEXT_PUBLIC_IMPRINT_NAME=Max Mustermann
+NEXT_PUBLIC_IMPRINT_ADDRESS=Musterstraße 1, 12345 Berlin
+NEXT_PUBLIC_IMPRINT_EMAIL=kontakt@example.com
+NEXT_PUBLIC_IMPRINT_PHONE=+49 30 123456
 ```

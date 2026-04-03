@@ -36,10 +36,12 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **Wishlist & Budget** — Track things you want to buy, with a monthly budget indicator to spend more consciously.
 - **Push Notifications** — Daily reminders via browser push. No third-party service, no subscription.
 - **PWA** — Install on your phone like a native app. Works offline.
+- **REST API & API Keys** — Full public REST API with personal access tokens (read-only flag, expiry dates). Interactive Swagger UI at `/api-docs`.
+- **Account Linking** — Connect multiple OAuth providers to one account.
 - **Multilingual** — German, English, and French UI with cookie-based locale switching. Add any language by dropping in a `messages/XX.json` file.
 - **Dark & Light Mode** — Cozy warm tones in both themes. Because productivity shouldn't feel clinical.
 - **DSGVO / GDPR Ready** — Data export (JSON), account deletion with full cascade, Impressum + Datenschutzerklärung pages, no tracking cookies.
-- **Open Source & Self-Hostable** — Your data, your server, your rules.
+- **Open Source & Self-Hostable** — Your data, your server, your rules. Migrations run automatically on container start.
 
 ---
 
@@ -68,7 +70,8 @@ See [OAuth Setup Guide](docs/oauth-setup.md) for configuration instructions.
 | **Database** | PostgreSQL 18 + Drizzle ORM |
 | **i18n** | next-intl — German, English, French (cookie-based, no URL prefix) |
 | **Push Notifications** | Web Push API (VAPID, no third-party) |
-| **Container** | Docker |
+| **API** | OpenAPI 3.1.0 + Personal Access Tokens (Bearer) |
+| **Container** | Docker (Node.js 22 LTS) |
 | **Orchestration** | Kubernetes |
 | **CI/CD** | GitHub Actions (native multi-arch: amd64 + arm64) |
 | **Image Registries** | GHCR, Docker Hub, Quay.io |
@@ -93,7 +96,7 @@ Momo is intentionally cozy. Both the dark and light themes use warm, earthy tone
 ### Prerequisites
 
 - Docker & Docker Compose
-- Node.js 20+ (for local development)
+- Node.js 22+ (for local development only)
 - A GitHub or Discord OAuth App (see [OAuth Setup](docs/oauth-setup.md))
 
 ### 1. Clone the repository
@@ -118,13 +121,7 @@ See [Environment Variables](docs/environment-variables.md) for a full reference.
 docker compose up -d
 ```
 
-The app will be available at `http://localhost:3000`.
-
-### 4. Run database migrations
-
-```bash
-docker compose exec app npx drizzle-kit migrate
-```
+The app is available at `http://localhost:3000`. **Database migrations run automatically** before the server starts — no manual step needed.
 
 ---
 
@@ -137,7 +134,7 @@ npm install
 # Start PostgreSQL via Docker Compose
 docker compose up db -d
 
-# Run database migrations
+# Run database migrations (local dev only)
 npx drizzle-kit migrate
 
 # Start the development server
@@ -179,7 +176,7 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 | [Deployment](docs/deployment.md) | Docker Compose, production checklist, Kubernetes reference |
 | [Environment Variables](docs/environment-variables.md) | All configuration options |
 | [OAuth Setup](docs/oauth-setup.md) | GitHub, Discord, Google & OIDC configuration |
-| [API Reference](docs/api.md) | All REST endpoints — interactive at `/api-docs` |
+| [API Reference](docs/api.md) | All REST endpoints — interactive Swagger UI at `/api-docs` |
 | [Database](docs/database.md) | Schema overview, migrations, Drizzle Studio |
 | [DSGVO / GDPR](docs/gdpr.md) | Compliance guide for operators |
 
@@ -197,6 +194,7 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 | Phase 6 – PWA & Push | ✅ Done | PWA manifest, Service Worker, VAPID push, Daily quest & streak notifications, Settings page |
 | Phase 7 – Deployment | ✅ Done | Multi-stage Docker, GitHub Actions (GHCR + DockerHub + Quay), Security Headers, Rate Limiting, K8s manifests |
 | Phase 8 – Polish | ✅ Done | Multilingual (DE/EN/FR), DSGVO compliance, Dark mode redesign, self-hosted fonts, data export, account deletion |
+| Phase 9 – API & Keys | ✅ Done | Public REST API, Personal Access Tokens, Swagger UI, Account Linking, Font Awesome icons, SVG Logo |
 
 ---
 
@@ -208,6 +206,7 @@ Before deploying Momo to production, verify all items below:
   ```bash
   openssl rand -base64 32
   ```
+- [ ] **Set AUTH_TRUST_HOST=true** — required when running behind any reverse proxy (nginx, Caddy, Traefik) or in Kubernetes
 - [ ] **Set all required environment variables** — see [Environment Variables](docs/environment-variables.md)
 - [ ] **Generate VAPID keys** for push notifications:
   ```bash
@@ -218,15 +217,9 @@ Before deploying Momo to production, verify all items below:
   ```bash
   openssl rand -hex 32
   ```
-- [ ] **Configure Kubernetes secrets** — copy `deploy/examples/secret.example.yaml`, fill in real values, apply it, then delete the file (never commit real secrets)
-- [ ] **Set up cert-manager** for automatic TLS certificate provisioning
-- [ ] **Configure legal pages** (for public deployments) — set `NEXT_PUBLIC_IMPRINT_NAME`, `NEXT_PUBLIC_IMPRINT_ADDRESS`, `NEXT_PUBLIC_IMPRINT_EMAIL` in your environment (see [DSGVO Guide](docs/gdpr.md))
-- [ ] **Run database migrations** after every deployment:
-  ```bash
-  docker compose exec app npx drizzle-kit migrate
-  # or in Kubernetes:
-  kubectl exec -n momo deployment/momo-app -- npx drizzle-kit migrate
-  ```
+- [ ] **Configure TLS** — use a reverse proxy (nginx, Caddy) or cert-manager in Kubernetes
+- [ ] **Configure legal pages** (for public deployments) — set `NEXT_PUBLIC_IMPRINT_NAME`, `NEXT_PUBLIC_IMPRINT_ADDRESS`, `NEXT_PUBLIC_IMPRINT_EMAIL` (see [DSGVO Guide](docs/gdpr.md))
+- [ ] **Migrations run automatically** — the container applies all pending migrations on startup. Check `docker compose logs app` after deployment to confirm.
 
 See the full [Deployment Guide](docs/deployment.md) for AUTH_SECRET rotation procedures and Kubernetes deployment steps.
 

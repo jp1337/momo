@@ -66,7 +66,9 @@ The required fields in `secret.yaml`:
 stringData:
   DATABASE_URL: "postgresql://momo:yourpassword@momo-postgres:5432/momo"
   AUTH_SECRET: "generate with: openssl rand -base64 32"
+  AUTH_TRUST_HOST: "true"
   NEXT_PUBLIC_APP_URL: "https://momo.example.com"
+  NEXTAUTH_URL: "https://momo.example.com"
 
   # At least one OAuth provider
   GITHUB_CLIENT_ID: ""
@@ -80,6 +82,8 @@ stringData:
   # Cron protection
   CRON_SECRET: "generate with: openssl rand -hex 32"
 ```
+
+> **Important:** `AUTH_TRUST_HOST: "true"` is required for Kubernetes — Auth.js v5 rejects requests from unrecognised hosts unless this is set.
 
 Apply the secret:
 
@@ -115,16 +119,7 @@ kubectl apply -f deploy/examples/service.yaml
 kubectl apply -f deploy/examples/ingress.yaml
 ```
 
-### Step 6 — Run database migrations
-
-Wait for the app pod to be running, then run migrations:
-
-```bash
-kubectl rollout status deployment/momo-app -n momo
-kubectl exec -n momo deployment/momo-app -- npx drizzle-kit migrate
-```
-
-### Step 7 — Verify
+### Step 6 — Verify
 
 ```bash
 kubectl get pods -n momo
@@ -132,6 +127,12 @@ kubectl get ingress -n momo
 ```
 
 The app should be accessible at `https://momo.example.com` once cert-manager provisions the TLS certificate (usually within 1-2 minutes).
+
+> **Migrations run automatically.** The container runs all pending database migrations before the Next.js server starts on every pod start. Check the logs to confirm:
+> ```bash
+> kubectl logs -n momo deployment/momo-app --tail=20
+> ```
+> You should see `[migrate] All migrations applied successfully.`
 
 ---
 
@@ -174,11 +175,7 @@ kubectl set image deployment/momo-app momo=ghcr.io/jp1337/momo:latest -n momo
 kubectl rollout restart deployment/momo-app -n momo
 ```
 
-After updates that include database changes, run migrations:
-
-```bash
-kubectl exec -n momo deployment/momo-app -- npx drizzle-kit migrate
-```
+Migrations for any new schema changes run automatically when the pods restart.
 
 ---
 
