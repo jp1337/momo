@@ -17,6 +17,7 @@ import { db } from "@/lib/db";
 import type { Database } from "@/lib/db";
 import { tasks, users, topics } from "@/lib/db/schema";
 import { eq, and, isNull, isNotNull, lte, lt, gte, or, ne, sql } from "drizzle-orm";
+import { getLocalDateString, getLocalTomorrowString } from "@/lib/date-utils";
 
 /** A Drizzle transaction or the base db instance */
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -438,9 +439,10 @@ export interface PostponeResult {
  */
 export async function postponeDailyQuest(
   taskId: string,
-  userId: string
+  userId: string,
+  timezone?: string | null
 ): Promise<PostponeResult> {
-  const todayStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  const todayStr = getLocalDateString(timezone);
 
   // Fetch user's postpone counters and limit
   const userRows = await db
@@ -482,10 +484,8 @@ export async function postponeDailyQuest(
     throw new Error("Task not found, not owned by user, or not the active daily quest");
   }
 
-  // Calculate tomorrow's date
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split("T")[0]; // YYYY-MM-DD
+  // Calculate tomorrow's date in the user's timezone
+  const tomorrowStr = getLocalTomorrowString(timezone);
 
   const newPostponesToday = postponesToday + 1;
 

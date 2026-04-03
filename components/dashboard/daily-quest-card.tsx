@@ -125,8 +125,11 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit }: DailyQu
     setIsCompleting(true);
 
     try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const res = await fetch(`/api/tasks/${quest.id}/complete`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timezone }),
       });
 
       if (!res.ok) {
@@ -179,10 +182,11 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit }: DailyQu
     setIsPostponing(true);
 
     try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const res = await fetch("/api/daily-quest/postpone", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId: quest.id }),
+        body: JSON.stringify({ taskId: quest.id, timezone }),
       });
 
       if (!res.ok) {

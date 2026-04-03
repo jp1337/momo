@@ -16,6 +16,7 @@ import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 /** Validation schema for the postpone request body */
 const PostponeBodySchema = z.object({
   taskId: z.string().uuid("taskId must be a valid UUID"),
+  timezone: z.string().max(64).optional().nullable(),
 });
 
 /**
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await postponeDailyQuest(parsed.data.taskId, user.userId);
+    const result = await postponeDailyQuest(parsed.data.taskId, user.userId, parsed.data.timezone);
     return Response.json({ ok: true, ...result });
   } catch (error) {
     if (error instanceof Error && error.message === "LIMIT_REACHED") {
