@@ -57,7 +57,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
     await sendPushNotification(user.userId, subscription, {
       title: "Momo test notification",
       body: "Push notifications are working correctly!",
-      icon: "/favicon.ico",
+      icon: "/icon-192.png",
       url: "/dashboard",
       tag: "momo-test",
     });
