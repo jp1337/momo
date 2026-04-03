@@ -5,8 +5,10 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 
 ## Contents
 - `theme-toggle.tsx` — Cycles dark → light → system using next-themes
-- `layout/navbar.tsx` — Top bar: app name (Lora font), ThemeToggle, user avatar, sign-out
-- `layout/sidebar.tsx` — Left navigation with active route highlighting
+- `layout/navbar.tsx` — Top bar: app name (Lora font), ThemeToggle, coin display, user avatar dropdown
+- `layout/sidebar.tsx` — Left navigation (hidden on mobile), active route highlighting
+- `layout/mobile-nav.tsx` — Fixed bottom tab bar (mobile only, md:hidden): Dashboard/Tasks/Topics/Wishlist
+- `layout/user-menu.tsx` — Avatar dropdown: Settings, API Keys, Stats, Admin (if isAdmin), Sign out
 - `ui/` — shadcn/ui base components (Button, Card, etc.) — heavily customized to use CSS variables
 - `tasks/task-item.tsx` — Single task row: checkbox, Framer Motion completion animation, priority badges, topic tag, due date, recurring/quest indicators
 - `tasks/task-form.tsx` — Create/edit modal (client component), shows recurrence interval only when type=RECURRING
@@ -20,8 +22,10 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `wishlist/wishlist-form.tsx` — Create/edit wishlist item modal
 - `wishlist/wishlist-view.tsx` — Full wishlist page with budget bar + item grid
 - `wishlist/budget-bar.tsx` — Progress bar showing coins spent vs. monthly budget
-- `settings/notification-settings.tsx` — Push notification enable/disable + test button
-- `settings/linked-accounts.tsx` — Connected OAuth providers list with "Connect" buttons
+- `settings/notification-settings.tsx` — Push notification enable/disable/test; receives `vapidPublicKey` as prop from Server Component (not from clientEnv — NEXT_PUBLIC vars are build-time only)
+- `settings/linked-accounts.tsx` — Connected OAuth providers list; uses `signIn()` from next-auth/react (not window.location) to trigger linking flow
+- `settings/language-switcher.tsx` — UI language switcher (de/en/fr); POSTs to /api/locale
+- `settings/delete-account.tsx` — Danger zone: account deletion with confirmation dialog
 - `api-keys/api-keys-view.tsx` — API key management (create form, one-time key display, revoke)
 - `layout/user-menu.tsx` — Avatar dropdown in navbar (Settings, API Keys, Sign out)
 - `animations/confetti.tsx` — Confetti burst on task completion / level-up
