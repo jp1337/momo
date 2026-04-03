@@ -98,7 +98,7 @@ export default function DatenschutzPage() {
             <br />
             Die Datenverarbeitung in dieser Anwendung erfolgt durch den
             Betreiber. Dessen Kontaktdaten können Sie dem Abschnitt
-            „Hinweis zur verantwortlichen Stelle" in dieser
+            {`„Hinweis zur verantwortlichen Stelle"`} in dieser
             Datenschutzerklärung entnehmen.
           </p>
           <p style={{ color: "var(--text-muted)" }}>
@@ -377,8 +377,8 @@ export default function DatenschutzPage() {
             Diese Anwendung nutzt aus Sicherheitsgründen und zum Schutz
             der Übertragung vertraulicher Inhalte eine SSL- bzw.
             TLS-Verschlüsselung. Eine verschlüsselte Verbindung erkennen
-            Sie daran, dass die Adresszeile des Browsers von „http://" auf
-            „https://" wechselt und an dem Schloss-Symbol in Ihrer
+            Sie daran, dass die Adresszeile des Browsers von {`„http://"`} auf
+            {`„https://"`} wechselt und an dem Schloss-Symbol in Ihrer
             Browserzeile. Wenn die SSL- bzw. TLS-Verschlüsselung aktiviert
             ist, können die Daten, die Sie an uns übermitteln, nicht von
             Dritten mitgelesen werden.

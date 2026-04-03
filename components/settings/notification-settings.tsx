@@ -89,7 +89,7 @@ export function NotificationSettings({
     }
 
     setStatus("default");
-  }, [initialEnabled]);
+  }, [initialEnabled, vapidPublicKey]);
 
   /**
    * Converts a URL-safe base64 string to a Uint8Array.
