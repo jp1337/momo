@@ -8,11 +8,13 @@ All server-side business logic and infrastructure. API routes import from here �
 - `env.ts` — Zod-validated env wrapper. **All** env var access must go through `serverEnv` or `clientEnv` exports here
 - `db/index.ts` — Drizzle client (postgres driver), singleton pattern
 - `db/schema.ts` — All table definitions: users, topics, tasks, task_completions, wishlist_items, achievements, user_achievements + Auth.js tables (accounts, sessions, verification_tokens)
-- `tasks.ts` — getUserTasks, getTaskById, createTask, updateTask, deleteTask, completeTask (coin award + recurring auto-reset), uncompleteTask
+- `tasks.ts` — getUserTasks, getTaskById, createTask, updateTask, deleteTask, completeTask (coin award + streak + achievements, timezone-aware), uncompleteTask, breakdownTask
+- `topic-icons.ts` — TOPIC_ICONS map of 47 curated FA solid icons + resolveTopicIcon(key) with faFolder fallback
 - `topics.ts` — getUserTopics (with task counts), getTopicById (with tasks), createTopic, updateTopic, deleteTopic (reassigns tasks to null)
 - `validators/index.ts` — Zod schemas: CreateTaskInput, UpdateTaskInput, CreateTopicInput, UpdateTopicInput, CreateWishlistItemInput, UpdateWishlistItemInput
-- `daily-quest.ts` — selectDailyQuest: picks today's task (priority: overdue → high-priority topic subtask → recurring → random)
-- `gamification.ts` — awardCoins, deductCoins, checkAchievements, getLevelFromXP — coin/XP/achievement logic
+- `daily-quest.ts` — selectDailyQuest, getCurrentDailyQuest, postponeDailyQuest (timezone-aware), forceSelectDailyQuest
+- `gamification.ts` — updateStreak (timezone-aware), getLevelForCoins, checkAndUnlockAchievements, seedAchievements, getUserStats
+- `date-utils.ts` — getLocalDateString, getLocalTomorrowString, getLocalYesterdayString — all timezone-aware via Intl.DateTimeFormat("en-CA")
 - `push.ts` — savePushSubscription, sendPushNotification, sendStreakReminder — Web Push via VAPID
 - `rate-limit.ts` — In-memory rate limiter (sliding window) applied to mutation API routes
 - `wishlist.ts` — getUserWishlistItems, createWishlistItem, updateWishlistItem, deleteWishlistItem, buyWishlistItem, discardWishlistItem
