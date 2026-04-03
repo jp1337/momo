@@ -37,12 +37,9 @@ The recommended way to self-host Momo.
    docker compose up -d
    ```
 
-4. Run database migrations:
-   ```bash
-   docker compose exec app npx drizzle-kit migrate
-   ```
+4. Open `http://localhost:3000` (or your domain if behind a reverse proxy)
 
-5. Open `http://localhost:3000` (or your domain if behind a reverse proxy)
+> **Migrations run automatically.** The container runs all pending database migrations before the Next.js server starts. Check `docker compose logs app` after deployment to confirm.
 
 ---
 
@@ -72,8 +69,8 @@ app:
 - Runs as non-root user (`nextjs:1001`)
 - Uses `output: standalone` for a minimal production bundle
 - No dev dependencies in the final image
-- Drizzle migration files (`drizzle/` + `drizzle.config.ts`) are included in the runner stage so `npx drizzle-kit migrate` works inside the container without mounting external volumes
-- HEALTHCHECK hits `/api/health` every 30 seconds
+- `docker-entrypoint.sh` runs `scripts/migrate.mjs` on every container start — applies any pending Drizzle migrations before the server starts
+- HEALTHCHECK hits `/api/health` every 30 seconds (`start-period: 30s` to allow migrations to finish)
 
 ---
 
@@ -102,10 +99,7 @@ Before going live, complete all items below:
 - **Configure TLS** — use a reverse proxy (nginx, Caddy) or cert-manager in Kubernetes
 - **Configure HSTS** — the app sets `Strict-Transport-Security` headers automatically
 - **Never commit real secrets** to git — use `.env.local` (gitignored) or a secrets manager
-- **Run database migrations** after every deployment that includes schema changes:
-  ```bash
-  docker compose exec app npx drizzle-kit migrate
-  ```
+- **Migrations run automatically** — the container applies all pending migrations on startup. No manual step needed; check `docker compose logs app` to verify.
 
 ---
 

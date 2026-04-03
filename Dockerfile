@@ -69,11 +69,13 @@ RUN mkdir .next && chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Drizzle migration files so `npx drizzle-kit migrate` works inside the container.
-# Migrations must be run once after initial deployment and after every schema change:
-#   docker compose exec app npx drizzle-kit migrate
+# Copy Drizzle migration files — used by scripts/migrate.mjs at container start
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
-COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
+
+# Copy the migration runner script and entrypoint
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh
 
 # Switch to non-root user
 USER nextjs
@@ -86,8 +88,9 @@ ENV HOSTNAME="0.0.0.0"
 
 # Health check — hits the /api/health endpoint every 30s
 # wget is available on Alpine; curl is not installed by default
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+# start-period gives the migration runner time to finish before health checks begin
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
   CMD wget -qO- http://localhost:3000/api/health || exit 1
 
-# Start the Next.js standalone server
-CMD ["node", "server.js"]
+# Run migrations then start the Next.js standalone server
+CMD ["./docker-entrypoint.sh"]
