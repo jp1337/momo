@@ -36,7 +36,9 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **Wishlist & Budget** — Track things you want to buy, with a monthly budget indicator to spend more consciously.
 - **Push Notifications** — Daily reminders via browser push. No third-party service, no subscription.
 - **PWA** — Install on your phone like a native app. Works offline.
+- **Multilingual** — German, English, and French UI with cookie-based locale switching. Add any language by dropping in a `messages/XX.json` file.
 - **Dark & Light Mode** — Cozy warm tones in both themes. Because productivity shouldn't feel clinical.
+- **DSGVO / GDPR Ready** — Data export (JSON), account deletion with full cascade, Impressum + Datenschutzerklärung pages, no tracking cookies.
 - **Open Source & Self-Hostable** — Your data, your server, your rules.
 
 ---
@@ -60,14 +62,15 @@ See [OAuth Setup Guide](docs/oauth-setup.md) for configuration instructions.
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | Next.js 15 (App Router) + React 19, TypeScript, Tailwind CSS v4 |
+| **Frontend** | Next.js 16 (App Router) + React 19, TypeScript, Tailwind CSS v4 |
 | **Animations** | Framer Motion |
 | **Auth** | Auth.js v5 (GitHub, Discord, Google, OIDC) |
 | **Database** | PostgreSQL 18 + Drizzle ORM |
+| **i18n** | next-intl — German, English, French (cookie-based, no URL prefix) |
 | **Push Notifications** | Web Push API (VAPID, no third-party) |
 | **Container** | Docker |
 | **Orchestration** | Kubernetes |
-| **CI/CD** | GitHub Actions |
+| **CI/CD** | GitHub Actions (native multi-arch: amd64 + arm64) |
 | **Image Registries** | GHCR, Docker Hub, Quay.io |
 
 > **Note for React developers:** Next.js is a React framework. All UI is written in React — Next.js adds routing, server-side rendering, API routes, and PWA support on top.
@@ -173,12 +176,12 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 
 | Guide | Description |
 |---|---|
-| [Getting Started](docs/getting-started.md) | Quick setup guide |
-| [Self-Hosting](docs/deployment.md) | Full deployment instructions |
-| [Kubernetes](docs/kubernetes.md) | Deploying to a Kubernetes cluster |
+| [Deployment](docs/deployment.md) | Docker Compose, production checklist, Kubernetes reference |
 | [Environment Variables](docs/environment-variables.md) | All configuration options |
-| [OAuth Setup](docs/oauth-setup.md) | GitHub, Discord & OIDC configuration |
-| [Contributing](docs/contributing.md) | How to contribute |
+| [OAuth Setup](docs/oauth-setup.md) | GitHub, Discord, Google & OIDC configuration |
+| [API Reference](docs/api.md) | All REST endpoints |
+| [Database](docs/database.md) | Schema overview, migrations, Drizzle Studio |
+| [DSGVO / GDPR](docs/gdpr.md) | Compliance guide for operators |
 
 ---
 
@@ -186,14 +189,14 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 
 | Phase | Status | Description |
 |---|---|---|
-| Phase 1 – Foundation | ✅ Done | Next.js 15 + Auth.js v5 + Drizzle ORM + Design System |
+| Phase 1 – Foundation | ✅ Done | Next.js 16 + Auth.js v5 + Drizzle ORM + Design System |
 | Phase 2 – Core Tasks | ✅ Done | Task CRUD, Topics, Recurring |
 | Phase 3 – Daily Quest | ✅ Done | Quest algorithm, Dashboard |
 | Phase 4 – Gamification | ✅ Done | Coins, Streaks, Animations |
 | Phase 5 – Wishlist | ✅ Done | Wishlist CRUD, Budget tracking, Affordability, Coin-unlock |
 | Phase 6 – PWA & Push | ✅ Done | PWA manifest, Service Worker, VAPID push, Daily quest & streak notifications, Settings page |
 | Phase 7 – Deployment | ✅ Done | Multi-stage Docker, GitHub Actions (GHCR + DockerHub + Quay), Security Headers, Rate Limiting, K8s manifests |
-| Phase 8 – Docs | ⬜ Planned | GitHub Pages documentation |
+| Phase 8 – Polish | ✅ Done | Multilingual (DE/EN/FR), DSGVO compliance, Dark mode redesign, self-hosted fonts, data export, account deletion |
 
 ---
 
@@ -217,6 +220,7 @@ Before deploying Momo to production, verify all items below:
   ```
 - [ ] **Configure Kubernetes secrets** — copy `deploy/examples/secret.example.yaml`, fill in real values, apply it, then delete the file (never commit real secrets)
 - [ ] **Set up cert-manager** for automatic TLS certificate provisioning
+- [ ] **Configure legal pages** (for public deployments) — set `NEXT_PUBLIC_IMPRINT_NAME`, `NEXT_PUBLIC_IMPRINT_ADDRESS`, `NEXT_PUBLIC_IMPRINT_EMAIL` in your environment (see [DSGVO Guide](docs/gdpr.md))
 - [ ] **Run database migrations** after every deployment:
   ```bash
   docker compose exec app npx drizzle-kit migrate
@@ -230,7 +234,7 @@ See the full [Deployment Guide](docs/deployment.md) for AUTH_SECRET rotation pro
 
 ## 🤝 Contributing
 
-Momo is open source and welcomes contributions. Please read [CONTRIBUTING.md](docs/contributing.md) before submitting a pull request.
+Momo is open source and welcomes contributions. Please open an issue or pull request on [GitHub](https://github.com/jp1337/momo).
 
 ---
 
