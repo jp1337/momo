@@ -11,8 +11,8 @@
  * attribute set by next-themes on the <html> element.
  */
 
-/* ─── Google Fonts ─────────────────────────────────────────────────────────── */
-@import url("https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@300;400;500;600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap");
+/* Fonts are self-hosted via next/font/google in app/layout.tsx —
+   no external CDN requests at runtime. */
 
 @import "tailwindcss";
 

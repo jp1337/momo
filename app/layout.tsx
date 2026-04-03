@@ -9,10 +9,38 @@
  */
 
 import type { Metadata, Viewport } from "next";
+import { Lora, JetBrains_Mono, DM_Sans } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
+
+/**
+ * Self-hosted fonts via next/font/google.
+ * Downloaded at build time, served from the app's own domain — no requests to
+ * fonts.googleapis.com or fonts.gstatic.com at runtime (DSGVO/performance).
+ */
+const lora = Lora({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+  weight: ["300", "400", "500", "600"],
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-ui",
+  display: "swap",
+  weight: ["300", "400", "500", "600"],
+});
 
 export const metadata: Metadata = {
   title: {
@@ -54,7 +82,11 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html
+      lang={locale}
+      className={`${lora.variable} ${jetbrainsMono.variable} ${dmSans.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {/* PWA manifest */}
         <link rel="manifest" href="/manifest.json" />
