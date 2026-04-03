@@ -55,8 +55,11 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
     dueDate: t.dueDate ?? null,
     nextDueDate: t.nextDueDate ?? null,
     topicId: t.topicId ?? null,
+    notes: t.notes ?? null,
     coinValue: t.coinValue,
     createdAt: t.createdAt.toISOString(),
+    recurrenceInterval: t.recurrenceInterval ?? null,
+    estimatedMinutes: t.estimatedMinutes ?? null,
   }));
 
   const accentColor = topic.color ?? "var(--accent-amber)";

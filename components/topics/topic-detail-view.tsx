@@ -25,8 +25,11 @@ interface Task {
   dueDate: string | null;
   nextDueDate: string | null;
   topicId: string | null;
+  notes: string | null;
   coinValue: number;
   createdAt: string;
+  recurrenceInterval?: number | null;
+  estimatedMinutes?: number | null;
 }
 
 interface TopicDetailViewProps {
@@ -278,21 +281,16 @@ export function TopicDetailView({
                   id: editingTask.id,
                   title: editingTask.title,
                   topicId: editingTask.topicId,
-                  notes: "",
+                  notes: editingTask.notes ?? "",
                   type: editingTask.type,
                   priority: editingTask.priority,
                   recurrenceInterval:
                     editingTask.type === "RECURRING"
-                      ? String(
-                          (
-                            editingTask as unknown as {
-                              recurrenceInterval: number;
-                            }
-                          ).recurrenceInterval ?? 7
-                        )
+                      ? String(editingTask.recurrenceInterval ?? 7)
                       : "7",
                   dueDate: editingTask.dueDate ?? "",
                   coinValue: String(editingTask.coinValue),
+                  estimatedMinutes: (editingTask.estimatedMinutes ?? null) as 5 | 15 | 30 | 60 | null,
                 }
               : undefined
           }
