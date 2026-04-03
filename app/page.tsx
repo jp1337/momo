@@ -92,8 +92,13 @@ export default async function LandingPage() {
         .feather-float {
           animation: featherFloat 6s ease-in-out infinite;
         }
+        .landing-cta:hover {
+          opacity: 0.88;
+          transform: translateY(-1px);
+        }
         @media (prefers-reduced-motion: reduce) {
           .feather-float { animation: none; }
+          .landing-cta:hover { transform: none; }
         }
       `}</style>
 
@@ -150,6 +155,7 @@ export default async function LandingPage() {
         {/* CTA button */}
         <Link
           href="/login"
+          className="landing-cta"
           style={{
             display: "inline-block",
             padding: "0.9rem 2.5rem",
@@ -161,14 +167,6 @@ export default async function LandingPage() {
             fontSize: "1rem",
             textDecoration: "none",
             transition: "opacity 0.2s, transform 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.opacity = "0.88";
-            (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-1px)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.opacity = "1";
-            (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(0)";
           }}
         >
           {t("hero_cta")}
