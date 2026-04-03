@@ -73,14 +73,6 @@ export default async function TasksPage() {
     color: t.color ?? null,
   }));
 
-  const activeTasks = tasks.filter((task) => task.completedAt === null).length;
-  const completedTasks = tasks.filter((task) => task.completedAt !== null).length;
-
-  const subtitle =
-    tasks.length === 0
-      ? t("page_subtitle_empty")
-      : t("page_subtitle", { active: activeTasks, completed: completedTasks });
-
   return (
     <div className="max-w-4xl mx-auto">
       {/* Page header */}
@@ -94,15 +86,6 @@ export default async function TasksPage() {
         >
           {t("page_title")}
         </h1>
-        <p
-          className="text-base"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {subtitle}
-        </p>
       </div>
 
       {/* Due today / overdue greeting banner */}
