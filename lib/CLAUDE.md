@@ -16,6 +16,9 @@ All server-side business logic and infrastructure. API routes import from here �
 - `push.ts` — savePushSubscription, sendPushNotification, sendStreakReminder — Web Push via VAPID
 - `rate-limit.ts` — In-memory rate limiter (sliding window) applied to mutation API routes
 - `wishlist.ts` — getUserWishlistItems, createWishlistItem, updateWishlistItem, deleteWishlistItem, buyWishlistItem, discardWishlistItem
+- `api-keys.ts` — generateApiKey (256-bit), createApiKey, listApiKeys, revokeApiKey, resolveApiKeyUser
+- `api-auth.ts` — resolveApiUser() — Bearer Token + Session Cookie, readonlyKeyResponse()
+- `openapi.ts` — Full OpenAPI 3.1.0 specification object (served at /api/openapi.json)
 - `utils/crypto.ts` — Cryptographic helpers (e.g. CRON_SECRET constant-time comparison)
 
 ## Patterns

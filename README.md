@@ -179,7 +179,7 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 | [Deployment](docs/deployment.md) | Docker Compose, production checklist, Kubernetes reference |
 | [Environment Variables](docs/environment-variables.md) | All configuration options |
 | [OAuth Setup](docs/oauth-setup.md) | GitHub, Discord, Google & OIDC configuration |
-| [API Reference](docs/api.md) | All REST endpoints |
+| [API Reference](docs/api.md) | All REST endpoints — interactive at `/api-docs` |
 | [Database](docs/database.md) | Schema overview, migrations, Drizzle Studio |
 | [DSGVO / GDPR](docs/gdpr.md) | Compliance guide for operators |
 

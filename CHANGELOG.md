@@ -9,6 +9,53 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+**Public REST API + Personal Access Tokens + Swagger UI (2026-04-03)**
+
+- `lib/openapi.ts` — vollständige OpenAPI 3.1.0 Spezifikation (29 Endpunkte, 8 Tags, alle Schemas)
+- `GET /api/openapi.json` — Maschinenlesbare Spec (öffentlich, Cache 5 Min.)
+- `/api-docs` — Interaktive Swagger UI (öffentlich, kein Auth nötig)
+  - Authorize via Bearer Token oder Session Cookie
+  - "Try it out" für alle Endpunkte direkt im Browser
+- `api_keys`-Tabelle — Mehrere Keys pro User, Read-Only-Option, Ablaufdatum
+- `lib/api-keys.ts` — `generateApiKey()` (256-bit Entropie), `createApiKey()`, `listApiKeys()`, `revokeApiKey()`, `resolveApiKeyUser()`
+- `lib/api-auth.ts` — `resolveApiUser()` — Bearer Token + Session Cookie, `readonlyKeyResponse()`
+- Alle ~18 API-Routen auf `resolveApiUser()` migriert (Bearer Token + Session Cookie)
+- Read-Only-Keys erhalten `403 Forbidden` auf POST/PATCH/DELETE-Routen
+- `GET /api/user/api-keys` — Liste aktiver Keys (ohne Hash)
+- `POST /api/user/api-keys` — Erstellt neuen Key (Klartext wird einmalig zurückgegeben, rate limit: 10/h)
+- `DELETE /api/user/api-keys/:id` — Widerruft Key
+- `/api-keys` Seite — API Key Verwaltung mit Formular, einmaliger Klartextanzeige + Copy-Button
+- `components/layout/user-menu.tsx` — Avatar-Dropdown (Einstellungen / API Keys / Abmelden)
+
+**Logo SVG + Favicon (2026-04-03)**
+
+- `public/icon.svg` — Stilisiertes Feder-Icon in Amber (#f0a500)
+- `app/icon.svg` — Next.js Favicon auto-discovery
+- `app/apple-icon.svg` — Apple Touch Icon
+- `public/logo.svg` — Wortmarke: Feder + "momo" in Lora-Schrift
+- `public/manifest.json` — SVG als primäres PWA-Icon
+- Navbar: Feder-SVG + "momo" in Lora statt 🪶 Emoji-Text
+- Login: `logo.svg` als `<Image>` statt Text-H1
+
+**Font Awesome Icons (lokal, kein CDN) (2026-04-03)**
+
+- `@fortawesome/fontawesome-svg-core` + `free-solid-svg-icons` + `free-brands-svg-icons` + `react-fontawesome` installiert
+- `config.autoAddCss = false` in `app/layout.tsx` — verhindert doppeltes Stylesheet
+- Sidebar: faHouse / faListCheck / faFolderOpen / faStar / faGear
+- ThemeToggle: faMoon / faSun / faDesktop
+- CoinCounter: faCoins
+- Dashboard-Stats: faCoins / faFire / faTrophy / faCircleCheck
+- Login-Provider: faGithub / faDiscord / faGoogle / faKey
+
+**Account Linking — mehrere OAuth-Provider verbinden (2026-04-03)**
+
+- `linking_requests`-Tabelle — Short-lived tokens für OAuth-Account-Linking (5 Min. TTL)
+- `POST /api/auth/link-request` — Erstellt Linking-Token, gibt OAuth-Redirect-URL zurück
+- `GET /api/auth/link-callback` — Mergt neuen OAuth-Account auf Original-User nach OAuth-Flow
+- `components/settings/linked-accounts.tsx` — Provider-Liste mit Status-Badges + "Verbinden"-Button
+- Settings-Seite: Neue Sektion "Verbundene Konten" (vor Gefahrenzone)
+- i18n: `section_linked_accounts` + `linked_accounts_hint` in DE/EN/FR
+
 **DSGVO Compliance + Performance (2026-04-03)**
 
 - Self-hosted Google Fonts via `next/font/google` — no more CDN requests to `fonts.googleapis.com` at runtime (DSGVO + performance)

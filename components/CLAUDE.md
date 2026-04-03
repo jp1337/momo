@@ -21,6 +21,9 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `wishlist/wishlist-view.tsx` — Full wishlist page with budget bar + item grid
 - `wishlist/budget-bar.tsx` — Progress bar showing coins spent vs. monthly budget
 - `settings/notification-settings.tsx` — Push notification enable/disable + test button
+- `settings/linked-accounts.tsx` — Connected OAuth providers list with "Connect" buttons
+- `api-keys/api-keys-view.tsx` — API key management (create form, one-time key display, revoke)
+- `layout/user-menu.tsx` — Avatar dropdown in navbar (Settings, API Keys, Sign out)
 - `animations/confetti.tsx` — Confetti burst on task completion / level-up
 - `animations/achievement-toast.tsx` — Toast overlay when an achievement is unlocked
 - `animations/level-up-overlay.tsx` — Full-screen overlay animation on level-up
