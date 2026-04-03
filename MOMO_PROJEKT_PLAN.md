@@ -347,7 +347,7 @@ services:
       - db
 
   db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: momo
       POSTGRES_USER: momo

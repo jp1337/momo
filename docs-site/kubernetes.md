@@ -23,7 +23,7 @@ This guide covers deploying Momo to a Kubernetes cluster. Example manifests are 
 | File | Purpose |
 |---|---|
 | `namespace.yaml` | Creates the `momo` namespace |
-| `postgres-statefulset.yaml` | PostgreSQL 16 StatefulSet with a persistent volume |
+| `postgres-statefulset.yaml` | PostgreSQL 18 StatefulSet with a persistent volume |
 | `secret.example.yaml` | Template for all required secrets — **fill in and apply, never commit** |
 | `deployment.yaml` | App deployment with 2 replicas, liveness/readiness probes, non-root security context |
 | `service.yaml` | ClusterIP service exposing the app on port 3000 |
@@ -150,7 +150,7 @@ The `deployment.yaml` includes:
 
 ### PostgreSQL StatefulSet
 
-- PostgreSQL 16 with a persistent volume claim
+- PostgreSQL 18 with a persistent volume claim
 - Data is stored in a `PersistentVolumeClaim` — survives pod restarts
 - Accessible within the cluster at `momo-postgres:5432`
 

@@ -67,7 +67,7 @@ docker compose up -d
 
 This starts:
 - **app** — the Momo Next.js application on port 3000
-- **db** — PostgreSQL 16 on port 5432
+- **db** — PostgreSQL 18 on port 5432
 
 ### Step 5 — Run database migrations
 

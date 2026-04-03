@@ -63,7 +63,7 @@ See [OAuth Setup Guide](docs/oauth-setup.md) for configuration instructions.
 | **Frontend** | Next.js 15 (App Router) + React 19, TypeScript, Tailwind CSS v4 |
 | **Animations** | Framer Motion |
 | **Auth** | Auth.js v5 (GitHub, Discord, Google, OIDC) |
-| **Database** | PostgreSQL 16 + Drizzle ORM |
+| **Database** | PostgreSQL 18 + Drizzle ORM |
 | **Push Notifications** | Web Push API (VAPID, no third-party) |
 | **Container** | Docker |
 | **Orchestration** | Kubernetes |

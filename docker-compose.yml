@@ -1,7 +1,7 @@
 # Docker Compose configuration for Momo
 #
 # Services:
-#   db  — PostgreSQL 16 database
+#   db  — PostgreSQL 18 database
 #   app — The Next.js application (built from Dockerfile)
 #
 # Usage:
@@ -13,7 +13,7 @@
 services:
   # ─── PostgreSQL Database ────────────────────────────────────────────────────
   db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: momo-db
     restart: unless-stopped
     environment:
