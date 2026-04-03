@@ -53,6 +53,9 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `notification_time` | time | Daily reminder time (24h, e.g. `08:00`) |
 | `push_subscription` | jsonb | Browser Web Push subscription object |
 | `theme` | enum | UI theme preference: `light`, `dark`, `system` |
+| `quest_postpones_today` | integer | Number of quest postponements the user has used today |
+| `quest_postponed_date` | date | Date of the last postpone (used to reset the daily counter) |
+| `quest_postpone_limit` | integer | Max daily postponements the user allows themselves (1–5, default 3) |
 
 ### `tasks`
 
@@ -69,7 +72,10 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `next_due_date` | date | Computed next due for recurring tasks |
 | `completed_at` | timestamp | Set when ONE_TIME task is completed |
 | `coin_value` | integer | Coins awarded on completion (1–10) |
+| `notes` | text | Optional free-text notes on the task |
 | `is_daily_quest` | boolean | Currently selected as today's daily quest |
+| `postpone_count` | integer | How many times this task has been postponed as a quest |
+| `estimated_minutes` | integer | Optional time estimate: 5, 15, 30, or 60 minutes |
 
 ### `topics`
 
@@ -79,7 +85,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `user_id` | uuid | FK → users (cascade) |
 | `title` | text | Topic name |
 | `color` | text | Optional hex/CSS color for UI |
-| `icon` | text | Optional emoji identifier |
+| `icon` | text | Font Awesome icon key (e.g. `"folder"`, `"camera"`) — resolved via `resolveTopicIcon()` |
 | `priority` | enum | `HIGH`, `NORMAL`, `SOMEDAY` — influences quest selection |
 | `archived` | boolean | Hidden from main view |
 
@@ -100,31 +106,41 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 
 ## Migrations
 
-> **Important:** Migrations do not run automatically on startup. They must be run explicitly after deploying schema changes.
+Migrations run **automatically** at container startup via `scripts/migrate.mjs`, which is called by `docker-entrypoint.sh` before the Next.js server starts. The script is idempotent: it reconciles the Drizzle migration-tracking table against the actual database schema before calling `migrate()`.
 
-### Local development
+### Creating a new migration (after schema changes)
 
 ```bash
-# Start the database
+# 1. Edit lib/db/schema.ts
+# 2. Generate the migration SQL
+npx drizzle-kit generate
+# 3. Review the generated drizzle/NNNN_*.sql file
+# 4. Commit schema.ts + migration SQL + drizzle/meta/
+git add lib/db/schema.ts drizzle/
+```
+
+> **Never edit `.sql` migration files after they have been applied to any environment.**
+
+### Applying migrations manually (local development)
+
+```bash
+# Start the database first
 docker compose up db -d
 
-# Generate a new migration from the current schema
-npx drizzle-kit generate
-
-# Apply all pending migrations
-npx drizzle-kit migrate
+# Apply pending migrations (reads DATABASE_URL from environment)
+DATABASE_URL=postgres://... npx drizzle-kit migrate
 ```
 
-### Docker Compose (production)
+### Production / Kubernetes
+
+Migrations run automatically on container start. To trigger manually:
 
 ```bash
-docker compose exec app npx drizzle-kit migrate
-```
+# Docker Compose
+docker compose exec app node scripts/migrate.mjs
 
-### Kubernetes
-
-```bash
-kubectl exec -n momo deployment/momo-app -- npx drizzle-kit migrate
+# Kubernetes
+kubectl exec -n momo deployment/momo-app -- node scripts/migrate.mjs
 ```
 
 ---
