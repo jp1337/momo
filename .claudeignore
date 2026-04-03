@@ -32,8 +32,8 @@ drizzle/meta/
 # CI/CD agent reports — historical, not relevant to coding tasks
 .claude/reports/
 
-# Documentation site build artifacts
-docs-site/assets/css/
+# Documentation site — Jekyll-based static site, not the app itself
+docs-site/
 
 # Large project plan (reference only, not needed for most tasks)
 MOMO_PROJEKT_PLAN.md
@@ -44,3 +44,9 @@ public/globe.svg
 public/next.svg
 public/vercel.svg
 public/window.svg
+
+# next-intl type declaration — auto-generated, do not edit
+types/next-intl.d.ts
+
+# Worker — single-file service worker, only relevant for PWA/push changes
+worker/

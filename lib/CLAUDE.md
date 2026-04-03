@@ -19,6 +19,9 @@ All server-side business logic and infrastructure. API routes import from here �
 - `api-keys.ts` — generateApiKey (256-bit), createApiKey, listApiKeys, revokeApiKey, resolveApiKeyUser
 - `api-auth.ts` — resolveApiUser() — Bearer Token + Session Cookie, readonlyKeyResponse()
 - `openapi.ts` — Full OpenAPI 3.1.0 specification object (served at /api/openapi.json)
+- `statistics.ts` — getUserStatistics(userId), getAdminStatistics() — aggregated stats for /stats and /admin pages
+- `export.ts` — buildUserExport(userId) — GDPR data export (all user data as JSON)
+- `users.ts` — deleteUser(userId) — full account deletion cascade
 - `utils/crypto.ts` — Cryptographic helpers (e.g. CRON_SECRET constant-time comparison)
 
 ## Patterns
