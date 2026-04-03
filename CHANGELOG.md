@@ -9,6 +9,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+**DSGVO Compliance + Performance (2026-04-03)**
+
+- Self-hosted Google Fonts via `next/font/google` — no more CDN requests to `fonts.googleapis.com` at runtime (DSGVO + performance)
+- `GET /api/user/export` — personal data export as JSON download (DSGVO Art. 15/20, rate limit: 5/hour)
+- `DELETE /api/user` — account deletion with full CASCADE across all tables (DSGVO Art. 17)
+- `/impressum` and `/datenschutz` legal pages — env-var driven, publicly accessible, no auth required
+- Login page footer with Impressum and Datenschutz links
+- "Daten exportieren" button in Settings page (section above Danger Zone)
+- "Konto löschen" two-step confirmation in Settings page Danger Zone
+- `docs/gdpr.md` — DSGVO compliance guide for operators
+- `NEXT_PUBLIC_IMPRINT_*` environment variables documented in `.env.example` and `docs/environment-variables.md`
+- CSP headers updated: `fonts.googleapis.com` and `fonts.gstatic.com` removed (no longer needed)
+
 **CI/CD Improvements (2026-04-01)**
 
 - Native multi-arch CI build: `linux/amd64` on `ubuntu-latest`, `linux/arm64` on `ubuntu-24.04-arm` — eliminates slow QEMU emulation

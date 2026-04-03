@@ -271,6 +271,58 @@ All API routes return consistent JSON responses.
 }
 ```
 
+---
+
+## User Routes
+
+### DELETE /api/user
+
+Permanently deletes the authenticated user's account and all associated data.
+The cascade is handled by PostgreSQL FK constraints — all tasks, topics, wishlist items,
+sessions, OAuth accounts, achievements, and task completions are removed automatically.
+
+| Field | Value |
+|---|---|
+| Auth | Required |
+| Rate Limit | 5 per hour |
+| Body | none |
+| Response | `{ "success": true }` |
+
+After a successful response the client calls `signOut()` and redirects to `/login`.
+
+---
+
+### GET /api/user/export
+
+Exports all personal data for the authenticated user as a downloadable JSON file.
+Implements DSGVO Art. 15 (right of access) and Art. 20 (data portability).
+
+| Field | Value |
+|---|---|
+| Auth | Required |
+| Rate Limit | 5 per hour |
+| Body | none |
+| Response | JSON file attachment (`momo-export-YYYY-MM-DD.json`) |
+
+**Included in export:** profile, topics, tasks, task completions, wishlist items, earned achievements.
+
+**Excluded from export:** OAuth tokens, session tokens, push subscription objects (internal/sensitive).
+
+```json
+{
+  "exportedAt": "2026-04-03T12:00:00.000Z",
+  "version": "1",
+  "profile": { "id": "...", "name": "...", "email": "...", "coins": 42 },
+  "topics": [...],
+  "tasks": [...],
+  "taskCompletions": [...],
+  "wishlistItems": [...],
+  "achievements": [{ "key": "first_task_completed", "title": "...", "earnedAt": "..." }]
+}
+```
+
+---
+
 ## Authentication
 
 All application API routes require a valid session. The session is validated using Auth.js `auth()` at the start of every handler.

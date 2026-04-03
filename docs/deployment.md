@@ -157,3 +157,53 @@ After the app starts, run migrations:
 ```bash
 kubectl exec -n momo deployment/momo-app -- npx drizzle-kit migrate
 ```
+
+---
+
+## DSGVO / Legal Compliance
+
+Operators of publicly accessible Momo instances are legally responsible for:
+
+1. **Impressum (§5 TMG)** — required in Germany for any publicly accessible website
+2. **Datenschutzerklärung (DSGVO Art. 13/14)** — required whenever personal data is processed
+
+### Configuring Legal Pages
+
+Set the following environment variables before deploying:
+
+```bash
+NEXT_PUBLIC_IMPRINT_NAME="Max Mustermann"
+NEXT_PUBLIC_IMPRINT_ADDRESS="Musterstraße 1, 12345 Berlin"
+NEXT_PUBLIC_IMPRINT_EMAIL="kontakt@example.com"
+NEXT_PUBLIC_IMPRINT_PHONE="+49 30 123456"   # optional
+```
+
+Once configured, the pages are available at:
+- `/impressum` — Impressum (§5 TMG)
+- `/datenschutz` — Datenschutzerklärung (DSGVO)
+
+Both pages are publicly accessible without authentication and are linked from the login page footer.
+
+### Cookie Banner
+
+**Not required.** Momo only uses technically necessary cookies:
+- `next-auth.session-token` — authentication session
+- `locale` — UI language preference
+
+No analytics, tracking, or advertising cookies are used.
+
+### User Rights (implemented in the app)
+
+| DSGVO Right | Implementation |
+|---|---|
+| Art. 17 — Right to erasure | Settings → Delete account |
+| Art. 15/20 — Access / portability | Settings → Export data (JSON download) |
+
+### Note
+
+The Datenschutzerklärung template provided at `/datenschutz` is a generic boilerplate for
+OAuth-only apps without tracking. Operators should review the content and adapt it to their
+specific deployment (server location, data retention policies, etc.). When in doubt, consult
+a legal professional or use a generator like E-Recht24.
+
+See [docs/gdpr.md](gdpr.md) for a full DSGVO compliance guide.

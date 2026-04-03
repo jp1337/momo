@@ -198,26 +198,51 @@ export default async function LoginPage() {
       </div>
 
       {/* Footer note */}
-      <p
-        className="text-center text-xs"
-        style={{
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          color: "var(--text-muted)",
-        }}
-      >
-        {t("disclaimer")}
-        <br />
-        Momo is{" "}
-        <a
-          href="https://github.com/jp1337/momo"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "var(--accent-amber)" }}
+      <div className="flex flex-col items-center gap-2">
+        <p
+          className="text-center text-xs"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            color: "var(--text-muted)",
+          }}
         >
-          {t("open_source")}
-        </a>
-        .
-      </p>
+          {t("disclaimer")}
+          <br />
+          Momo is{" "}
+          <a
+            href="https://github.com/jp1337/momo"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--accent-amber)" }}
+          >
+            {t("open_source")}
+          </a>
+          .
+        </p>
+
+        {/* Legal links */}
+        <p
+          className="text-center text-xs"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            color: "var(--text-muted)",
+          }}
+        >
+          <a
+            href="/impressum"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Impressum
+          </a>
+          {" · "}
+          <a
+            href="/datenschutz"
+            style={{ color: "var(--text-muted)" }}
+          >
+            Datenschutz
+          </a>
+        </p>
+      </div>
     </div>
   );
 }
