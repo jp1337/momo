@@ -51,7 +51,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className="w-56 shrink-0 flex flex-col border-r min-h-0"
+      className="w-56 shrink-0 hidden md:flex flex-col border-r min-h-0"
       style={{
         backgroundColor: "var(--bg-surface)",
         borderColor: "var(--border)",
