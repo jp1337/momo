@@ -75,7 +75,7 @@ const securityHeaders = [
       // Fonts are self-hosted via next/font — no external font CDN needed
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self'",
-      "img-src 'self' data: https://avatars.githubusercontent.com https://cdn.discordapp.com https://lh3.googleusercontent.com",
+      "img-src 'self' data: https://avatars.githubusercontent.com https://cdn.discordapp.com https://lh3.googleusercontent.com https://cdn.jsdelivr.net",
       "connect-src 'self'",
       "frame-ancestors 'none'",
     ].join("; "),
