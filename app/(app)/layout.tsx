@@ -32,6 +32,17 @@ export default async function AppLayout({
   const { user } = session;
   const { coins } = await getUserStats(user.id!);
 
+  // Admin check: ADMIN_USER_IDS is a comma-separated list of user UUIDs.
+  // Optional — if not set, no user is treated as admin.
+  const isAdmin = (() => {
+    const adminIds = process.env.ADMIN_USER_IDS ?? "";
+    if (!adminIds) return false;
+    return adminIds
+      .split(",")
+      .map((id) => id.trim())
+      .includes(user.id!);
+  })();
+
   return (
     <div className="flex flex-col h-screen" style={{ backgroundColor: "var(--bg-primary)" }}>
       {/* Top navigation */}
@@ -40,6 +51,7 @@ export default async function AppLayout({
         userImage={user.image}
         userEmail={user.email}
         initialCoins={coins}
+        isAdmin={isAdmin}
       />
 
       {/* Body: sidebar + page content */}

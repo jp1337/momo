@@ -9,6 +9,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+**Nutzer- und Admin-Statistiken (2026-04-03)**
+
+- `lib/statistics.ts` — `getUserStatistics()` und `getAdminStatistics()` mit parallelen Drizzle-Abfragen
+- `/stats` — Nutzerstatistiken-Seite (Server Component):
+  - Übersichtskarten: Aufgaben, Abschlüsse, Streak, Bester Streak
+  - Fortschrittsbereich: Level-Badge mit deutschem Titel, Coin-Guthaben, Fortschrittsbalken zum nächsten Level
+  - Aktivitätsbereich: Abschlüsse letzte 7 und 30 Tage, offene Aufgaben
+  - Aufgaben nach Typ (Einmalig / Wiederkehrend / Tagesquest-fähig) mit Prozentstabs
+  - Aufgaben nach Priorität (Hoch / Normal / Irgendwann)
+  - Topics mit Fortschrittsbalken pro Topic
+  - Errungenschaften: verdiente mit Datum, gesperrte mit Schloss-Icon und reduzierter Opacity
+  - Wunschliste: Gekauft, Ausgegeben (€), Offen, Verworfen
+- `/admin` — Admin-Statistiken-Seite (Server Component):
+  - Zugriffschutz via `ADMIN_USER_IDS` Umgebungsvariable (kein Redirect, zeigt "Zugriff verweigert")
+  - System-Übersicht: Nutzer, Aufgaben, Abschlüsse, Topics
+  - Nutzerwachstum (7d/30d), Aktivität (7d/30d), Durchschnittswerte (Level, Coins, Streak)
+  - OAuth-Provider-Tabelle mit Anteilen
+  - Top-10-Nutzer-Tabelle nach Abschlüssen
+  - Errungenschaften-Verteilung mit Anteilen
+  - Wunschliste-Aggregat (Total gekauft, Total ausgegeben)
+- `components/layout/user-menu.tsx` — "Statistiken"-Link (faChartBar) + optionaler "Admin"-Link (faShieldHalved) für Admins
+- `components/layout/navbar.tsx` — `isAdmin?: boolean` prop durchgereicht
+- `app/(app)/layout.tsx` — Admin-Prüfung via `ADMIN_USER_IDS`, `isAdmin` an Navbar übergeben
+- `ADMIN_USER_IDS` Umgebungsvariable dokumentiert in `.env.example` und `docs/environment-variables.md`
+
 **Public REST API + Personal Access Tokens + Swagger UI (2026-04-03)**
 
 - `lib/openapi.ts` — vollständige OpenAPI 3.1.0 Spezifikation (29 Endpunkte, 8 Tags, alle Schemas)

@@ -27,6 +27,8 @@ interface NavbarProps {
   userEmail?: string | null;
   /** Initial coin balance fetched server-side */
   initialCoins?: number;
+  /** If true, the Admin link is shown in the user menu */
+  isAdmin?: boolean;
 }
 
 /**
@@ -36,8 +38,9 @@ interface NavbarProps {
  * @param userImage - User's avatar URL from the OAuth provider
  * @param userEmail - User's email (shown in the user menu)
  * @param initialCoins - Initial coin balance for the animated counter
+ * @param isAdmin   - If true, shows the Admin link in the user menu
  */
-export function Navbar({ userName, userImage, userEmail, initialCoins = 0 }: NavbarProps) {
+export function Navbar({ userName, userImage, userEmail, initialCoins = 0, isAdmin }: NavbarProps) {
   return (
     <header
       className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 border-b"
@@ -79,6 +82,7 @@ export function Navbar({ userName, userImage, userEmail, initialCoins = 0 }: Nav
           userName={userName}
           userImage={userImage}
           userEmail={userEmail}
+          isAdmin={isAdmin}
         />
       </div>
     </header>
