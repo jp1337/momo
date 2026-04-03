@@ -10,6 +10,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { animate } from "framer-motion";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCoins } from "@fortawesome/free-solid-svg-icons";
 
 interface CoinCounterProps {
   /** Initial coin balance fetched server-side */
@@ -46,7 +48,7 @@ export function CoinCounter({ initialCoins }: CoinCounterProps) {
   return (
     <span
       ref={nodeRef}
-      className="flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-lg"
+      className="flex items-center gap-1.5 text-sm font-medium px-2.5 py-1 rounded-lg"
       style={{
         fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
         color: "var(--coin-gold)",
@@ -55,7 +57,8 @@ export function CoinCounter({ initialCoins }: CoinCounterProps) {
       }}
       title="Your coin balance"
     >
-      ◎ <span>{displayValue}</span>
+      <FontAwesomeIcon icon={faCoins} className="w-3.5 h-3.5" aria-hidden="true" />
+      <span>{displayValue}</span>
     </span>
   );
 }

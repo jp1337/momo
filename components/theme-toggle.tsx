@@ -3,17 +3,20 @@
 /**
  * ThemeToggle component.
  * Cycles through dark → light → system themes using next-themes.
- * Shows the current theme as an icon with an accessible label.
+ * Shows the current theme as a Font Awesome icon with an accessible label.
  */
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMoon, faSun, faDesktop } from "@fortawesome/free-solid-svg-icons";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 /** Maps theme values to display icons and labels */
 const THEME_CONFIG = {
-  dark: { icon: "🌙", label: "Dark mode", next: "light" },
-  light: { icon: "☀️", label: "Light mode", next: "system" },
-  system: { icon: "💻", label: "System theme", next: "dark" },
+  dark: { icon: faMoon as IconDefinition, label: "Dark mode", next: "light" },
+  light: { icon: faSun as IconDefinition, label: "Light mode", next: "system" },
+  system: { icon: faDesktop as IconDefinition, label: "System theme", next: "dark" },
 } as const;
 
 type ThemeKey = keyof typeof THEME_CONFIG;
@@ -59,16 +62,14 @@ export function ThemeToggle() {
       onClick={handleToggle}
       title={`Current: ${config.label}. Click to switch.`}
       aria-label={`Switch theme (currently ${config.label})`}
-      className="w-9 h-9 rounded-lg flex items-center justify-center text-lg transition-all duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2"
+      className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2"
       style={{
         backgroundColor: "var(--bg-elevated)",
         border: "1px solid var(--border)",
         color: "var(--text-primary)",
       }}
     >
-      <span role="img" aria-hidden="true">
-        {config.icon}
-      </span>
+      <FontAwesomeIcon icon={config.icon} className="w-4 h-4" aria-hidden="true" />
     </button>
   );
 }

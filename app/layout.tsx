@@ -13,7 +13,13 @@ import { Lora, JetBrains_Mono, DM_Sans } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { config } from "@fortawesome/fontawesome-svg-core";
+import "@fortawesome/fontawesome-svg-core/styles.css";
 import "./globals.css";
+
+// Prevent Font Awesome from adding its own <style> tag at runtime —
+// we already import the CSS above, so this avoids a duplicated stylesheet.
+config.autoAddCss = false;
 
 /**
  * Self-hosted fonts via next/font/google.
