@@ -270,7 +270,7 @@ export function TopicForm({
                       height={380}
                       searchDisabled={false}
                       skinTonesDisabled
-                      lazyLoadEmojis
+                      lazyLoadEmojis={false}
                     />
                   </div>
                 )}

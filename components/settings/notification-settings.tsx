@@ -18,7 +18,6 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { clientEnv } from "@/lib/env";
 
 type NotificationStatus =
   | "unsupported"       // Browser doesn't support Notifications
@@ -34,6 +33,12 @@ interface NotificationSettingsProps {
   initialEnabled: boolean;
   /** Current notification time from DB (HH:MM) */
   initialTime: string;
+  /**
+   * The VAPID public key for push subscriptions.
+   * Passed as a prop from the server component so it reflects the runtime
+   * environment (NEXT_PUBLIC_* vars are build-time only in client bundles).
+   */
+  vapidPublicKey?: string;
 }
 
 /**
@@ -46,6 +51,7 @@ interface NotificationSettingsProps {
 export function NotificationSettings({
   initialEnabled,
   initialTime,
+  vapidPublicKey,
 }: NotificationSettingsProps) {
   const t = useTranslations("settings");
   const [status, setStatus] = useState<NotificationStatus>("loading");
@@ -67,7 +73,7 @@ export function NotificationSettings({
       return;
     }
 
-    if (!clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+    if (!vapidPublicKey) {
       setStatus("no-vapid");
       return;
     }
@@ -134,12 +140,12 @@ export function NotificationSettings({
       ]);
 
       // Step 3: Subscribe to push
-      const vapidKey = clientEnv.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      if (!vapidKey) {
+      if (!vapidPublicKey) {
         setMessage(t("notif_err_not_configured"));
         setIsSaving(false);
         return;
       }
+      const vapidKey = vapidPublicKey;
 
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
