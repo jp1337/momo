@@ -13,6 +13,8 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { resolveTopicIcon } from "@/lib/topic-icons";
 
 interface TopicCardProps {
   id: string;
@@ -82,7 +84,10 @@ export function TopicCard({
           }}
           aria-hidden="true"
         >
-          {icon ?? "📁"}
+          <FontAwesomeIcon
+            icon={resolveTopicIcon(icon)}
+            style={{ width: "1.1rem", height: "1.1rem", color: accentColor }}
+          />
         </div>
 
         {/* Title + description */}

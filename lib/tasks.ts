@@ -532,7 +532,7 @@ export async function breakdownTask(
         description: originalTask.notes ?? null,
         priority: originalTask.priority,
         color: "#f0a500",
-        icon: "🗂️",
+        icon: "layer-group",
       })
       .returning();
 
