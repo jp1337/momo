@@ -20,12 +20,10 @@ import "swagger-ui-react/swagger-ui.css";
  */
 export default function ApiDocsPage() {
   return (
-    <div style={{ minHeight: "100vh" }}>
-      <SwaggerUI
-        url="/api/openapi.json"
-        persistAuthorization={true}
-        tryItOutEnabled={true}
-      />
-    </div>
+    <SwaggerUI
+      url="/api/openapi.json"
+      persistAuthorization={true}
+      tryItOutEnabled={true}
+    />
   );
 }
