@@ -130,7 +130,26 @@ export function NotificationSettings({
       }
       // Trim whitespace/newlines that can be introduced by env var storage
       const vapidKey = vapidPublicKey.trim();
-      console.debug("[Push] VAPID key length:", vapidKey.length, "chars");
+
+      // Validate VAPID key format before attempting subscription.
+      // A valid P-256 uncompressed public key is 65 bytes = 87–88 base64url chars.
+      // Private keys are only 32 bytes (43 chars) — a common misconfiguration.
+      try {
+        const padding = "=".repeat((4 - (vapidKey.length % 4)) % 4);
+        const decoded = atob(vapidKey.replace(/-/g, "+").replace(/_/g, "/") + padding);
+        console.log(`[Push] VAPID key: ${vapidKey.length} chars → ${decoded.length} bytes, first byte: 0x${decoded.charCodeAt(0).toString(16).padStart(2, "0")}`);
+        if (decoded.length !== 65) {
+          throw new Error(`VAPID public key invalid: ${decoded.length} bytes (expected 65). Check NEXT_PUBLIC_VAPID_PUBLIC_KEY — private key has only 32 bytes.`);
+        }
+        if (decoded.charCodeAt(0) !== 0x04) {
+          throw new Error(`VAPID public key invalid: first byte 0x${decoded.charCodeAt(0).toString(16)} (expected 0x04 for uncompressed EC point).`);
+        }
+      } catch (validationErr) {
+        if (validationErr instanceof Error && validationErr.message.startsWith("VAPID")) {
+          throw validationErr;
+        }
+        throw new Error(`VAPID public key could not be decoded: ${validationErr instanceof Error ? validationErr.message : String(validationErr)}`);
+      }
 
       // Unsubscribe any stale existing subscription before creating a new one.
       // A leftover subscription (e.g. from a previous SW registration) can cause
