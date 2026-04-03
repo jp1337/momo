@@ -50,7 +50,7 @@
     "quest_no_quest": "✦ No quest for today yet.",
     "quest_no_quest_hint": "Head to Tasks to add your first task — Momo will pick one for you each day.",
     "quest_done": "Quest complete! ✨",
-    "quest_done_hint": "+{coins} ◎ earned — come back tomorrow.",
+    "quest_done_hint": "+{coins} coins earned — come back tomorrow.",
     "quest_comeback": "Come back tomorrow for your next quest.",
     "quest_completing": "Completing…",
     "quest_complete_btn": "✓ Complete",

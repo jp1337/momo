@@ -50,7 +50,7 @@
     "quest_no_quest": "✦ Pas encore de quête pour aujourd'hui.",
     "quest_no_quest_hint": "Va dans Tâches pour ajouter ta première tâche — Momo en choisira une chaque jour.",
     "quest_done": "Quête accomplie ! ✨",
-    "quest_done_hint": "+{coins} ◎ gagnés — reviens demain.",
+    "quest_done_hint": "+{coins} coins gagnés — reviens demain.",
     "quest_comeback": "Reviens demain pour ta prochaine quête.",
     "quest_completing": "En cours...",
     "quest_complete_btn": "✓ Terminer",
