@@ -43,7 +43,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `deploy/examples/service.yaml` — ClusterIP Service for the app
 - `deploy/examples/ingress.yaml` — Ingress with TLS placeholder (cert-manager + ingress-nginx)
 - `deploy/examples/secret.example.yaml` — Secret template with all required keys and generation instructions
-- `deploy/examples/postgres-statefulset.yaml` — PostgreSQL 16 StatefulSet with PVC (10Gi) for self-hosted database
+- `deploy/examples/postgres-statefulset.yaml` — PostgreSQL 18 StatefulSet with PVC (10Gi) for self-hosted database
 
 ### Changed
 
@@ -96,14 +96,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `topics`, `tasks`, `task_completions`
   - `wishlist_items`
   - `achievements`, `user_achievements`
-- PostgreSQL 16 integration via `pg` driver + Drizzle ORM
+- PostgreSQL 18 integration via `pg` driver + Drizzle ORM
 - Zod-validated environment variable wrapper (`lib/env.ts`)
 - `Navbar` component with app name (Lora font), theme toggle, user avatar, sign-out
 - `Sidebar` component with navigation links and active state highlighting
 - Login page with styled OAuth provider buttons
 - Dashboard shell with greeting, daily quest placeholder, quick stats
 - Placeholder pages for Tasks, Topics, Wishlist
-- Docker Compose setup (app + PostgreSQL 16)
+- Docker Compose setup (app + PostgreSQL 18)
 - Multi-stage Dockerfile with non-root user (`nextjs:1001`)
 - `drizzle.config.ts` — Drizzle Kit configuration
 - `.env.example` with all environment variables documented

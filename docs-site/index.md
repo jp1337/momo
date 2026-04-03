@@ -82,7 +82,7 @@ Open [http://localhost:3000](http://localhost:3000) — done.
 |---|---|
 | Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS v4 |
 | Auth | Auth.js v5 (GitHub, Discord, Google, OIDC) |
-| Database | PostgreSQL 16 + Drizzle ORM |
+| Database | PostgreSQL 18 + Drizzle ORM |
 | Push | Web Push API (VAPID) |
 | Container | Docker + Kubernetes |
 

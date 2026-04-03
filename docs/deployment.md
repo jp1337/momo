@@ -139,7 +139,7 @@ Example manifests are in [`deploy/examples/`](../deploy/examples/):
 | `service.yaml` | ClusterIP service for the app |
 | `ingress.yaml` | Ingress with TLS (cert-manager + ingress-nginx) |
 | `secret.example.yaml` | Template for required Kubernetes secrets |
-| `postgres-statefulset.yaml` | PostgreSQL 16 StatefulSet with persistent volume |
+| `postgres-statefulset.yaml` | PostgreSQL 18 StatefulSet with persistent volume |
 
 ### Apply order
 

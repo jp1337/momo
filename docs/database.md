@@ -1,6 +1,6 @@
 # Database
 
-Momo uses **PostgreSQL 16** with **Drizzle ORM** for all database operations.
+Momo uses **PostgreSQL 18** with **Drizzle ORM** for all database operations.
 
 ## Schema Overview
 

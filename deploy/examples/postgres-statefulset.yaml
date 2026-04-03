@@ -1,4 +1,4 @@
-# PostgreSQL 16 StatefulSet for Momo
+# PostgreSQL 18 StatefulSet for Momo
 #
 # This provides a single-replica PostgreSQL instance suitable for small self-hosted
 # deployments. For high-availability, consider managed PostgreSQL (e.g. CloudNativePG,
@@ -56,7 +56,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:16-alpine
+          image: postgres:18-alpine
           ports:
             - name: postgres
               containerPort: 5432
