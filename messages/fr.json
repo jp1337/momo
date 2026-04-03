@@ -247,7 +247,19 @@
     "notif_err_disable": "Impossible de désactiver les notifications.",
     "notif_err_save": "Impossible d'enregistrer l'abonnement",
     "notif_test_sent": "Notification de test envoyée ! Vérifiez votre appareil.",
-    "notif_test_failed": "Impossible d'envoyer la notification de test."
+    "notif_test_failed": "Impossible d'envoyer la notification de test.",
+    "section_danger": "Zone dangereuse",
+    "danger_hint": "Ces actions sont irréversibles.",
+    "delete_account_btn": "Supprimer le compte",
+    "delete_confirm_text": "Êtes-vous sûr ? Les données suivantes seront supprimées définitivement :",
+    "delete_warn_tasks": "Toutes vos tâches et complétions",
+    "delete_warn_topics": "Tous vos thèmes",
+    "delete_warn_wishlist": "Tous les articles de la liste de souhaits",
+    "delete_warn_coins": "Vos pièces, séries et succès",
+    "delete_confirm_btn": "Oui, tout supprimer",
+    "delete_confirming": "Suppression...",
+    "delete_cancel_btn": "Annuler",
+    "delete_err_generic": "Impossible de supprimer le compte — veuillez réessayer."
   },
   "animations": {
     "achievement_title": "Succès débloqué !",
