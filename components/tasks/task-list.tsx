@@ -373,6 +373,13 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
   const grouped = groupTasks(tasks);
   const hasAnyTasks = tasks.length > 0;
 
+  const activeCount = tasks.filter((task) => task.completedAt === null).length;
+  const completedCount = tasks.filter((task) => task.completedAt !== null).length;
+  const subtitle =
+    tasks.length === 0
+      ? t("page_subtitle_empty")
+      : t("page_subtitle", { active: activeCount, completed: completedCount });
+
   return (
     <div>
       {/* Level-up overlay */}
@@ -391,6 +398,17 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
           onAllDone={() => setPendingAchievements([])}
         />
       )}
+
+      {/* Live task count subtitle */}
+      <p
+        className="text-base mb-6"
+        style={{
+          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+          color: "var(--text-muted)",
+        }}
+      >
+        {subtitle}
+      </p>
 
       {/* New Task button */}
       <div className="flex justify-end mb-6">
