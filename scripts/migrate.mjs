@@ -57,6 +57,20 @@ async function tableExists(client, tableName) {
 }
 
 /**
+ * Returns true if the given enum type exists in the public schema.
+ * Used to detect partial migrations (ENUMs created, tables not yet).
+ */
+async function enumTypeExists(client, typeName) {
+  const res = await client.query(
+    `SELECT 1 FROM pg_type t
+     JOIN pg_namespace n ON n.oid = t.typnamespace
+     WHERE n.nspname = 'public' AND t.typname = $1 AND t.typtype = 'e'`,
+    [typeName]
+  );
+  return res.rowCount > 0;
+}
+
+/**
  * Returns the number of rows in __drizzle_migrations (0 if table doesn't exist).
  */
 async function countTrackedMigrations(client) {
@@ -106,11 +120,17 @@ async function seedMigrationHistory(client, folder) {
 
 const client = await pool.connect();
 try {
-  // Detect pre-existing database: users table exists but no migration records
+  // Detect pre-existing or partially-applied schema.
+  // Drizzle runs migration statements individually (no wrapping transaction),
+  // so a failed previous run can leave ENUMs created but tables missing and
+  // the migration untracked. On the next run, CREATE TYPE fails with "already exists".
+  // We check for the first enum type from migration 0000 as the reliable signal.
   const usersExist = await tableExists(client, "users");
+  const priorityTypeExists = await enumTypeExists(client, "priority");
+  const schemaHasObjects = usersExist || priorityTypeExists;
   const trackedCount = await countTrackedMigrations(client);
 
-  if (usersExist && trackedCount === 0) {
+  if (schemaHasObjects && trackedCount === 0) {
     console.log(
       "[migrate] Detected pre-existing schema without migration history — seeding tracking table..."
     );
