@@ -219,6 +219,7 @@ export default async function SettingsPage() {
         <NotificationSettings
           initialEnabled={user.notificationEnabled}
           initialTime={user.notificationTime ?? "08:00"}
+          vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
         />
       </section>
 

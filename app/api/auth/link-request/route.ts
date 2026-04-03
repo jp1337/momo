@@ -3,13 +3,12 @@
  * Initiates the account linking flow for an additional OAuth provider.
  *
  * Creates a short-lived linking_request record (5 minute TTL) and returns the
- * URL to redirect the user to for the OAuth flow. After the user completes the
- * OAuth flow, Auth.js redirects them to /api/auth/link-callback?token=<id>
- * where the accounts are merged.
+ * linking token ID. The client then calls signIn(provider, { callbackUrl })
+ * from next-auth/react which issues the correct CSRF-protected POST to Auth.js.
  *
  * Authentication: session cookie (required)
  * Body: { provider: "github" | "discord" | "google" | "keycloak" }
- * Returns: { redirectUrl: string }
+ * Returns: { token: string }
  */
 
 import { auth } from "@/lib/auth";
@@ -102,8 +101,5 @@ export async function POST(request: Request) {
     })
     .returning({ id: linkingRequests.id });
 
-  const callbackUrl = `/api/auth/link-callback?token=${linkRequest.id}`;
-  const redirectUrl = `/api/auth/signin/${provider}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-
-  return Response.json({ redirectUrl });
+  return Response.json({ token: linkRequest.id });
 }

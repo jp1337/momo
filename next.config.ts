@@ -66,6 +66,10 @@ const securityHeaders = [
       // payloads as inline <script> tags (self.__next_f.push) needed for hydration.
       // Without it, all client components fail silently (no dropdowns, no buttons).
       `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+      // blob: required for emoji-picker-react — it creates a Web Worker via
+      // URL.createObjectURL(). Without worker-src blob:, the worker is blocked
+      // and emoji data never loads (only category headers appear).
+      "worker-src blob:",
       // unsafe-inline is needed for Next.js injected styles even in production
       // Fonts are self-hosted via next/font — no external font CDN needed
       "style-src 'self' 'unsafe-inline'",
@@ -85,19 +89,6 @@ const nextConfig: NextConfig = {
    */
   output: "standalone",
 
-  /**
-   * Expose NEXT_PUBLIC_* variables at runtime so they can be injected via
-   * Docker environment variables without rebuilding the image.
-   * Next.js normally inlines these at build time; listing them here makes
-   * Next.js read them from process.env at server startup instead.
-   */
-  env: {
-    NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "",
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "",
-    NEXT_PUBLIC_IMPRINT_NAME: process.env.NEXT_PUBLIC_IMPRINT_NAME ?? "",
-    NEXT_PUBLIC_IMPRINT_ADDRESS: process.env.NEXT_PUBLIC_IMPRINT_ADDRESS ?? "",
-    NEXT_PUBLIC_IMPRINT_EMAIL: process.env.NEXT_PUBLIC_IMPRINT_EMAIL ?? "",
-  },
 
   /**
    * Allow loading images from OAuth provider CDNs.

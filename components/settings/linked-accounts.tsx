@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub, faDiscord, faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { faKey, faCheck } from "@fortawesome/free-solid-svg-icons";
@@ -78,8 +79,11 @@ export function LinkedAccounts({
         setErrorCode(data.error ?? "unknown");
         return;
       }
-      // Redirect to the OAuth provider
-      window.location.href = data.redirectUrl;
+      // Use signIn() so Auth.js receives a CSRF-protected POST — a plain
+      // GET redirect to /api/auth/signin/[provider] is not supported in v5.
+      await signIn(providerId, {
+        callbackUrl: `/api/auth/link-callback?token=${data.token}`,
+      });
     } catch {
       setErrorCode("network");
     } finally {

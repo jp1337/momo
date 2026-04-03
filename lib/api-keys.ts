@@ -186,8 +186,8 @@ export async function resolveApiKeyUser(
 
   if (!row) return null;
 
-  // Update last_used_at asynchronously — don't block the request
-  void db
+  // Update last_used_at — awaited so it completes before the serverless context ends
+  await db
     .update(apiKeys)
     .set({ lastUsedAt: now })
     .where(eq(apiKeys.id, row.id));
