@@ -236,7 +236,8 @@ export async function deleteTask(
  */
 export async function completeTask(
   taskId: string,
-  userId: string
+  userId: string,
+  timezone?: string | null
 ): Promise<CompleteTaskResult> {
   // Fetch task outside the transaction to fail fast before acquiring a connection
   const task = await getTaskById(taskId, userId);
@@ -315,8 +316,8 @@ export async function completeTask(
         .where(eq(users.id, userId));
     }
 
-    // Update streak inside the transaction
-    const { streakCurrent } = await updateStreak(userId, tx);
+    // Update streak inside the transaction (timezone-aware)
+    const { streakCurrent } = await updateStreak(userId, tx, timezone);
 
     // Count total completions for achievement context
     const completionCountRows = await tx
