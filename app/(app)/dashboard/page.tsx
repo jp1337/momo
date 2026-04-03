@@ -2,8 +2,9 @@
  * Dashboard page — the home screen for authenticated users.
  *
  * Shows:
- *  - Greeting with the user's first name
+ *  - Time-aware greeting with the user's first name
  *  - Daily Quest Hero Card (live quest selected by algorithm)
+ *  - Quick Wins section (tasks ≤ 15 min, uncompleted)
  *  - Stats row: coins, streak, level, total completions
  *  - Quick links to Tasks and Topics
  *
@@ -17,8 +18,8 @@ import Link from "next/link";
 import { getDailyQuestIncludingCompleted, selectDailyQuest } from "@/lib/daily-quest";
 import { getUserStats } from "@/lib/gamification";
 import { db } from "@/lib/db";
-import { taskCompletions } from "@/lib/db/schema";
-import { eq, count } from "drizzle-orm";
+import { taskCompletions, users, tasks } from "@/lib/db/schema";
+import { eq, count, lte, isNull, and } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { getTranslations } from "next-intl/server";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -44,6 +45,17 @@ function getGreetingKey(hour: number): string {
 }
 
 /**
+ * Converts a coin count to a "level feel" description for atmospheric display.
+ * Used to give the coins stat more storytelling character.
+ */
+function getCoinTier(coins: number): string {
+  if (coins >= 1000) return "✦✦✦";
+  if (coins >= 300) return "✦✦";
+  if (coins >= 50) return "✦";
+  return "·";
+}
+
+/**
  * Dashboard page — loads the daily quest and user stats, then renders the UI.
  */
 export default async function DashboardPage() {
@@ -58,8 +70,10 @@ export default async function DashboardPage() {
 
   const t = await getTranslations("dashboard");
 
-  // Fetch quest, stats, and completion count in parallel
-  const [rawQuest, stats, completionCountRows] = await Promise.all([
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  // Fetch quest, stats, completion count, postpone data, and quick wins in parallel
+  const [rawQuest, stats, completionCountRows, userPostponeData, quickWinTasks] = await Promise.all([
     // Try to get (or select) the daily quest
     selectDailyQuest(userId).catch(() => getDailyQuestIncludingCompleted(userId)),
     getUserStats(userId),
@@ -67,7 +81,36 @@ export default async function DashboardPage() {
       .select({ count: count() })
       .from(taskCompletions)
       .where(eq(taskCompletions.userId, userId)),
+    // Fetch postpone counters from users table
+    db
+      .select({
+        questPostponesToday: users.questPostponesToday,
+        questPostponedDate: users.questPostponedDate,
+        questPostponeLimit: users.questPostponeLimit,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1),
+    // Quick wins: uncompleted tasks with estimatedMinutes <= 15
+    db
+      .select({ id: tasks.id, title: tasks.title, estimatedMinutes: tasks.estimatedMinutes, coinValue: tasks.coinValue })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          isNull(tasks.completedAt),
+          lte(tasks.estimatedMinutes, 15)
+        )
+      )
+      .limit(3),
   ]);
+
+  // Compute actual postponesToday (reset if date differs)
+  const postponeData = userPostponeData[0];
+  const postponesToday = postponeData?.questPostponedDate === todayStr
+    ? (postponeData?.questPostponesToday ?? 0)
+    : 0;
+  const postponeLimit = postponeData?.questPostponeLimit ?? 3;
 
   // Serialize Date fields — Next.js cannot pass Date objects from Server to Client Components
   const quest = rawQuest
@@ -100,31 +143,53 @@ export default async function DashboardPage() {
       ? t("subtitle_done")
       : t("subtitle_empty");
 
+  const coinTier = getCoinTier(stats.coins);
+
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-8">
-      {/* Greeting */}
-      <div>
-        <h1
-          className="text-3xl font-semibold"
+      {/* ── Greeting ─────────────────────────────────────────────────────────── */}
+      <div className="relative">
+        {/* Atmospheric background glow behind greeting */}
+        <div
+          aria-hidden="true"
           style={{
-            fontFamily: "var(--font-display, 'Lora', serif)",
-            color: "var(--text-primary)",
+            position: "absolute",
+            top: "-2rem",
+            left: "-3rem",
+            width: "300px",
+            height: "180px",
+            background:
+              "radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-amber) 8%, transparent) 0%, transparent 70%)",
+            pointerEvents: "none",
+            zIndex: 0,
           }}
-        >
-          {greeting}, {firstName}.
-        </h1>
-        <p
-          className="mt-1 text-base"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {subtitle}
-        </p>
+        />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <h1
+            className="text-3xl font-semibold"
+            style={{
+              fontFamily: "var(--font-display, 'Lora', serif)",
+              fontStyle: "italic",
+              color: "var(--text-primary)",
+              lineHeight: 1.2,
+            }}
+          >
+            {greeting}, {firstName}.
+          </h1>
+          <p
+            className="mt-1.5 text-sm"
+            style={{
+              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+              color: "var(--text-muted)",
+              letterSpacing: "0.01em",
+            }}
+          >
+            {subtitle}
+          </p>
+        </div>
       </div>
 
-      {/* Daily Quest Hero Card */}
+      {/* ── Daily Quest Hero Card ─────────────────────────────────────────────── */}
       <section>
         <h2
           className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -135,10 +200,94 @@ export default async function DashboardPage() {
         >
           {t("section_quest")}
         </h2>
-        <DailyQuestCard quest={quest} />
+        <DailyQuestCard
+          quest={quest}
+          postponesToday={postponesToday}
+          postponeLimit={postponeLimit}
+        />
       </section>
 
-      {/* Stats row */}
+      {/* ── Quick Wins ── only shown if there are short tasks ────────────────── */}
+      {quickWinTasks.length > 0 && (
+        <section>
+          <div className="flex items-baseline gap-3 mb-3">
+            <h2
+              className="text-xs font-semibold uppercase tracking-widest"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+              }}
+            >
+              {t("section_quick_wins")}
+            </h2>
+            <span
+              style={{
+                fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+                fontSize: "10px",
+                color: "var(--accent-green)",
+                opacity: 0.8,
+              }}
+            >
+              — {t("quick_wins_hint")}
+            </span>
+          </div>
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ border: "1px solid var(--border)" }}
+          >
+            {quickWinTasks.map((task, i) => (
+              <div
+                key={task.id}
+                className="flex items-center justify-between px-4 py-3"
+                style={{
+                  backgroundColor: "var(--bg-surface)",
+                  borderBottom:
+                    i < quickWinTasks.length - 1 ? "1px solid var(--border)" : "none",
+                }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span
+                    style={{
+                      width: "6px",
+                      height: "6px",
+                      borderRadius: "50%",
+                      backgroundColor: "var(--accent-green)",
+                      flexShrink: 0,
+                      opacity: 0.7,
+                    }}
+                  />
+                  <Link
+                    href="/tasks"
+                    className="text-sm truncate"
+                    style={{
+                      fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+                      color: "var(--text-primary)",
+                      textDecoration: "none",
+                    }}
+                  >
+                    {task.title}
+                  </Link>
+                </div>
+                <span
+                  className="text-xs px-2 py-0.5 rounded ml-3 flex-shrink-0"
+                  style={{
+                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                    color: "var(--accent-green)",
+                    backgroundColor:
+                      "color-mix(in srgb, var(--accent-green) 10%, transparent)",
+                    border:
+                      "1px solid color-mix(in srgb, var(--accent-green) 20%, transparent)",
+                  }}
+                >
+                  {task.estimatedMinutes} min
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Stats ────────────────────────────────────────────────────────────── */}
       <section>
         <h2
           className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -155,28 +304,36 @@ export default async function DashboardPage() {
               {
                 label: t("stat_coins"),
                 value: String(stats.coins),
+                sub: coinTier,
                 icon: faCoins as IconDefinition,
+                accent: "var(--coin-gold)",
                 pulse: false,
               },
               {
                 label: t("stat_streak"),
                 value: `${stats.streakCurrent}d`,
+                sub: stats.streakCurrent >= 7 ? "🔥" : stats.streakCurrent >= 3 ? "↑" : "·",
                 icon: faFire as IconDefinition,
+                accent: stats.streakCurrent >= 3 ? "var(--accent-amber)" : "var(--text-muted)",
                 pulse: stats.streakCurrent > 0,
               },
               {
                 label: t("stat_level"),
                 value: String(stats.level),
+                sub: `${stats.coins} coins`,
                 icon: faTrophy as IconDefinition,
+                accent: "var(--accent-amber)",
                 pulse: false,
               },
               {
                 label: t("stat_completed"),
                 value: String(totalCompletions),
+                sub: totalCompletions >= 100 ? "✦✦✦" : totalCompletions >= 10 ? "✦" : "·",
                 icon: faCircleCheck as IconDefinition,
+                accent: "var(--accent-green)",
                 pulse: false,
               },
-            ] as { label: string; value: string; icon: IconDefinition; pulse: boolean }[]
+            ] as { label: string; value: string; sub: string; icon: IconDefinition; accent: string; pulse: boolean }[]
           ).map((stat) => (
             <div
               key={stat.label}
@@ -185,9 +342,24 @@ export default async function DashboardPage() {
                 backgroundColor: "var(--bg-surface)",
                 border: "1px solid var(--border)",
                 boxShadow: "var(--shadow-sm)",
+                position: "relative",
+                overflow: "hidden",
               }}
             >
-              <div className="flex items-center justify-between">
+              {/* Subtle accent glow top-right */}
+              <div
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  width: "60px",
+                  height: "60px",
+                  background: `radial-gradient(circle at top right, color-mix(in srgb, ${stat.accent} 12%, transparent) 0%, transparent 70%)`,
+                  pointerEvents: "none",
+                }}
+              />
+              <div className="flex items-center justify-between" style={{ position: "relative" }}>
                 <span
                   className="text-xs font-medium uppercase tracking-wider"
                   style={{
@@ -200,25 +372,40 @@ export default async function DashboardPage() {
                 <FontAwesomeIcon
                   icon={stat.icon}
                   className={stat.pulse ? "streak-pulse w-4 h-4" : "w-4 h-4"}
-                  style={{ color: "var(--text-muted)" }}
+                  style={{ color: stat.accent }}
                   aria-hidden="true"
                 />
               </div>
-              <span
-                className="text-2xl font-semibold"
-                style={{
-                  fontFamily: "var(--font-display, 'Lora', serif)",
-                  color: "var(--text-primary)",
-                }}
-              >
-                {stat.value}
-              </span>
+              <div style={{ position: "relative" }}>
+                <span
+                  className="text-2xl font-semibold block"
+                  style={{
+                    fontFamily: "var(--font-display, 'Lora', serif)",
+                    color: "var(--text-primary)",
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {stat.value}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+                    fontSize: "0.7rem",
+                    color: stat.accent,
+                    opacity: 0.7,
+                    display: "block",
+                    marginTop: "2px",
+                  }}
+                >
+                  {stat.sub}
+                </span>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Quick links */}
+      {/* ── Quick links ──────────────────────────────────────────────────────── */}
       <section>
         <h2
           className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -238,6 +425,7 @@ export default async function DashboardPage() {
               backgroundColor: "var(--bg-surface)",
               border: "1px solid var(--border)",
               color: "var(--text-primary)",
+              textDecoration: "none",
             }}
           >
             {t("all_tasks")}
@@ -250,6 +438,7 @@ export default async function DashboardPage() {
               backgroundColor: "var(--bg-surface)",
               border: "1px solid var(--border)",
               color: "var(--text-primary)",
+              textDecoration: "none",
             }}
           >
             {t("all_topics")}
