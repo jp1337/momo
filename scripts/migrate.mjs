@@ -5,10 +5,14 @@
  * Next.js server starts. Uses drizzle-orm's built-in migrate() function
  * instead of drizzle-kit CLI, which hangs in non-interactive shells.
  *
- * Handles pre-existing databases (schema applied outside of Drizzle) by
- * seeding the __drizzle_migrations tracking table when tables already exist
- * but no migrations are recorded. This prevents "already exists" errors on
- * container restarts or first-time deploys of existing databases.
+ * Drizzle stores migration history in the "drizzle" schema:
+ *   drizzle.__drizzle_migrations (id, hash, created_at)
+ * where created_at = folderMillis from meta/_journal.json.
+ *
+ * When a database already has the schema applied (but no migration history),
+ * Drizzle tries to re-run all migrations and fails on "already exists" errors.
+ * This script detects that situation and pre-seeds the tracking table so that
+ * migrate() treats everything as already applied.
  *
  * Exits with code 1 on failure so the container does not start with a
  * stale or broken schema.
@@ -18,14 +22,13 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
 import { createHash } from "crypto";
-import { readFileSync, readdirSync } from "fs";
+import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 const { Pool } = pg;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// Resolve migrations folder relative to this script: scripts/ → ../drizzle
 const migrationsFolder = join(__dirname, "..", "drizzle");
 
 const connectionString = process.env.DATABASE_URL;
@@ -45,20 +48,8 @@ console.log("[migrate] Connecting to database...");
 const db = drizzle(pool);
 
 /**
- * Returns true if the given table exists in the public schema.
- */
-async function tableExists(client, tableName) {
-  const res = await client.query(
-    `SELECT 1 FROM information_schema.tables
-     WHERE table_schema = 'public' AND table_name = $1`,
-    [tableName]
-  );
-  return res.rowCount > 0;
-}
-
-/**
  * Returns true if the given enum type exists in the public schema.
- * Used to detect partial migrations (ENUMs created, tables not yet).
+ * Used to detect whether any schema has already been applied to the database.
  */
 async function enumTypeExists(client, typeName) {
   const res = await client.query(
@@ -71,75 +62,85 @@ async function enumTypeExists(client, typeName) {
 }
 
 /**
- * Returns the number of rows in __drizzle_migrations (0 if table doesn't exist).
+ * Returns the number of rows in drizzle.__drizzle_migrations.
+ * Returns 0 if the schema or table doesn't exist yet.
  */
 async function countTrackedMigrations(client) {
-  const exists = await tableExists(client, "__drizzle_migrations");
-  if (!exists) return 0;
-  const res = await client.query('SELECT COUNT(*) FROM "__drizzle_migrations"');
-  return parseInt(res.rows[0].count, 10);
+  const res = await client.query(
+    `SELECT COUNT(*) FROM information_schema.tables
+     WHERE table_schema = 'drizzle' AND table_name = '__drizzle_migrations'`
+  );
+  if (parseInt(res.rows[0].count, 10) === 0) return 0;
+
+  const rows = await client.query(
+    'SELECT COUNT(*) FROM drizzle."__drizzle_migrations"'
+  );
+  return parseInt(rows.rows[0].count, 10);
 }
 
 /**
- * Pre-populates __drizzle_migrations with all SQL files found in the
- * migrations folder. Drizzle uses SHA-256(file content) as the hash.
- * Only call this when the schema is already applied but not yet tracked.
+ * Pre-seeds drizzle.__drizzle_migrations using the journal + SQL files so that
+ * migrate() considers all existing migrations as already applied.
+ *
+ * Drizzle uses:
+ *   hash       = SHA-256(raw SQL file content)
+ *   created_at = journalEntry.when (folderMillis)
+ *
+ * The schema and table are created if they don't exist yet.
  */
 async function seedMigrationHistory(client, folder) {
-  const files = readdirSync(folder)
-    .filter((f) => f.endsWith(".sql"))
-    .sort();
+  const journal = JSON.parse(
+    readFileSync(join(folder, "meta", "_journal.json"), "utf8")
+  );
 
-  // Ensure tracking table exists (drizzle-orm creates it, but we may run before it)
+  await client.query(`CREATE SCHEMA IF NOT EXISTS drizzle`);
   await client.query(`
-    CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
+    CREATE TABLE IF NOT EXISTS drizzle."__drizzle_migrations" (
       id SERIAL PRIMARY KEY,
       hash text NOT NULL,
       created_at bigint
     )
   `);
 
-  for (const file of files) {
-    const sql = readFileSync(join(folder, file), "utf8");
-    const hash = createHash("sha256").update(sql).digest("hex");
+  for (const entry of journal.entries) {
+    const sqlPath = join(folder, `${entry.tag}.sql`);
+    const sqlContent = readFileSync(sqlPath, "utf8");
+    const hash = createHash("sha256").update(sqlContent).digest("hex");
 
-    // Skip if already recorded (idempotent)
-    const res = await client.query(
-      'SELECT 1 FROM "__drizzle_migrations" WHERE hash = $1',
+    // Idempotent: skip if this migration is already recorded
+    const exists = await client.query(
+      'SELECT 1 FROM drizzle."__drizzle_migrations" WHERE hash = $1',
       [hash]
     );
-    if (res.rowCount === 0) {
+    if (exists.rowCount === 0) {
       await client.query(
-        'INSERT INTO "__drizzle_migrations" (hash, created_at) VALUES ($1, $2)',
-        [hash, Date.now()]
+        'INSERT INTO drizzle."__drizzle_migrations" (hash, created_at) VALUES ($1, $2)',
+        [hash, entry.when]
       );
-      console.log(`[migrate] Seeded migration history: ${file}`);
+      console.log(`[migrate] Seeded: ${entry.tag}`);
     }
   }
 }
 
+// --- Detect pre-existing schema and seed if needed ---
+
 const client = await pool.connect();
 try {
-  // Detect pre-existing or partially-applied schema.
-  // Drizzle runs migration statements individually (no wrapping transaction),
-  // so a failed previous run can leave ENUMs created but tables missing and
-  // the migration untracked. On the next run, CREATE TYPE fails with "already exists".
-  // We check for the first enum type from migration 0000 as the reliable signal.
-  const usersExist = await tableExists(client, "users");
   const priorityTypeExists = await enumTypeExists(client, "priority");
-  const schemaHasObjects = usersExist || priorityTypeExists;
   const trackedCount = await countTrackedMigrations(client);
 
-  if (schemaHasObjects && trackedCount === 0) {
+  if (priorityTypeExists && trackedCount === 0) {
     console.log(
-      "[migrate] Detected pre-existing schema without migration history — seeding tracking table..."
+      "[migrate] Pre-existing schema detected without migration history — seeding drizzle.__drizzle_migrations..."
     );
     await seedMigrationHistory(client, migrationsFolder);
-    console.log("[migrate] Migration history seeded.");
+    console.log("[migrate] Migration history seeded successfully.");
   }
 } finally {
   client.release();
 }
+
+// --- Run pending migrations (no-op if all are already tracked) ---
 
 try {
   console.log("[migrate] Applying pending migrations from", migrationsFolder);
