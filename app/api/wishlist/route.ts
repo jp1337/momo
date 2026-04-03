@@ -11,7 +11,7 @@
  * Returns: { item: WishlistItem }
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import {
   getUserWishlistItems,
   createWishlistItem,
@@ -24,16 +24,14 @@ import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
  * GET /api/wishlist
  * Returns all wishlist items and budget summary for the authenticated user.
  */
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(request: Request) {
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const [items, budget] = await Promise.all([
-      getUserWishlistItems(session.user.id),
-      getBudgetSummary(session.user.id),
+      getUserWishlistItems(user.userId),
+      getBudgetSummary(user.userId),
     ]);
     return Response.json({ items, budget });
   } catch (error) {
@@ -47,13 +45,12 @@ export async function GET() {
  * Creates a new wishlist item.
  */
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   // Rate limit: 30 wishlist item creations per minute per user
-  const rateCheck = checkRateLimit(`wishlist-create:${session.user.id}`, 30, 60_000);
+  const rateCheck = checkRateLimit(`wishlist-create:${user.userId}`, 30, 60_000);
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   let body: unknown;
@@ -75,7 +72,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const item = await createWishlistItem(session.user.id, parsed.data);
+    const item = await createWishlistItem(user.userId, parsed.data);
     return Response.json({ item }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/wishlist]", error);

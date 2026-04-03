@@ -12,7 +12,7 @@
  * Returns: { success: true }
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { getBudgetSummary, updateMonthlyBudget } from "@/lib/wishlist";
 import { UpdateBudgetInputSchema } from "@/lib/validators";
 
@@ -20,14 +20,12 @@ import { UpdateBudgetInputSchema } from "@/lib/validators";
  * GET /api/settings/budget
  * Returns the user's current budget settings and spending summary.
  */
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(request: Request) {
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const budget = await getBudgetSummary(session.user.id);
+    const budget = await getBudgetSummary(user.userId);
     return Response.json({ budget });
   } catch (error) {
     console.error("[GET /api/settings/budget]", error);
@@ -43,10 +41,10 @@ export async function GET() {
  * Updates the user's monthly budget. Send { budget: null } to remove the limit.
  */
 export async function PATCH(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
+
 
   let body: unknown;
   try {
@@ -67,7 +65,7 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    await updateMonthlyBudget(session.user.id, parsed.data.budget);
+    await updateMonthlyBudget(user.userId, parsed.data.budget);
     return Response.json({ success: true });
   } catch (error) {
     console.error("[PATCH /api/settings/budget]", error);

@@ -11,18 +11,17 @@
  * the local session cookie, then redirect to /login.
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { deleteUser } from "@/lib/users";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
-export async function DELETE() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function DELETE(request: Request) {
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   const { limited, resetAt } = checkRateLimit(
-    `delete-account:${session.user.id}`,
+    `delete-account:${user.userId}`,
     5,
     60 * 60 * 1_000 // 1 hour
   );
@@ -31,7 +30,7 @@ export async function DELETE() {
   }
 
   try {
-    await deleteUser(session.user.id);
+    await deleteUser(user.userId);
     return Response.json({ success: true });
   } catch (error) {
     console.error("[DELETE /api/user]", error);

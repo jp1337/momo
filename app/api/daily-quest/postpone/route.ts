@@ -7,7 +7,7 @@
  * Returns: { ok: true } | { error: string }
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { postponeDailyQuest } from "@/lib/daily-quest";
 import { z } from "zod";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
@@ -22,13 +22,12 @@ const PostponeBodySchema = z.object({
  * Postpones the specified daily quest task to tomorrow.
  */
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   // Rate limit: 10 postpones per minute per user (intentionally strict)
-  const rateCheck = checkRateLimit(`quest-postpone:${session.user.id}`, 10, 60_000);
+  const rateCheck = checkRateLimit(`quest-postpone:${user.userId}`, 10, 60_000);
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   let body: unknown;
@@ -47,7 +46,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    await postponeDailyQuest(parsed.data.taskId, session.user.id);
+    await postponeDailyQuest(parsed.data.taskId, user.userId);
     return Response.json({ ok: true });
   } catch (error) {
     console.error("[POST /api/daily-quest/postpone]", error);

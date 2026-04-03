@@ -11,7 +11,7 @@
  * Returns: { success: true }
  */
 
-import { auth } from "@/lib/auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -41,10 +41,10 @@ const subscribeBodySchema = z.object({
  * POST — Save push subscription + enable notifications for the current user.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const user = await resolveApiUser(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return NextResponse.json({ error: "Forbidden", message: "This API key is read-only. Use a read-write key to modify data." }, { status: 403 });
+
 
   let body: unknown;
   try {
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         notificationEnabled: true,
         ...(notificationTime ? { notificationTime } : {}),
       })
-      .where(eq(users.id, session.user.id));
+      .where(eq(users.id, user.userId));
 
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -111,11 +111,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 /**
  * DELETE — Remove push subscription and disable notifications for the current user.
  */
-export async function DELETE(): Promise<NextResponse> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function DELETE(request: Request): Promise<NextResponse> {
+  const user = await resolveApiUser(request);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return NextResponse.json({ error: "Forbidden", message: "This API key is read-only. Use a read-write key to modify data." }, { status: 403 });
 
   try {
     await db
@@ -124,7 +123,7 @@ export async function DELETE(): Promise<NextResponse> {
         pushSubscription: null,
         notificationEnabled: false,
       })
-      .where(eq(users.id, session.user.id));
+      .where(eq(users.id, user.userId));
 
     return NextResponse.json({ success: true });
   } catch (err) {
