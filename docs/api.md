@@ -2,6 +2,30 @@
 
 All API routes are prefixed with `/api`.
 
+## Interactive Documentation
+
+The full API is documented interactively via Swagger UI:
+
+- **Swagger UI:** [`/api-docs`](/api-docs)
+- **OpenAPI 3.1.0 JSON spec:** [`/api/openapi.json`](/api/openapi.json)
+
+You can authorize with a Personal Access Token in the Swagger UI to try out all endpoints directly.
+
+---
+
+## Authentication
+
+All routes (except `/api/health`) require authentication via one of:
+
+| Method | How |
+|---|---|
+| Session cookie | Automatic for logged-in browser users |
+| Bearer token | `Authorization: Bearer momo_live_<key>` |
+
+**Read-only API keys** (`readonly: true`) may only call GET endpoints. POST/PATCH/DELETE requests with a read-only key return `403 Forbidden`.
+
+Create and manage API keys at [`/api-keys`](/api-keys) or via the navbar → avatar → "API Keys".
+
 ## Authentication Routes
 
 Managed by Auth.js v5. These routes are handled internally by the framework.

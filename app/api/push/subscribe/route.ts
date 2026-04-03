@@ -11,7 +11,7 @@
  * Returns: { success: true }
  */
 
-import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
+import { resolveApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
