@@ -1,21 +1,18 @@
 /**
- * Impressum — required for publicly accessible websites under § 5 TMG (Germany).
+ * Impressum — required for publicly accessible websites under § 5 DDG (Germany).
+ * The Telemediengesetz (TMG) was replaced by the Digitale-Dienste-Gesetz (DDG)
+ * effective 14 May 2024.
  *
  * Operator information is read from environment variables. If required variables
  * are not set, a configuration warning is displayed instead.
  *
  * Required env vars:
- *   NEXT_PUBLIC_IMPRINT_NAME     — Full legal name of the operator
+ *   NEXT_PUBLIC_IMPRINT_NAME     — Full name of the operator
  *   NEXT_PUBLIC_IMPRINT_ADDRESS  — Street address, postcode, city (newline-separated)
  *   NEXT_PUBLIC_IMPRINT_EMAIL    — Contact email address
  *
  * Optional env vars:
- *   NEXT_PUBLIC_IMPRINT_PHONE            — Phone number
- *   NEXT_PUBLIC_IMPRINT_FAX              — Fax number
- *   NEXT_PUBLIC_IMPRINT_COMPANY_REGISTER — e.g. "HRB 12345, Amtsgericht München"
- *   NEXT_PUBLIC_IMPRINT_VAT_ID           — Umsatzsteuer-ID, e.g. "DE123456789"
- *   NEXT_PUBLIC_IMPRINT_REPRESENTATIVES  — Managing directors / Geschäftsführer
- *   NEXT_PUBLIC_IMPRINT_RESPONSIBLE      — Redaktionell verantwortlich (name + address)
+ *   NEXT_PUBLIC_IMPRINT_PHONE    — Phone number
  */
 
 import type { Metadata } from "next";
@@ -33,11 +30,6 @@ export default function ImpressumPage() {
   const address = process.env.NEXT_PUBLIC_IMPRINT_ADDRESS;
   const email = process.env.NEXT_PUBLIC_IMPRINT_EMAIL;
   const phone = process.env.NEXT_PUBLIC_IMPRINT_PHONE;
-  const fax = process.env.NEXT_PUBLIC_IMPRINT_FAX;
-  const companyRegister = process.env.NEXT_PUBLIC_IMPRINT_COMPANY_REGISTER;
-  const vatId = process.env.NEXT_PUBLIC_IMPRINT_VAT_ID;
-  const representatives = process.env.NEXT_PUBLIC_IMPRINT_REPRESENTATIVES;
-  const responsible = process.env.NEXT_PUBLIC_IMPRINT_RESPONSIBLE;
 
   const isConfigured = !!name && !!address && !!email;
 
@@ -85,7 +77,7 @@ export default function ImpressumPage() {
           className="flex flex-col gap-8 text-sm leading-relaxed"
           style={{ color: "var(--text-primary)", fontFamily: "var(--font-ui)" }}
         >
-          {/* Angaben gemäß § 5 TMG */}
+          {/* Angaben gemäß § 5 DDG */}
           <section className="flex flex-col gap-3">
             <h2
               className="text-base font-semibold"
@@ -96,7 +88,7 @@ export default function ImpressumPage() {
                 paddingBottom: "0.5rem",
               }}
             >
-              Angaben gemäß § 5 TMG
+              Angaben gemäß § 5 DDG
             </h2>
             <address className="not-italic flex flex-col gap-0.5" style={{ color: "var(--text-muted)" }}>
               <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{name}</span>
@@ -104,12 +96,6 @@ export default function ImpressumPage() {
                 <span key={i}>{line}</span>
               ))}
             </address>
-            {representatives && (
-              <p style={{ color: "var(--text-muted)" }}>
-                <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>Vertreten durch:</span>{" "}
-                {representatives}
-              </p>
-            )}
           </section>
 
           {/* Kontakt */}
@@ -127,7 +113,6 @@ export default function ImpressumPage() {
             </h2>
             <div className="flex flex-col gap-1" style={{ color: "var(--text-muted)" }}>
               {phone && <p>Telefon: {phone}</p>}
-              {fax && <p>Telefax: {fax}</p>}
               <p>
                 E-Mail:{" "}
                 <a
@@ -139,65 +124,6 @@ export default function ImpressumPage() {
               </p>
             </div>
           </section>
-
-          {/* Handelsregister (optional) */}
-          {companyRegister && (
-            <section className="flex flex-col gap-3">
-              <h2
-                className="text-base font-semibold"
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  color: "var(--text-primary)",
-                  borderBottom: "1px solid var(--border)",
-                  paddingBottom: "0.5rem",
-                }}
-              >
-                Handelsregister
-              </h2>
-              <p style={{ color: "var(--text-muted)" }}>{companyRegister}</p>
-            </section>
-          )}
-
-          {/* Umsatzsteuer-ID (optional) */}
-          {vatId && (
-            <section className="flex flex-col gap-3">
-              <h2
-                className="text-base font-semibold"
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  color: "var(--text-primary)",
-                  borderBottom: "1px solid var(--border)",
-                  paddingBottom: "0.5rem",
-                }}
-              >
-                Umsatzsteuer-ID
-              </h2>
-              <p style={{ color: "var(--text-muted)" }}>
-                Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:{" "}
-                {vatId}
-              </p>
-            </section>
-          )}
-
-          {/* Redaktionell verantwortlich (optional) */}
-          {responsible && (
-            <section className="flex flex-col gap-3">
-              <h2
-                className="text-base font-semibold"
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  color: "var(--text-primary)",
-                  borderBottom: "1px solid var(--border)",
-                  paddingBottom: "0.5rem",
-                }}
-              >
-                Redaktionell verantwortlich
-              </h2>
-              <address className="not-italic" style={{ color: "var(--text-muted)", whiteSpace: "pre-line" }}>
-                {responsible}
-              </address>
-            </section>
-          )}
 
           {/* Verbraucherschlichtung — mandatory § 36 VSBG */}
           <section className="flex flex-col gap-3">

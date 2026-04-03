@@ -145,11 +145,12 @@ export function NotificationSettings({
         setIsSaving(false);
         return;
       }
-      const vapidKey = vapidPublicKey;
+      // Trim whitespace/newlines that can be introduced by env var storage
+      const vapidKey = vapidPublicKey.trim();
 
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey) as unknown as ArrayBuffer,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
       });
 
       // Step 4: Serialize and send to server
@@ -175,9 +176,13 @@ export function NotificationSettings({
       setStatus("active");
       setMessage(t("notif_success_enabled"));
     } catch (err) {
-      console.error("[NotificationSettings] Enable failed:", err);
+      // Log full details: DOMException name + message help diagnose push service errors
+      console.error("[NotificationSettings] Enable failed:", err instanceof Error
+        ? `${err.name}: ${err.message}`
+        : err
+      );
       setMessage(
-        err instanceof Error ? err.message : t("notif_err_enable")
+        err instanceof Error ? `${err.name}: ${err.message}` : t("notif_err_enable")
       );
       setStatus("default");
     } finally {
