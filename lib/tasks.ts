@@ -146,6 +146,7 @@ export async function createTask(
         ? (input.dueDate ?? new Date().toISOString().split("T")[0])
         : null,
       coinValue: input.coinValue ?? 1,
+      estimatedMinutes: input.estimatedMinutes ?? null,
     })
     .returning();
 
@@ -179,6 +180,7 @@ export async function updateTask(
     updateValues.recurrenceInterval = input.recurrenceInterval;
   if (input.dueDate !== undefined) updateValues.dueDate = input.dueDate;
   if (input.coinValue !== undefined) updateValues.coinValue = input.coinValue;
+  if (input.estimatedMinutes !== undefined) updateValues.estimatedMinutes = input.estimatedMinutes;
 
   const rows = await db
     .update(tasks)
@@ -284,7 +286,8 @@ export async function completeTask(
     });
 
     // Award coins atomically — avoids read-modify-write race under concurrency
-    const coinsEarned = task.coinValue;
+    // Bonus: tasks that were postponed 3+ times award double coins (procrastination reward)
+    const coinsEarned = task.postponeCount >= 3 ? task.coinValue * 2 : task.coinValue;
     await tx
       .update(users)
       .set({ coins: sql`${users.coins} + ${coinsEarned}` })
@@ -477,5 +480,84 @@ export async function promoteTaskToTopic(
       .returning();
 
     return { topic: newTopic, task: updatedTaskRows[0] };
+  });
+}
+
+/** Result from breaking down a task into subtasks */
+export interface BreakdownTaskResult {
+  /** The newly created topic (named after the original task) */
+  topicId: string;
+  /** The newly created subtasks */
+  tasks: Task[];
+}
+
+/**
+ * Breaks a task down into multiple subtasks inside a new topic.
+ *
+ * The original task is deleted. A new topic is created with the original task's
+ * title, and N new tasks are created as subtasks within that topic.
+ * All new tasks inherit the original task's priority and type (ONE_TIME).
+ *
+ * @param taskId - The task's UUID to break down
+ * @param userId - Must own the task
+ * @param subtaskTitles - Array of 2–10 titles for the new subtasks
+ * @returns The new topic's ID and the created subtasks
+ * @throws Error if task not found or access denied
+ */
+export async function breakdownTask(
+  taskId: string,
+  userId: string,
+  subtaskTitles: string[]
+): Promise<BreakdownTaskResult> {
+  return db.transaction(async (tx) => {
+    // Verify ownership
+    const taskRows = await tx
+      .select()
+      .from(tasks)
+      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+      .limit(1);
+
+    if (!taskRows[0]) {
+      throw new Error("Task not found or access denied");
+    }
+
+    const originalTask = taskRows[0];
+
+    // Create a new topic named after the original task
+    const topicRows = await tx
+      .insert(topics)
+      .values({
+        userId,
+        title: originalTask.title,
+        description: originalTask.notes ?? null,
+        priority: originalTask.priority,
+        color: "#f0a500",
+        icon: "fa-layer-group",
+      })
+      .returning();
+
+    const newTopic = topicRows[0];
+
+    // Create the subtasks
+    const newTasks = await tx
+      .insert(tasks)
+      .values(
+        subtaskTitles.map((title) => ({
+          userId,
+          topicId: newTopic.id,
+          title,
+          type: "ONE_TIME" as const,
+          priority: originalTask.priority,
+          coinValue: originalTask.coinValue,
+        }))
+      )
+      .returning();
+
+    // Delete the original task (cascade handles task_completions)
+    await tx
+      .delete(tasks)
+      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
+
+    return { topicId: newTopic.id, tasks: newTasks };
   });
 }

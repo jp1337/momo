@@ -15,8 +15,8 @@
 
 import { db } from "@/lib/db";
 import type { Database } from "@/lib/db";
-import { tasks, topics } from "@/lib/db/schema";
-import { eq, and, isNull, isNotNull, lte, lt, or, ne } from "drizzle-orm";
+import { tasks, users, topics } from "@/lib/db/schema";
+import { eq, and, isNull, isNotNull, lte, lt, or, ne, sql } from "drizzle-orm";
 
 /** A Drizzle transaction or the base db instance */
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -393,17 +393,54 @@ export async function forceSelectDailyQuest(
 }
 
 /**
+ * Result of a postpone operation, including the updated postpone counters.
+ */
+export interface PostponeResult {
+  /** How many times the user has postponed their quest today (after this postpone) */
+  postponesToday: number;
+  /** The user's configured daily postpone limit */
+  postponeLimit: number;
+}
+
+/**
  * Marks a task as "not today" — clears is_daily_quest and sets due_date to tomorrow.
- * Does not count as a skip for streak purposes (first postpone per week is free).
+ * Increments the task's postpone_count and the user's daily postpone counter.
+ * Enforces the user's configured daily postpone limit (questPostponeLimit).
  *
  * @param taskId - The task to postpone
  * @param userId - Must own the task
+ * @returns PostponeResult with updated counters
+ * @throws Error "LIMIT_REACHED" if the user has exhausted their daily postpone budget
  * @throws Error if task not found, not owned by user, or not the current daily quest
  */
 export async function postponeDailyQuest(
   taskId: string,
   userId: string
-): Promise<void> {
+): Promise<PostponeResult> {
+  const todayStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+  // Fetch user's postpone counters and limit
+  const userRows = await db
+    .select({
+      questPostponesToday: users.questPostponesToday,
+      questPostponedDate: users.questPostponedDate,
+      questPostponeLimit: users.questPostponeLimit,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  const user = userRows[0];
+  if (!user) throw new Error("User not found");
+
+  // Reset daily counter if last postpone was on a different day
+  const postponesToday =
+    user.questPostponedDate === todayStr ? user.questPostponesToday : 0;
+
+  if (postponesToday >= user.questPostponeLimit) {
+    throw new Error("LIMIT_REACHED");
+  }
+
   // Verify ownership and that the task is the active daily quest
   const taskRows = await db
     .select()
@@ -427,19 +464,32 @@ export async function postponeDailyQuest(
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split("T")[0]; // YYYY-MM-DD
 
-  // Clear the daily quest flag and push the due date to tomorrow
-  await db
-    .update(tasks)
-    .set({
-      isDailyQuest: false,
-      dueDate: tomorrowStr,
-    })
-    .where(
-      and(
-        eq(tasks.id, taskId),
-        eq(tasks.userId, userId)
-      )
-    );
+  const newPostponesToday = postponesToday + 1;
+
+  // Update task (clear quest flag, push due date, increment postpone_count) and user counters atomically
+  await db.transaction(async (tx) => {
+    await tx
+      .update(tasks)
+      .set({
+        isDailyQuest: false,
+        dueDate: tomorrowStr,
+        postponeCount: sql`${tasks.postponeCount} + 1`,
+      })
+      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
+
+    await tx
+      .update(users)
+      .set({
+        questPostponesToday: newPostponesToday,
+        questPostponedDate: todayStr,
+      })
+      .where(eq(users.id, userId));
+  });
+
+  return {
+    postponesToday: newPostponesToday,
+    postponeLimit: user.questPostponeLimit,
+  };
 }
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────

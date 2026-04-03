@@ -2,9 +2,10 @@
  * POST /api/daily-quest/postpone
  * Postpones the current daily quest to tomorrow.
  * Clears is_daily_quest on the task and sets its due_date to tomorrow.
+ * Increments the task's postpone_count and the user's daily postpone counter.
  * Requires: authentication
  * Body: { taskId: string }
- * Returns: { ok: true } | { error: string }
+ * Returns: { ok: true, postponesToday: number, postponeLimit: number } | { error: string }
  */
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
@@ -46,9 +47,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    await postponeDailyQuest(parsed.data.taskId, user.userId);
-    return Response.json({ ok: true });
+    const result = await postponeDailyQuest(parsed.data.taskId, user.userId);
+    return Response.json({ ok: true, ...result });
   } catch (error) {
+    if (error instanceof Error && error.message === "LIMIT_REACHED") {
+      return Response.json({ error: "LIMIT_REACHED" }, { status: 429 });
+    }
     console.error("[POST /api/daily-quest/postpone]", error);
     const isNotFound =
       error instanceof Error && error.message.includes("not found");

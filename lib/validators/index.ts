@@ -43,6 +43,16 @@ export const CreateTaskInputSchema = z
       .min(1, "Coin value must be at least 1")
       .max(10, "Coin value cannot exceed 10")
       .default(1),
+    /** Estimated completion time in minutes (5 / 15 / 30 / 60 / null = unknown) */
+    estimatedMinutes: z
+      .union([
+        z.literal(5),
+        z.literal(15),
+        z.literal(30),
+        z.literal(60),
+      ])
+      .nullable()
+      .optional(),
   })
   .refine(
     (data) => {
@@ -87,6 +97,10 @@ export const UpdateTaskInputSchema = z
       .nullable()
       .optional(),
     coinValue: z.number().int().min(1).max(10).optional(),
+    estimatedMinutes: z
+      .union([z.literal(5), z.literal(15), z.literal(30), z.literal(60)])
+      .nullable()
+      .optional(),
   })
   .refine(
     (data) => {
