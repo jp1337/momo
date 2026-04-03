@@ -138,7 +138,6 @@ export function NotificationSettings({
       try {
         const padding = "=".repeat((4 - (vapidKey.length % 4)) % 4);
         const decoded = atob(vapidKey.replace(/-/g, "+").replace(/_/g, "/") + padding);
-        console.log(`[Push] VAPID key: ${vapidKey.length} chars → ${decoded.length} bytes, first byte: 0x${decoded.charCodeAt(0).toString(16).padStart(2, "0")}`);
         if (decoded.length !== 65) {
           throw new Error(`VAPID public key invalid: ${decoded.length} bytes (expected 65). Check NEXT_PUBLIC_VAPID_PUBLIC_KEY — private key has only 32 bytes.`);
         }
@@ -170,25 +169,21 @@ export function NotificationSettings({
 
       // Step 4: Serialize and send to server
       const subscriptionJSON = subscription.toJSON();
-      console.log("[Push] Subscription JSON:", JSON.stringify(subscriptionJSON));
-
-      const payload = {
-        subscription: {
-          endpoint: subscriptionJSON.endpoint,
-          keys: subscriptionJSON.keys,
-        },
-        notificationTime,
-      };
 
       const res = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          subscription: {
+            endpoint: subscriptionJSON.endpoint,
+            keys: subscriptionJSON.keys,
+          },
+          notificationTime,
+        }),
       });
 
       if (!res.ok) {
-        const data = await res.json() as { error?: string; details?: unknown };
-        console.error("[Push] Subscribe API error:", JSON.stringify(data));
+        const data = await res.json() as { error?: string };
         throw new Error(data.error ?? t("notif_err_save"));
       }
 

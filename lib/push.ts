@@ -116,8 +116,8 @@ export async function sendPushNotification(
       JSON.stringify({
         title: payload.title,
         body: payload.body,
-        icon: payload.icon ?? "/favicon.ico",
-        badge: payload.badge ?? "/favicon.ico",
+        icon: payload.icon ?? "/icon-192.png",
+        badge: payload.badge ?? "/icon-192.png",
         url: payload.url ?? "/dashboard",
         tag: payload.tag ?? "momo-notification",
       })
@@ -196,7 +196,7 @@ export async function sendDailyQuestNotifications(): Promise<{
       await sendPushNotification(user.id, subscription, {
         title: "Your daily quest awaits",
         body: "Open Momo to see today's mission. One small step forward.",
-        icon: "/favicon.ico",
+        icon: "/icon-192.png",
         url: "/dashboard",
         tag: "daily-quest",
       });
@@ -280,7 +280,7 @@ export async function sendStreakReminders(): Promise<{
       await sendPushNotification(user.id, subscription, {
         title: `Keep your ${user.streakCurrent}-day streak alive!`,
         body: "You haven't completed a task today yet. Don't let your streak slip.",
-        icon: "/favicon.ico",
+        icon: "/icon-192.png",
         url: "/dashboard",
         tag: "streak-reminder",
       });
