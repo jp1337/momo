@@ -55,9 +55,19 @@ description: Task management for people who struggle with procrastination. Open 
     <p>Install on your phone like a native app. Works offline.</p>
   </div>
   <div class="feature-card">
+    <div class="icon">🔑</div>
+    <h3>REST API & API Keys</h3>
+    <p>Full REST API with personal access tokens. Read-only keys, expiry dates, Swagger UI at <code>/api-docs</code>.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🌍</div>
+    <h3>Multilingual</h3>
+    <p>German, English, and French UI. Add any language by dropping in a messages file.</p>
+  </div>
+  <div class="feature-card">
     <div class="icon">🏠</div>
     <h3>Self-Hostable</h3>
-    <p>Your data, your server, your rules. Docker Compose in minutes.</p>
+    <p>Your data, your server, your rules. Docker Compose in minutes — migrations run automatically.</p>
   </div>
 </div>
 
@@ -69,10 +79,9 @@ cd momo
 cp .env.example .env.local
 # Edit .env.local with your credentials
 docker compose up -d
-docker compose exec app npx drizzle-kit migrate
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — done.
+Open [http://localhost:3000](http://localhost:3000) — done. Database migrations run automatically on first start.
 
 [Full getting started guide](/momo/getting-started)
 
@@ -80,10 +89,11 @@ Open [http://localhost:3000](http://localhost:3000) — done.
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS v4 |
+| Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4 |
 | Auth | Auth.js v5 (GitHub, Discord, Google, OIDC) |
 | Database | PostgreSQL 18 + Drizzle ORM |
 | Push | Web Push API (VAPID) |
+| API | OpenAPI 3.1.0, Personal Access Tokens |
 | Container | Docker + Kubernetes |
 
 ## The Name

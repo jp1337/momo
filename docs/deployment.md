@@ -149,10 +149,10 @@ kubectl apply -f deploy/examples/service.yaml
 kubectl apply -f deploy/examples/ingress.yaml
 ```
 
-After the app starts, run migrations:
+Migrations run automatically when each pod starts — no manual step needed. Check pod logs to confirm:
 
 ```bash
-kubectl exec -n momo deployment/momo-app -- npx drizzle-kit migrate
+kubectl logs -n momo deployment/momo-app --tail=20
 ```
 
 ---
