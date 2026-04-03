@@ -39,6 +39,8 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **REST API & API Keys** — Full public REST API with personal access tokens (read-only flag, expiry dates). Interactive Swagger UI at `/api-docs`.
 - **Account Linking** — Connect multiple OAuth providers to one account.
 - **Multilingual** — German, English, and French UI with cookie-based locale switching. Add any language by dropping in a `messages/XX.json` file.
+- **Statistics** — Personal stats dashboard showing tasks completed, coins earned, streaks, level progress, achievements unlocked, and wishlist purchases.
+- **Admin Panel** — Platform-wide statistics for operators (user growth, top users, achievement distribution). Protected by `ADMIN_USER_IDS` env var — only listed user UUIDs can access `/admin`.
 - **Dark & Light Mode** — Cozy warm tones in both themes. Because productivity shouldn't feel clinical.
 - **DSGVO / GDPR Ready** — Data export (JSON), account deletion with full cascade, Impressum + Datenschutzerklärung pages, no tracking cookies.
 - **Open Source & Self-Hostable** — Your data, your server, your rules. Migrations run automatically on container start.
@@ -195,6 +197,7 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 | Phase 7 – Deployment | ✅ Done | Multi-stage Docker, GitHub Actions (GHCR + DockerHub + Quay), Security Headers, Rate Limiting, K8s manifests |
 | Phase 8 – Polish | ✅ Done | Multilingual (DE/EN/FR), DSGVO compliance, Dark mode redesign, self-hosted fonts, data export, account deletion |
 | Phase 9 – API & Keys | ✅ Done | Public REST API, Personal Access Tokens, Swagger UI, Account Linking, Font Awesome icons, SVG Logo |
+| Phase 10 – Statistics & Admin | ✅ Done | Personal stats page, Admin panel, Mobile bottom navigation |
 
 ---
 
@@ -219,6 +222,11 @@ Before deploying Momo to production, verify all items below:
   ```
 - [ ] **Configure TLS** — use a reverse proxy (nginx, Caddy) or cert-manager in Kubernetes
 - [ ] **Configure legal pages** (for public deployments) — set `NEXT_PUBLIC_IMPRINT_NAME`, `NEXT_PUBLIC_IMPRINT_ADDRESS`, `NEXT_PUBLIC_IMPRINT_EMAIL` (see [DSGVO Guide](docs/gdpr.md))
+- [ ] **Set ADMIN_USER_IDS** (optional) — comma-separated UUIDs of users who can access `/admin`. If unset, the admin page is inaccessible to everyone:
+  ```bash
+  # Find your UUID in the database, or check the "access denied" screen at /admin
+  ADMIN_USER_IDS=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  ```
 - [ ] **Migrations run automatically** — the container applies all pending migrations on startup. Check `docker compose logs app` after deployment to confirm.
 
 See the full [Deployment Guide](docs/deployment.md) for AUTH_SECRET rotation procedures and Kubernetes deployment steps.

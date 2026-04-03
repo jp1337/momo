@@ -64,17 +64,17 @@ npx web-push generate-vapid-keys
 
 Find a user's UUID in the database: `SELECT id, email FROM users;`
 
-## Legal Pages (DSGVO / § 5 TMG)
+## Legal Pages (DSGVO / § 5 DDG)
 
 Required for publicly accessible deployments. These values are rendered on `/impressum` and `/datenschutz`.
 Operators of self-hosted instances must fill these in with their own details.
 
 | Variable | Type | Required | Description |
 |---|---|---|---|
-| `NEXT_PUBLIC_IMPRINT_NAME` | string | Public deployments | Full legal name of the operator (§5 TMG) |
+| `NEXT_PUBLIC_IMPRINT_NAME` | string | Public deployments | Full legal name of the operator (§5 DDG) |
 | `NEXT_PUBLIC_IMPRINT_ADDRESS` | string | Public deployments | Street address, postcode, city (may include newlines) |
 | `NEXT_PUBLIC_IMPRINT_EMAIL` | string | Public deployments | Contact / data protection email address |
-| `NEXT_PUBLIC_IMPRINT_PHONE` | string | No | Phone number (recommended for §5 TMG, optional) |
+| `NEXT_PUBLIC_IMPRINT_PHONE` | string | No | Phone number (recommended for §5 DDG, optional) |
 
 If these variables are not set, `/impressum` and `/datenschutz` display a configuration warning instead of legal content.
 
