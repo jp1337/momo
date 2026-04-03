@@ -13,8 +13,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: 'npm'
@@ -45,7 +45,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Derive a safe artifact/cache suffix from the platform name (e.g. linux-amd64)
       - name: Prepare platform suffix
@@ -53,7 +53,7 @@ jobs:
         run: echo "suffix=$(echo '${{ matrix.platform }}' | tr '/' '-')" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Authenticate with GitHub Container Registry — used as staging area for digests
       - name: Log in to GHCR
@@ -66,7 +66,7 @@ jobs:
       # OCI labels (e.g. org.opencontainers.image.*) are attached at build time
       - name: Extract metadata (labels)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/jp1337/momo
 
@@ -74,7 +74,7 @@ jobs:
       # GHA cache is scoped per platform so the layers don't mix.
       - name: Build and push by digest
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: ${{ matrix.platform }}
@@ -92,7 +92,7 @@ jobs:
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: digests-${{ steps.platform.outputs.suffix }}
           path: /tmp/digests/*
@@ -113,19 +113,19 @@ jobs:
     steps:
       # Download both digest artifacts into the same directory
       - name: Download digest artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: /tmp/digests
           pattern: digests-*
           merge-multiple: true
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Generate the final tags for all three registries
       - name: Extract metadata (tags and labels)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/jp1337/momo
