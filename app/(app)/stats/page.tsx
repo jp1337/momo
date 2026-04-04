@@ -28,6 +28,7 @@ import {
   faListCheck,
   faChartBar,
 } from "@fortawesome/free-solid-svg-icons";
+import { resolveTopicIcon } from "@/lib/topic-icons";
 
 export const metadata: Metadata = {
   title: "Statistiken — Momo",
@@ -584,9 +585,16 @@ export default async function StatsPage() {
                 >
                   <div className="flex items-center gap-2 mb-3">
                     {topic.icon && (
-                      <span className="text-lg" aria-hidden="true">
-                        {topic.icon}
-                      </span>
+                      <FontAwesomeIcon
+                        icon={resolveTopicIcon(topic.icon)}
+                        aria-hidden="true"
+                        style={{
+                          width: "1rem",
+                          height: "1rem",
+                          color: topic.color ?? "var(--accent-amber)",
+                          flexShrink: 0,
+                        }}
+                      />
                     )}
                     <span
                       className="text-sm font-medium truncate"
