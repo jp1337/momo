@@ -177,27 +177,33 @@ export function TaskForm({
   };
 
   return (
-    /* Backdrop */
+    /*
+      Backdrop — only provides the dimmed overlay on sm+.
+      On mobile the form is fixed full-screen, so the backdrop is just cosmetic.
+    */
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+      className="fixed inset-0 z-50 sm:flex sm:items-center sm:justify-center sm:p-4"
       style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
     >
       {/*
-        Modal — flex column so the footer sticks to the bottom.
-        Only the fields section scrolls; the header and footer are always visible.
-        Bottom-sheet on mobile, centered card on sm+.
+        Mobile  : fixed inset-0 → explicit 100dvh height → flex-1 resolves correctly
+        Desktop : static, max-h-[90dvh], centered by the backdrop flex container
+        The header and footer use flex-shrink-0; only the fields div scrolls.
       */}
       <form
         onSubmit={handleSubmit}
-        className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-lg flex flex-col"
+        className="
+          fixed inset-0 flex flex-col
+          sm:static sm:inset-auto sm:w-full sm:max-w-lg sm:rounded-2xl sm:max-h-[90dvh]
+          shadow-lg
+        "
         style={{
           backgroundColor: "var(--bg-surface)",
           border: "1px solid var(--border)",
           boxShadow: "var(--shadow-lg)",
-          maxHeight: "92dvh",
         }}
       >
         {/* Header — never scrolls */}
