@@ -182,7 +182,7 @@ export function TaskForm({
       On mobile the form is fixed full-screen, so the backdrop is just cosmetic.
     */
     <div
-      className="fixed inset-0 z-50 sm:flex sm:items-center sm:justify-center sm:p-4"
+      className="fixed inset-0 z-[60] sm:flex sm:items-center sm:justify-center sm:p-4"
       style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
