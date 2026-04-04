@@ -14,6 +14,7 @@ import { getTopicById } from "@/lib/topics";
 import { TopicDetailView } from "@/components/topics/topic-detail-view";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { resolveTopicIcon } from "@/lib/topic-icons";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
   title: "Topic — Momo",
@@ -34,7 +35,10 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
   }
 
   const { id } = await params;
-  const topic = await getTopicById(id, session.user.id);
+  const [topic, t] = await Promise.all([
+    getTopicById(id, session.user.id),
+    getTranslations("topics"),
+  ]);
 
   if (!topic) {
     notFound();
@@ -75,7 +79,7 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
           color: "var(--text-muted)",
         }}
       >
-        ← Back to Topics
+        {t("back_to_topics")}
       </Link>
 
       {/* Topic header */}
@@ -139,7 +143,7 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
                 color: "var(--text-muted)",
               }}
             >
-              {completedCount}/{topic.tasks.length} tasks completed
+              {t("tasks_completed", { completed: completedCount, total: topic.tasks.length })}
             </span>
             <span
               className="text-sm font-semibold"

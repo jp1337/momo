@@ -20,6 +20,7 @@
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { completeTask, uncompleteTask } from "@/lib/tasks";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { TimezoneSchema } from "@/lib/validators";
 
 /**
  * POST /api/tasks/:id/complete
@@ -41,8 +42,9 @@ export async function POST(
 
   let timezone: string | null = null;
   try {
-    const body = await request.json() as { timezone?: string | null };
-    if (typeof body?.timezone === "string") timezone = body.timezone;
+    const body = await request.json() as { timezone?: unknown };
+    const parsed = TimezoneSchema.safeParse(body?.timezone);
+    if (parsed.success && parsed.data) timezone = parsed.data;
   } catch {
     // body is optional — timezone defaults to null (UTC fallback)
   }

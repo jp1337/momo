@@ -25,6 +25,7 @@ import { triggerConfetti } from "@/components/animations/confetti";
 import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
 import type { AchievementItem } from "@/components/animations/achievement-toast";
+import { dispatchCoinsEarned } from "@/lib/client/coin-events";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -132,23 +133,18 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit }: DailyQu
         body: JSON.stringify({ timezone }),
       });
 
+      const data = (await res.json()) as CompleteResponse & { error?: string };
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
         console.error("Failed to complete quest:", data.error);
         return;
       }
 
-      const data = (await res.json()) as CompleteResponse;
       const earned = data.coinsEarned ?? quest.coinValue;
       setCoinsEarned(earned);
       setIsCompleted(true);
 
       // Notify CoinCounter in the navbar about earned coins
-      if (earned > 0) {
-        window.dispatchEvent(
-          new CustomEvent("coinsEarned", { detail: { delta: earned } })
-        );
-      }
+      dispatchCoinsEarned(earned);
 
       // Always fire confetti on quest completion
       triggerConfetti();

@@ -24,6 +24,7 @@ import { triggerSmallConfetti } from "@/components/animations/confetti";
 import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
 import type { AchievementItem } from "@/components/animations/achievement-toast";
+import { dispatchCoinsEarned } from "@/lib/client/coin-events";
 
 interface Task {
   id: string;
@@ -39,6 +40,7 @@ interface Task {
   createdAt: string;
   postponeCount?: number;
   estimatedMinutes?: number | null;
+  recurrenceInterval?: number | null;
 }
 
 interface TopicOption {
@@ -252,9 +254,10 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
         setTasks(data.tasks);
       }
     } catch {
-      // silent fail — stale data is better than crashed UI
+      // Network failure — fall back to a full SSR refresh so the page isn't stale
+      router.refresh();
     }
-  }, []);
+  }, [router]);
 
   const handleComplete = useCallback(async (id: string) => {
     try {
@@ -271,11 +274,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
         triggerSmallConfetti();
 
         // Notify CoinCounter in the navbar about earned coins
-        if (data.coinsEarned && data.coinsEarned > 0) {
-          window.dispatchEvent(
-            new CustomEvent("coinsEarned", { detail: { delta: data.coinsEarned } })
-          );
-        }
+        dispatchCoinsEarned(data.coinsEarned ?? 0);
 
         // Show level-up overlay if user leveled up
         if (data.newLevel) {
@@ -300,11 +299,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
       if (res.ok) {
         const data = (await res.json()) as { task?: { coinValue?: number } };
         const refunded = data.task?.coinValue ?? 0;
-        if (refunded > 0) {
-          window.dispatchEvent(
-            new CustomEvent("coinsEarned", { detail: { delta: -refunded } })
-          );
-        }
+        dispatchCoinsEarned(-refunded);
         await refreshTasks();
       }
     } catch {
@@ -605,7 +600,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                   type: editingTask.type,
                   priority: editingTask.priority,
                   recurrenceInterval: editingTask.type === "RECURRING"
-                    ? String((editingTask as unknown as { recurrenceInterval: number }).recurrenceInterval ?? 7)
+                    ? String(editingTask.recurrenceInterval ?? 7)
                     : "7",
                   dueDate: editingTask.dueDate ?? "",
                   coinValue: String(editingTask.coinValue),

@@ -17,6 +17,7 @@ import {
   type Level,
   type UnlockedAchievement,
 } from "@/lib/gamification";
+import { getLocalDateString } from "@/lib/date-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -250,103 +251,113 @@ export async function completeTask(
     throw new Error("Task is already completed");
   }
 
-  return db.transaction(async (tx) => {
-    const now = new Date();
-    let updatedTask: Task;
+  const { task: updatedTask, coinsEarned, newLevel, newCoins, levelAfter } =
+    await db.transaction(async (tx) => {
+      const now = new Date();
+      let updatedTask: Task;
 
-    if (task.type === "RECURRING") {
-      // Calculate next due date: today + recurrenceInterval days
-      const intervalDays = task.recurrenceInterval ?? 1;
-      const nextDue = new Date(now);
-      nextDue.setDate(nextDue.getDate() + intervalDays);
-      const nextDueStr = nextDue.toISOString().split("T")[0]; // YYYY-MM-DD
+      if (task.type === "RECURRING") {
+        // Calculate next due date: user's local today + recurrenceInterval days
+        const intervalDays = task.recurrenceInterval ?? 1;
+        const baseStr = getLocalDateString(timezone);
+        const [y, m, d] = baseStr.split("-").map(Number);
+        const nextDueUtc = new Date(Date.UTC(y, m - 1, d + intervalDays));
+        const nextDueStr = nextDueUtc.toISOString().split("T")[0]; // YYYY-MM-DD
 
-      const rows = await tx
-        .update(tasks)
-        .set({ nextDueDate: nextDueStr })
-        .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-        .returning();
+        const rows = await tx
+          .update(tasks)
+          .set({ nextDueDate: nextDueStr })
+          .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+          .returning();
 
-      updatedTask = rows[0];
-    } else {
-      // ONE_TIME or DAILY_ELIGIBLE — mark as done
-      const rows = await tx
-        .update(tasks)
-        .set({ completedAt: now })
-        .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-        .returning();
+        updatedTask = rows[0];
+      } else {
+        // ONE_TIME or DAILY_ELIGIBLE — mark as done
+        const rows = await tx
+          .update(tasks)
+          .set({ completedAt: now })
+          .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+          .returning();
 
-      updatedTask = rows[0];
-    }
+        updatedTask = rows[0];
+      }
 
-    // Record the completion event
-    await tx.insert(taskCompletions).values({
-      taskId,
-      userId,
-      completedAt: now,
-    });
+      // Record the completion event
+      await tx.insert(taskCompletions).values({
+        taskId,
+        userId,
+        completedAt: now,
+      });
 
-    // Award coins atomically — avoids read-modify-write race under concurrency
-    // Bonus: tasks that were postponed 3+ times award double coins (procrastination reward)
-    const coinsEarned = task.postponeCount >= 3 ? task.coinValue * 2 : task.coinValue;
-    await tx
-      .update(users)
-      .set({ coins: sql`${users.coins} + ${coinsEarned}` })
-      .where(eq(users.id, userId));
-
-    // Read the updated balance once to compute level detection
-    const [updatedUser] = await tx
-      .select({ coins: users.coins, level: users.level })
-      .from(users)
-      .where(eq(users.id, userId));
-
-    const newCoins = updatedUser?.coins ?? coinsEarned;
-    const coinsBeforeCompletion = newCoins - coinsEarned;
-
-    // Detect level-up
-    const levelBefore = getLevelForCoins(coinsBeforeCompletion).level;
-    const levelAfter = getLevelForCoins(newCoins);
-    const newLevel = levelAfter.level > levelBefore ? levelAfter : null;
-
-    // Update level in DB if it changed
-    if (newLevel !== null) {
+      // Award coins atomically — avoids read-modify-write race under concurrency
+      // Bonus: tasks that were postponed 3+ times award double coins (procrastination reward)
+      const coinsEarned = task.postponeCount >= 3 ? task.coinValue * 2 : task.coinValue;
       await tx
         .update(users)
-        .set({ level: newLevel.level })
+        .set({ coins: sql`${users.coins} + ${coinsEarned}` })
         .where(eq(users.id, userId));
-    }
 
-    // Update streak inside the transaction (timezone-aware)
-    const { streakCurrent } = await updateStreak(userId, tx, timezone);
+      // Read the updated balance once to compute level detection
+      const [updatedUser] = await tx
+        .select({ coins: users.coins, level: users.level })
+        .from(users)
+        .where(eq(users.id, userId));
 
-    // Count total completions for achievement context
-    const completionCountRows = await tx
-      .select({ count: count() })
-      .from(taskCompletions)
-      .where(eq(taskCompletions.userId, userId));
-    const totalCompleted = Number(completionCountRows[0]?.count ?? 0);
+      const newCoins = updatedUser?.coins ?? coinsEarned;
+      const coinsBeforeCompletion = newCoins - coinsEarned;
 
-    // Check and unlock achievements inside the transaction
-    const unlockedAchievements = await checkAndUnlockAchievements(
-      userId,
-      {
-        totalCompleted,
-        streakCurrent,
-        coins: newCoins,
-        level: levelAfter.level,
-        isDailyQuestComplete: task.isDailyQuest,
-      },
-      tx
-    );
+      // Detect level-up
+      const levelBefore = getLevelForCoins(coinsBeforeCompletion).level;
+      const levelAfter = getLevelForCoins(newCoins);
+      const newLevel = levelAfter.level > levelBefore ? levelAfter : null;
 
-    return {
-      task: updatedTask,
-      coinsEarned,
-      newLevel,
-      unlockedAchievements,
+      // Update level in DB if it changed
+      if (newLevel !== null) {
+        await tx
+          .update(users)
+          .set({ level: newLevel.level })
+          .where(eq(users.id, userId));
+      }
+
+      return { task: updatedTask, coinsEarned, newLevel, newCoins, levelAfter };
+    });
+
+  // Update streak outside the transaction — a transient streak failure should
+  // not roll back the task completion or coin award.
+  let streakCurrent = 0;
+  try {
+    const streakResult = await updateStreak(userId, undefined, timezone);
+    streakCurrent = streakResult.streakCurrent;
+  } catch (err) {
+    console.error("[completeTask] streak update failed (non-fatal):", err);
+  }
+
+  // Count total completions and check achievements after streak is known
+  const completionCountRows = await db
+    .select({ count: count() })
+    .from(taskCompletions)
+    .where(eq(taskCompletions.userId, userId));
+  const totalCompleted = Number(completionCountRows[0]?.count ?? 0);
+
+  const unlockedAchievements = await checkAndUnlockAchievements(
+    userId,
+    {
+      totalCompleted,
       streakCurrent,
-    };
-  });
+      coins: newCoins,
+      level: levelAfter.level,
+      isDailyQuestComplete: task.isDailyQuest,
+    },
+    undefined
+  );
+
+  return {
+    task: updatedTask,
+    coinsEarned,
+    newLevel,
+    unlockedAchievements,
+    streakCurrent,
+  };
 }
 
 /**

@@ -65,6 +65,9 @@ export default async function TasksPage() {
     notes: t.notes ?? null,
     coinValue: t.coinValue,
     createdAt: t.createdAt.toISOString(),
+    postponeCount: t.postponeCount ?? 0,
+    estimatedMinutes: t.estimatedMinutes ?? null,
+    recurrenceInterval: t.recurrenceInterval ?? null,
   }));
 
   const serializedTopics = topics.map((t) => ({

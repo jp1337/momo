@@ -185,7 +185,9 @@
     "form_save": "Änderungen speichern",
     "form_create": "Thema erstellen",
     "form_saving": "Speichere...",
-    "form_error_title": "Titel ist erforderlich"
+    "form_error_title": "Titel ist erforderlich",
+    "back_to_topics": "← Zurück zu Themen",
+    "tasks_completed": "{completed}/{total} Aufgaben erledigt"
   },
   "wishlist": {
     "page_title": "Wunschliste",

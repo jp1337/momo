@@ -43,12 +43,17 @@ export function getLocalDateString(timezone?: string | null): string {
 /**
  * Returns tomorrow's date as a YYYY-MM-DD string in the given IANA timezone.
  *
+ * Calendar arithmetic is performed on the user's local date string (not on
+ * the server's UTC clock), so UTC− users near midnight never get the wrong day.
+ *
  * @param timezone - IANA timezone identifier
  * @returns Tomorrow's date string in YYYY-MM-DD format
  */
 export function getLocalTomorrowString(timezone?: string | null): string {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  // Derive today in the user's local calendar, then add 1 day at UTC midnight
+  const todayStr = getLocalDateString(timezone);
+  const [y, m, d] = todayStr.split("-").map(Number);
+  const tomorrowUtc = new Date(Date.UTC(y, m - 1, d + 1));
 
   if (timezone) {
     try {
@@ -57,27 +62,32 @@ export function getLocalTomorrowString(timezone?: string | null): string {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
-      }).format(tomorrow);
+      }).format(tomorrowUtc);
     } catch {
       // Invalid timezone — fall through
     }
   }
 
-  const yyyy = tomorrow.getFullYear();
-  const mm = String(tomorrow.getMonth() + 1).padStart(2, "0");
-  const dd = String(tomorrow.getDate()).padStart(2, "0");
+  const yyyy = tomorrowUtc.getUTCFullYear();
+  const mm = String(tomorrowUtc.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(tomorrowUtc.getUTCDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
 
 /**
  * Returns yesterday's date as a YYYY-MM-DD string in the given IANA timezone.
  *
+ * Calendar arithmetic is performed on the user's local date string (not on
+ * the server's UTC clock), so UTC− users near midnight never get the wrong day.
+ *
  * @param timezone - IANA timezone identifier
  * @returns Yesterday's date string in YYYY-MM-DD format
  */
 export function getLocalYesterdayString(timezone?: string | null): string {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
+  // Derive today in the user's local calendar, then subtract 1 day at UTC midnight
+  const todayStr = getLocalDateString(timezone);
+  const [y, m, d] = todayStr.split("-").map(Number);
+  const yesterdayUtc = new Date(Date.UTC(y, m - 1, d - 1));
 
   if (timezone) {
     try {
@@ -86,14 +96,14 @@ export function getLocalYesterdayString(timezone?: string | null): string {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
-      }).format(yesterday);
+      }).format(yesterdayUtc);
     } catch {
       // Invalid timezone — fall through
     }
   }
 
-  const yyyy = yesterday.getFullYear();
-  const mm = String(yesterday.getMonth() + 1).padStart(2, "0");
-  const dd = String(yesterday.getDate()).padStart(2, "0");
+  const yyyy = yesterdayUtc.getUTCFullYear();
+  const mm = String(yesterdayUtc.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(yesterdayUtc.getUTCDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }

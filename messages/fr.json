@@ -185,7 +185,9 @@
     "form_save": "Enregistrer les modifications",
     "form_create": "Créer le sujet",
     "form_saving": "Enregistrement...",
-    "form_error_title": "Le titre est requis"
+    "form_error_title": "Le titre est requis",
+    "back_to_topics": "← Retour aux sujets",
+    "tasks_completed": "{completed}/{total} tâches terminées"
   },
   "wishlist": {
     "page_title": "Liste de souhaits",

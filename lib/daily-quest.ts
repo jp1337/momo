@@ -35,19 +35,6 @@ export interface TaskWithTopic extends Task {
   topic: Topic | null;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Returns today's date as a YYYY-MM-DD string in local time.
- */
-function getTodayString(): string {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
 // ─── Core functions ───────────────────────────────────────────────────────────
 
 /**
@@ -146,7 +133,7 @@ async function getCurrentDailyQuestTx(
  * @returns The candidate task row, or null if no eligible task exists
  */
 async function pickBestTask(userId: string, tx: Tx): Promise<Task | null> {
-  const today = getTodayString();
+  const today = getLocalDateString();
 
   // Priority 1: Oldest overdue task
   const overdueRows = await tx
@@ -244,8 +231,8 @@ async function pickBestTask(userId: string, tx: Tx): Promise<Task | null> {
 export async function selectDailyQuest(
   userId: string
 ): Promise<TaskWithTopic | null> {
-  const today = getTodayString();
-  const todayStart = new Date(`${today}T00:00:00`);
+  const today = getLocalDateString();
+  const todayStart = new Date(`${today}T00:00:00Z`);
 
   // If the user already completed a quest today, return it for the celebration
   // state. One quest per day is the intent — don't pick a new one.
@@ -332,7 +319,7 @@ export async function forceSelectDailyQuest(
       )
     );
 
-  const today = getTodayString();
+  const today = getLocalDateString();
 
   // Run the same priority algorithm as selectDailyQuest (no existing check)
 
