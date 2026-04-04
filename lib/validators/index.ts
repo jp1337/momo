@@ -7,6 +7,17 @@
 
 import { z } from "zod";
 
+// ─── Shared Schemas ───────────────────────────────────────────────────────────
+
+/**
+ * Schema for an optional IANA timezone string.
+ * Max 64 characters to prevent oversized input; mirrors the constraint used in
+ * daily-quest/postpone and tasks/[id]/complete routes.
+ */
+export const TimezoneSchema = z.string().max(64).optional().nullable();
+
+export type Timezone = z.infer<typeof TimezoneSchema>;
+
 // ─── Task Validators ──────────────────────────────────────────────────────────
 
 /**
@@ -20,7 +31,7 @@ export const CreateTaskInputSchema = z
       .min(1, "Title is required")
       .max(255, "Title must be 255 characters or less"),
     topicId: z.string().uuid("Invalid topic ID").nullable().optional(),
-    notes: z.string().nullable().optional(),
+    notes: z.string().max(5000).nullable().optional(),
     type: z.enum(["ONE_TIME", "RECURRING", "DAILY_ELIGIBLE"]),
     priority: z
       .enum(["HIGH", "NORMAL", "SOMEDAY"])
@@ -81,7 +92,7 @@ export const UpdateTaskInputSchema = z
       .max(255, "Title must be 255 characters or less")
       .optional(),
     topicId: z.string().uuid("Invalid topic ID").nullable().optional(),
-    notes: z.string().nullable().optional(),
+    notes: z.string().max(5000).nullable().optional(),
     type: z.enum(["ONE_TIME", "RECURRING", "DAILY_ELIGIBLE"]).optional(),
     priority: z.enum(["HIGH", "NORMAL", "SOMEDAY"]).optional(),
     recurrenceInterval: z
@@ -127,7 +138,7 @@ export const CreateTopicInputSchema = z.object({
     .string()
     .min(1, "Title is required")
     .max(100, "Title must be 100 characters or less"),
-  description: z.string().nullable().optional(),
+  description: z.string().max(5000).nullable().optional(),
   color: z
     .string()
     .regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex color (e.g. #ff0000)")
@@ -151,7 +162,7 @@ export const UpdateTopicInputSchema = z.object({
     .min(1, "Title is required")
     .max(100, "Title must be 100 characters or less")
     .optional(),
-  description: z.string().nullable().optional(),
+  description: z.string().max(5000).nullable().optional(),
   color: z
     .string()
     .regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex color (e.g. #ff0000)")

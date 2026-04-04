@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { animate } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoins } from "@fortawesome/free-solid-svg-icons";
+import { COINS_EARNED_EVENT } from "@/lib/client/coin-events";
 
 interface CoinCounterProps {
   /** Initial coin balance fetched server-side */
@@ -41,8 +42,8 @@ export function CoinCounter({ initialCoins }: CoinCounterProps) {
       });
     };
 
-    window.addEventListener("coinsEarned", handleCoinsEarned);
-    return () => window.removeEventListener("coinsEarned", handleCoinsEarned);
+    window.addEventListener(COINS_EARNED_EVENT, handleCoinsEarned);
+    return () => window.removeEventListener(COINS_EARNED_EVENT, handleCoinsEarned);
   }, []);
 
   return (

@@ -58,6 +58,11 @@ const db = drizzle(pool);
 // DB inspection helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Returns true if the given table exists in the public schema.
+ * @param {import('pg').PoolClient} client
+ * @param {string} name - Table name to check
+ */
 async function tableExists(client, name) {
   const r = await client.query(
     `SELECT 1 FROM information_schema.tables
@@ -67,6 +72,11 @@ async function tableExists(client, name) {
   return r.rowCount > 0;
 }
 
+/**
+ * Returns true if the given index exists in the public schema.
+ * @param {import('pg').PoolClient} client
+ * @param {string} name - Index name to check
+ */
 async function indexExists(client, name) {
   const r = await client.query(
     `SELECT 1 FROM pg_indexes
@@ -76,6 +86,12 @@ async function indexExists(client, name) {
   return r.rowCount > 0;
 }
 
+/**
+ * Returns true if the given column exists on the specified table in the public schema.
+ * @param {import('pg').PoolClient} client
+ * @param {string} table - Table name to check
+ * @param {string} column - Column name to check
+ */
 async function columnExists(client, table, column) {
   const r = await client.query(
     `SELECT 1 FROM information_schema.columns
@@ -91,7 +107,8 @@ async function columnExists(client, table, column) {
 function parseAlterAddColumns(sql) {
   const pairs = [];
   // Matches: ALTER TABLE "table" ADD COLUMN "column" ... or without quotes
-  const re = /ALTER TABLE\s+"?(\w+)"?\s+ADD COLUMN(?:\s+IF NOT EXISTS)?\s+"?(\w+)"?/gi;
+  // Supports hyphenated identifiers (e.g. "my-table") as well as plain word identifiers
+  const re = /ALTER TABLE\s+"?([\w-]+)"?\s+ADD COLUMN(?:\s+IF NOT EXISTS)?\s+"?([\w-]+)"?/gi;
   for (const m of sql.matchAll(re)) {
     pairs.push({ table: m[1], column: m[2] });
   }
@@ -209,6 +226,9 @@ async function isMigrationAppliedInDb(client, sqlContent) {
 
 const client = await pool.connect();
 try {
+  // Set a statement timeout so catalog queries never block indefinitely on a cold DB
+  await client.query("SET statement_timeout = 30000");
+
   const journal = JSON.parse(
     readFileSync(join(migrationsFolder, "meta", "_journal.json"), "utf8")
   );
@@ -216,39 +236,45 @@ try {
   let seededAny = false;
 
   for (const entry of journal.entries) {
-    const sqlPath = join(migrationsFolder, `${entry.tag}.sql`);
-    const sqlContent = readFileSync(sqlPath, "utf8");
-    const hash = createHash("sha256").update(sqlContent).digest("hex");
+    try {
+      const sqlPath = join(migrationsFolder, `${entry.tag}.sql`);
+      const sqlContent = readFileSync(sqlPath, "utf8");
+      const hash = createHash("sha256").update(sqlContent).digest("hex");
 
-    const tracked = await isMigrationTracked(client, hash);
-    const appliedInDb = await isMigrationAppliedInDb(client, sqlContent);
+      const tracked = await isMigrationTracked(client, hash);
+      const appliedInDb = await isMigrationAppliedInDb(client, sqlContent);
 
-    if (tracked && !appliedInDb) {
-      // Stale tracking entry: migration was recorded as applied but its DB
-      // objects are missing (e.g. a previous buggy seed run). Remove it so
-      // that migrate() will actually run the migration.
-      await client.query(
-        `DELETE FROM drizzle."__drizzle_migrations" WHERE hash = $1`,
-        [hash]
-      );
-      console.log(`[migrate] Removed stale tracking entry: ${entry.tag}`);
-      // Stop here — migrate() will (re-)apply this and all subsequent entries.
-      break;
+      if (tracked && !appliedInDb) {
+        // Stale tracking entry: migration was recorded as applied but its DB
+        // objects are missing (e.g. a previous buggy seed run). Remove it so
+        // that migrate() will actually run the migration.
+        await client.query(
+          `DELETE FROM drizzle."__drizzle_migrations" WHERE hash = $1`,
+          [hash]
+        );
+        console.log(`[migrate] Removed stale tracking entry: ${entry.tag}`);
+        // Stop here — migrate() will (re-)apply this and all subsequent entries.
+        break;
+      }
+
+      if (!tracked && appliedInDb) {
+        // Schema exists but not tracked — seed so migrate() won't re-run it.
+        await seedOneMigration(client, entry, sqlContent);
+        seededAny = true;
+        continue;
+      }
+
+      if (!tracked && !appliedInDb) {
+        // First genuinely pending migration — let migrate() handle it.
+        break;
+      }
+
+      // tracked && appliedInDb — already in sync, nothing to do.
+    } catch (err) {
+      console.error(`[migrate] Error inspecting migration "${entry.tag}":`, err?.message ?? err);
+      client.release();
+      process.exit(1);
     }
-
-    if (!tracked && appliedInDb) {
-      // Schema exists but not tracked — seed so migrate() won't re-run it.
-      await seedOneMigration(client, entry, sqlContent);
-      seededAny = true;
-      continue;
-    }
-
-    if (!tracked && !appliedInDb) {
-      // First genuinely pending migration — let migrate() handle it.
-      break;
-    }
-
-    // tracked && appliedInDb — already in sync, nothing to do.
   }
 
   if (seededAny) {

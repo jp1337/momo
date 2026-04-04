@@ -185,7 +185,9 @@
     "form_save": "Save changes",
     "form_create": "Create topic",
     "form_saving": "Saving...",
-    "form_error_title": "Title is required"
+    "form_error_title": "Title is required",
+    "back_to_topics": "← Back to Topics",
+    "tasks_completed": "{completed}/{total} tasks completed"
   },
   "wishlist": {
     "page_title": "Wishlist",

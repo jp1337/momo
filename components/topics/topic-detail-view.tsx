@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { TaskItem } from "@/components/tasks/task-item";
 import { TaskForm } from "@/components/tasks/task-form";
@@ -15,6 +16,7 @@ import { triggerSmallConfetti } from "@/components/animations/confetti";
 import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
 import type { AchievementItem } from "@/components/animations/achievement-toast";
+import { dispatchCoinsEarned } from "@/lib/client/coin-events";
 
 interface Task {
   id: string;
@@ -50,6 +52,7 @@ export function TopicDetailView({
   topicColor,
 }: TopicDetailViewProps) {
   const t = useTranslations("topics");
+  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -66,9 +69,10 @@ export function TopicDetailView({
         setTasks(data.tasks);
       }
     } catch {
-      // silent fail
+      // Network failure — fall back to a full SSR refresh so the page isn't stale
+      router.refresh();
     }
-  }, [topicId]);
+  }, [topicId, router]);
 
   const handleComplete = useCallback(
     async (id: string) => {
@@ -88,11 +92,7 @@ export function TopicDetailView({
 
           triggerSmallConfetti();
 
-          if (data.coinsEarned && data.coinsEarned > 0) {
-            window.dispatchEvent(
-              new CustomEvent("coinsEarned", { detail: { delta: data.coinsEarned } })
-            );
-          }
+          dispatchCoinsEarned(data.coinsEarned ?? 0);
           if (data.newLevel) setLevelUp(data.newLevel);
           if (data.unlockedAchievements && data.unlockedAchievements.length > 0) {
             setPendingAchievements((prev) => [...prev, ...data.unlockedAchievements!]);
@@ -114,11 +114,7 @@ export function TopicDetailView({
         if (res.ok) {
           const data = await res.json() as { task?: { coinValue?: number } };
           const refunded = data.task?.coinValue ?? 0;
-          if (refunded > 0) {
-            window.dispatchEvent(
-              new CustomEvent("coinsEarned", { detail: { delta: -refunded } })
-            );
-          }
+          dispatchCoinsEarned(-refunded);
           await refreshTasks();
         }
       } catch {
@@ -290,7 +286,9 @@ export function TopicDetailView({
                       : "7",
                   dueDate: editingTask.dueDate ?? "",
                   coinValue: String(editingTask.coinValue),
-                  estimatedMinutes: (editingTask.estimatedMinutes ?? null) as 5 | 15 | 30 | 60 | null,
+                  estimatedMinutes: ([5, 15, 30, 60] as const).includes(editingTask.estimatedMinutes as 5 | 15 | 30 | 60)
+                    ? (editingTask.estimatedMinutes as 5 | 15 | 30 | 60)
+                    : null,
                 }
               : undefined
           }
