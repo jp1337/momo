@@ -2,6 +2,11 @@
 
 ## Reviews
 
+- [Full Review 2026-04-04](review/full-review-20260404.md) — Phase 11 Bugfixes, 3 Blocking, 12 Non-Blocking; CHANGES REQUESTED
+- [L1 Peer Review 2026-04-04](review/L1-peer-20260404.md) — 2 Blocking, 6 Non-Blocking
+- [L2 Architecture Review 2026-04-04](review/L2-arch-20260404.md) — Timezone threading, coin event pattern, migration script, hook extraction
+- [L3 Security Review 2026-04-04](security/L3-security-20260404.md) — 2 High, 3 Medium, 2 Low
+- [L4 Reliability Review 2026-04-04](sre/L4-reliability-20260404.md) — 3 Blocking, 2 High, 4 Medium, 4 Low
 - [Full Review 2026-04-01](review/full-review-20260401.md) — Delta-Review (9 Commits), 3 Blocking, 5 Non-Blocking, alle behoben
 - [L1 Peer Review 2026-04-01](review/L1-peer-20260401.md) — 3 Blocking, 4 Non-Blocking, 2 NITs
 - [L2 Architecture Review 2026-04-01](review/L2-arch-20260401.md) — CI-Pipeline Architektur, digest-basierter Multi-Arch Build
