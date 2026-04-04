@@ -177,27 +177,31 @@ export function TaskForm({
   };
 
   return (
-    /* Backdrop — scrollable so content is always reachable on small screens */
+    /* Backdrop */
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
       style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      {/* Modal — bottom-sheet on mobile, centered card on sm+ */}
-      <div
-        className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl p-6 shadow-lg"
+      {/*
+        Modal — flex column so the footer sticks to the bottom.
+        Only the fields section scrolls; the header and footer are always visible.
+        Bottom-sheet on mobile, centered card on sm+.
+      */}
+      <form
+        onSubmit={handleSubmit}
+        className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-lg flex flex-col"
         style={{
           backgroundColor: "var(--bg-surface)",
           border: "1px solid var(--border)",
           boxShadow: "var(--shadow-lg)",
           maxHeight: "92dvh",
-          overflowY: "auto",
         }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        {/* Header — never scrolls */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
           <h2
             className="text-xl font-semibold"
             style={{
@@ -208,6 +212,7 @@ export function TaskForm({
             {isEditing ? t("form_title_edit") : t("form_title_new")}
           </h2>
           <button
+            type="button"
             onClick={onCancel}
             className="p-1 rounded-lg transition-colors"
             style={{ color: "var(--text-muted)" }}
@@ -217,22 +222,23 @@ export function TaskForm({
           </button>
         </div>
 
-        {/* Error */}
-        {error && (
-          <div
-            className="mb-4 px-4 py-3 rounded-lg text-sm"
-            style={{
-              backgroundColor: "rgba(184,84,80,0.12)",
-              color: "var(--accent-red)",
-              border: "1px solid rgba(184,84,80,0.3)",
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            }}
-          >
-            {error}
-          </div>
-        )}
+        {/* Scrollable fields area */}
+        <div className="flex flex-col gap-4 overflow-y-auto px-6 pb-2 flex-1">
+          {/* Error */}
+          {error && (
+            <div
+              className="px-4 py-3 rounded-lg text-sm"
+              style={{
+                backgroundColor: "rgba(184,84,80,0.12)",
+                color: "var(--accent-red)",
+                border: "1px solid rgba(184,84,80,0.3)",
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              }}
+            >
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Title */}
           <div>
             <label htmlFor="task-title" style={labelStyle}>
@@ -419,44 +425,47 @@ export function TaskForm({
               }}
             />
           </div>
+        </div>
 
-          {/* Footer buttons */}
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-                border: "1px solid var(--border)",
-                backgroundColor: "transparent",
-              }}
-            >
-              {tc("cancel")}
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                backgroundColor: "var(--accent-amber)",
-                color: "var(--bg-primary)",
-                opacity: isSubmitting ? 0.7 : 1,
-                cursor: isSubmitting ? "not-allowed" : "pointer",
-              }}
-            >
-              {isSubmitting
-                ? t("form_saving")
-                : isEditing
-                ? t("form_save")
-                : t("form_create")}
-            </button>
-          </div>
-        </form>
-      </div>
+        {/* Footer buttons — always visible, never scrolls */}
+        <div
+          className="flex gap-3 px-6 py-4 flex-shrink-0"
+          style={{ borderTop: "1px solid var(--border)" }}
+        >
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+              border: "1px solid var(--border)",
+              backgroundColor: "transparent",
+            }}
+          >
+            {tc("cancel")}
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              backgroundColor: "var(--accent-amber)",
+              color: "var(--bg-primary)",
+              opacity: isSubmitting ? 0.7 : 1,
+              cursor: isSubmitting ? "not-allowed" : "pointer",
+            }}
+          >
+            {isSubmitting
+              ? t("form_saving")
+              : isEditing
+              ? t("form_save")
+              : t("form_create")}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
