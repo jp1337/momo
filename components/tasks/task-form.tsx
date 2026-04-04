@@ -177,22 +177,22 @@ export function TaskForm({
   };
 
   return (
-    /* Backdrop */
+    /* Backdrop — scrollable so content is always reachable on small screens */
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto"
       style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      {/* Modal */}
+      {/* Modal — bottom-sheet on mobile, centered card on sm+ */}
       <div
-        className="w-full max-w-lg rounded-2xl p-6 shadow-lg"
+        className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl p-6 shadow-lg"
         style={{
           backgroundColor: "var(--bg-surface)",
           border: "1px solid var(--border)",
           boxShadow: "var(--shadow-lg)",
-          maxHeight: "90vh",
+          maxHeight: "92dvh",
           overflowY: "auto",
         }}
       >
