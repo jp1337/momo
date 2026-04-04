@@ -182,6 +182,7 @@ export async function getUserStatistics(
         streakCurrent: users.streakCurrent,
         streakMax: users.streakMax,
         createdAt: users.createdAt,
+        totalTasksCreated: users.totalTasksCreated,
       })
       .from(users)
       .where(eq(users.id, userId))
@@ -338,9 +339,12 @@ export async function getUserStatistics(
   const streakCurrent = user?.streakCurrent ?? 0;
   const streakMax = user?.streakMax ?? 0;
   const memberSince = user?.createdAt ?? new Date();
+  // Use the immutable counter from the users table so deleting tasks doesn't reduce this stat.
+  // Existing users were backfilled to their task count at migration time (see 0004_messy_zodiak.sql).
+  const totalTasksCreated = user?.totalTasksCreated ?? taskCounts.length;
 
   return {
-    totalTasksCreated: taskCounts.length,
+    totalTasksCreated,
     openTasks,
     completedTasks: completedTasksCount,
     totalCompletions,

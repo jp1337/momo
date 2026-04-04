@@ -128,6 +128,13 @@ export const users = pgTable("users", {
   /** Maximum number of daily quest postponements allowed per day (1–5, default 3) */
   questPostponeLimit: integer("quest_postpone_limit").notNull().default(3),
 
+  /**
+   * Cumulative count of tasks ever created by this user.
+   * Incremented on createTask() and never decremented — gives a true "tasks created" stat
+   * even after tasks are deleted.
+   */
+  totalTasksCreated: integer("total_tasks_created").notNull().default(0),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

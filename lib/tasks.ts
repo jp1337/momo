@@ -130,28 +130,36 @@ export async function createTask(
   userId: string,
   input: CreateTaskInput
 ): Promise<Task> {
-  const rows = await db
-    .insert(tasks)
-    .values({
-      userId,
-      title: input.title,
-      topicId: input.topicId ?? null,
-      notes: input.notes ?? null,
-      type: input.type,
-      priority: input.priority ?? "NORMAL",
-      recurrenceInterval: input.recurrenceInterval ?? null,
-      dueDate: input.dueDate ?? null,
-      // For RECURRING tasks, set nextDueDate to dueDate (or today) so the task is
-      // immediately visible to the daily quest algorithm.
-      nextDueDate: input.type === "RECURRING"
-        ? (input.dueDate ?? new Date().toISOString().split("T")[0])
-        : null,
-      coinValue: input.coinValue ?? 1,
-      estimatedMinutes: input.estimatedMinutes ?? null,
-    })
-    .returning();
+  return db.transaction(async (tx) => {
+    const rows = await tx
+      .insert(tasks)
+      .values({
+        userId,
+        title: input.title,
+        topicId: input.topicId ?? null,
+        notes: input.notes ?? null,
+        type: input.type,
+        priority: input.priority ?? "NORMAL",
+        recurrenceInterval: input.recurrenceInterval ?? null,
+        dueDate: input.dueDate ?? null,
+        // For RECURRING tasks, set nextDueDate to dueDate (or today) so the task is
+        // immediately visible to the daily quest algorithm.
+        nextDueDate: input.type === "RECURRING"
+          ? (input.dueDate ?? new Date().toISOString().split("T")[0])
+          : null,
+        coinValue: input.coinValue ?? 1,
+        estimatedMinutes: input.estimatedMinutes ?? null,
+      })
+      .returning();
 
-  return rows[0];
+    // Increment the immutable "ever created" counter — never decremented on delete
+    await tx
+      .update(users)
+      .set({ totalTasksCreated: sql`${users.totalTasksCreated} + 1` })
+      .where(eq(users.id, userId));
+
+    return rows[0];
+  });
 }
 
 /**
