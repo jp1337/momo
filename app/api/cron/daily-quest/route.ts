@@ -10,15 +10,15 @@ import { sendDailyQuestNotifications } from "@/lib/push";
 import { serverEnv } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "@/lib/utils/crypto";
+import { db } from "@/lib/db";
+import { cronRuns } from "@/lib/db/schema";
 
 /**
  * Module-level idempotency guard.
- * Prevents duplicate notifications if the cron fires more than once per minute.
- * Key format: "YYYY-MM-DDTHH:MM" (UTC). Resets on pod restart — acceptable for
- * notifications (at-most-once per instance; for strict cross-replica dedup
- * use a DB lock or Redis).
+ * Prevents duplicate sends if the cron fires more than once in the same 5-minute bucket.
+ * Key format: "YYYY-MM-DDTHH:B" where B is the bucket index (0–11). Resets on restart.
  */
-let lastRunMinute: string | null = null;
+let lastRunBucket: string | null = null;
 
 /**
  * POST — Fan out daily quest notifications to all users with active subscriptions.
@@ -33,19 +33,38 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Idempotency guard — skip if already ran this UTC minute
+  // Idempotency guard — skip if already ran in the current 5-minute bucket
   const now = new Date();
-  const currentMinute = now.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
-  if (lastRunMinute === currentMinute) {
-    return NextResponse.json({ message: "Already ran this minute", skipped: true });
+  const bucket = Math.floor(now.getUTCMinutes() / 5);
+  const bucketKey = `${now.toISOString().slice(0, 14)}${bucket}`; // "YYYY-MM-DDTHH:B"
+  if (lastRunBucket === bucketKey) {
+    return NextResponse.json({ message: "Already ran this bucket", skipped: true });
   }
-  lastRunMinute = currentMinute;
+  lastRunBucket = bucketKey;
 
+  const startedAt = Date.now();
   try {
     const result = await sendDailyQuestNotifications();
-    return NextResponse.json(result);
+    const durationMs = Date.now() - startedAt;
+
+    // Persist run to DB for admin visibility and health endpoint
+    await db.insert(cronRuns).values({
+      name: "daily-quest",
+      sent: result.sent,
+      failed: result.failed,
+      durationMs,
+    });
+
+    return NextResponse.json({ ...result, durationMs });
   } catch (err) {
     console.error("[POST /api/cron/daily-quest]", err);
+    // Still log the failed run to DB so the admin can see something went wrong
+    await db.insert(cronRuns).values({
+      name: "daily-quest",
+      sent: 0,
+      failed: 1,
+      durationMs: Date.now() - startedAt,
+    }).catch(() => { /* ignore secondary failure */ });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

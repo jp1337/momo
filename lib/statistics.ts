@@ -21,6 +21,7 @@ import {
   userAchievements,
   wishlistItems,
   accounts,
+  cronRuns,
 } from "@/lib/db/schema";
 import {
   count,
@@ -573,3 +574,34 @@ export async function getAdminStatistics(): Promise<AdminStatistics> {
     },
   };
 }
+
+// ─── Cron Status ──────────────────────────────────────────────────────────────
+
+export interface CronRunRow {
+  id: string;
+  ranAt: Date;
+  sent: number;
+  failed: number;
+  durationMs: number | null;
+}
+
+/**
+ * Returns the 20 most recent cron runs for the "daily-quest" job.
+ * Used by the admin page to display cron health and history.
+ */
+export async function getRecentCronRuns(): Promise<CronRunRow[]> {
+  const rows = await db
+    .select({
+      id: cronRuns.id,
+      ranAt: cronRuns.ranAt,
+      sent: cronRuns.sent,
+      failed: cronRuns.failed,
+      durationMs: cronRuns.durationMs,
+    })
+    .from(cronRuns)
+    .where(eq(cronRuns.name, "daily-quest"))
+    .orderBy(desc(cronRuns.ranAt))
+    .limit(20);
+  return rows;
+}
+

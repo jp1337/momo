@@ -36,6 +36,13 @@
       "when": 1775323331575,
       "tag": "0004_messy_zodiak",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1744041600000,
+      "tag": "0005_cron_runs",
+      "breakpoints": true
     }
   ]
 }

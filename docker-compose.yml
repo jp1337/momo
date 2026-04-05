@@ -83,8 +83,9 @@ services:
         condition: service_healthy
     environment:
       CRON_SECRET: ${CRON_SECRET}
-    # Läuft jede Minute zur vollen Minute — damit funktionieren auch Zeiten wie 06:30.
-    # Der App-seitige Filter matcht EXTRACT(HOUR) + EXTRACT(MINUTE) exakt auf UTC-Zeit.
+    # Läuft alle 5 Minuten zur vollen 5-Minuten-Marke.
+    # Der App-seitige Filter matcht EXTRACT(HOUR) + FLOOR(EXTRACT(MINUTE)/5).
+    # Nutzer können beliebige HH:MM[0,5]-Zeiten einstellen (Granularität: 5 Min).
     entrypoint:
       - sh
       - -c
@@ -92,8 +93,8 @@ services:
         apk add --no-cache -q curl
         while true; do
           now=$$(date +%s)
-          next_min=$$(( (now / 60 + 1) * 60 ))
-          sleep $$(( next_min - now ))
+          next_5min=$$(( (now / 300 + 1) * 300 ))
+          sleep $$(( next_5min - now ))
           curl -sf \
             -X POST \
             -H "Authorization: Bearer $${CRON_SECRET}" \
