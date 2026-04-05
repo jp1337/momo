@@ -585,11 +585,18 @@ export interface CronRunRow {
   durationMs: number | null;
 }
 
+export interface CronStatus {
+  rows: CronRunRow[];
+  /** Minutes since the last run, or null if no run has been recorded yet. */
+  minutesSinceLastRun: number | null;
+}
+
 /**
- * Returns the 20 most recent cron runs for the "daily-quest" job.
- * Used by the admin page to display cron health and history.
+ * Returns the 20 most recent cron runs for the "daily-quest" job, plus the
+ * number of minutes since the last run (computed server-side to avoid calling
+ * Date.now() inside a React Server Component, which ESLint flags as impure).
  */
-export async function getRecentCronRuns(): Promise<CronRunRow[]> {
+export async function getRecentCronRuns(): Promise<CronStatus> {
   const rows = await db
     .select({
       id: cronRuns.id,
@@ -602,6 +609,12 @@ export async function getRecentCronRuns(): Promise<CronRunRow[]> {
     .where(eq(cronRuns.name, "daily-quest"))
     .orderBy(desc(cronRuns.ranAt))
     .limit(20);
-  return rows;
+
+  const minutesSinceLastRun =
+    rows[0] != null
+      ? Math.floor((Date.now() - new Date(rows[0].ranAt).getTime()) / 60_000)
+      : null;
+
+  return { rows, minutesSinceLastRun };
 }
 
