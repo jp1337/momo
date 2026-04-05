@@ -93,13 +93,17 @@ jobs:
           set -euo pipefail
           KEEP=10
 
+          # Quay.io REST API uses Basic auth (base64(username:token)),
+          # same credentials as docker login — not a Bearer/OAuth token.
+          QUAY_BASIC=$(echo -n "${QUAY_USERNAME}:${QUAY_TOKEN}" | base64 -w 0)
+
           # Collect all sha- tags sorted newest-first (has_additional pagination)
           SHA_TAGS=()
           PAGE=1
           while true; do
             RESP=$(curl -sf \
               "https://quay.io/api/v1/repository/jp1337/momo/tag/?limit=100&page=${PAGE}&onlyActiveTags=true" \
-              -H "Authorization: Bearer ${QUAY_TOKEN}")
+              -H "Authorization: Basic ${QUAY_BASIC}")
             mapfile -t PAGE_TAGS < <(echo "${RESP}" | jq -r '.tags[].name | select(startswith("sha-"))')
             SHA_TAGS+=("${PAGE_TAGS[@]}")
             [[ $(echo "${RESP}" | jq -r '.has_additional') != "true" ]] && break
@@ -112,7 +116,7 @@ jobs:
             tag="${SHA_TAGS[$i]}"
             if curl -sf -X DELETE \
               "https://quay.io/api/v1/repository/jp1337/momo/tag/${tag}" \
-              -H "Authorization: Bearer ${QUAY_TOKEN}"; then
+              -H "Authorization: Basic ${QUAY_BASIC}"; then
               echo "Deleted Quay.io: ${tag}"
               DELETED=$((DELETED + 1))
             else
