@@ -6,17 +6,17 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ## Nächste Schritte (konkret geplant)
 
-| Feature | Kategorie | Aufwand | Notizen |
-|---------|-----------|---------|---------|
-| Microsoft Sign In | Auth | S | Auth.js `AzureAD`-Provider; braucht App-Registrierung in Azure |
-| Apple Sign In | Auth | M | Auth.js `Apple`-Provider; erfordert Apple Developer Account (99 $/Jahr) |
-| Passkeys (WebAuthn) | Auth | M | `@simplewebauthn`-Adapter für Auth.js; keine externen Provider nötig |
-| E-Mail-Benachrichtigungen | Notifications | M | Resend oder SMTP; täglicher Quest-Reminder + Streak-Warnung |
-| ntfy.sh Integration | Notifications | S | URL-basierte Push-Benachrichtigungen; gut für Selfhoster |
-| Pushover Integration | Notifications | S | API Token + User Key in Settings; sofortige Push-Alerts |
-| Telegram-Bot | Notifications | M | Bot Token + Chat ID in Settings; Benachrichtigungen + ggf. Task-Eingabe |
-| Push-Benachrichtigungen debuggen | Technisch | S | Daily Quest Reminder kommt nicht an; VAPID / Service Worker prüfen |
-| Alexa Skill | User + Technisch | L | Account Linking via API Key; `POST /api/tasks` aus Lambda |
+| Feature                          | Kategorie        | Aufwand | Notizen                                                                 |
+| -------------------------------- | ---------------- | ------- | ----------------------------------------------------------------------- |
+| Microsoft Sign In                | Auth             | S       | Auth.js `AzureAD`-Provider; braucht App-Registrierung in Azure          |
+| Apple Sign In                    | Auth             | M       | Auth.js `Apple`-Provider; erfordert Apple Developer Account (99 $/Jahr) |
+| Passkeys (WebAuthn)              | Auth             | M       | `@simplewebauthn`-Adapter für Auth.js; keine externen Provider nötig    |
+| E-Mail-Benachrichtigungen        | Notifications    | M       | Resend oder SMTP; täglicher Quest-Reminder + Streak-Warnung             |
+| ntfy.sh Integration              | Notifications    | S       | URL-basierte Push-Benachrichtigungen; gut für Selfhoster                |
+| Pushover Integration             | Notifications    | S       | API Token + User Key in Settings; sofortige Push-Alerts                 |
+| Telegram-Bot                     | Notifications    | M       | Bot Token + Chat ID in Settings; Benachrichtigungen + ggf. Task-Eingabe |
+| Push-Benachrichtigungen debuggen | Technisch        | ✅      | 4 Bugs behoben: K8s CronJob, notificationTime-Filter, PATCH-Endpoint, Idempotenz-Guard |
+| Alexa Skill                      | User + Technisch | L       | Account Linking via API Key; `POST /api/tasks` aus Lambda               |
 
 ---
 
@@ -97,6 +97,7 @@ Authorization: Bearer momo_live_...
 ```
 
 **Benötigt:**
+
 1. Alexa Skill im Amazon Developer Console registrieren (Invocation: "Momo")
 2. Account Linking: User gibt API Key einmalig in der Alexa App ein
 3. Lambda-Funktion (Node.js/TypeScript) mit Intent-Handling

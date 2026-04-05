@@ -110,6 +110,52 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 }
 
 /**
+ * PATCH /api/push/subscribe
+ * Updates only the notification time for the current user without touching the push subscription.
+ * Requires: authentication
+ * Body: { notificationTime: string } in HH:MM format
+ * Returns: { success: true }
+ */
+export async function PATCH(req: NextRequest): Promise<NextResponse> {
+  const user = await resolveApiUser(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return NextResponse.json({ error: "Forbidden", message: "This API key is read-only." }, { status: 403 });
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = z.object({
+    notificationTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
+      .transform((v) => v.slice(0, 5)),
+  }).safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request body", details: parsed.error.flatten() },
+      { status: 422 }
+    );
+  }
+
+  try {
+    await db
+      .update(users)
+      .set({ notificationTime: parsed.data.notificationTime })
+      .where(eq(users.id, user.userId));
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[PATCH /api/push/subscribe]", err);
+    return NextResponse.json({ error: "Failed to update notification time" }, { status: 500 });
+  }
+}
+
+/**
  * DELETE — Remove push subscription and disable notifications for the current user.
  */
 export async function DELETE(request: Request): Promise<NextResponse> {

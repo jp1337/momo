@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: momo-daily-quest-notifier
+  namespace: momo
+  labels:
+    app.kubernetes.io/name: momo
+    app.kubernetes.io/component: cron
+spec:
+  # Run every full hour so the app can match each user's preferred notification_time
+  schedule: "0 * * * *"
+  # Keep the last 3 successful and 1 failed job for debugging
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  # Prevent overlapping runs if a job takes longer than expected
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      # Retry once on failure
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: notifier
+              # Minimal image — only needs curl
+              image: curlimages/curl:8.7.1
+              command:
+                - sh
+                - -c
+                - |
+                  curl -sf \
+                    -X POST \
+                    -H "Authorization: Bearer ${CRON_SECRET}" \
+                    "${APP_URL}/api/cron/daily-quest" \
+                  && echo "daily-quest cron OK" \
+                  || (echo "daily-quest cron FAILED" && exit 1)
+              env:
+                - name: APP_URL
+                  value: "https://momotask.app"
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: momo-secrets
+                      key: CRON_SECRET

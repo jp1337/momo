@@ -236,20 +236,17 @@ export function NotificationSettings({
     if (status !== "active") return;
 
     try {
-      await fetch("/api/push/subscribe", {
-        method: "POST",
+      const res = await fetch("/api/push/subscribe", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          // Re-use existing subscription stored on server — just update time
-          // The server PATCH isn't available, so we skip re-subscribing here;
-          // time is saved next time the user re-enables. For active users we
-          // send a PATCH to a dedicated settings endpoint (not yet built),
-          // so for now just note: the time change requires re-subscribe.
-          notificationTime: newTime,
-        }),
+        body: JSON.stringify({ notificationTime: newTime }),
       });
-    } catch {
-      // Non-critical: time will be saved on next subscribe
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        console.error("[NotificationSettings] Time update failed:", data.error);
+      }
+    } catch (err) {
+      console.error("[NotificationSettings] Time update failed:", err);
     }
   }
 
