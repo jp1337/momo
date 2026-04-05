@@ -109,16 +109,15 @@ export default async function AdminPage() {
     );
   }
 
-  const [stats, cronHistory] = await Promise.all([
+  const [stats, cronStatus] = await Promise.all([
     getAdminStatistics(),
     getRecentCronRuns(),
   ]);
   const totalUsers = stats.totalUsers;
 
+  const cronHistory = cronStatus.rows;
   const lastCron = cronHistory[0] ?? null;
-  const minutesSinceLastCron = lastCron
-    ? Math.floor((Date.now() - new Date(lastCron.ranAt).getTime()) / 60_000)
-    : null;
+  const minutesSinceLastCron = cronStatus.minutesSinceLastRun;
   const cronStale = minutesSinceLastCron === null || minutesSinceLastCron > 15;
 
   return (
