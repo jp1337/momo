@@ -19,6 +19,9 @@ The full schema is defined in `lib/db/schema.ts`.
 | `wishlist_items` | Things the user wants to buy, with optional coin-gating |
 | `achievements` | Master list of available achievements (seeded once) |
 | `user_achievements` | Junction table: which achievements each user has earned |
+| `api_keys` | Personal Access Tokens for programmatic API access |
+| `linking_requests` | Short-lived tokens for OAuth account linking |
+| `cron_runs` | Log of push-notification cron job executions (30-day retention) |
 
 ### Auth.js Adapter Tables
 

@@ -7,6 +7,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Cron-Status auf Admin-Seite**: Status-Banner (grün/rot) und History-Tabelle mit den letzten 20 Push-Cron-Läufen (Zeitpunkt, Gesendet, Fehler, Dauer). Rot wenn letzter Lauf älter als 15 Minuten.
+- **Cron-Status im Health-Endpoint**: `GET /api/health` enthält jetzt ein nicht-blockierendes `cron`-Objekt mit `lastRunAt` und `minutesSinceLastRun`.
+- **PATCH /api/push/subscribe**: Neuer Endpoint zum Aktualisieren der Benachrichtigungszeit ohne erneutes Subscriben.
+- **Google OAuth** auf der Live-Version aktiviert.
+
+### Fixed
+
+- **Push-Benachrichtigungen**: Vier Bugs behoben — kein Cron-Service, `notificationTime` wurde ignoriert, Zeitänderung wurde silently verworfen (Zod 422), Idempotenz-Guard war falsch konfiguriert.
+- **Cron-Intervall 5 Minuten**: Beliebige Zeiten in 5-Minuten-Schritten (z.B. 06:30, 08:00) werden korrekt getriggert.
+- **Docker Compose `cron`-Service**: Neuer Container (`alpine:3` + curl) startet automatisch mit dem Stack und ruft alle 5 Minuten `POST /api/cron/daily-quest` auf.
+- **Cron-History**: Letzte 30 Tage werden in der `cron_runs`-Tabelle gespeichert, ältere Rows werden automatisch bereinigt.
+
 ### Fixed
 
 **Code-Qualität & Robustheit (2026-04-05)**
