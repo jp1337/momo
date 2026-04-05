@@ -19,6 +19,14 @@ Every AI agent working on this codebase **must** follow these guidelines without
 
 ---
 
+## Code Standards
+
+This project uses TypeScript and Markdown as primary languages. Always write new code in TypeScript (not plain JavaScript). Documentation should be in Markdown format.
+
+## UI/CSS Fixes section
+
+When fixing CSS z-index or layout overlap issues, always check ALL overlapping elements (nav bars, button bars, fixed/sticky positioned elements) before proposing a fix. Test the fix mentally against the full component stack.
+
 ## 🌿 Git Conventions
 
 ### Branch Strategy
@@ -44,16 +52,16 @@ git commit -m "<type>(<scope>): <short description>"
 
 Format: `<type>(<scope>): <description>`
 
-| Type | When to use |
-|---|---|
-| `feat` | New feature or capability |
-| `fix` | Bug fix |
-| `docs` | Documentation only (README, CLAUDE.md, docs/, comments) |
-| `style` | Formatting, CSS changes (no logic change) |
-| `refactor` | Code restructuring without behavior change |
-| `chore` | Build config, dependencies, CI/CD, tooling |
-| `test` | Adding or updating tests |
-| `db` | Database schema or migration changes |
+| Type       | When to use                                             |
+| ---------- | ------------------------------------------------------- |
+| `feat`     | New feature or capability                               |
+| `fix`      | Bug fix                                                 |
+| `docs`     | Documentation only (README, CLAUDE.md, docs/, comments) |
+| `style`    | Formatting, CSS changes (no logic change)               |
+| `refactor` | Code restructuring without behavior change              |
+| `chore`    | Build config, dependencies, CI/CD, tooling              |
+| `test`     | Adding or updating tests                                |
+| `db`       | Database schema or migration changes                    |
 
 **Examples:**
 
@@ -69,23 +77,23 @@ style(dashboard): apply dark/light mode CSS variables to task cards
 
 ### Commit Scope Reference
 
-| Scope | Area |
-|---|---|
-| `auth` | Authentication, sessions, OAuth |
-| `tasks` | Task creation, editing, completion |
-| `topics` | Topics and subtasks |
-| `recurring` | Recurring task logic |
-| `daily-quest` | Daily quest algorithm and UI |
+| Scope          | Area                               |
+| -------------- | ---------------------------------- |
+| `auth`         | Authentication, sessions, OAuth    |
+| `tasks`        | Task creation, editing, completion |
+| `topics`       | Topics and subtasks                |
+| `recurring`    | Recurring task logic               |
+| `daily-quest`  | Daily quest algorithm and UI       |
 | `gamification` | Coins, streaks, levels, animations |
-| `wishlist` | Wishlist and budget features |
-| `push` | Web Push / VAPID notifications |
-| `pwa` | PWA manifest, service worker |
-| `ui` | Shared UI components |
-| `db` | Database schema, migrations |
-| `api` | API routes |
-| `deploy` | Docker, Kubernetes, CI/CD |
-| `docs` | Documentation |
-| `config` | Configuration files |
+| `wishlist`     | Wishlist and budget features       |
+| `push`         | Web Push / VAPID notifications     |
+| `pwa`          | PWA manifest, service worker       |
+| `ui`           | Shared UI components               |
+| `db`           | Database schema, migrations        |
+| `api`          | API routes                         |
+| `deploy`       | Docker, Kubernetes, CI/CD          |
+| `docs`         | Documentation                      |
+| `config`       | Configuration files                |
 
 ---
 
@@ -103,6 +111,7 @@ Documentation is not an afterthought — it is written alongside the code, in th
 - Every **complex algorithm** (e.g. daily quest selection, gamification logic) gets a detailed explanation comment above the implementation.
 
 **Example — API Route:**
+
 ```typescript
 /**
  * POST /api/tasks
@@ -114,6 +123,7 @@ Documentation is not an afterthought — it is written alongside the code, in th
 ```
 
 **Example — Function:**
+
 ```typescript
 /**
  * Selects the daily quest task for a user.
@@ -138,6 +148,7 @@ Every time a **new environment variable** is introduced:
 ### 3. API Documentation (`docs/api.md`)
 
 Every API route must be listed in `docs/api.md` with:
+
 - Method & path
 - Authentication required (yes/no)
 - Request body schema
@@ -148,15 +159,15 @@ Every API route must be listed in `docs/api.md` with:
 
 When a **phase or major feature** is completed, update or create the relevant doc file:
 
-| Feature completed | Update this file |
-|---|---|
-| Auth setup | `docs/oauth-setup.md` |
-| Database schema change | `docs/database.md` |
-| New environment variables | `docs/environment-variables.md` |
-| Docker / deployment change | `docs/deployment.md` |
-| Kubernetes change | `docs/kubernetes.md` |
-| New user-facing feature | `docs/features.md` |
-| API route added/changed | `docs/api.md` |
+| Feature completed          | Update this file                |
+| -------------------------- | ------------------------------- |
+| Auth setup                 | `docs/oauth-setup.md`           |
+| Database schema change     | `docs/database.md`              |
+| New environment variables  | `docs/environment-variables.md` |
+| Docker / deployment change | `docs/deployment.md`            |
+| Kubernetes change          | `docs/kubernetes.md`            |
+| New user-facing feature    | `docs/features.md`              |
+| API route added/changed    | `docs/api.md`                   |
 
 ### 5. README Project Status Table
 
