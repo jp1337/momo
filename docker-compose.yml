@@ -63,6 +63,7 @@ services:
       VAPID_CONTACT: ${VAPID_CONTACT:-mailto:admin@example.com}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
+      CRON_SECRET: ${CRON_SECRET}
     ports:
       - "3000:3000"
     healthcheck:
@@ -71,6 +72,37 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+  # ─── Cron — stündlicher Push-Notifier ──────────────────────────────────────
+  cron:
+    image: curlimages/curl:8.7.1
+    container_name: momo-cron
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      CRON_SECRET: ${CRON_SECRET}
+    # Supercronic-freie Lösung: sleep-Loop der jede Stunde zur vollen Stunde feuert.
+    # Berechnet die Sekunden bis zur nächsten vollen Stunde und schläft dann.
+    entrypoint:
+      - sh
+      - -c
+      - |
+        while true; do
+          now=$$(date +%s)
+          next_hour=$$(( (now / 3600 + 1) * 3600 ))
+          sleep_secs=$$(( next_hour - now ))
+          echo "[cron] Sleeping ${sleep_secs}s until next full hour..."
+          sleep $$sleep_secs
+          echo "[cron] Triggering daily-quest notifications at $$(date -u)"
+          curl -sf \
+            -X POST \
+            -H "Authorization: Bearer $${CRON_SECRET}" \
+            http://app:3000/api/cron/daily-quest \
+          && echo "[cron] OK" \
+          || echo "[cron] FAILED (non-fatal)"
+        done
 
 # ─── Volumes ──────────────────────────────────────────────────────────────────
 volumes:
