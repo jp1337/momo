@@ -16,7 +16,7 @@
  *  - Service worker is not registered (development mode)
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 
 type NotificationStatus =
@@ -62,6 +62,7 @@ export function NotificationSettings({
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"success" | "error">("success");
+  const timeSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /** Check browser support and current permission state on mount */
   useEffect(() => {
@@ -249,26 +250,35 @@ export function NotificationSettings({
     }
   }
 
-  /** Saves the notification time preference when the user changes it */
-  async function handleTimeChange(newTime: string) {
+  /** Saves the notification time preference when the user changes it (debounced 600ms) */
+  function handleTimeChange(newTime: string) {
     setNotificationTime(newTime);
-
     if (status !== "active") return;
 
-    try {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const res = await fetch("/api/push/subscribe", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationTime: newTime, timezone }),
-      });
-      if (!res.ok) {
-        const data = await res.json() as { error?: string };
-        console.error("[NotificationSettings] Time update failed:", data.error);
+    // Debounce: cancel any pending save and wait for the user to stop changing
+    if (timeSaveTimer.current) clearTimeout(timeSaveTimer.current);
+    timeSaveTimer.current = setTimeout(async () => {
+      try {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const res = await fetch("/api/push/subscribe", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notificationTime: newTime, timezone }),
+        });
+        if (res.ok) {
+          setMessageType("success");
+          setMessage(t("notif_time_saved"));
+        } else {
+          const data = await res.json() as { error?: string };
+          setMessageType("error");
+          setMessage(data.error ?? t("notif_test_failed"));
+        }
+      } catch (err) {
+        console.error("[NotificationSettings] Time update failed:", err);
+        setMessageType("error");
+        setMessage(t("notif_test_failed"));
       }
-    } catch (err) {
-      console.error("[NotificationSettings] Time update failed:", err);
-    }
+    }, 600);
   }
 
   /** Sends a test push notification */
