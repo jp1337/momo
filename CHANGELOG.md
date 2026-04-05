@@ -21,9 +21,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Docker Compose `cron`-Service**: Neuer Container (`alpine:3` + curl) startet automatisch mit dem Stack und ruft alle 5 Minuten `POST /api/cron/daily-quest` auf.
 - **Cron-History**: Letzte 30 Tage werden in der `cron_runs`-Tabelle gespeichert, ältere Rows werden automatisch bereinigt.
 
-### Fixed
-
-**Code-Qualität & Robustheit (2026-04-05)**
+#### Code-Qualität & Robustheit (2026-04-05)
 
 - **Wiederkehrende Tasks erstellen korrektes Fälligkeitsdatum**: `nextDueDate` bei wiederkehrenden Aufgaben wird jetzt in der lokalen Zeitzone des Nutzers berechnet, nicht mehr in UTC. Ein Task, der um Mitternacht in UTC+2 erstellt wird, erhält den richtigen lokalen Folgetag als Fälligkeitsdatum.
 - **Task Breakdown zählt alle Subtasks**: Der globale `totalTasksCreated`-Zähler wird beim Aufteilen einer Aufgabe korrekt um die Anzahl der erstellten Subtasks erhöht (nicht nur um 1).
@@ -33,11 +31,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Achievement-Fehler blockieren nicht mehr den Task-Abschluss**: Schlägt die Errungenschaftsprüfung beim Abschließen einer Aufgabe fehl, wird der Fehler abgefangen und protokolliert — der Abschluss selbst bleibt davon unberührt.
 - **Datenbank-Migrationsskript mit Verbindungs-Timeout**: Alle Datenbankverbindungen im Migrationsskript setzen jetzt einen `statement_timeout` von 30 Sekunden, einschließlich der Drizzle-ORM-Migration selbst.
 
-**Statistikseite — Topic-Icons (2026-04-05)**
+#### Statistikseite — Topic-Icons (2026-04-05)
 
 - **Topic-Icons in der Statistikseite werden korrekt dargestellt**: Statt des rohen Icon-Namens (z. B. "house", "camera") wird jetzt das tatsächliche FontAwesome-Icon gerendert.
 
-**Formular-Darstellung auf Mobilgeräten (2026-04-05)**
+#### Formular-Darstellung auf Mobilgeräten (2026-04-05)
 
 - **Task-Formular-Modal überlappt nicht mehr die Navigation**: Das Speichern/Abbrechen-Buttons im Task-Formular werden auf Mobilgeräten nicht mehr von der unteren Navigationsleiste verdeckt. Das Modal nutzt jetzt die volle Bildschirmhöhe (`100dvh`) auf Mobilgeräten und eine begrenzte Höhe auf dem Desktop.
 

@@ -67,7 +67,8 @@ services:
     ports:
       - "3000:3000"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      test:
+        ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -75,7 +76,7 @@ services:
 
   # ─── Cron — stündlicher Push-Notifier ──────────────────────────────────────
   cron:
-    image: alpine:3.21
+    image: alpine:3
     container_name: momo-cron
     restart: unless-stopped
     depends_on:
