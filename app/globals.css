@@ -19,21 +19,21 @@
 /* ─── Dark Mode (default) — "Warme Dämmerung" ──────────────────────────────── */
 /*                                                                               */
 /* Konzept: Tannenwald zur blauen Stunde. Nicht Mitternacht, sondern Dämmerung. */
-/* Die Backgrounds liegen bei L 12–20 % (war 7–14 %) — gut unterscheidbare     */
-/* Ebenen, kein erdrückendes Schwarz. Warme Grüntöne, weiches Creme-Weiß.      */
+/* Die Backgrounds liegen bei L 12–28 % — deutlich unterscheidbare Ebenen,     */
+/* kein erdrückendes Schwarz. Warme Grüntöne, weiches Creme-Weiß.              */
 :root,
 [data-theme="dark"] {
-  /* Backgrounds — angehoben um ~5–8 % Helligkeit für besseres Layering */
-  --bg-primary: #1a1f1b;   /* L 12 %  (war #0f1410, L  7 %) */
-  --bg-surface: #222820;   /* L 16 %  (war #161d18, L 11 %) */
-  --bg-elevated: #2b3429;  /* L 20 %  (war #1e2922, L 14 %) */
+  /* Backgrounds — Ebenen mit klarem Kontrast (~10 % L-Abstand je Stufe) */
+  --bg-primary: #1a1f1b;   /* L 12 % — Seitengrund */
+  --bg-surface: #2e3d30;   /* L 23 % — Karten, Listen (war #222820, L 16 %) */
+  --bg-elevated: #3a4e3c;  /* L 28 % — Modals, Dropdowns (war #2b3429, L 20 %) */
 
-  /* Borders — sichtbarer, aber noch subtil */
-  --border: #3d5342;       /* L 30 %  (war #2e4035, L 22 %) */
+  /* Borders — deutlich sichtbarer */
+  --border: #52735a;       /* L 38 %  (war #3d5342, L 30 %) */
 
   /* Text — sanftes Creme, kein hartes Weiß */
   --text-primary: #eedfc6;
-  --text-muted: #8fa690;   /* etwas heller als zuvor für bessere Lesbarkeit */
+  --text-muted: #9db89f;   /* etwas heller für bessere Lesbarkeit auf helleren Surfaces */
 
   /* Accent colours */
   --accent-amber: #f0a500;
