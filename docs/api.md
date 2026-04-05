@@ -71,6 +71,7 @@ Valid values: `"de"`, `"en"`, `"fr"`. Response: `{ "success": true }`
 | `DELETE` | `/api/tasks/:id` | Yes | — | Delete a task |
 | `POST` | `/api/tasks/:id/complete` | Yes | 30/min | Mark task as complete + award coins |
 | `DELETE` | `/api/tasks/:id/complete` | Yes | — | Undo task completion + refund coins |
+| `POST` | `/api/tasks/:id/breakdown` | Yes | — | Break task into subtasks under a new topic |
 | `POST` | `/api/tasks/:id/promote-to-topic` | Yes | 10/min | Promote standalone task to a new topic |
 
 ### GET /api/tasks
@@ -110,6 +111,19 @@ Response:
 ### POST /api/tasks
 
 Request body:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `title` | string | Yes | Task title (max 255 chars) |
+| `type` | `ONE_TIME` \| `RECURRING` | Yes | Task type |
+| `priority` | `LOW` \| `NORMAL` \| `HIGH` | No | Defaults to `NORMAL` |
+| `dueDate` | ISO date string | No | e.g. `"2026-04-05"` |
+| `coinValue` | integer | No | Coin reward on completion |
+| `notes` | string | No | Free-text notes |
+| `topicId` | UUID | No | Assign to an existing topic |
+| `recurrenceInterval` | integer (days) | Conditionally | Required when `type` is `RECURRING` |
+| `timezone` | IANA timezone string | No | Used to calculate `nextDueDate` for `RECURRING` tasks in non-UTC timezones (max 64 chars). Falls back to UTC if omitted. |
+
 ```json
 {
   "title": "Buy groceries",
@@ -119,7 +133,8 @@ Request body:
   "coinValue": 2,
   "notes": "Optional notes",
   "topicId": "uuid-or-null",
-  "recurrenceInterval": null
+  "recurrenceInterval": null,
+  "timezone": "Europe/Berlin"
 }
 ```
 
@@ -157,6 +172,42 @@ Response:
 Refunds the `coinValue` coins, resets `completedAt` to null.
 
 Response: `{ "task": Task }`
+
+### POST /api/tasks/:id/breakdown
+
+Breaks a task into multiple subtasks inside a new topic. The original task is deleted. A new topic is created using the task's title, and each entry in `subtaskTitles` becomes an individual task within that topic.
+
+Also increments the `totalTasksCreated` statistics counter by the number of subtasks created (N).
+
+Request body:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `subtaskTitles` | string[] | Yes | 2–10 subtask titles (each max 255 chars) |
+
+```json
+{
+  "subtaskTitles": [
+    "Research options",
+    "Compare prices",
+    "Place order"
+  ]
+}
+```
+
+Returns `404 Not Found` if the task does not exist or does not belong to the authenticated user.
+
+Response (200 OK):
+```json
+{
+  "topicId": "uuid",
+  "tasks": [
+    { "id": "uuid", "title": "Research options", ... },
+    { "id": "uuid", "title": "Compare prices", ... },
+    { "id": "uuid", "title": "Place order", ... }
+  ]
+}
+```
 
 ### POST /api/tasks/:id/promote-to-topic
 
@@ -257,6 +308,14 @@ Returns the active daily quest. If no quest is currently selected, one is automa
 3. Due recurring task
 4. Random open task from pool
 
+Optional query parameters:
+
+| Parameter | Type | Description |
+|---|---|---|
+| `timezone` | IANA timezone string | Used for timezone-aware "today" boundary when selecting the quest (max 64 chars). Falls back to UTC if omitted. |
+
+Example: `GET /api/daily-quest?timezone=Europe%2FBerlin`
+
 Response:
 ```json
 {
@@ -266,6 +325,31 @@ Response:
 ```
 
 Returns `{ "task": null }` if no eligible tasks exist.
+
+### POST /api/daily-quest
+
+Forces a new daily quest selection for the authenticated user. Clears any existing active or completed quest and runs the priority algorithm to assign a new one.
+
+Optional request body (JSON):
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `timezone` | IANA timezone string | No | Used for timezone-aware "today" boundary during selection (max 64 chars). Falls back to UTC if omitted. |
+
+```json
+{ "timezone": "Europe/Berlin" }
+```
+
+The request body is entirely optional — sending an empty body or omitting `Content-Type` is also valid.
+
+Response:
+```json
+{
+  "quest": { ... }
+}
+```
+
+Returns `{ "quest": null }` if no eligible tasks exist.
 
 ### POST /api/daily-quest/postpone
 
