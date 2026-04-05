@@ -77,6 +77,11 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 - **Telegram-Bot** — Benachrichtigungen + ggf. Task-Eingabe per Telegram-Bot (`/addtask Zahnarzt`); via Bot Token + Chat ID
 - **Webhook / Custom HTTP** — generischer Outbound-Webhook bei konfigurierbaren Events (Quest bereit, Streak-Warnung, etc.)
 
+> **Implementierungsansatz:** Alle Kanäle via nativem `fetch` — kein zusätzlicher Container, keine externe Abstraktion.
+> Einheitliches Interface in `lib/notifications.ts`: `interface NotificationChannel { send(payload: { title, body, url? }): Promise<void> }`
+> E-Mail via `nodemailer` (SMTP, pure Node.js). Cron iteriert alle konfigurierten Channels.
+> User-Konfiguration per DB-Spalte (z.B. `ntfy_topic`, `telegram_chat_id`, `pushover_user_key`).
+
 ### Erweiterbarkeit
 
 - **Webhook-System** — ausgehende Webhooks bei Task-erstellt / Task-abgeschlossen
