@@ -25,6 +25,7 @@ All server-side business logic and infrastructure. API routes import from here �
 - `export.ts` — buildUserExport(userId) — GDPR data export (all user data as JSON)
 - `users.ts` — deleteUser(userId) — full account deletion cascade
 - `utils/crypto.ts` — Cryptographic helpers (e.g. CRON_SECRET constant-time comparison)
+- `client/coin-events.ts` — Client-safe module: `COINS_EARNED_EVENT` const + `dispatchCoinsEarned(delta)` with NaN/Infinity guard. Shared by TaskList, TopicDetailView, DailyQuestCard and CoinCounter.
 
 ## Patterns
 - Business logic functions go directly in `lib/` (e.g. `lib/tasks.ts`, `lib/daily-quest.ts`)
