@@ -35,7 +35,7 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **Gamification** — Earn coins, build streaks, level up. Small wins deserve real celebration.
 - **Wishlist & Budget** — Track things you want to buy, with a monthly budget indicator to spend more consciously.
 - **Push Notifications** — Daily reminders via browser push. No third-party service, no subscription.
-- **PWA** — Install on your phone like a native app. Works offline.
+- **PWA** — Install on your phone like a native app. Works offline. The task creation form is fully usable on mobile — a corrected z-index ensures it renders above the bottom navigation bar as a proper full-height modal.
 - **REST API & API Keys** — Full public REST API with personal access tokens (read-only flag, expiry dates). Interactive Swagger UI at `/api-docs`.
 - **Account Linking** — Connect multiple OAuth providers to one account.
 - **Multilingual** — German, English, and French UI with cookie-based locale switching. Add any language by dropping in a `messages/XX.json` file.
@@ -43,7 +43,9 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **Admin Panel** — Platform-wide statistics for operators (user growth, top users, achievement distribution). Protected by `ADMIN_USER_IDS` env var — only listed user UUIDs can access `/admin`.
 - **Procrastination Counter** — Every task tracks how many times it has been postponed. Tasks postponed 3 or more times award double coins on completion.
 - **Daily Quest Postpone Limit** — Configurable per-user daily postpone limit (1–5, default 3) in Settings. Prevents endless deferral of the one thing that matters.
-- **Task Breakdown** — Split any task into subtasks with a single button. A new Topic is created from the breakdown; the original task is removed.
+- **Task Breakdown** — Split any task into subtasks with a single button. A new Topic is created from the breakdown; the original task is removed. The `totalTasksCreated` statistics counter is correctly incremented for each generated subtask.
+- **Timezone-Aware Daily Quest** — The daily quest selection respects the user's local timezone (`GET /api/daily-quest?timezone=Europe/Berlin`), ensuring the quest resets at local midnight rather than UTC.
+- **Immutable Statistics Counter** — `totalTasksCreated` is a cumulative counter that only ever increases. Deleting a task never decrements it, giving an accurate lifetime picture of your output.
 - **Time Estimates** — Assign a time estimate (5, 15, 30, or 60 minutes) to any task. Estimates are displayed as a badge on task cards.
 - **Quick Wins** — Dashboard section that surfaces all tasks estimated at 15 minutes or less, so a short window of focus never goes to waste.
 - **Public Landing Page** — Atmospheric Momo-themed landing page (Lora italic, dark forest green, feather animation, Michael Ende quote) for unauthenticated visitors.
@@ -205,6 +207,7 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 | Phase 9 – API & Keys | ✅ Done | Public REST API, Personal Access Tokens, Swagger UI, Account Linking, Font Awesome icons, SVG Logo |
 | Phase 10 – Statistics & Admin | ✅ Done | Personal stats page, Admin panel, Mobile bottom navigation |
 | Phase 11 – UX & Anti-Procrastination | ✅ Done | Procrastination counter, postpone limit, bonus coins, task breakdown, time estimates, Quick Wins, public landing page, dashboard redesign, FA icon picker |
+| Phase 11 – Bugfixes (2026-04-05) | ✅ Done | Timezone-aware daily quest selection, immutable statistics counter, task breakdown stat increment, mobile task form z-index fix |
 
 ---
 
