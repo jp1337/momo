@@ -114,13 +114,14 @@ jobs:
           for i in "${!SHA_TAGS[@]}"; do
             [[ $i -lt $KEEP ]] && continue
             tag="${SHA_TAGS[$i]}"
-            if curl -sf -X DELETE \
+            HTTP_CODE=$(curl -s -o /tmp/quay_resp -w "%{http_code}" -X DELETE \
               "https://quay.io/api/v1/repository/jp1337/momo/tag/${tag}" \
-              -H "Authorization: Basic ${QUAY_BASIC}"; then
-              echo "Deleted Quay.io: ${tag}"
+              -H "Authorization: Basic ${QUAY_BASIC}")
+            if [[ "${HTTP_CODE}" =~ ^2 ]]; then
+              echo "Deleted Quay.io: ${tag} (HTTP ${HTTP_CODE})"
               DELETED=$((DELETED + 1))
             else
-              echo "Failed to delete Quay.io: ${tag}" >&2
+              echo "Failed to delete Quay.io: ${tag} (HTTP ${HTTP_CODE}: $(cat /tmp/quay_resp))" >&2
             fi
           done
           echo "Quay.io: kept ${KEEP}, deleted ${DELETED} sha- tag(s)."
