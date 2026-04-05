@@ -11,6 +11,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 | Microsoft Sign In                | Auth             | S       | Auth.js `AzureAD`-Provider; braucht App-Registrierung in Azure          |
 | Apple Sign In                    | Auth             | M       | Auth.js `Apple`-Provider; erfordert Apple Developer Account (99 $/Jahr) |
 | Passkeys (WebAuthn)              | Auth             | M       | `@simplewebauthn`-Adapter für Auth.js; keine externen Provider nötig    |
+| 2FA — TOTP                       | Auth             | M       | Authenticator-App (Google Authenticator, Authy); TOTP als zweiter Faktor nach OAuth-Login |
 | E-Mail-Benachrichtigungen        | Notifications    | M       | Resend oder SMTP; täglicher Quest-Reminder + Streak-Warnung             |
 | ntfy.sh Integration              | Notifications    | S       | URL-basierte Push-Benachrichtigungen; gut für Selfhoster                |
 | Pushover Integration             | Notifications    | S       | API Token + User Key in Settings; sofortige Push-Alerts                 |
@@ -24,6 +25,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ### Hoher Impact, kleiner Aufwand
 
+- **Custom Error Pages** — eigene 404- und 500-Seiten im Momo-Design (Lora-Schrift, Waldgrün-Ästhetik, Rücklink zur App); Next.js `not-found.tsx` + `error.tsx`
 - **Swipe-to-complete auf Mobile** — Wischgeste auf Task-Items statt Checkbox tippen; senkt Hemmschwelle
 - **Snooze / Aufgabe pausieren** — "Erinnere mich ab [Datum]" für Tasks die man nicht löschen, aber auch nicht ständig sehen will
 - **"Ich hab nur 5 Minuten"-Modus** — prominenter Einstiegspunkt der nur Tasks ≤5 min zeigt (über Quick Wins hinaus)
@@ -63,6 +65,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 ### Authentifizierung erweitern
 
 - **Passkeys (WebAuthn)** — passwordloser Login ohne externen Provider; Auth.js hat `@simplewebauthn`-Adapter; ideal für PWA-Nutzer
+- **2FA — TOTP** — Authenticator-App (Google Authenticator, Authy) als zweiter Faktor *nach* dem OAuth-Login; kein Passkey-Ersatz; via `otplib` + QR-Code-Setup; Backup-Codes empfohlen
 - **Microsoft / Azure AD** — Auth.js `AzureAD`-Provider; relevant für Windows/Office-Nutzer; geringer Aufwand
 - **Apple Sign In** — Auth.js `Apple`-Provider; wichtig für iOS/macOS-Nutzer; erfordert Apple Developer Account
 

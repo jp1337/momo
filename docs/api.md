@@ -44,7 +44,7 @@ Managed by Auth.js v5. These routes are handled internally by the framework.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `GET` | `/api/health` | No | Liveness probe — returns `{ status: "ok" }` or `503` on DB error |
+| `GET` | `/api/health` | No | Liveness probe — returns `{ status: "ok", cron: {...} }` or `503` on DB error |
 | `POST` | `/api/locale` | No | Set UI language preference cookie |
 
 ### POST /api/locale
@@ -478,6 +478,7 @@ Send `null` to remove the budget limit. Response: `{ "success": true }`
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | `POST` | `/api/push/subscribe` | Yes | Save push subscription + enable notifications |
+| `PATCH` | `/api/push/subscribe` | Yes | Update notification time without re-subscribing |
 | `DELETE` | `/api/push/subscribe` | Yes | Remove subscription + disable notifications |
 | `POST` | `/api/push/test` | Yes | Send a test push notification to the current user |
 
@@ -496,6 +497,17 @@ Request body:
 
 Response: `{ "success": true }`
 
+### PATCH /api/push/subscribe
+
+Updates only the `notificationTime` for the current user. Does not require the push subscription object.
+
+Request body:
+```json
+{ "notificationTime": "06:30" }
+```
+
+Response: `{ "success": true }`
+
 ---
 
 ## Cron Routes
@@ -510,7 +522,9 @@ If `CRON_SECRET` is not set, these routes are unprotected — set it in producti
 | `POST` | `/api/cron/daily-quest` | CRON_SECRET | Send daily quest push notifications to all eligible users |
 | `POST` | `/api/cron/streak-reminder` | CRON_SECRET | Send streak reminder push notifications |
 
-Response format for both: `{ "sent": 5, "failed": 0 }`
+Response format for both: `{ "sent": 5, "failed": 0, "durationMs": 42 }`
+
+The `daily-quest` cron also persists each run to the `cron_runs` table (visible on the admin page and via `GET /api/health`). Rows older than 30 days are pruned automatically.
 
 ---
 

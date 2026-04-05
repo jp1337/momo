@@ -66,6 +66,38 @@ app:
 
 ---
 
+## Cron Service (Push Notifications)
+
+The `docker-compose.yml` includes a `cron` service that triggers push notifications every 5 minutes:
+
+```yaml
+cron:
+  image: alpine:3
+  # sleeps until the next 5-minute mark, then POSTs to /api/cron/daily-quest
+```
+
+**How it works:**
+- Fires every 5 minutes at the exact 5-minute boundary (06:00, 06:05, 06:10, …)
+- The app filters users whose `notificationTime` falls in the current 5-minute bucket
+- Users can set any time with 5-minute granularity (e.g. 06:30, 08:45)
+- All times are **UTC** — adjust accordingly for your timezone (CET = UTC+1, CEST = UTC+2)
+- Each run is logged to the `cron_runs` table (30-day retention)
+- Cron status is visible on the **Admin page** and via `GET /api/health` (`cron.minutesSinceLastRun`)
+
+**Requirements:** `CRON_SECRET` must be set in `.env.local` and match the app's `CRON_SECRET`.
+
+**Start the cron service:**
+```bash
+docker compose up -d   # starts app + db + cron together
+```
+
+**Check cron logs:**
+```bash
+docker compose logs -f cron
+```
+
+---
+
 ## Production Checklist
 
 Before going live, complete all items below:
