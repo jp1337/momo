@@ -61,6 +61,7 @@ export function NotificationSettings({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<"success" | "error">("success");
 
   /** Check browser support and current permission state on mount */
   useEffect(() => {
@@ -105,6 +106,7 @@ export function NotificationSettings({
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setStatus("denied");
+        setMessageType("error");
         setMessage(t("notif_err_denied"));
         setIsSaving(false);
         return;
@@ -125,6 +127,7 @@ export function NotificationSettings({
 
       // Step 3: Subscribe to push
       if (!vapidPublicKey) {
+        setMessageType("error");
         setMessage(t("notif_err_not_configured"));
         setIsSaving(false);
         return;
@@ -188,6 +191,7 @@ export function NotificationSettings({
       }
 
       setStatus("active");
+      setMessageType("success");
       setMessage(t("notif_success_enabled"));
     } catch (err) {
       // Log full details: DOMException name + message help diagnose push service errors
@@ -195,6 +199,7 @@ export function NotificationSettings({
         ? `${err.name}: ${err.message}`
         : err
       );
+      setMessageType("error");
       setMessage(
         err instanceof Error ? `${err.name}: ${err.message}` : t("notif_err_enable")
       );
@@ -218,9 +223,11 @@ export function NotificationSettings({
       }
 
       setStatus("default");
+      setMessageType("success");
       setMessage(t("notif_success_disabled"));
     } catch (err) {
       console.error("[NotificationSettings] Disable failed:", err);
+      setMessageType("error");
       setMessage(
         err instanceof Error ? err.message : t("notif_err_disable")
       );
@@ -260,11 +267,14 @@ export function NotificationSettings({
       const data = await res.json() as { success?: boolean; error?: string };
 
       if (data.success) {
+        setMessageType("success");
         setMessage(t("notif_test_sent"));
       } else {
+        setMessageType("error");
         setMessage(data.error ?? t("notif_test_failed"));
       }
     } catch {
+      setMessageType("error");
       setMessage(t("notif_test_failed"));
     } finally {
       setIsSaving(false);
@@ -433,11 +443,7 @@ export function NotificationSettings({
         <p
           className="text-sm"
           style={{
-            color:
-              message.toLowerCase().includes("erfolgreich") ||
-              message.toLowerCase().includes("gesendet")
-                ? "var(--accent-green)"
-                : "var(--text-muted)",
+            color: messageType === "success" ? "var(--accent-green)" : "var(--accent-red)",
             fontFamily: "var(--font-ui)",
           }}
         >
