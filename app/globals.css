@@ -37,8 +37,8 @@
 
   /* Accent colours */
   --accent-amber: #f0a500;
-  --accent-green: #52a06e; /* etwas heller/lebendiger als #4a8c5c */
-  --accent-red: #c05a56;
+  --accent-green: #5ec47e; /* heller/lebendiger für bessere Sichtbarkeit im Dark Mode */
+  --accent-red: #d06460;   /* minimal heller für besseren Kontrast auf dunklen Flächen */
   --coin-gold: #ffd060;
 
   /* Semantic tokens */
@@ -53,10 +53,10 @@
   --color-danger: var(--accent-red);
   --color-coin: var(--coin-gold);
 
-  /* Shadow tokens — weicher, weniger schwer */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.30);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.38);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
+  /* Shadow tokens — in Dark Mode: opaker + subtiler Inset-Highlight für Tiefenwirkung */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.05);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 /* ─── Light Mode ────────────────────────────────────────────────────────────── */
