@@ -50,6 +50,13 @@ const pool = new Pool({
   idleTimeoutMillis: 5_000,
 });
 
+// Apply statement_timeout to every connection in the pool — including those
+// used by drizzle-orm/migrate() — so large backfill migrations cannot block
+// container startup indefinitely.
+pool.on("connect", (client) => {
+  client.query("SET statement_timeout = 30000").catch(() => {});
+});
+
 console.log("[migrate] Connecting to database...");
 
 const db = drizzle(pool);

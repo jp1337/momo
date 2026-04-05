@@ -11,12 +11,13 @@
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { postponeDailyQuest } from "@/lib/daily-quest";
 import { z } from "zod";
+import { TimezoneSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /** Validation schema for the postpone request body */
 const PostponeBodySchema = z.object({
   taskId: z.string().uuid("taskId must be a valid UUID"),
-  timezone: z.string().max(64).optional().nullable(),
+  timezone: TimezoneSchema,
 });
 
 /**

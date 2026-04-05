@@ -17,7 +17,8 @@ export const COINS_EARNED_EVENT = "coinsEarned" as const;
  * @param delta - Positive number when coins are earned, negative when refunded
  */
 export function dispatchCoinsEarned(delta: number): void {
-  if (typeof delta !== "number" || !isFinite(delta) || delta === 0) return;
+  if (typeof window === "undefined") return; // SSR guard
+  if (!isFinite(delta) || delta === 0) return;
   window.dispatchEvent(
     new CustomEvent(COINS_EARNED_EVENT, { detail: { delta } })
   );

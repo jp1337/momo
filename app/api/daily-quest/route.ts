@@ -14,6 +14,7 @@
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { selectDailyQuest, forceSelectDailyQuest } from "@/lib/daily-quest";
+import { TimezoneSchema } from "@/lib/validators";
 
 /**
  * GET /api/daily-quest
@@ -23,8 +24,12 @@ export async function GET(request: Request) {
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { searchParams } = new URL(request.url);
+  const tzResult = TimezoneSchema.safeParse(searchParams.get("timezone"));
+  const timezone = tzResult.success ? tzResult.data : null;
+
   try {
-    const quest = await selectDailyQuest(user.userId);
+    const quest = await selectDailyQuest(user.userId, timezone);
     return Response.json({ quest });
   } catch (error) {
     console.error("[GET /api/daily-quest]", error);
@@ -42,8 +47,17 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
 
+  let timezone: string | null | undefined = null;
   try {
-    const quest = await forceSelectDailyQuest(user.userId);
+    const body = await request.json() as Record<string, unknown>;
+    const tzResult = TimezoneSchema.safeParse(body?.timezone);
+    if (tzResult.success) timezone = tzResult.data;
+  } catch {
+    // Body is optional for this endpoint
+  }
+
+  try {
+    const quest = await forceSelectDailyQuest(user.userId, timezone);
     return Response.json({ quest });
   } catch (error) {
     console.error("[POST /api/daily-quest]", error);

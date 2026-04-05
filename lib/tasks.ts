@@ -128,7 +128,8 @@ export async function getTaskById(
  */
 export async function createTask(
   userId: string,
-  input: CreateTaskInput
+  input: CreateTaskInput,
+  timezone?: string | null
 ): Promise<Task> {
   return db.transaction(async (tx) => {
     const rows = await tx
@@ -142,10 +143,11 @@ export async function createTask(
         priority: input.priority ?? "NORMAL",
         recurrenceInterval: input.recurrenceInterval ?? null,
         dueDate: input.dueDate ?? null,
-        // For RECURRING tasks, set nextDueDate to dueDate (or today) so the task is
-        // immediately visible to the daily quest algorithm.
+        // For RECURRING tasks, set nextDueDate to dueDate (or local today) so the
+        // task is immediately visible to the daily quest algorithm.
+        // getLocalDateString(timezone) avoids a UTC off-by-one for UTC− users.
         nextDueDate: input.type === "RECURRING"
-          ? (input.dueDate ?? new Date().toISOString().split("T")[0])
+          ? (input.dueDate ?? getLocalDateString(timezone))
           : null,
         coinValue: input.coinValue ?? 1,
         estimatedMinutes: input.estimatedMinutes ?? null,
@@ -347,17 +349,24 @@ export async function completeTask(
     .where(eq(taskCompletions.userId, userId));
   const totalCompleted = Number(completionCountRows[0]?.count ?? 0);
 
-  const unlockedAchievements = await checkAndUnlockAchievements(
-    userId,
-    {
-      totalCompleted,
-      streakCurrent,
-      coins: newCoins,
-      level: levelAfter.level,
-      isDailyQuestComplete: task.isDailyQuest,
-    },
-    undefined
-  );
+  // Check achievements outside the transaction — a transient failure should
+  // not roll back the task completion or coin award.
+  let unlockedAchievements: UnlockedAchievement[] = [];
+  try {
+    unlockedAchievements = await checkAndUnlockAchievements(
+      userId,
+      {
+        totalCompleted,
+        streakCurrent,
+        coins: newCoins,
+        level: levelAfter.level,
+        isDailyQuestComplete: task.isDailyQuest,
+      },
+      undefined
+    );
+  } catch (err) {
+    console.error("[completeTask] achievement check failed (non-fatal):", err);
+  }
 
   return {
     task: updatedTask,
@@ -577,6 +586,13 @@ export async function breakdownTask(
     await tx
       .delete(tasks)
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
+
+    // Increment the immutable "ever created" counter by the number of subtasks.
+    // The original task was already counted when it was created; the subtasks are new.
+    await tx
+      .update(users)
+      .set({ totalTasksCreated: sql`${users.totalTasksCreated} + ${subtaskTitles.length}` })
+      .where(eq(users.id, userId));
 
     return { topicId: newTopic.id, tasks: newTasks };
   });
