@@ -231,7 +231,7 @@ export function TaskItem({
 
       {/* Main content */}
       <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
           {/* Title — double-click to edit inline */}
           {isEditing ? (
             <input
@@ -240,7 +240,7 @@ export function TaskItem({
               onChange={(e) => setEditValue(e.target.value)}
               onBlur={commitInlineEdit}
               onKeyDown={handleInputKeyDown}
-              className="text-sm rounded px-1 py-0.5 outline-none min-w-0 w-full"
+              className="text-sm rounded px-1 py-0.5 outline-none min-w-0 flex-1"
               style={{
                 fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
                 color: "var(--text-primary)",
@@ -251,8 +251,8 @@ export function TaskItem({
             />
           ) : (
             <span
-              className="text-sm task-text transition-all duration-200 cursor-text"
-              title={onInlineEdit && !isCompleted ? t("inline_hint") : undefined}
+              className="text-sm task-text transition-all duration-200 cursor-text truncate min-w-0 flex-1"
+              title={title}
               onDoubleClick={handleTitleDoubleClick}
               style={{
                 color: isCompleted ? "var(--text-muted)" : "var(--text-primary)",
@@ -267,7 +267,7 @@ export function TaskItem({
           {/* Recurring indicator */}
           {type === "RECURRING" && (
             <span
-              className="text-xs"
+              className="text-xs flex-shrink-0"
               title={t("aria_recurring")}
               aria-label={t("aria_recurring")}
               style={{ color: "var(--text-muted)" }}
@@ -279,7 +279,7 @@ export function TaskItem({
           {/* DAILY_ELIGIBLE indicator */}
           {type === "DAILY_ELIGIBLE" && (
             <span
-              className="text-xs"
+              className="text-xs flex-shrink-0"
               title={t("aria_daily_eligible")}
               aria-label={t("aria_daily_eligible")}
               style={{ color: "var(--accent-amber)" }}
