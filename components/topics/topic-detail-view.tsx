@@ -134,6 +134,10 @@ export function TopicDetailView({
     }
   }, [t]);
 
+  const handleBreakdown = useCallback((id: string) => {
+    setTasks((prev) => prev.filter((task) => task.id !== id));
+  }, []);
+
   const handleFormSuccess = useCallback(async () => {
     setEditingTaskId(null);
     setShowCreateForm(false);
@@ -227,6 +231,7 @@ export function TopicDetailView({
               onUncomplete={handleUncomplete}
               onEdit={setEditingTaskId}
               onDelete={handleDelete}
+              onBreakdown={handleBreakdown}
             />
           ))}
         </div>
