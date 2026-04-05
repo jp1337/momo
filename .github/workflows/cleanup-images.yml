@@ -1,0 +1,124 @@
+name: Cleanup Old Images
+
+# Runs weekly to prevent unbounded growth of sha- tagged images across all
+# three container registries. Keeps the most recent sha- tags for rollback
+# capability; semver tags and `latest` are never deleted.
+on:
+  schedule:
+    - cron: '0 3 * * 0'  # Weekly, Sunday 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  # ── GHCR ──────────────────────────────────────────────────────────────────
+  # Step 1: delete untagged versions (intermediate per-platform digests
+  #         produced by push-by-digest=true during the multi-arch build).
+  # Step 2: keep only the 10 most recent sha- tagged manifest lists;
+  #         semver tags and `latest` are protected by ignore-versions.
+  cleanup-ghcr:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete untagged GHCR versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: momo
+          package-type: container
+          delete-only-untagged-versions: true
+          min-versions-to-keep: 0
+
+      - name: Keep only 10 most recent sha- versions in GHCR
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: momo
+          package-type: container
+          # Versions whose tag matches this pattern are never deleted.
+          # Covers: latest, 1.2, 1.2.3  (type=semver tags have no 'v' prefix)
+          ignore-versions: '^(latest|\d+\.\d+)'
+          min-versions-to-keep: 10
+
+  # ── Docker Hub + Quay.io ──────────────────────────────────────────────────
+  # Both registries expose a REST API for tag management. We delete sha- tags
+  # that are older than KEEP_DAYS days, leaving semver and latest untouched.
+  cleanup-registries:
+    runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
+    steps:
+      - name: Delete old sha- tags from Docker Hub
+        if: env.DOCKERHUB_TOKEN != ''
+        run: |
+          set -euo pipefail
+          KEEP_DAYS=30
+          CUTOFF=$(date -d "-${KEEP_DAYS} days" +%s)
+
+          # Obtain a short-lived API token
+          API_TOKEN=$(curl -sf -X POST \
+            "https://hub.docker.com/v2/users/login" \
+            -H "Content-Type: application/json" \
+            -d '{"username":"'"${DOCKERHUB_USERNAME}"'","password":"'"${DOCKERHUB_TOKEN}"'"}' \
+            | jq -r '.token')
+
+          PAGE=1
+          DELETED=0
+          while true; do
+            RESP=$(curl -sf \
+              "https://hub.docker.com/v2/repositories/kermit1337/momo/tags?page_size=100&page=${PAGE}&ordering=last_updated" \
+              -H "Authorization: Bearer ${API_TOKEN}")
+
+            # Extract name + last_updated pairs
+            while IFS=$'\t' read -r name updated; do
+              ts=$(date -d "${updated}" +%s 2>/dev/null || echo 0)
+              if [[ "${name}" =~ ^sha- ]] && [[ "${ts}" -lt "${CUTOFF}" ]]; then
+                if curl -sf -X DELETE \
+                  "https://hub.docker.com/v2/repositories/kermit1337/momo/tags/${name}/" \
+                  -H "Authorization: Bearer ${API_TOKEN}"; then
+                  echo "Deleted Docker Hub tag: ${name}"
+                  DELETED=$((DELETED + 1))
+                else
+                  echo "Failed to delete Docker Hub tag: ${name}" >&2
+                fi
+              fi
+            done < <(echo "${RESP}" | jq -r '.results[] | [.name, .last_updated] | @tsv')
+
+            NEXT=$(echo "${RESP}" | jq -r '.next')
+            [[ "${NEXT}" == "null" ]] && break
+            PAGE=$((PAGE + 1))
+          done
+          echo "Docker Hub: deleted ${DELETED} tag(s) older than ${KEEP_DAYS} days."
+
+      - name: Delete old sha- tags from Quay.io
+        if: env.QUAY_TOKEN != ''
+        run: |
+          set -euo pipefail
+          KEEP_DAYS=30
+          CUTOFF=$(date -d "-${KEEP_DAYS} days" +%s)
+
+          PAGE=1
+          DELETED=0
+          while true; do
+            RESP=$(curl -sf \
+              "https://quay.io/api/v1/repository/jp1337/momo/tag/?limit=100&page=${PAGE}&onlyActiveTags=true" \
+              -H "Authorization: Bearer ${QUAY_TOKEN}")
+
+            while IFS=$'\t' read -r name last_modified; do
+              ts=$(date -d "${last_modified}" +%s 2>/dev/null || echo 0)
+              if [[ "${name}" =~ ^sha- ]] && [[ "${ts}" -lt "${CUTOFF}" ]]; then
+                if curl -sf -X DELETE \
+                  "https://quay.io/api/v1/repository/jp1337/momo/tag/${name}" \
+                  -H "Authorization: Bearer ${QUAY_TOKEN}"; then
+                  echo "Deleted Quay.io tag: ${name}"
+                  DELETED=$((DELETED + 1))
+                else
+                  echo "Failed to delete Quay.io tag: ${name}" >&2
+                fi
+              fi
+            done < <(echo "${RESP}" | jq -r '.tags[] | [.name, .last_modified] | @tsv')
+
+            HAS_MORE=$(echo "${RESP}" | jq -r '.has_additional')
+            [[ "${HAS_MORE}" != "true" ]] && break
+            PAGE=$((PAGE + 1))
+          done
+          echo "Quay.io: deleted ${DELETED} tag(s) older than ${KEEP_DAYS} days."
