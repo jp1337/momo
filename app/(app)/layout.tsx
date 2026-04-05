@@ -48,7 +48,7 @@ export default async function AppLayout({
   })();
 
   return (
-    <div className="flex flex-col h-screen" style={{ backgroundColor: "var(--bg-primary)" }}>
+    <div className="flex flex-col h-dvh" style={{ backgroundColor: "var(--bg-primary)" }}>
       {/* Top navigation */}
       <Navbar
         userName={user.name}
@@ -64,7 +64,7 @@ export default async function AppLayout({
 
         {/* Main content area — pb-16 prevents content hiding behind mobile bottom nav */}
         <main
-          className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6"
+          className="flex-1 overflow-y-auto p-6"
           style={{ backgroundColor: "var(--bg-primary)" }}
         >
           {children}

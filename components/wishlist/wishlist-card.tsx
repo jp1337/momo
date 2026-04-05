@@ -284,13 +284,9 @@ export function WishlistCard({
         </a>
       )}
 
-      {/* Action buttons — visible on hover for OPEN items, always for bought */}
+      {/* Action buttons — always visible for touch and desktop accessibility */}
       {!isDiscarded && (
-        <div
-          className={`flex items-center gap-2 pt-1 ${
-            isOpen ? "opacity-0 group-hover:opacity-100" : "opacity-100"
-          } transition-opacity duration-150`}
-        >
+        <div className="flex items-center gap-2 pt-1">
           {isOpen && (
             <>
               <button
@@ -352,9 +348,9 @@ export function WishlistCard({
         </div>
       )}
 
-      {/* Delete button for discarded items */}
+      {/* Delete button for discarded items — always visible */}
       {isDiscarded && (
-        <div className="flex items-center gap-2 pt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+        <div className="flex items-center gap-2 pt-1">
           <button
             onClick={() => handleAction(() => onDelete(id))}
             disabled={isLoading}

@@ -114,8 +114,8 @@ export function TopicCard({
           )}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        {/* Action buttons — always visible for touch and desktop accessibility */}
+        <div className="flex gap-1 flex-shrink-0">
           <button
             onClick={() => onEdit(id)}
             className="p-1.5 rounded-lg transition-colors"

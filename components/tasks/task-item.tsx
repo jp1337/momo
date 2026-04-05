@@ -393,8 +393,8 @@ export function TaskItem({
         />
       )}
 
-      {/* Action buttons — visible on hover, larger touch targets */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0">
+      {/* Action buttons — always visible for touch and desktop accessibility */}
+      <div className="flex items-center gap-1 flex-shrink-0">
         {/* Promote to topic — only for standalone tasks */}
         {topicId === null && onPromote && (
           <button
