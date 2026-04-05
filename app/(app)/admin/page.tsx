@@ -18,7 +18,7 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getAdminStatistics } from "@/lib/statistics";
+import { getAdminStatistics, getRecentCronRuns } from "@/lib/statistics";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faShieldHalved,
@@ -26,6 +26,8 @@ import {
   faListCheck,
   faCircleCheck,
   faFolderOpen,
+  faClock,
+  faCircleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const metadata: Metadata = {
@@ -107,8 +109,17 @@ export default async function AdminPage() {
     );
   }
 
-  const stats = await getAdminStatistics();
+  const [stats, cronHistory] = await Promise.all([
+    getAdminStatistics(),
+    getRecentCronRuns(),
+  ]);
   const totalUsers = stats.totalUsers;
+
+  const lastCron = cronHistory[0] ?? null;
+  const minutesSinceLastCron = lastCron
+    ? Math.floor((Date.now() - new Date(lastCron.ranAt).getTime()) / 60_000)
+    : null;
+  const cronStale = minutesSinceLastCron === null || minutesSinceLastCron > 15;
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-8">
@@ -642,7 +653,133 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      {/* ── Section 6: Wunschliste ───────────────────────────────────────────── */}
+      {/* ── Section 6: Cron-Status ──────────────────────────────────────────── */}
+      <section>
+        <h2
+          className="text-xs font-semibold uppercase tracking-widest mb-3"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            color: "var(--text-muted)",
+          }}
+        >
+          Cron-Status (Push-Benachrichtigungen)
+        </h2>
+
+        {/* Status-Banner */}
+        <div
+          className="rounded-xl p-4 mb-4 flex items-center gap-3"
+          style={{
+            backgroundColor: cronStale ? "color-mix(in srgb, var(--accent-red) 12%, var(--bg-surface))" : "color-mix(in srgb, var(--accent-green) 12%, var(--bg-surface))",
+            border: `1px solid ${cronStale ? "var(--accent-red)" : "var(--accent-green)"}`,
+          }}
+        >
+          <FontAwesomeIcon
+            icon={cronStale ? faCircleExclamation : faClock}
+            className="w-4 h-4 flex-shrink-0"
+            style={{ color: cronStale ? "var(--accent-red)" : "var(--accent-green)" }}
+            aria-hidden="true"
+          />
+          <div>
+            <p
+              className="text-sm font-medium"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: cronStale ? "var(--accent-red)" : "var(--text-primary)",
+              }}
+            >
+              {lastCron
+                ? cronStale
+                  ? `Cron läuft möglicherweise nicht — letzter Lauf vor ${minutesSinceLastCron} Minuten`
+                  : `Cron aktiv — letzter Lauf vor ${minutesSinceLastCron} Minute${minutesSinceLastCron === 1 ? "" : "n"}`
+                : "Noch kein Cron-Lauf verzeichnet"}
+            </p>
+            {lastCron && (
+              <p
+                className="text-xs mt-0.5"
+                style={{ fontFamily: "var(--font-body)", color: "var(--text-muted)" }}
+              >
+                {new Date(lastCron.ranAt).toLocaleString("de-DE", { timeZone: "UTC", timeZoneName: "short" })}
+                {" · "}gesendet: {lastCron.sent} · fehlgeschlagen: {lastCron.failed}
+                {lastCron.durationMs != null ? ` · ${lastCron.durationMs} ms` : ""}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* History-Tabelle */}
+        {cronHistory.length > 0 && (
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{
+              backgroundColor: "var(--bg-surface)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr
+                    style={{
+                      borderBottom: "1px solid var(--border)",
+                      backgroundColor: "var(--bg-elevated)",
+                    }}
+                  >
+                    {["Zeitpunkt (UTC)", "Gesendet", "Fehler", "Dauer"].map((col) => (
+                      <th
+                        key={col}
+                        className="px-4 py-3 text-left font-semibold"
+                        style={{
+                          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                          color: "var(--text-muted)",
+                        }}
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {cronHistory.map((run, idx) => (
+                    <tr
+                      key={run.id}
+                      style={{
+                        borderBottom: idx < cronHistory.length - 1 ? "1px solid var(--border)" : undefined,
+                      }}
+                    >
+                      <td
+                        className="px-4 py-3"
+                        style={{ fontFamily: "var(--font-body)", color: "var(--text-primary)" }}
+                      >
+                        {new Date(run.ranAt).toLocaleString("de-DE", { timeZone: "UTC", timeZoneName: "short" })}
+                      </td>
+                      <td
+                        className="px-4 py-3 font-semibold"
+                        style={{ fontFamily: "var(--font-ui)", color: run.sent > 0 ? "var(--accent-green)" : "var(--text-muted)" }}
+                      >
+                        {run.sent}
+                      </td>
+                      <td
+                        className="px-4 py-3"
+                        style={{ fontFamily: "var(--font-ui)", color: run.failed > 0 ? "var(--accent-red)" : "var(--text-muted)" }}
+                      >
+                        {run.failed}
+                      </td>
+                      <td
+                        className="px-4 py-3"
+                        style={{ fontFamily: "var(--font-body)", color: "var(--text-muted)" }}
+                      >
+                        {run.durationMs != null ? `${run.durationMs} ms` : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ── Section 7: Wunschliste ───────────────────────────────────────────── */}
       <section>
         <h2
           className="text-xs font-semibold uppercase tracking-widest mb-3"

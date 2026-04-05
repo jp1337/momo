@@ -443,6 +443,30 @@ export const linkingRequests = pgTable("linking_requests", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+/**
+ * Cron run log — one row per cron job execution.
+ * Used to track push-notification delivery history and detect stale/missing cron jobs.
+ * Visible on the admin page and via /api/health (non-blocking).
+ */
+export const cronRuns = pgTable("cron_runs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  /** Cron job name (e.g. "daily-quest") */
+  name: text("name").notNull(),
+
+  /** When the cron started */
+  ranAt: timestamp("ran_at", { withTimezone: true }).notNull().defaultNow(),
+
+  /** Number of push notifications successfully sent */
+  sent: integer("sent").notNull().default(0),
+
+  /** Number of push notifications that failed */
+  failed: integer("failed").notNull().default(0),
+
+  /** Execution time in milliseconds */
+  durationMs: integer("duration_ms"),
+});
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
