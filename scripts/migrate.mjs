@@ -15,11 +15,16 @@
  *   drizzle-kit run), some migrations may be applied but not tracked.
  *
  * Solution:
- *   Before calling migrate(), inspect each migration file and check whether
- *   the DB objects it creates (tables, indexes) actually exist. Only seed the
- *   migration as "applied" if ALL its objects are present. Stop at the first
- *   migration whose objects are missing — migrate() will then apply that
- *   migration and all subsequent ones normally.
+ *   Before calling migrate(), scan ALL migrations in the journal:
+ *   - "tracked but objects missing" (stale) → delete tracking entry so
+ *     migrate() will re-apply it. Do not stop early — multiple stale entries
+ *     can exist and must all be cleared before migrate() runs.
+ *   - "not tracked but objects present" → seed as applied so migrate() won't
+ *     re-run DDL that already exists.
+ *   - "not tracked and objects missing" → first genuinely pending migration;
+ *     no need to inspect further, migrate() handles everything from here.
+ *   After migrate() completes, a post-migration sanity check verifies that
+ *   every table declared across all migration files actually exists in the DB.
  *
  * Exits with code 1 on failure so the container does not start with a
  * stale or broken schema.
@@ -241,8 +246,14 @@ try {
   );
 
   let seededAny = false;
+  let removedStale = 0;
+  // Once we hit the first genuinely pending migration (not tracked, not in DB),
+  // all subsequent entries are also pending — no need to inspect them.
+  let pendingFromHere = false;
 
   for (const entry of journal.entries) {
+    if (pendingFromHere) break;
+
     try {
       const sqlPath = join(migrationsFolder, `${entry.tag}.sql`);
       const sqlContent = readFileSync(sqlPath, "utf8");
@@ -253,15 +264,15 @@ try {
 
       if (tracked && !appliedInDb) {
         // Stale tracking entry: migration was recorded as applied but its DB
-        // objects are missing (e.g. a previous buggy seed run). Remove it so
-        // that migrate() will actually run the migration.
+        // objects are missing. Remove it so migrate() will actually run it.
+        // Do NOT break — more stale entries may follow and must also be cleared.
         await client.query(
           `DELETE FROM drizzle."__drizzle_migrations" WHERE hash = $1`,
           [hash]
         );
         console.log(`[migrate] Removed stale tracking entry: ${entry.tag}`);
-        // Stop here — migrate() will (re-)apply this and all subsequent entries.
-        break;
+        removedStale++;
+        continue;
       }
 
       if (!tracked && appliedInDb) {
@@ -272,7 +283,9 @@ try {
       }
 
       if (!tracked && !appliedInDb) {
-        // First genuinely pending migration — let migrate() handle it.
+        // First genuinely pending migration — migrate() handles this and all
+        // subsequent entries sequentially. No need to inspect further.
+        pendingFromHere = true;
         break;
       }
 
@@ -284,6 +297,9 @@ try {
     }
   }
 
+  if (removedStale > 0) {
+    console.log(`[migrate] Cleared ${removedStale} stale tracking entr${removedStale === 1 ? "y" : "ies"} — migrate() will re-apply them.`);
+  }
   if (seededAny) {
     console.log("[migrate] Migration history seeded for pre-existing schema.");
   }
