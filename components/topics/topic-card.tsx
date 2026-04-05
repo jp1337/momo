@@ -86,7 +86,7 @@ export function TopicCard({
       }}
     >
       {/* Header */}
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         {/* Icon/Color circle */}
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
