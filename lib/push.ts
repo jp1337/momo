@@ -120,7 +120,8 @@ export async function sendPushNotification(
         badge: payload.badge ?? "/icon-192.png",
         url: payload.url ?? "/dashboard",
         tag: payload.tag ?? "momo-notification",
-      })
+      }),
+      { TTL: 3600 } // 1 hour — deliver even if browser is momentarily disconnected
     );
   } catch (err: unknown) {
     // 410 Gone = subscription is no longer valid; clean it up
