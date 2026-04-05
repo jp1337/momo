@@ -2,6 +2,11 @@
 
 ## Reviews
 
+- [Full Review 2026-04-05](review/full-review-20260405.md) — Delta Phase 11 Impl + UX Fixes, 0 Blocking, 8 Non-Blocking; APPROVED WITH FOLLOW-UP
+- [L1 Peer Review 2026-04-05](review/L1-peer-20260405.md) — 1 Blocking (createTask UTC), 3 Non-Blocking, 3 NITs
+- [L2 Architecture Review 2026-04-05](review/L2-arch-20260405.md) — createTask UTC, breakdownTask counter, selectDailyQuest timezone threading
+- [L3 Security Review 2026-04-05](security/L3-security-20260405.md) — 0 Critical, 1 High, 2 Medium, 2 Low
+- [L4 Reliability Review 2026-04-05](sre/L4-reliability-20260405.md) — 0 Blocking, breakdownTask counter + selectDailyQuest timezone as P1
 - [Full Review 2026-04-04](review/full-review-20260404.md) — Phase 11 Bugfixes, 3 Blocking, 12 Non-Blocking; CHANGES REQUESTED
 - [L1 Peer Review 2026-04-04](review/L1-peer-20260404.md) — 2 Blocking, 6 Non-Blocking
 - [L2 Architecture Review 2026-04-04](review/L2-arch-20260404.md) — Timezone threading, coin event pattern, migration script, hook extraction
