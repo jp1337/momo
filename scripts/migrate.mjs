@@ -301,3 +301,45 @@ try {
 } finally {
   await pool.end();
 }
+
+// Post-migration sanity check: verify that all tables declared in migration
+// files actually exist. Exits with code 1 if any table is missing so that
+// the container never starts with a broken schema.
+async function postMigrationCheck() {
+  const checkPool = new Pool({
+    connectionString,
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 5_000,
+  });
+  const checkClient = await checkPool.connect();
+  try {
+    const journal = JSON.parse(
+      readFileSync(join(migrationsFolder, "meta", "_journal.json"), "utf8")
+    );
+
+    const missingTables = [];
+    for (const entry of journal.entries) {
+      const sqlPath = join(migrationsFolder, `${entry.tag}.sql`);
+      const sqlContent = readFileSync(sqlPath, "utf8");
+      const tables = parseCreatedTables(sqlContent);
+      for (const table of tables) {
+        if (!(await tableExists(checkClient, table))) {
+          missingTables.push(`${table} (from ${entry.tag})`);
+        }
+      }
+    }
+
+    if (missingTables.length > 0) {
+      console.error("[migrate] POST-MIGRATION CHECK FAILED — tables missing after migration:");
+      for (const t of missingTables) console.error("  ✗", t);
+      console.error("[migrate] Exiting to prevent starting with a broken schema.");
+      process.exit(1);
+    }
+    console.log("[migrate] Post-migration check passed — all tables present.");
+  } finally {
+    checkClient.release();
+    await checkPool.end();
+  }
+}
+
+await postMigrationCheck();
