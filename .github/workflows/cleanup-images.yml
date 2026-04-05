@@ -45,6 +45,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
+      QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
     steps:
       - name: Delete old sha- tags from Docker Hub
         if: env.DOCKERHUB_TOKEN != ''
