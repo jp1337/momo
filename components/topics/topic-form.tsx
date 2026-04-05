@@ -189,9 +189,9 @@ export function TopicForm({
           <div
             className="mb-4 px-4 py-3 rounded-lg text-sm"
             style={{
-              backgroundColor: "rgba(184,84,80,0.12)",
+              backgroundColor: "color-mix(in srgb, var(--accent-red) 15%, transparent)",
               color: "var(--accent-red)",
-              border: "1px solid rgba(184,84,80,0.3)",
+              border: "1px solid color-mix(in srgb, var(--accent-red) 30%, transparent)",
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             }}
           >

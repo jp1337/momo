@@ -30,9 +30,21 @@ interface TopicCardProps {
 }
 
 const PRIORITY_STYLES = {
-  HIGH: { color: "var(--accent-red)", backgroundColor: "rgba(184,84,80,0.12)" },
-  NORMAL: { color: "var(--accent-amber)", backgroundColor: "rgba(240,165,0,0.12)" },
-  SOMEDAY: { color: "var(--text-muted)", backgroundColor: "rgba(122,144,127,0.12)" },
+  HIGH: {
+    color: "var(--accent-red)",
+    backgroundColor: "color-mix(in srgb, var(--accent-red) 15%, transparent)",
+    border: "1px solid color-mix(in srgb, var(--accent-red) 25%, transparent)",
+  },
+  NORMAL: {
+    color: "var(--accent-amber)",
+    backgroundColor: "color-mix(in srgb, var(--accent-amber) 15%, transparent)",
+    border: "1px solid color-mix(in srgb, var(--accent-amber) 25%, transparent)",
+  },
+  SOMEDAY: {
+    color: "var(--text-muted)",
+    backgroundColor: "color-mix(in srgb, var(--text-muted) 12%, transparent)",
+    border: "1px solid color-mix(in srgb, var(--text-muted) 20%, transparent)",
+  },
 } as const;
 
 /**
