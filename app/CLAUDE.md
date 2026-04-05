@@ -11,13 +11,18 @@ Next.js 15 App Router pages and API routes. Thin layer — validates input, call
   tasks/        → Task list and management
   topics/       → Topics + subtasks
   wishlist/     → Wishlist + budget tracker
+  settings/     → Notification, budget, language, account deletion settings
+  api-keys/     → API key management UI
+  stats/        → User statistics page
+  admin/        → Admin statistics (requires ADMIN_USER_IDS env var)
 (auth)/         → Route group: unauthenticated
   layout.tsx    → Centered layout for auth pages
   login/        → OAuth provider buttons (GitHub, Discord, Google)
-  settings/   → Notification and budget settings
-  api-keys/   → API key management UI
-  stats/      → User statistics page
-  admin/      → Admin statistics (requires ADMIN_USER_IDS env var)
+(docs)/         → Public documentation routes (no auth)
+  api-docs/     → Interactive OpenAPI / Swagger UI
+(legal)/        → Legal pages (no auth)
+  datenschutz/  → Privacy policy (Datenschutzerklärung)
+  impressum/    → Legal notice (Impressum)
 api/
   auth/[...nextauth]/route.ts        → Auth.js v5 handler (GET + POST)
   tasks/route.ts                     → GET (list, ?topicId/type/completed filters), POST (create)
