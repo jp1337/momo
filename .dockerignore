@@ -1,0 +1,37 @@
+# Node modules — reinstalled inside Docker via npm ci
+node_modules
+
+# Next.js build output — rebuilt inside Docker
+.next
+
+# Git metadata
+.git
+.gitignore
+
+# Environment files — secrets must never enter the build context
+.env
+.env.local
+.env.*
+
+# Documentation and local dev artifacts
+docs-site
+coverage
+*.log
+README.md
+CHANGELOG.md
+ROADMAP.md
+
+# Docker files — not needed inside the build context
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# CI/CD and deployment configs
+.github
+deploy
+
+# Editor and OS artifacts
+.DS_Store
+*.pem
+.vscode
+.idea

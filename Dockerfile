@@ -24,7 +24,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install all dependencies (including dev, needed for build)
-RUN npm ci
+# --mount=type=cache persists the npm cache across builds (GHA cache via type=gha)
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # ─── Stage 2: Build ───────────────────────────────────────────────────────────
 FROM base AS builder
@@ -46,7 +48,11 @@ ENV AUTH_SECRET="build-time-placeholder-not-used-in-production"
 ENV DATABASE_URL="postgresql://momo:password@localhost:5432/momo"
 ENV NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-RUN npm run build
+# --mount=type=cache on .next/cache persists the Next.js incremental build cache.
+# On warm cache (no source changes), next build skips unchanged pages — typically
+# cuts build time from ~3 min to ~30-60 s.
+RUN --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
 # ─── Stage 3: Production runner ──────────────────────────────────────────────
 FROM base AS runner
