@@ -14,6 +14,8 @@ Every AI agent working on this codebase **must** follow these guidelines without
 - **Active branch:** `main` (all development happens directly on main)
 - **Language:** TypeScript throughout. No JavaScript files unless absolutely unavoidable.
 - **Package manager:** npm
+- **Feature Roadmap:** `ROADMAP.md` — priorisierte Feature-Ideen und geplante technische Verbesserungen
+- **User Documentation:** GitHub Pages unter `jp1337.github.io/momo` (Jekyll, Quellcode in `docs-site/`)
 
 ---
 
