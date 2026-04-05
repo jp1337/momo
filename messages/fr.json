@@ -271,6 +271,7 @@
     "notif_err_save": "Impossible d'enregistrer l'abonnement",
     "notif_test_sent": "Notification de test envoyée ! Vérifiez votre appareil.",
     "notif_test_failed": "Impossible d'envoyer la notification de test.",
+    "notif_time_saved": "Heure enregistrée.",
     "section_quest_settings": "Paramètres de quête",
     "quest_settings_hint": "Configurez combien de fois vous pouvez changer votre quête quotidienne.",
     "quest_postpone_limit_label": "Reports par jour",

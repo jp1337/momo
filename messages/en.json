@@ -271,6 +271,7 @@
     "notif_err_save": "Failed to save subscription",
     "notif_test_sent": "Test notification sent! Check your device.",
     "notif_test_failed": "Failed to send test notification.",
+    "notif_time_saved": "Time saved.",
     "section_quest_settings": "Quest Settings",
     "quest_settings_hint": "Configure how often you can swap your daily quest.",
     "quest_postpone_limit_label": "Postponements per day",

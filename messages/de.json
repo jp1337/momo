@@ -271,6 +271,7 @@
     "notif_err_save": "Abonnement konnte nicht gespeichert werden",
     "notif_test_sent": "Test-Benachrichtigung gesendet! Überprüfe dein Gerät.",
     "notif_test_failed": "Test-Benachrichtigung konnte nicht gesendet werden.",
+    "notif_time_saved": "Uhrzeit gespeichert.",
     "section_quest_settings": "Quest-Einstellungen",
     "quest_settings_hint": "Lege fest, wie oft du die tägliche Quest pro Tag wechseln kannst.",
     "quest_postpone_limit_label": "Verschiebungen pro Tag",

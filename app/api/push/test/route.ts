@@ -32,6 +32,8 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
       .from(pushSubscriptions)
       .where(eq(pushSubscriptions.userId, user.userId));
 
+    console.log(`[POST /api/push/test] user=${user.userId} subscriptions=${subs.length}`);
+
     if (subs.length === 0) {
       return NextResponse.json(
         { error: "No push subscription found. Enable notifications first." },
@@ -41,6 +43,8 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
 
     let sent = 0;
     for (const row of subs) {
+      const endpoint = (row.subscription as PushSubscriptionData).endpoint;
+      console.log(`[POST /api/push/test] sending to endpoint: ${endpoint.slice(0, 60)}...`);
       await sendPushNotification(user.userId, row.subscription as PushSubscriptionData, {
         title: "Momo test notification",
         body: "Push notifications are working correctly!",
