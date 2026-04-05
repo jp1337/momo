@@ -13,12 +13,12 @@ import { timingSafeEqual } from "@/lib/utils/crypto";
 
 /**
  * Module-level idempotency guard.
- * Prevents duplicate notifications if the cron fires more than once per hour.
- * Key format: "YYYY-MM-DDTHH" (UTC). Resets on pod restart — acceptable for
+ * Prevents duplicate notifications if the cron fires more than once per minute.
+ * Key format: "YYYY-MM-DDTHH:MM" (UTC). Resets on pod restart — acceptable for
  * notifications (at-most-once per instance; for strict cross-replica dedup
  * use a DB lock or Redis).
  */
-let lastRunHour: string | null = null;
+let lastRunMinute: string | null = null;
 
 /**
  * POST — Fan out daily quest notifications to all users with active subscriptions.
@@ -33,13 +33,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Idempotency guard — skip if already ran this UTC hour
+  // Idempotency guard — skip if already ran this UTC minute
   const now = new Date();
-  const currentHour = `${now.toISOString().slice(0, 13)}`; // "YYYY-MM-DDTHH"
-  if (lastRunHour === currentHour) {
-    return NextResponse.json({ message: "Already ran this hour", skipped: true });
+  const currentMinute = now.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
+  if (lastRunMinute === currentMinute) {
+    return NextResponse.json({ message: "Already ran this minute", skipped: true });
   }
-  lastRunHour = currentHour;
+  lastRunMinute = currentMinute;
 
   try {
     const result = await sendDailyQuestNotifications();

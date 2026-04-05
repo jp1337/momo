@@ -83,8 +83,8 @@ services:
         condition: service_healthy
     environment:
       CRON_SECRET: ${CRON_SECRET}
-    # Supercronic-freie Lösung: sleep-Loop der jede Stunde zur vollen Stunde feuert.
-    # Berechnet die Sekunden bis zur nächsten vollen Stunde und schläft dann.
+    # Läuft jede Minute zur vollen Minute — damit funktionieren auch Zeiten wie 06:30.
+    # Der App-seitige Filter matcht EXTRACT(HOUR) + EXTRACT(MINUTE) exakt auf UTC-Zeit.
     entrypoint:
       - sh
       - -c
@@ -92,17 +92,13 @@ services:
         apk add --no-cache -q curl
         while true; do
           now=$$(date +%s)
-          next_hour=$$(( (now / 3600 + 1) * 3600 ))
-          sleep_secs=$$(( next_hour - now ))
-          echo "[cron] Sleeping ${sleep_secs}s until next full hour..."
-          sleep $$sleep_secs
-          echo "[cron] Triggering daily-quest notifications at $$(date -u)"
+          next_min=$$(( (now / 60 + 1) * 60 ))
+          sleep $$(( next_min - now ))
           curl -sf \
             -X POST \
             -H "Authorization: Bearer $${CRON_SECRET}" \
             http://app:3000/api/cron/daily-quest \
-          && echo "[cron] OK" \
-          || echo "[cron] FAILED (non-fatal)"
+          || echo "[cron] FAILED at $$(date -u) (non-fatal)"
         done
 
 # ─── Volumes ──────────────────────────────────────────────────────────────────

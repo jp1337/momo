@@ -175,11 +175,14 @@ export async function sendDailyQuestNotifications(): Promise<{
     return { sent: 0, failed: 0 };
   }
 
-  // Match users whose notification_time falls in the current UTC hour
-  const currentHour = new Date().getUTCHours();
+  // Match users whose notification_time matches the current UTC hour AND minute exactly.
+  // The cron runs every minute so any HH:MM time set by the user works correctly.
+  const now = new Date();
+  const currentHour = now.getUTCHours();
+  const currentMinute = now.getUTCMinutes();
 
-  // Fetch all users with notifications enabled and a push subscription
-  // whose notification hour matches the current UTC hour
+  // Fetch all users with notifications enabled, a push subscription,
+  // and a notification_time matching the current UTC HH:MM
   const eligibleUsers = await db
     .select({
       id: users.id,
@@ -190,7 +193,8 @@ export async function sendDailyQuestNotifications(): Promise<{
       and(
         eq(users.notificationEnabled, true),
         isNotNull(users.pushSubscription),
-        sql`EXTRACT(HOUR FROM ${users.notificationTime}) = ${currentHour}`
+        sql`EXTRACT(HOUR FROM ${users.notificationTime}) = ${currentHour}`,
+        sql`EXTRACT(MINUTE FROM ${users.notificationTime}) = ${currentMinute}`
       )
     );
 
