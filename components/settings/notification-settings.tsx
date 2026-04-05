@@ -172,6 +172,7 @@ export function NotificationSettings({
 
       // Step 4: Serialize and send to server
       const subscriptionJSON = subscription.toJSON();
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       const res = await fetch("/api/push/subscribe", {
         method: "POST",
@@ -182,6 +183,7 @@ export function NotificationSettings({
             keys: subscriptionJSON.keys,
           },
           notificationTime,
+          timezone,
         }),
       });
 
@@ -209,13 +211,24 @@ export function NotificationSettings({
     }
   }
 
-  /** Disables notifications and removes the push subscription from the server. */
+  /** Disables notifications for this device only and removes its subscription from the server. */
   async function handleDisable() {
     setIsSaving(true);
     setMessage(null);
 
     try {
-      const res = await fetch("/api/push/subscribe", { method: "DELETE" });
+      // Get the current device's push subscription so we only unsubscribe this device
+      const registration = await navigator.serviceWorker.ready;
+      const sub = await registration.pushManager.getSubscription();
+      if (sub) {
+        await sub.unsubscribe();
+      }
+
+      const res = await fetch("/api/push/subscribe", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint: sub?.endpoint ?? "" }),
+      });
 
       if (!res.ok) {
         const data = await res.json() as { error?: string };
@@ -243,10 +256,11 @@ export function NotificationSettings({
     if (status !== "active") return;
 
     try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const res = await fetch("/api/push/subscribe", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationTime: newTime }),
+        body: JSON.stringify({ notificationTime: newTime, timezone }),
       });
       if (!res.ok) {
         const data = await res.json() as { error?: string };

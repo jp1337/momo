@@ -1,20 +1,29 @@
 /**
  * POST /api/push/subscribe
- * Saves the user's push subscription to the DB and enables notifications.
+ * Registers or updates the push subscription for the current device.
+ * Upserts by endpoint — calling this from the same device twice is safe.
  * Requires: authentication
- * Body: { subscription: PushSubscriptionJSON, notificationTime?: string }
+ * Body: { subscription: PushSubscriptionJSON, notificationTime?: string, timezone?: string }
+ * Returns: { success: true }
+ *
+ * PATCH /api/push/subscribe
+ * Updates the notification time (and optionally timezone) for the user.
+ * Does not require a push subscription object.
+ * Requires: authentication
+ * Body: { notificationTime: string, timezone?: string }
  * Returns: { success: true }
  *
  * DELETE /api/push/subscribe
- * Removes the push subscription and disables notifications for the current user.
+ * Removes the push subscription for the current device only.
  * Requires: authentication
+ * Body: { endpoint: string }
  * Returns: { success: true }
  */
 
 import { resolveApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { users, pushSubscriptions } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -30,22 +39,24 @@ const pushSubscriptionSchema = z.object({
 /** Zod schema for the POST request body */
 const subscribeBodySchema = z.object({
   subscription: pushSubscriptionSchema,
-  /** Preferred notification time in HH:MM or HH:MM:SS 24h format (PostgreSQL returns HH:MM:SS) */
+  /** Preferred notification time in HH:MM or HH:MM:SS 24h format */
   notificationTime: z
     .string()
     .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
     .transform((v) => v.slice(0, 5))
     .optional(),
+  /** IANA timezone identifier (e.g. "Europe/Berlin") */
+  timezone: z.string().min(1).max(64).optional(),
 });
 
 /**
- * POST — Save push subscription + enable notifications for the current user.
+ * POST — Register or refresh the push subscription for the current device.
+ * Upserts by endpoint so calling this from the same browser twice is safe.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return NextResponse.json({ error: "Forbidden", message: "This API key is read-only. Use a read-write key to modify data." }, { status: 403 });
-
 
   let body: unknown;
   try {
@@ -62,7 +73,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const { subscription, notificationTime } = parsed.data;
+  const { subscription, notificationTime, timezone } = parsed.data;
 
   // Validate endpoint is a legitimate push service URL (prevent SSRF)
   const allowedPushHosts = [
@@ -90,12 +101,26 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    // Upsert the device subscription by endpoint (unique key per browser/device)
+    await db
+      .insert(pushSubscriptions)
+      .values({
+        userId: user.userId,
+        endpoint: subscription.endpoint,
+        subscription,
+      })
+      .onConflictDoUpdate({
+        target: pushSubscriptions.endpoint,
+        set: { subscription, userId: user.userId },
+      });
+
+    // Mark the user as having notifications enabled, and update preferences if provided
     await db
       .update(users)
       .set({
-        pushSubscription: subscription,
         notificationEnabled: true,
         ...(notificationTime ? { notificationTime } : {}),
+        ...(timezone ? { timezone } : {}),
       })
       .where(eq(users.id, user.userId));
 
@@ -110,11 +135,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 }
 
 /**
- * PATCH /api/push/subscribe
- * Updates only the notification time for the current user without touching the push subscription.
- * Requires: authentication
- * Body: { notificationTime: string } in HH:MM format
- * Returns: { success: true }
+ * PATCH — Update notification time and/or timezone without touching subscriptions.
  */
 export async function PATCH(req: NextRequest): Promise<NextResponse> {
   const user = await resolveApiUser(req);
@@ -133,6 +154,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
       .string()
       .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
       .transform((v) => v.slice(0, 5)),
+    timezone: z.string().min(1).max(64).optional(),
   }).safeParse(body);
 
   if (!parsed.success) {
@@ -145,7 +167,10 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   try {
     await db
       .update(users)
-      .set({ notificationTime: parsed.data.notificationTime })
+      .set({
+        notificationTime: parsed.data.notificationTime,
+        ...(parsed.data.timezone ? { timezone: parsed.data.timezone } : {}),
+      })
       .where(eq(users.id, user.userId));
 
     return NextResponse.json({ success: true });
@@ -156,21 +181,50 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
 }
 
 /**
- * DELETE — Remove push subscription and disable notifications for the current user.
+ * DELETE — Remove the push subscription for the current device only.
+ * Other devices belonging to the same user are not affected.
+ * Body: { endpoint: string }
  */
-export async function DELETE(request: Request): Promise<NextResponse> {
-  const user = await resolveApiUser(request);
+export async function DELETE(req: NextRequest): Promise<NextResponse> {
+  const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return NextResponse.json({ error: "Forbidden", message: "This API key is read-only. Use a read-write key to modify data." }, { status: 403 });
 
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = z.object({ endpoint: z.string().url() }).safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request body: endpoint required" }, { status: 422 });
+  }
+
   try {
     await db
-      .update(users)
-      .set({
-        pushSubscription: null,
-        notificationEnabled: false,
-      })
-      .where(eq(users.id, user.userId));
+      .delete(pushSubscriptions)
+      .where(
+        and(
+          eq(pushSubscriptions.userId, user.userId),
+          eq(pushSubscriptions.endpoint, parsed.data.endpoint)
+        )
+      );
+
+    // If the user has no subscriptions left, mark notifications as disabled
+    const remaining = await db
+      .select({ id: pushSubscriptions.id })
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, user.userId))
+      .limit(1);
+
+    if (remaining.length === 0) {
+      await db
+        .update(users)
+        .set({ notificationEnabled: false })
+        .where(eq(users.id, user.userId));
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

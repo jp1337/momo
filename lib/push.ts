@@ -17,8 +17,8 @@
 
 import webpush from "web-push";
 import { db } from "@/lib/db";
-import { users, taskCompletions } from "@/lib/db/schema";
-import { eq, and, isNotNull, gt, gte, sql } from "drizzle-orm";
+import { users, pushSubscriptions, taskCompletions } from "@/lib/db/schema";
+import { eq, and, gt, gte, sql } from "drizzle-orm";
 import { serverEnv } from "@/lib/env";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -135,13 +135,22 @@ export async function sendPushNotification(
         userId,
         "— removing from DB"
       );
+      // Remove only this specific device subscription
       await db
-        .update(users)
-        .set({
-          pushSubscription: null,
-          notificationEnabled: false,
-        })
-        .where(eq(users.id, userId));
+        .delete(pushSubscriptions)
+        .where(eq(pushSubscriptions.endpoint, subscription.endpoint));
+      // If no subscriptions remain, disable notifications for the user
+      const remaining = await db
+        .select({ id: pushSubscriptions.id })
+        .from(pushSubscriptions)
+        .where(eq(pushSubscriptions.userId, userId))
+        .limit(1);
+      if (remaining.length === 0) {
+        await db
+          .update(users)
+          .set({ notificationEnabled: false })
+          .where(eq(users.id, userId));
+      }
       return;
     }
     // Re-throw all other errors so callers can count failures
@@ -152,17 +161,15 @@ export async function sendPushNotification(
 // ─── Fan-out helpers ──────────────────────────────────────────────────────────
 
 /**
- * Sends the daily quest notification to all eligible users whose notification_time
- * falls within the current UTC hour (e.g. cron runs at 08:00 UTC → sends to all
- * users with notification_time between 08:00 and 08:59).
+ * Sends the daily quest notification to all eligible device subscriptions whose
+ * notification_time (in the user's local timezone) falls within the current
+ * 5-minute bucket. Each user may have multiple devices — all are notified.
  *
- * Eligible users must have:
+ * Eligible subscriptions must belong to a user with:
  *  - notification_enabled = true
- *  - push_subscription set (non-null)
- *  - notification_time hour matching the current UTC hour
+ *  - notification_time matching the current local time (in the user's timezone)
  *
- * The cron must be scheduled to run every full hour (e.g. "0 * * * *").
- * Called by the POST /api/cron/daily-quest route.
+ * The cron runs every 5 minutes. Called by POST /api/cron/daily-quest.
  *
  * @returns Object with sent and failed counts
  */
@@ -175,36 +182,34 @@ export async function sendDailyQuestNotifications(): Promise<{
     return { sent: 0, failed: 0 };
   }
 
-  // Match users whose notification_time falls within the current 5-minute UTC bucket.
-  // Cron runs every 5 minutes, so a user who sets 06:30 is reached by the 06:30 run.
-  // Bucket formula: FLOOR(minute / 5) — e.g. minutes 30–34 all map to bucket 6.
-  const now = new Date();
-  const currentHour = now.getUTCHours();
-  const currentBucket = Math.floor(now.getUTCMinutes() / 5);
-
-  const eligibleUsers = await db
+  // Match subscriptions whose user's notification_time falls in the current 5-minute
+  // bucket, evaluated in the user's own timezone (COALESCE to UTC if unset).
+  // This ensures "08:00" means 08:00 local time, not 08:00 UTC.
+  const eligibleSubscriptions = await db
     .select({
-      id: users.id,
-      pushSubscription: users.pushSubscription,
+      userId: pushSubscriptions.userId,
+      subscription: pushSubscriptions.subscription,
     })
-    .from(users)
+    .from(pushSubscriptions)
+    .innerJoin(users, eq(pushSubscriptions.userId, users.id))
     .where(
       and(
         eq(users.notificationEnabled, true),
-        isNotNull(users.pushSubscription),
-        sql`EXTRACT(HOUR FROM ${users.notificationTime}) = ${currentHour}`,
-        sql`FLOOR(EXTRACT(MINUTE FROM ${users.notificationTime}) / 5) = ${currentBucket}`
+        sql`EXTRACT(HOUR FROM ${users.notificationTime})
+            = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
+        sql`FLOOR(EXTRACT(MINUTE FROM ${users.notificationTime}) / 5)
+            = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
       )
     );
 
   let sent = 0;
   let failed = 0;
 
-  for (const user of eligibleUsers) {
+  for (const row of eligibleSubscriptions) {
     try {
-      const subscription = user.pushSubscription as PushSubscriptionData;
+      const subscription = row.subscription as PushSubscriptionData;
 
-      await sendPushNotification(user.id, subscription, {
+      await sendPushNotification(row.userId, subscription, {
         title: "Your daily quest awaits",
         body: "Open Momo to see today's mission. One small step forward.",
         icon: "/icon-192.png",
@@ -214,7 +219,7 @@ export async function sendDailyQuestNotifications(): Promise<{
 
       sent++;
     } catch (err) {
-      console.error("[push] Failed to send daily quest notification to", user.id, err);
+      console.error("[push] Failed to send daily quest notification to", row.userId, err);
       failed++;
     }
   }
