@@ -12,6 +12,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getTopicById } from "@/lib/topics";
 import { TopicDetailView } from "@/components/topics/topic-detail-view";
+import { TopicDetailActions } from "@/components/topics/topic-detail-actions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { resolveTopicIcon } from "@/lib/topic-icons";
 import { getTranslations } from "next-intl/server";
@@ -109,7 +110,7 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
               }}
             />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1
               className="text-2xl font-semibold"
               style={{
@@ -131,6 +132,16 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
               </p>
             )}
           </div>
+          <TopicDetailActions
+            topic={{
+              id: topic.id,
+              title: topic.title,
+              description: topic.description ?? null,
+              color: topic.color ?? null,
+              icon: topic.icon ?? null,
+              priority: topic.priority,
+            }}
+          />
         </div>
 
         {/* Progress bar */}
