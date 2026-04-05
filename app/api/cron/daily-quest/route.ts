@@ -12,6 +12,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "@/lib/utils/crypto";
 import { db } from "@/lib/db";
 import { cronRuns } from "@/lib/db/schema";
+import { lt, eq, and } from "drizzle-orm";
+
+/** Retain cron run history for this many days — older rows are pruned after each run. */
+const CRON_RETENTION_DAYS = 30;
 
 /**
  * Module-level idempotency guard.
@@ -54,6 +58,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       failed: result.failed,
       durationMs,
     });
+
+    // Prune rows older than CRON_RETENTION_DAYS to keep the table small
+    const cutoff = new Date(Date.now() - CRON_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    await db.delete(cronRuns)
+      .where(and(eq(cronRuns.name, "daily-quest"), lt(cronRuns.ranAt, cutoff)))
+      .catch(() => { /* non-critical */ });
 
     return NextResponse.json({ ...result, durationMs });
   } catch (err) {
