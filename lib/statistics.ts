@@ -432,21 +432,39 @@ export async function getAdminStatistics(): Promise<AdminStatistics> {
       .from(users)
       .where(gte(users.createdAt, thirtyDaysAgo)),
 
-    // Active users last 7 days (distinct userId with completions)
+    // Active users last 7 days: registered OR completed at least one task in the window
     db
       .select({
-        total: sql<number>`COUNT(DISTINCT ${taskCompletions.userId})`,
+        total: sql<number>`COUNT(DISTINCT ${users.id})`,
       })
-      .from(taskCompletions)
-      .where(gte(taskCompletions.completedAt, sevenDaysAgo)),
+      .from(users)
+      .leftJoin(
+        taskCompletions,
+        and(
+          eq(taskCompletions.userId, users.id),
+          gte(taskCompletions.completedAt, sevenDaysAgo)
+        )
+      )
+      .where(
+        sql`${users.createdAt} >= ${sevenDaysAgo} OR ${taskCompletions.id} IS NOT NULL`
+      ),
 
-    // Active users last 30 days (distinct userId with completions)
+    // Active users last 30 days: registered OR completed at least one task in the window
     db
       .select({
-        total: sql<number>`COUNT(DISTINCT ${taskCompletions.userId})`,
+        total: sql<number>`COUNT(DISTINCT ${users.id})`,
       })
-      .from(taskCompletions)
-      .where(gte(taskCompletions.completedAt, thirtyDaysAgo)),
+      .from(users)
+      .leftJoin(
+        taskCompletions,
+        and(
+          eq(taskCompletions.userId, users.id),
+          gte(taskCompletions.completedAt, thirtyDaysAgo)
+        )
+      )
+      .where(
+        sql`${users.createdAt} >= ${thirtyDaysAgo} OR ${taskCompletions.id} IS NOT NULL`
+      ),
 
     // Users by OAuth provider
     db
