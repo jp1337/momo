@@ -75,7 +75,7 @@ services:
 
   # ─── Cron — stündlicher Push-Notifier ──────────────────────────────────────
   cron:
-    image: curlimages/curl:8.7.1
+    image: alpine:3.21
     container_name: momo-cron
     restart: unless-stopped
     depends_on:
@@ -89,6 +89,7 @@ services:
       - sh
       - -c
       - |
+        apk add --no-cache -q curl
         while true; do
           now=$$(date +%s)
           next_hour=$$(( (now / 3600 + 1) * 3600 ))
