@@ -48,7 +48,7 @@ export default async function AppLayout({
   })();
 
   return (
-    <div className="flex flex-col h-dvh" style={{ backgroundColor: "var(--bg-primary)" }}>
+    <div className="flex flex-col h-dvh overflow-hidden" style={{ backgroundColor: "var(--bg-primary)" }}>
       {/* Top navigation */}
       <Navbar
         userName={user.name}
