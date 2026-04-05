@@ -9,6 +9,13 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 | Feature | Kategorie | Aufwand | Notizen |
 |---------|-----------|---------|---------|
 | Google Auth auf Live-Version | Technisch | XS | `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` in Prod-Env setzen |
+| Microsoft Sign In | Auth | S | Auth.js `AzureAD`-Provider; braucht App-Registrierung in Azure |
+| Apple Sign In | Auth | M | Auth.js `Apple`-Provider; erfordert Apple Developer Account (99 $/Jahr) |
+| Passkeys (WebAuthn) | Auth | M | `@simplewebauthn`-Adapter für Auth.js; keine externen Provider nötig |
+| E-Mail-Benachrichtigungen | Notifications | M | Resend oder SMTP; täglicher Quest-Reminder + Streak-Warnung |
+| ntfy.sh Integration | Notifications | S | URL-basierte Push-Benachrichtigungen; gut für Selfhoster |
+| Pushover Integration | Notifications | S | API Token + User Key in Settings; sofortige Push-Alerts |
+| Telegram-Bot | Notifications | M | Bot Token + Chat ID in Settings; Benachrichtigungen + ggf. Task-Eingabe |
 | Push-Benachrichtigungen debuggen | Technisch | S | Daily Quest Reminder kommt nicht an; VAPID / Service Worker prüfen |
 | Alexa Skill | User + Technisch | L | Account Linking via API Key; `POST /api/tasks` aus Lambda |
 
@@ -54,6 +61,20 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 - **Automatisierte Tests** — Integrationstests für `completeTask`, `selectDailyQuest`, `updateStreak` mit echter Test-DB
 - **Error-Tracking** — Sentry oder Axiom in Prod; aktuell läuft alles ohne Fehler-Visibility
 - **Database Backups** — automatisches `pg_dump` mit Retention in Docker Compose / K8s
+
+### Authentifizierung erweitern
+
+- **Passkeys (WebAuthn)** — passwordloser Login ohne externen Provider; Auth.js hat `@simplewebauthn`-Adapter; ideal für PWA-Nutzer
+- **Microsoft / Azure AD** — Auth.js `AzureAD`-Provider; relevant für Windows/Office-Nutzer; geringer Aufwand
+- **Apple Sign In** — Auth.js `Apple`-Provider; wichtig für iOS/macOS-Nutzer; erfordert Apple Developer Account
+
+### Benachrichtigungen erweitern
+
+- **E-Mail-Benachrichtigungen** — Tagesquest-Reminder, Streak-Warnung per E-Mail; via Resend oder SMTP; konfigurierbar in Settings
+- **ntfy.sh** — Self-hosted Push via ntfy.sh-Topic-URL; kein App-Account nötig; ideal für Power-User & Selfhosters
+- **Pushover** — Push-Benachrichtigungen via Pushover API; einfache Integration über `PUSHOVER_USER_KEY` + `PUSHOVER_APP_TOKEN`
+- **Telegram-Bot** — Benachrichtigungen + ggf. Task-Eingabe per Telegram-Bot (`/addtask Zahnarzt`); via Bot Token + Chat ID
+- **Webhook / Custom HTTP** — generischer Outbound-Webhook bei konfigurierbaren Events (Quest bereit, Streak-Warnung, etc.)
 
 ### Erweiterbarkeit
 
