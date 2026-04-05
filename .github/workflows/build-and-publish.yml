@@ -197,3 +197,18 @@ jobs:
           docker buildx imagetools create \
             $(jq -cr '.tags | map(select(startswith("quay.io")) | "-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf 'ghcr.io/jp1337/momo@sha256:%s ' *)
+
+  # After the multi-arch manifest is published, trigger an immediate Watchtower update
+  # on the intranet server so the new :latest image is rolled out without waiting for
+  # the nightly schedule. Runs only on main-branch pushes (where :latest is updated).
+  deploy:
+    needs: [merge]
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, intranet]
+    permissions: {}
+    steps:
+      - name: Trigger Watchtower update
+        run: |
+          curl -sf \
+            -H "Authorization: Bearer ${{ secrets.WATCHTOWER_API_TOKEN }}" \
+            "http://watchtower:8085/v1/update?image=ghcr.io/jp1337/momo"
