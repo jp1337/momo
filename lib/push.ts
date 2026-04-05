@@ -228,11 +228,11 @@ export async function sendDailyQuestNotifications(): Promise<{
 }
 
 /**
- * Sends streak reminder notifications to users who are at risk of losing their streak.
+ * Sends streak reminder notifications to all devices of users who are at risk
+ * of losing their streak.
  *
- * Eligible users must have:
+ * Eligible subscriptions belong to users with:
  *  - notification_enabled = true
- *  - push_subscription set
  *  - streak_current > 0
  *  - No task completion recorded today
  *
@@ -253,18 +253,18 @@ export async function sendStreakReminders(): Promise<{
   const todayStart = new Date();
   todayStart.setUTCHours(0, 0, 0, 0);
 
-  // Fetch users with active streaks and notifications enabled
-  const eligibleUsers = await db
+  // Fetch all subscriptions for users with active streaks and notifications enabled
+  const eligibleSubscriptions = await db
     .select({
-      id: users.id,
-      pushSubscription: users.pushSubscription,
+      userId: pushSubscriptions.userId,
+      subscription: pushSubscriptions.subscription,
       streakCurrent: users.streakCurrent,
     })
-    .from(users)
+    .from(pushSubscriptions)
+    .innerJoin(users, eq(pushSubscriptions.userId, users.id))
     .where(
       and(
         eq(users.notificationEnabled, true),
-        isNotNull(users.pushSubscription),
         gt(users.streakCurrent, 0)
       )
     );
@@ -272,29 +272,24 @@ export async function sendStreakReminders(): Promise<{
   let sent = 0;
   let failed = 0;
 
-  for (const user of eligibleUsers) {
+  for (const row of eligibleSubscriptions) {
     try {
-      // Check whether the user has already completed a task today — filter in DB
+      // Check whether the user has already completed a task today
       const completionsToday = await db
         .select({ id: taskCompletions.id })
         .from(taskCompletions)
         .where(
           and(
-            eq(taskCompletions.userId, user.id),
+            eq(taskCompletions.userId, row.userId),
             gte(taskCompletions.completedAt, todayStart)
           )
         )
         .limit(1);
 
-      // Skip if they've already done something today
-      const hasCompletedToday = completionsToday.length > 0;
+      if (completionsToday.length > 0) continue;
 
-      if (hasCompletedToday) continue;
-
-      const subscription = user.pushSubscription as PushSubscriptionData;
-
-      await sendPushNotification(user.id, subscription, {
-        title: `Keep your ${user.streakCurrent}-day streak alive!`,
+      await sendPushNotification(row.userId, row.subscription as PushSubscriptionData, {
+        title: `Keep your ${row.streakCurrent}-day streak alive!`,
         body: "You haven't completed a task today yet. Don't let your streak slip.",
         icon: "/icon-192.png",
         url: "/dashboard",
@@ -303,7 +298,7 @@ export async function sendStreakReminders(): Promise<{
 
       sent++;
     } catch (err) {
-      console.error("[push] Failed to send streak reminder to", user.id, err);
+      console.error("[push] Failed to send streak reminder to", row.userId, err);
       failed++;
     }
   }
