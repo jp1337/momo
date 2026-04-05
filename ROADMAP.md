@@ -8,7 +8,6 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 | Feature | Kategorie | Aufwand | Notizen |
 |---------|-----------|---------|---------|
-| Google Auth auf Live-Version | Technisch | XS | `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` in Prod-Env setzen |
 | Microsoft Sign In | Auth | S | Auth.js `AzureAD`-Provider; braucht App-Registrierung in Azure |
 | Apple Sign In | Auth | M | Auth.js `Apple`-Provider; erfordert Apple Developer Account (99 $/Jahr) |
 | Passkeys (WebAuthn) | Auth | M | `@simplewebauthn`-Adapter für Auth.js; keine externen Provider nötig |
@@ -53,7 +52,6 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ### Akut / Geplant
 
-- **Google Auth auf Live** — Auth.js config ist vorbereitet; braucht nur Prod-Credentials
 - **Push-Benachrichtigungen fixen** — Daily Quest Reminder debuggen (VAPID, Service Worker, Subscription-Persistenz)
 
 ### Stabilität
