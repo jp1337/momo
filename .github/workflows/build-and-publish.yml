@@ -209,6 +209,6 @@ jobs:
     steps:
       - name: Trigger Watchtower update
         run: |
-          curl -sf \
+          curl -sf -X POST \
             -H "Authorization: Bearer ${{ secrets.WATCHTOWER_API_TOKEN }}" \
             "http://watchtower:8085/v1/update?image=ghcr.io/jp1337/momo"
