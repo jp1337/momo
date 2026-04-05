@@ -257,7 +257,7 @@ export function TaskItem({
             />
           ) : (
             <span
-              className="text-sm task-text transition-all duration-200 cursor-text truncate min-w-0 flex-1"
+              className="text-sm task-text transition-all duration-200 cursor-text min-w-0 flex-1"
               title={title}
               onDoubleClick={handleTitleDoubleClick}
               style={{
