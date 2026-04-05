@@ -234,7 +234,7 @@ Maintain a `CHANGELOG.md` in the root. Add an entry for every commit that touche
 - Dark and light mode must both work correctly for every new component
 - Responsive design is mandatory: test at 375px (mobile) and 1280px (desktop) minimum
 - Animations via Framer Motion for complex interactions, CSS-only for simple hover/focus states
-- Font usage: `--font-display` (Lora) for headings, `--font-body` (JetBrains Mono) for task text, `--font-ui` (DM Sans) for UI elements
+- Font usage: `--font-display` (Lora) for page-level headings (h1/h2), `--font-body` (JetBrains Mono) for all card/item titles (tasks, topics, wishlist — must be consistent across all three), `--font-ui` (DM Sans) for UI elements (labels, badges, buttons, metadata)
 
 ---
 

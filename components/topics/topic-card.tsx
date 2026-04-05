@@ -107,7 +107,7 @@ export function TopicCard({
           <h3
             className="text-base font-semibold truncate"
             style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
+              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
               color: "var(--text-primary)",
             }}
           >

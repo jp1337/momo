@@ -485,6 +485,9 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               onInlineEdit={handleInlineEdit}
               onPromote={handlePromote}
               onGoToTopic={handleGoToTopic}
+              postponeCount={task.postponeCount}
+              estimatedMinutes={task.estimatedMinutes}
+              onBreakdown={handleBreakdown}
             />
           );
         })}
@@ -516,6 +519,9 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               onInlineEdit={handleInlineEdit}
               onPromote={handlePromote}
               onGoToTopic={handleGoToTopic}
+              postponeCount={task.postponeCount}
+              estimatedMinutes={task.estimatedMinutes}
+              onBreakdown={handleBreakdown}
             />
           );
         })}
@@ -547,6 +553,9 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               onInlineEdit={handleInlineEdit}
               onPromote={handlePromote}
               onGoToTopic={handleGoToTopic}
+              postponeCount={task.postponeCount}
+              estimatedMinutes={task.estimatedMinutes}
+              onBreakdown={handleBreakdown}
             />
           );
         })}
