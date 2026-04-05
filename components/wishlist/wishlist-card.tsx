@@ -34,6 +34,7 @@ interface WishlistCardProps {
   onBuy: (id: string) => void;
   onUnbuy: (id: string) => void;
   onDiscard: (id: string) => void;
+  onUndiscard: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }
@@ -73,6 +74,7 @@ export function WishlistCard({
   onBuy,
   onUnbuy,
   onDiscard,
+  onUndiscard,
   onEdit,
   onDelete,
 }: WishlistCardProps) {
@@ -285,54 +287,68 @@ export function WishlistCard({
       )}
 
       {/* Action buttons — always visible for touch and desktop accessibility */}
-      {!isDiscarded && (
-        <div className="flex items-center gap-2 pt-1">
-          {isOpen && (
-            <>
-              <button
-                onClick={() => handleAction(() => onBuy(id))}
-                disabled={isLoading}
-                className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  backgroundColor: "rgba(74,140,92,0.15)",
-                  color: "var(--accent-green)",
-                  border: "1px solid rgba(74,140,92,0.3)",
-                  cursor: isLoading ? "not-allowed" : "pointer",
-                }}
-              >
-                {t("card_btn_bought")}
-              </button>
-              <button
-                onClick={() => handleAction(() => onDiscard(id))}
-                disabled={isLoading}
-                className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  backgroundColor: "rgba(122,144,127,0.1)",
-                  color: "var(--text-muted)",
-                  border: "1px solid var(--border)",
-                  cursor: isLoading ? "not-allowed" : "pointer",
-                }}
-              >
-                {t("card_btn_discard")}
-              </button>
-              <button
-                onClick={() => onEdit(id)}
-                className="text-xs px-2.5 py-1 rounded-lg transition-colors"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: "var(--text-muted)",
-                  border: "1px solid var(--border)",
-                }}
-              >
-                {t("card_btn_edit")}
-              </button>
-            </>
-          )}
-          {isBought && (
+      <div className="flex items-center gap-2 pt-1 flex-wrap">
+        {isOpen && (
+          <>
             <button
-              onClick={() => handleAction(() => onUnbuy(id))}
+              onClick={() => handleAction(() => onBuy(id))}
+              disabled={isLoading}
+              className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                backgroundColor: "rgba(74,140,92,0.15)",
+                color: "var(--accent-green)",
+                border: "1px solid rgba(74,140,92,0.3)",
+                cursor: isLoading ? "not-allowed" : "pointer",
+              }}
+            >
+              {t("card_btn_bought")}
+            </button>
+            <button
+              onClick={() => handleAction(() => onDiscard(id))}
+              disabled={isLoading}
+              className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                backgroundColor: "rgba(122,144,127,0.1)",
+                color: "var(--text-muted)",
+                border: "1px solid var(--border)",
+                cursor: isLoading ? "not-allowed" : "pointer",
+              }}
+            >
+              {t("card_btn_discard")}
+            </button>
+            {/* Edit — icon button, consistent with task/topic pages */}
+            <button
+              onClick={() => onEdit(id)}
+              className="p-1.5 rounded-lg transition-colors"
+              style={{ color: "var(--text-muted)" }}
+              aria-label={t("card_btn_edit")}
+              title={t("card_btn_edit")}
+            >
+              ✎
+            </button>
+          </>
+        )}
+        {isBought && (
+          <button
+            onClick={() => handleAction(() => onUnbuy(id))}
+            disabled={isLoading}
+            className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+              border: "1px solid var(--border)",
+              cursor: isLoading ? "not-allowed" : "pointer",
+            }}
+          >
+            {t("card_btn_undo")}
+          </button>
+        )}
+        {isDiscarded && (
+          <>
+            <button
+              onClick={() => handleAction(() => onUndiscard(id))}
               disabled={isLoading}
               className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
               style={{
@@ -342,31 +358,25 @@ export function WishlistCard({
                 cursor: isLoading ? "not-allowed" : "pointer",
               }}
             >
-              {t("card_btn_undo")}
+              {t("card_btn_restore")}
             </button>
-          )}
-        </div>
-      )}
-
-      {/* Delete button for discarded items — always visible */}
-      {isDiscarded && (
-        <div className="flex items-center gap-2 pt-1">
-          <button
-            onClick={() => handleAction(() => onDelete(id))}
-            disabled={isLoading}
-            className="text-xs px-2.5 py-1 rounded-lg transition-colors"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--accent-red)",
-              border: "1px solid rgba(184,84,80,0.3)",
-              backgroundColor: "rgba(184,84,80,0.08)",
-              cursor: isLoading ? "not-allowed" : "pointer",
-            }}
-          >
-            {t("card_btn_delete")}
-          </button>
-        </div>
-      )}
+            {/* Delete — icon button, consistent with task/topic pages */}
+            <button
+              onClick={() => handleAction(() => onDelete(id))}
+              disabled={isLoading}
+              className="p-1.5 rounded-lg transition-colors"
+              style={{
+                color: "var(--accent-red)",
+                cursor: isLoading ? "not-allowed" : "pointer",
+              }}
+              aria-label={t("card_btn_delete")}
+              title={t("card_btn_delete")}
+            >
+              ✕
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

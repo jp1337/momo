@@ -101,6 +101,16 @@ export function WishlistView({
     }
   };
 
+  /** Restore a discarded item back to OPEN */
+  const handleUndiscard = async (id: string) => {
+    try {
+      await fetch(`/api/wishlist/${id}/discard`, { method: "DELETE" });
+      await refresh();
+    } catch {
+      // no-op
+    }
+  };
+
   /** Mark an item as discarded */
   const handleDiscard = async (id: string) => {
     try {
@@ -247,6 +257,7 @@ export function WishlistView({
               onBuy={handleBuy}
               onUnbuy={handleUnbuy}
               onDiscard={handleDiscard}
+              onUndiscard={handleUndiscard}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
@@ -300,6 +311,7 @@ export function WishlistView({
                   onBuy={handleBuy}
                   onUnbuy={handleUnbuy}
                   onDiscard={handleDiscard}
+                  onUndiscard={handleUndiscard}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />

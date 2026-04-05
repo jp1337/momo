@@ -209,6 +209,7 @@
     "card_btn_discard": "× Discard",
     "card_btn_edit": "✎ Edit",
     "card_btn_undo": "↩ Undo",
+    "card_btn_restore": "↩ Restore",
     "card_btn_delete": "Delete permanently",
     "form_title_edit": "Edit Wishlist Item",
     "form_title_new": "Add to Wishlist",

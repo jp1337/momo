@@ -237,6 +237,39 @@ export async function discardWishlistItem(
 }
 
 /**
+ * Restores a DISCARDED wishlist item back to OPEN status (undo discard).
+ *
+ * @param itemId - The wishlist item's UUID
+ * @param userId - The authenticated user's UUID
+ * @returns The updated wishlist item
+ * @throws Error if item not found, not owned by user, or not in DISCARDED status
+ */
+export async function restoreWishlistItem(
+  itemId: string,
+  userId: string
+): Promise<WishlistItem> {
+  const existing = await getWishlistItemById(itemId, userId);
+  if (!existing) {
+    throw new Error("Wishlist item not found or access denied");
+  }
+  if (existing.status !== "DISCARDED") {
+    throw new Error("Wishlist item is not discarded");
+  }
+
+  const rows = await db
+    .update(wishlistItems)
+    .set({ status: "OPEN" })
+    .where(and(eq(wishlistItems.id, itemId), eq(wishlistItems.userId, userId)))
+    .returning();
+
+  if (!rows[0]) {
+    throw new Error("Wishlist item not found or access denied");
+  }
+
+  return rows[0];
+}
+
+/**
  * Permanently deletes a wishlist item.
  * Recommended only for DISCARDED items, but not enforced at this layer
  * (the API route should guard this).
