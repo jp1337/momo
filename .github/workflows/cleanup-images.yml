@@ -93,8 +93,10 @@ jobs:
           set -euo pipefail
           KEEP=10
 
-          # Quay.io REST API uses Basic auth (base64(username:token)),
-          # same credentials as docker login — not a Bearer/OAuth token.
+          # Use the Quay.io REST API with Basic auth only for listing (read-only).
+          # Quay.io blocks Basic auth + CSRF-free DELETE via REST API for robot accounts.
+          # Deletion is done via skopeo (registry protocol) which avoids CSRF entirely
+          # and works with the same robot account credentials as docker login.
           QUAY_BASIC=$(echo -n "${QUAY_USERNAME}:${QUAY_TOKEN}" | base64 -w 0)
 
           # Collect all sha- tags sorted newest-first (has_additional pagination)
@@ -114,14 +116,13 @@ jobs:
           for i in "${!SHA_TAGS[@]}"; do
             [[ $i -lt $KEEP ]] && continue
             tag="${SHA_TAGS[$i]}"
-            HTTP_CODE=$(curl -s -o /tmp/quay_resp -w "%{http_code}" -X DELETE \
-              "https://quay.io/api/v1/repository/jp1337/momo/tag/${tag}" \
-              -H "Authorization: Basic ${QUAY_BASIC}")
-            if [[ "${HTTP_CODE}" =~ ^2 ]]; then
-              echo "Deleted Quay.io: ${tag} (HTTP ${HTTP_CODE})"
+            if skopeo delete \
+              --creds "${QUAY_USERNAME}:${QUAY_TOKEN}" \
+              "docker://quay.io/jp1337/momo:${tag}"; then
+              echo "Deleted Quay.io: ${tag}"
               DELETED=$((DELETED + 1))
             else
-              echo "Failed to delete Quay.io: ${tag} (HTTP ${HTTP_CODE}: $(cat /tmp/quay_resp))" >&2
+              echo "Failed to delete Quay.io: ${tag}" >&2
             fi
           done
           echo "Quay.io: kept ${KEEP}, deleted ${DELETED} sha- tag(s)."
