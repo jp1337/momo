@@ -110,11 +110,15 @@ export const users = pgTable("users", {
   /** Whether the user has enabled push notifications */
   notificationEnabled: boolean("notification_enabled").notNull().default(false),
 
-  /** Time of day for the daily notification (24h format) */
+  /** Time of day for the daily notification (24h format, in the user's local timezone) */
   notificationTime: time("notification_time").notNull().default("08:00"),
 
-  /** Browser push subscription object (stored as JSON) */
-  pushSubscription: jsonb("push_subscription"),
+  /**
+   * IANA timezone identifier (e.g. "Europe/Berlin", "America/New_York").
+   * Used to interpret notificationTime in the user's local time rather than UTC.
+   * NULL falls back to UTC.
+   */
+  timezone: text("timezone"),
 
   /** User's preferred colour theme */
   theme: themeEnum("theme").notNull().default("system"),
@@ -467,6 +471,38 @@ export const cronRuns = pgTable("cron_runs", {
   durationMs: integer("duration_ms"),
 });
 
+/**
+ * Per-device push subscriptions.
+ *
+ * One row per (user, browser/device) combination. The push endpoint URL is
+ * globally unique — it identifies a specific browser push subscription.
+ * This allows a user to receive notifications on multiple devices simultaneously.
+ *
+ * Lifecycle:
+ *  - Created/updated when user enables notifications on a device (POST /api/push/subscribe)
+ *  - Deleted when user disables notifications on that device (DELETE /api/push/subscribe)
+ *  - Automatically deleted by sendPushNotification() when the push service returns 410 Gone
+ */
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  /** The user this subscription belongs to */
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  /**
+   * The push endpoint URL — globally unique, identifies one browser/device.
+   * Used as the upsert key: subscribing twice from the same device updates the row.
+   */
+  endpoint: text("endpoint").notNull().unique(),
+
+  /** Full W3C PushSubscription JSON (endpoint + keys) */
+  subscription: jsonb("subscription").notNull(),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -479,6 +515,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   userAchievements: many(userAchievements),
   apiKeys: many(apiKeys),
   linkingRequests: many(linkingRequests),
+  pushSubscriptions: many(pushSubscriptions),
 }));
 
 export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
@@ -531,3 +568,7 @@ export const userAchievementsRelations = relations(
     }),
   })
 );
+
+export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one }) => ({
+  user: one(users, { fields: [pushSubscriptions.userId], references: [users.id] }),
+}));

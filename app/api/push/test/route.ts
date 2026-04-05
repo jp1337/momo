@@ -1,21 +1,21 @@
 /**
  * POST /api/push/test
- * Sends a test push notification to the currently authenticated user.
- * Useful for verifying that push subscriptions are working correctly.
- * Requires: authentication + active push subscription
- * Returns: { success: true } | { error: string }
+ * Sends a test push notification to all active subscriptions of the current user
+ * (i.e. every registered device). Useful for verifying push delivery end-to-end.
+ * Requires: authentication + at least one active push subscription
+ * Returns: { success: true, sent: number } | { error: string }
  */
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { pushSubscriptions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { sendPushNotification, type PushSubscriptionData } from "@/lib/push";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
 /**
- * POST — Sends a test push notification to the current user's registered subscription.
+ * POST — Sends a test push notification to all registered devices of the current user.
  */
 export async function POST(request: Request): Promise<NextResponse | Response> {
   const user = await resolveApiUser(request);
@@ -27,42 +27,31 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   try {
-    const userRows = await db
-      .select({
-        pushSubscription: users.pushSubscription,
-        notificationEnabled: users.notificationEnabled,
-      })
-      .from(users)
-      .where(eq(users.id, user.userId))
-      .limit(1);
+    const subs = await db
+      .select({ subscription: pushSubscriptions.subscription })
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, user.userId));
 
-    const userRecord = userRows[0];
-
-    if (!userRecord?.pushSubscription) {
+    if (subs.length === 0) {
       return NextResponse.json(
         { error: "No push subscription found. Enable notifications first." },
         { status: 400 }
       );
     }
 
-    if (!userRecord.notificationEnabled) {
-      return NextResponse.json(
-        { error: "Notifications are disabled for this account." },
-        { status: 400 }
-      );
+    let sent = 0;
+    for (const row of subs) {
+      await sendPushNotification(user.userId, row.subscription as PushSubscriptionData, {
+        title: "Momo test notification",
+        body: "Push notifications are working correctly!",
+        icon: "/icon-192.png",
+        url: "/dashboard",
+        tag: "momo-test",
+      });
+      sent++;
     }
 
-    const subscription = userRecord.pushSubscription as PushSubscriptionData;
-
-    await sendPushNotification(user.userId, subscription, {
-      title: "Momo test notification",
-      body: "Push notifications are working correctly!",
-      icon: "/icon-192.png",
-      url: "/dashboard",
-      tag: "momo-test",
-    });
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, sent });
   } catch (err) {
     console.error("[POST /api/push/test]", err);
     return NextResponse.json(
