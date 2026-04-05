@@ -14,7 +14,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { users, accounts } from "@/lib/db/schema";
+import { users, accounts, pushSubscriptions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Image from "next/image";
 import { NotificationSettings } from "@/components/settings/notification-settings";
@@ -43,8 +43,8 @@ export default async function SettingsPage() {
   const t = await getTranslations("settings");
   const locale = await getLocale();
 
-  // Fetch user preferences and linked accounts from the DB
-  const [userRows, linkedAccountRows] = await Promise.all([
+  // Fetch user preferences, linked accounts, and active push subscriptions from DB
+  const [userRows, linkedAccountRows, activeSubs] = await Promise.all([
     db
       .select({
         name: users.name,
@@ -62,6 +62,11 @@ export default async function SettingsPage() {
       .select({ provider: accounts.provider })
       .from(accounts)
       .where(eq(accounts.userId, session.user.id)),
+    db
+      .select({ id: pushSubscriptions.id })
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, session.user.id))
+      .limit(1),
   ]);
 
   const user = userRows[0];
@@ -219,7 +224,7 @@ export default async function SettingsPage() {
         </div>
 
         <NotificationSettings
-          initialEnabled={user.notificationEnabled}
+          initialEnabled={user.notificationEnabled && activeSubs.length > 0}
           initialTime={user.notificationTime ?? "08:00"}
           vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
         />

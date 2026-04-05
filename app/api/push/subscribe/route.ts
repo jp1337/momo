@@ -203,27 +203,32 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    await db
+    const deleted = await db
       .delete(pushSubscriptions)
       .where(
         and(
           eq(pushSubscriptions.userId, user.userId),
           eq(pushSubscriptions.endpoint, parsed.data.endpoint)
         )
-      );
+      )
+      .returning({ id: pushSubscriptions.id });
 
-    // If the user has no subscriptions left, mark notifications as disabled
-    const remaining = await db
-      .select({ id: pushSubscriptions.id })
-      .from(pushSubscriptions)
-      .where(eq(pushSubscriptions.userId, user.userId))
-      .limit(1);
+    // Only update notificationEnabled if we actually removed a subscription.
+    // If nothing was deleted (e.g. subscription not in DB yet), leave the flag
+    // untouched so other devices are not affected.
+    if (deleted.length > 0) {
+      const remaining = await db
+        .select({ id: pushSubscriptions.id })
+        .from(pushSubscriptions)
+        .where(eq(pushSubscriptions.userId, user.userId))
+        .limit(1);
 
-    if (remaining.length === 0) {
-      await db
-        .update(users)
-        .set({ notificationEnabled: false })
-        .where(eq(users.id, user.userId));
+      if (remaining.length === 0) {
+        await db
+          .update(users)
+          .set({ notificationEnabled: false })
+          .where(eq(users.id, user.userId));
+      }
     }
 
     return NextResponse.json({ success: true });
