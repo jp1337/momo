@@ -18,7 +18,7 @@
 import webpush from "web-push";
 import { db } from "@/lib/db";
 import { users, taskCompletions } from "@/lib/db/schema";
-import { eq, and, isNotNull, gt, gte } from "drizzle-orm";
+import { eq, and, isNotNull, gt, gte, sql } from "drizzle-orm";
 import { serverEnv } from "@/lib/env";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -152,13 +152,16 @@ export async function sendPushNotification(
 // ─── Fan-out helpers ──────────────────────────────────────────────────────────
 
 /**
- * Sends the daily quest notification to all eligible users.
+ * Sends the daily quest notification to all eligible users whose notification_time
+ * falls within the current UTC hour (e.g. cron runs at 08:00 UTC → sends to all
+ * users with notification_time between 08:00 and 08:59).
  *
  * Eligible users must have:
  *  - notification_enabled = true
  *  - push_subscription set (non-null)
- *  - At least one task marked as daily quest that is not yet completed today
+ *  - notification_time hour matching the current UTC hour
  *
+ * The cron must be scheduled to run every full hour (e.g. "0 * * * *").
  * Called by the POST /api/cron/daily-quest route.
  *
  * @returns Object with sent and failed counts
@@ -172,7 +175,11 @@ export async function sendDailyQuestNotifications(): Promise<{
     return { sent: 0, failed: 0 };
   }
 
+  // Match users whose notification_time falls in the current UTC hour
+  const currentHour = new Date().getUTCHours();
+
   // Fetch all users with notifications enabled and a push subscription
+  // whose notification hour matches the current UTC hour
   const eligibleUsers = await db
     .select({
       id: users.id,
@@ -182,7 +189,8 @@ export async function sendDailyQuestNotifications(): Promise<{
     .where(
       and(
         eq(users.notificationEnabled, true),
-        isNotNull(users.pushSubscription)
+        isNotNull(users.pushSubscription),
+        sql`EXTRACT(HOUR FROM ${users.notificationTime}) = ${currentHour}`
       )
     );
 
