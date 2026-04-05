@@ -14,7 +14,7 @@
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { getUserTasks, createTask } from "@/lib/tasks";
-import { CreateTaskInputSchema } from "@/lib/validators";
+import { CreateTaskInputSchema, TimezoneSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
@@ -88,8 +88,12 @@ export async function POST(request: Request) {
     );
   }
 
+  // Extract timezone separately — it is context for calculation, not a task field.
+  const timezoneResult = TimezoneSchema.safeParse((body as Record<string, unknown>)?.timezone);
+  const timezone = timezoneResult.success ? timezoneResult.data : null;
+
   try {
-    const task = await createTask(user.userId, parsed.data);
+    const task = await createTask(user.userId, parsed.data, timezone);
     return Response.json({ task }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/tasks]", error);

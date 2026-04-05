@@ -132,8 +132,8 @@ async function getCurrentDailyQuestTx(
  * @param tx - The active Drizzle transaction
  * @returns The candidate task row, or null if no eligible task exists
  */
-async function pickBestTask(userId: string, tx: Tx): Promise<Task | null> {
-  const today = getLocalDateString();
+async function pickBestTask(userId: string, tx: Tx, timezone?: string | null): Promise<Task | null> {
+  const today = getLocalDateString(timezone);
 
   // Priority 1: Oldest overdue task
   const overdueRows = await tx
@@ -226,12 +226,14 @@ async function pickBestTask(userId: string, tx: Tx): Promise<Task | null> {
  * this call returns null gracefully.
  *
  * @param userId - The user's UUID
+ * @param timezone - Optional IANA timezone string (e.g. "Europe/Berlin"). Falls back to UTC.
  * @returns The selected Task (with topic), or null if no eligible tasks exist
  */
 export async function selectDailyQuest(
-  userId: string
+  userId: string,
+  timezone?: string | null
 ): Promise<TaskWithTopic | null> {
-  const today = getLocalDateString();
+  const today = getLocalDateString(timezone);
   const todayStart = new Date(`${today}T00:00:00Z`);
 
   // If the user already completed a quest today, return it for the celebration
@@ -275,7 +277,7 @@ export async function selectDailyQuest(
     }
 
     // Run the priority algorithm using the transaction client
-    const candidate = await pickBestTask(userId, tx);
+    const candidate = await pickBestTask(userId, tx, timezone);
     if (!candidate) return null;
 
     // Assign — the isDailyQuest = false predicate acts as an optimistic lock.
@@ -303,10 +305,12 @@ export async function selectDailyQuest(
  * Used for admin/dev reselection via POST /api/daily-quest.
  *
  * @param userId - The user's UUID
+ * @param timezone - Optional IANA timezone string. Falls back to UTC.
  * @returns The newly selected Task (with topic), or null if no eligible tasks
  */
 export async function forceSelectDailyQuest(
-  userId: string
+  userId: string,
+  timezone?: string | null
 ): Promise<TaskWithTopic | null> {
   // Clear any existing daily quest flag (completed or not)
   await db
@@ -319,7 +323,7 @@ export async function forceSelectDailyQuest(
       )
     );
 
-  const today = getLocalDateString();
+  const today = getLocalDateString(timezone);
 
   // Run the same priority algorithm as selectDailyQuest (no existing check)
 
