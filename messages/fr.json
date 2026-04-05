@@ -209,6 +209,7 @@
     "card_btn_discard": "× Rejeter",
     "card_btn_edit": "✎ Modifier",
     "card_btn_undo": "↩ Annuler",
+    "card_btn_restore": "↩ Restaurer",
     "card_btn_delete": "Supprimer définitivement",
     "form_title_edit": "Modifier l'article",
     "form_title_new": "Ajouter à la liste de souhaits",
