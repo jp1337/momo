@@ -30,7 +30,7 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 ## 🌟 Features
 
 - **Daily Quest** — One small task, chosen for you each day. No overwhelm, just one step forward.
-- **Topics & Subtasks** — Break big projects (like "Moving" or "Tax Return") into tiny, manageable pieces.
+- **Topics & Subtasks** — Break big projects (like "Moving" or "Tax Return") into tiny, manageable pieces. Drag & drop to reorder tasks within a topic.
 - **Recurring Tasks** — Weekly laundry, monthly cleaning, fortnightly grocery runs. Set it and forget it.
 - **Gamification** — Earn coins, build streaks, level up. Small wins deserve real celebration.
 - **Wishlist & Budget** — Track things you want to buy, with a monthly budget indicator to spend more consciously.

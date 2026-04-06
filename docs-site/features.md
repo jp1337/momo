@@ -142,6 +142,20 @@ Each topic shows its title, icon, and a count of **open** and **completed** task
 
 Click any topic card to open its detail view. You will see all subtasks grouped under the topic, with the same complete / edit / delete controls as the main task list. You can add new subtasks directly from this view.
 
+### Reordering tasks (drag & drop)
+
+Inside any topic, active tasks can be reordered by dragging them. A small **grip handle** (six dots) appears to the left of each task — grab it and drag the task to a new position. The new order is saved automatically.
+
+**How it works across devices:**
+
+- **Mouse** — click and drag the grip handle
+- **Touch** — press and hold the grip handle for a moment, then drag (the short delay prevents accidental drags while scrolling)
+- **Keyboard** — tab to the grip handle, press **Space** to pick up the task, use **arrow keys** to move it, then press **Space** again to drop
+
+The order persists across page reloads. If the save fails (e.g. a network hiccup), the tasks snap back to their previous positions.
+
+Only **active** tasks are reorderable. Snoozed and completed tasks stay in their own sections below. New tasks always appear at the bottom of the list.
+
 ### Deleting a topic
 
 Deleting a topic removes the topic itself but does not delete the subtasks. They are unlinked from the topic and returned to the main task list so no work is lost.
