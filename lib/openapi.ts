@@ -1769,6 +1769,60 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       },
     },
 
+    "/api/settings/quest": {
+      patch: {
+        operationId: "updateQuestSettings",
+        tags: ["Settings"],
+        summary: "Update quest settings",
+        description:
+          "Updates quest-related user settings. At least one field must be provided. " +
+          "Supports changing the daily postpone limit and toggling the emotional closure " +
+          "(affirmation/quote shown after quest completion).",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  postponeLimit: {
+                    type: "integer",
+                    minimum: 1,
+                    maximum: 5,
+                    description: "Maximum daily quest postponements (1–5).",
+                  },
+                  emotionalClosureEnabled: {
+                    type: "boolean",
+                    description:
+                      "Whether to show an affirmation or quote after completing the daily quest.",
+                  },
+                },
+              },
+              example: { postponeLimit: 3, emotionalClosureEnabled: true },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Settings updated.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { success: { type: "boolean" } },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
     // ─── User ─────────────────────────────────────────────────────────────────
 
     "/api/user/export": {

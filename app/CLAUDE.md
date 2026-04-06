@@ -51,7 +51,7 @@ api/
   user/export/route.ts               → GET (GDPR data export as JSON download)
   user/delete/route.ts               → DELETE (full account deletion)
   locale/route.ts                    → POST (set UI locale cookie)
-  settings/quest/route.ts            → PATCH (save quest postpone limit)
+  settings/quest/route.ts            → PATCH (save quest settings: postpone limit, emotional closure toggle)
   openapi.json/route.ts              → GET (OpenAPI 3.1.0 spec, public)
 globals.css     → Design system CSS variables, Tailwind v4, Google Fonts
 layout.tsx      → Root layout: ThemeProvider (next-themes), font variables
