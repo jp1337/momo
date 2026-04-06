@@ -201,6 +201,11 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
             format: "date",
             description: "Date until which this task is snoozed/hidden (YYYY-MM-DD). Null if active.",
           },
+          energyLevel: {
+            type: ["string", "null"],
+            enum: ["HIGH", "MEDIUM", "LOW", null],
+            description: "Energy level required for this task. Null = matches any energy state.",
+          },
           createdAt: {
             type: "string",
             format: "date-time",
@@ -458,6 +463,11 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
             default: 1,
             description: "Coin reward for completion.",
           },
+          energyLevel: {
+            type: ["string", "null"],
+            enum: ["HIGH", "MEDIUM", "LOW", null],
+            description: "Energy level required. Null = matches any.",
+          },
         },
       },
 
@@ -492,6 +502,11 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
             type: "integer",
             minimum: 1,
             maximum: 10,
+          },
+          energyLevel: {
+            type: ["string", "null"],
+            enum: ["HIGH", "MEDIUM", "LOW", null],
+            description: "Energy level required. Null = matches any.",
           },
         },
       },
@@ -1427,6 +1442,58 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           },
           "401": { $ref: "#/components/responses/Unauthorized" },
           "403": { $ref: "#/components/responses/Forbidden" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/energy-checkin": {
+      post: {
+        operationId: "energyCheckin",
+        tags: ["Daily Quest"],
+        summary: "Energy check-in",
+        description:
+          "Records the user's daily energy level and selects a matching daily quest in one " +
+          "round-trip. The quest algorithm prefers tasks whose energyLevel matches the " +
+          "check-in (soft preference — never blocks quest selection).",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["energyLevel"],
+                properties: {
+                  energyLevel: {
+                    type: "string",
+                    enum: ["HIGH", "MEDIUM", "LOW"],
+                    description: "How the user is feeling today.",
+                  },
+                  timezone: {
+                    type: "string",
+                    maxLength: 64,
+                    description: "IANA timezone (e.g. Europe/Berlin). Optional, defaults to UTC.",
+                  },
+                },
+              },
+              example: { energyLevel: "LOW", timezone: "Europe/Berlin" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Energy level saved and quest selected.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DailyQuest" },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "422": { $ref: "#/components/responses/ValidationError" },
           "429": { $ref: "#/components/responses/TooManyRequests" },
           "500": { $ref: "#/components/responses/InternalServerError" },
         },

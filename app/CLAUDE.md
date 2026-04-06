@@ -16,6 +16,7 @@ Next.js 15 App Router pages and API routes. Thin layer — validates input, call
   api-keys/     → API key management UI
   stats/        → User statistics page
   admin/        → Admin statistics (requires ADMIN_USER_IDS env var)
+  review/       → Weekly review page (weekly performance summary)
 (auth)/         → Route group: unauthenticated
   layout.tsx    → Centered layout for auth pages
   login/        → OAuth provider buttons (GitHub, Discord, Google)
@@ -35,6 +36,7 @@ api/
   topics/[id]/route.ts               → GET (with tasks), PATCH, DELETE
   daily-quest/route.ts               → GET (fetch today's quest, returns completed quest all day), POST (force new quest)
   daily-quest/postpone/route.ts      → POST (postpone quest, body: {taskId, timezone?}, enforces daily limit)
+  energy-checkin/route.ts            → POST (set daily energy level + select matching quest, body: {energyLevel, timezone?})
   wishlist/route.ts                  → GET (list), POST (create)
   wishlist/[id]/route.ts             → PATCH, DELETE
   wishlist/[id]/buy/route.ts         → POST (mark purchased, deduct coins)
@@ -42,8 +44,7 @@ api/
   settings/budget/route.ts           → GET/PATCH (monthly coin budget)
   push/subscribe/route.ts            → POST/DELETE (save/remove Web Push subscription)
   push/test/route.ts                 → POST (send test push notification)
-  cron/daily-quest/route.ts          → POST (daily quest reset cron — protected by CRON_SECRET)
-  cron/streak-reminder/route.ts      → POST (streak reminder push cron — protected by CRON_SECRET)
+  cron/route.ts                      → POST (unified cron dispatcher — runs all jobs from lib/cron.ts, protected by CRON_SECRET)
   health/route.ts                    → GET (liveness probe, returns 200 OK)
   admin/seed/route.ts                → POST (seed demo data — dev/staging only)
   auth/link-request/route.ts         → POST (initiate OAuth account linking flow)
