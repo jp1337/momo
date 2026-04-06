@@ -58,3 +58,15 @@ worker/
 public/sw.js
 public/workbox-*.js
 public/swe-worker-*.js
+
+# Alexa Skill — separate Lambda project in alexa-skill/, rarely relevant to app changes
+alexa-skill/dist/
+alexa-skill/node_modules/
+alexa-skill/package-lock.json
+
+# PNG icons — binary assets, not relevant to code tasks
+public/*.png
+
+# Drizzle migration SQL files — read only when debugging migration issues
+# The schema source of truth is lib/db/schema.ts, not the SQL files
+drizzle/*.sql

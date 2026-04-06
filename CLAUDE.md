@@ -304,10 +304,12 @@ components/
   tasks/          → TaskItem, TaskForm, TaskList
   quick/          → FiveMinuteView (5-min focused task view)
   focus/          → FocusModeView (distraction-free: quest + quick wins ≤15 min)
-  topics/         → TopicCard, TopicForm, TopicsGrid, TopicDetailView
+  topics/         → TopicCard, TopicForm, TopicsGrid, TopicDetailView, SortableTaskList, SortableTaskItem
 
-docs/             → Markdown docs (api, database, deployment, oauth, env vars)
-public/           → Static assets
+docs/             → Technical docs (api, database, deployment, oauth, env vars, gdpr)
+docs-site/        → User-facing GitHub Pages (Jekyll) — see .claudeignore
+public/           → Static assets (icons, manifest, PWA service worker)
+alexa-skill/      → Separate Lambda project for Alexa integration
 ```
 
 ## 🚫 What to Skip (never read these)
@@ -316,3 +318,7 @@ public/           → Static assets
 - `.next/` — build output, generated
 - `package-lock.json` — auto-managed
 - `public/` default SVGs (file.svg, globe.svg, next.svg, vercel.svg, window.svg) — Next.js defaults, not project assets
+- `drizzle/*.sql` — generated migrations, source of truth is `lib/db/schema.ts`
+- `drizzle/meta/` — auto-generated snapshots
+- `alexa-skill/dist/` — compiled Lambda output
+- `public/sw.js`, `public/workbox-*.js` — PWA build artifacts
