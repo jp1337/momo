@@ -78,6 +78,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `coin_value` | integer | Coins awarded on completion (1–10) |
 | `notes` | text | Optional free-text notes on the task |
 | `is_daily_quest` | boolean | Currently selected as today's daily quest |
+| `daily_quest_date` | date | Date (YYYY-MM-DD) on which this task was last assigned as the daily quest — used to reset stale incomplete quests each day so the same task does not repeat |
 | `postpone_count` | integer | How many times this task has been postponed as a quest |
 | `estimated_minutes` | integer | Optional time estimate: 5, 15, 30, or 60 minutes |
 
