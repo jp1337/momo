@@ -1,0 +1,28 @@
+{
+  "name": "momo-alexa-skill",
+  "version": "1.0.0",
+  "description": "Alexa Skill Lambda function for Momo task management",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --external:aws-sdk",
+    "zip": "npm run build && cd dist && zip -r ../deploy.zip index.js && echo 'deploy.zip ready'",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "ask-sdk-core": "^2.14.0",
+    "ask-sdk-model": "^1.86.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.161",
+    "@types/node": "^20",
+    "@typescript-eslint/eslint-plugin": "^8",
+    "@typescript-eslint/parser": "^8",
+    "esbuild": "^0.25.0",
+    "eslint": "^9",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

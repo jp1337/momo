@@ -17,7 +17,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 | Pushover Integration             | Notifications    | S       | API Token + User Key in Settings; sofortige Push-Alerts                 |
 | Telegram-Bot                     | Notifications    | M       | Bot Token + Chat ID in Settings; Benachrichtigungen + ggf. Task-Eingabe |
 | Push-Benachrichtigungen debuggen | Technisch        | ✅      | 4 Bugs behoben: K8s CronJob, notificationTime-Filter, PATCH-Endpoint, Idempotenz-Guard |
-| Alexa Skill                      | User + Technisch | L       | Account Linking via API Key; `POST /api/tasks` aus Lambda               |
+| Alexa Skill                      | User + Technisch | ✅      | Lambda-Code + Interaction Model in `alexa-skill/`; Account Linking via API Key |
 
 ---
 
@@ -27,6 +27,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 - **Custom Error Pages** — eigene 404- und 500-Seiten im Momo-Design (Lora-Schrift, Waldgrün-Ästhetik, Rücklink zur App); Next.js `not-found.tsx` + `error.tsx`
 - ✅ **Swipe-to-complete auf Mobile** — Wischgeste auf Task-Items: rechts = erledigen, links = löschen; Wishlist: rechts = kaufen, links = ablegen
+- ✅ **UI/UX-Konsistenz** — einheitliche Edit/Delete-Buttons (oben rechts) auf Tasks, Topics und Wishlist; vollständige Titelanzeige
 - **Snooze / Aufgabe pausieren** — "Erinnere mich ab [Datum]" für Tasks die man nicht löschen, aber auch nicht ständig sehen will
 - **"Ich hab nur 5 Minuten"-Modus** — prominenter Einstiegspunkt der nur Tasks ≤5 min zeigt (über Quick Wins hinaus)
 - **Emotionaler Abschluss** — nach Tagesquest-Abschluss kurze Affirmation oder Michael-Ende-Zitat (optional, abschaltbar)
@@ -42,7 +43,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ### Größere Features
 
-- **Alexa Skill** — "Alexa, füge Zahnarzt zu Momo hinzu" → Task per REST API; "Alexa, was ist meine Quest?" → `GET /api/daily-quest`
+- ✅ **Alexa Skill** — "Alexa, sage Momo: füge Zahnarzt hinzu" → Task per REST API; "Alexa, was ist meine Quest?" → Daily Quest; Lambda-Code in `alexa-skill/`
 - **Wiederkehrende Aufgaben Habit-Tracker** — Jahres-/Monatsraster (GitHub Contribution Graph Stil) pro Habit-Task
 - **iCal-Export** — fällige Aufgaben als Kalender-Feed (`.ics`) für Google/Apple Calendar
 - **Offline-Queue** — Tasks offline erstellen/abhaken; beim Reconnect syncen (PWA Service Worker)
@@ -54,7 +55,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ### Akut / Geplant
 
-- **Push-Benachrichtigungen fixen** — Daily Quest Reminder debuggen (VAPID, Service Worker, Subscription-Persistenz)
+- ✅ **Push-Benachrichtigungen** — Daily Quest Reminder mit Task-Titel in Notification; täglicher Quest-Wechsel (daily_quest_date)
 
 ### Stabilität
 

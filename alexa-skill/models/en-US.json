@@ -1,0 +1,106 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "momo",
+      "intents": [
+        {
+          "name": "AddTaskIntent",
+          "slots": [
+            {
+              "name": "taskName",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "add {taskName}",
+            "add task {taskName}",
+            "create task {taskName}",
+            "create a task for {taskName}",
+            "new task {taskName}",
+            "remind me of {taskName}",
+            "note {taskName}",
+            "put {taskName} on my list",
+            "add {taskName} to my list"
+          ]
+        },
+        {
+          "name": "GetQuestIntent",
+          "slots": [],
+          "samples": [
+            "what is my quest",
+            "what is my daily quest",
+            "show my quest",
+            "my daily task",
+            "what should I do today",
+            "my quest",
+            "what's on my agenda",
+            "today's mission"
+          ]
+        },
+        {
+          "name": "ListTasksIntent",
+          "slots": [],
+          "samples": [
+            "list my tasks",
+            "show my tasks",
+            "what tasks do I have",
+            "what do I have to do",
+            "my open tasks",
+            "my tasks",
+            "what's on my list",
+            "open tasks"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent"
+        },
+        {
+          "name": "AMAZON.CancelIntent"
+        },
+        {
+          "name": "AMAZON.StopIntent"
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent"
+        }
+      ],
+      "types": []
+    },
+    "dialog": {
+      "intents": [
+        {
+          "name": "AddTaskIntent",
+          "confirmationRequired": false,
+          "prompts": {},
+          "slots": [
+            {
+              "name": "taskName",
+              "type": "AMAZON.SearchQuery",
+              "confirmationRequired": false,
+              "elicitationRequired": true,
+              "prompts": {
+                "elicitation": "Elicit.Slot.AddTaskIntent.taskName"
+              }
+            }
+          ]
+        }
+      ],
+      "delegationStrategy": "SKILL_RESPONSE"
+    },
+    "prompts": [
+      {
+        "id": "Elicit.Slot.AddTaskIntent.taskName",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "What should the task be called?"
+          },
+          {
+            "type": "PlainText",
+            "value": "What task should I create?"
+          }
+        ]
+      }
+    ]
+  }
+}
