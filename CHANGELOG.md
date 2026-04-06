@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Snooze / Aufgabe pausieren** — Tasks können bis zu einem Datum pausiert werden ("Erinnere mich ab [Datum]"). Pausierte Tasks verschwinden aus der Aufgabenliste, Quick Wins und Tagesquest. Schnelloptionen: Morgen, Nächste Woche, In einem Monat, oder eigenes Datum. Tasks tauchen automatisch wieder auf, wenn das Datum erreicht ist. Neue API-Endpunkte: `POST/DELETE /api/tasks/:id/snooze`. Pausierte Tasks erscheinen in einer kollabierbaren "Pausiert"-Sektion. Wird die aktive Tagesquest pausiert, wird automatisch eine neue Quest gewählt.
 - **Suche & Filter** — Volltextsuche und Filter-Chips auf der Tasks- und Wunschlisten-Seite. Tasks können nach Priorität und Thema gefiltert werden, Wishlist-Items nach Priorität. Die Suche durchsucht Titel und Notizen (Tasks) bzw. Titel (Wishlist). Alles client-seitig, kein API-Roundtrip.
 - **Custom Error Pages** — eigene 404- und 500-Seite im Momo-Design (Lora-Schrift, Amber-Akzent, Waldgrün-Ästhetik, fliegende Animationsziffer). Beide Seiten unterstützen Dark- und Light-Mode vollständig. Die 500-Seite zeigt in der Entwicklungsumgebung den Fehlertext an und bietet "Neu laden" + "Zurück zur App".
 - **Alexa Skill** — Spracheingabe für Momo via Amazon Echo: Tasks hinzufügen ("füge Zahnarzt hinzu"), Daily Quest abfragen ("was ist meine Quest?"), Aufgaben auflisten ("liste meine Aufgaben"), Wunschliste befüllen ("füge Milch zur Einkaufsliste hinzu"). Lambda-Code und Interaction Models in `alexa-skill/`.

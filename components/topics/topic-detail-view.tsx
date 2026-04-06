@@ -32,6 +32,7 @@ interface Task {
   createdAt: string;
   recurrenceInterval?: number | null;
   estimatedMinutes?: number | null;
+  snoozedUntil?: string | null;
 }
 
 interface TopicDetailViewProps {
@@ -138,13 +139,50 @@ export function TopicDetailView({
     setTasks((prev) => prev.filter((task) => task.id !== id));
   }, []);
 
+  const handleSnooze = useCallback(async (id: string, snoozedUntil: string) => {
+    try {
+      const res = await fetch(`/api/tasks/${id}/snooze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ snoozedUntil }),
+      });
+      if (res.ok) {
+        setTasks((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, snoozedUntil } : t))
+        );
+      }
+    } catch {
+      // silent fail
+    }
+  }, []);
+
+  const handleUnsnooze = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/tasks/${id}/snooze`, { method: "DELETE" });
+      if (res.ok) {
+        setTasks((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, snoozedUntil: null } : t))
+        );
+      }
+    } catch {
+      // silent fail
+    }
+  }, []);
+
   const handleFormSuccess = useCallback(async () => {
     setEditingTaskId(null);
     setShowCreateForm(false);
     await refreshTasks();
   }, [refreshTasks]);
 
-  const activeTasks = tasks.filter((task) => task.completedAt === null);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const snoozedTasks = tasks.filter((task) => {
+    if (!task.snoozedUntil || task.completedAt !== null) return false;
+    return new Date(task.snoozedUntil + "T00:00:00") > today;
+  });
+  const snoozedIds = new Set(snoozedTasks.map((t) => t.id));
+  const activeTasks = tasks.filter((task) => task.completedAt === null && !snoozedIds.has(task.id));
   const completedTasks = tasks.filter((task) => task.completedAt !== null);
 
   return (
@@ -232,9 +270,52 @@ export function TopicDetailView({
               onEdit={setEditingTaskId}
               onDelete={handleDelete}
               onBreakdown={handleBreakdown}
+              snoozedUntil={task.snoozedUntil}
+              onSnooze={handleSnooze}
+              onUnsnooze={handleUnsnooze}
             />
           ))}
         </div>
+      )}
+
+      {/* Snoozed tasks */}
+      {snoozedTasks.length > 0 && (
+        <>
+          <h3
+            className="text-xs font-semibold uppercase tracking-wide mb-2 mt-6"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+            }}
+          >
+            {t("detail_snoozed", { count: snoozedTasks.length })}
+          </h3>
+          <div className="flex flex-col gap-2">
+            {snoozedTasks.map((task) => (
+              <TaskItem
+                key={task.id}
+                id={task.id}
+                title={task.title}
+                type={task.type}
+                priority={task.priority}
+                completedAt={task.completedAt}
+                dueDate={task.dueDate}
+                nextDueDate={task.nextDueDate}
+                topicTitle={topicTitle}
+                topicColor={topicColor}
+                coinValue={task.coinValue}
+                onComplete={handleComplete}
+                onUncomplete={handleUncomplete}
+                onEdit={setEditingTaskId}
+                onDelete={handleDelete}
+                onBreakdown={handleBreakdown}
+                snoozedUntil={task.snoozedUntil}
+                onSnooze={handleSnooze}
+                onUnsnooze={handleUnsnooze}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Completed tasks */}

@@ -102,6 +102,8 @@ Valid values: `"de"`, `"en"`, `"fr"`. Response: `{ "success": true }`
 | `DELETE` | `/api/tasks/:id/complete` | Yes | — | Undo task completion + refund coins |
 | `POST` | `/api/tasks/:id/breakdown` | Yes | — | Break task into subtasks under a new topic |
 | `POST` | `/api/tasks/:id/promote-to-topic` | Yes | 10/min | Promote standalone task to a new topic |
+| `POST` | `/api/tasks/:id/snooze` | Yes | 30/min | Snooze task until a date (hidden from views) |
+| `DELETE` | `/api/tasks/:id/snooze` | Yes | — | Unsnooze task (make visible again) |
 
 ### GET /api/tasks
 
@@ -199,6 +201,28 @@ Response:
 ### DELETE /api/tasks/:id/complete
 
 Refunds the `coinValue` coins, resets `completedAt` to null.
+
+Response: `{ "task": Task }`
+
+### POST /api/tasks/:id/snooze
+
+Snoozes a task until a future date. The task is hidden from the task list, Quick Wins, and Daily Quest until the snooze date passes. If the task is the current daily quest, the quest flag is cleared.
+
+Request body:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `snoozedUntil` | string | Yes | Date in YYYY-MM-DD format |
+
+```json
+{ "snoozedUntil": "2026-04-13" }
+```
+
+Response: `{ "task": Task }`
+
+### DELETE /api/tasks/:id/snooze
+
+Removes the snooze from a task, making it immediately visible again.
 
 Response: `{ "task": Task }`
 

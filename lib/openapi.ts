@@ -196,6 +196,11 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
             type: "boolean",
             description: "Whether this task is currently selected as the daily quest.",
           },
+          snoozedUntil: {
+            type: ["string", "null"],
+            format: "date",
+            description: "Date until which this task is snoozed/hidden (YYYY-MM-DD). Null if active.",
+          },
           createdAt: {
             type: "string",
             format: "date-time",
@@ -1077,6 +1082,98 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
         responses: {
           "200": {
             description: "Task uncompleted. Returns the updated task.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["task"],
+                  properties: {
+                    task: { $ref: "#/components/schemas/Task" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/tasks/{id}/snooze": {
+      post: {
+        operationId: "snoozeTask",
+        tags: ["Tasks"],
+        summary: "Snooze a task",
+        description:
+          "Hides a task from all active views (task list, Quick Wins, Daily Quest) until the specified date. " +
+          "If the task is the current daily quest, the quest flag is cleared.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/taskId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["snoozedUntil"],
+                properties: {
+                  snoozedUntil: {
+                    type: "string",
+                    format: "date",
+                    description: "Date until which to snooze the task (YYYY-MM-DD).",
+                    example: "2026-04-13",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Task snoozed. Returns the updated task.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["task"],
+                  properties: {
+                    task: { $ref: "#/components/schemas/Task" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": {
+            description: "Cannot snooze a completed task.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+      delete: {
+        operationId: "unsnoozeTask",
+        tags: ["Tasks"],
+        summary: "Unsnooze a task",
+        description:
+          "Removes the snooze from a task, making it immediately visible again in all active views.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/taskId" }],
+        responses: {
+          "200": {
+            description: "Task unsnoozed. Returns the updated task.",
             content: {
               "application/json": {
                 schema: {

@@ -280,6 +280,9 @@ export const tasks = pgTable("tasks", {
   /** Estimated time to complete this task in minutes (5 / 15 / 30 / 60 / null = unknown) */
   estimatedMinutes: integer("estimated_minutes"),
 
+  /** Date until which this task is snoozed/hidden (YYYY-MM-DD). Null = active/visible. */
+  snoozedUntil: date("snoozed_until"),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -135,6 +135,9 @@ async function getCurrentDailyQuestTx(
 async function pickBestTask(userId: string, tx: Tx, timezone?: string | null): Promise<Task | null> {
   const today = getLocalDateString(timezone);
 
+  // Exclude snoozed tasks from all quest candidates
+  const notSnoozed = or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, today));
+
   // Priority 1: Oldest overdue task
   const overdueRows = await tx
     .select()
@@ -145,7 +148,8 @@ async function pickBestTask(userId: string, tx: Tx, timezone?: string | null): P
         isNull(tasks.completedAt),
         isNotNull(tasks.dueDate),
         lt(tasks.dueDate, today),
-        ne(tasks.type, "RECURRING")
+        ne(tasks.type, "RECURRING"),
+        notSnoozed
       )
     )
     .orderBy(tasks.dueDate)
@@ -163,7 +167,8 @@ async function pickBestTask(userId: string, tx: Tx, timezone?: string | null): P
         isNull(tasks.completedAt),
         isNotNull(tasks.topicId),
         eq(tasks.priority, "HIGH"),
-        ne(tasks.type, "RECURRING")
+        ne(tasks.type, "RECURRING"),
+        notSnoozed
       )
     )
     .limit(1);
@@ -179,7 +184,8 @@ async function pickBestTask(userId: string, tx: Tx, timezone?: string | null): P
         eq(tasks.userId, userId),
         eq(tasks.type, "RECURRING"),
         isNotNull(tasks.nextDueDate),
-        lte(tasks.nextDueDate, today)
+        lte(tasks.nextDueDate, today),
+        notSnoozed
       )
     )
     .limit(1);
@@ -194,7 +200,8 @@ async function pickBestTask(userId: string, tx: Tx, timezone?: string | null): P
       and(
         eq(tasks.userId, userId),
         isNull(tasks.completedAt),
-        or(eq(tasks.type, "ONE_TIME"), eq(tasks.type, "DAILY_ELIGIBLE"))
+        or(eq(tasks.type, "ONE_TIME"), eq(tasks.type, "DAILY_ELIGIBLE")),
+        notSnoozed
       )
     );
 
@@ -343,6 +350,9 @@ export async function forceSelectDailyQuest(
 
   const today = getLocalDateString(timezone);
 
+  // Exclude snoozed tasks from all quest candidates
+  const notSnoozed = or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, today));
+
   // Run the same priority algorithm as selectDailyQuest (no existing check)
 
   // Priority 1: Oldest overdue task
@@ -355,7 +365,8 @@ export async function forceSelectDailyQuest(
         isNull(tasks.completedAt),
         isNotNull(tasks.dueDate),
         lt(tasks.dueDate, today),
-        ne(tasks.type, "RECURRING")
+        ne(tasks.type, "RECURRING"),
+        notSnoozed
       )
     )
     .orderBy(tasks.dueDate)
@@ -375,7 +386,8 @@ export async function forceSelectDailyQuest(
         isNull(tasks.completedAt),
         isNotNull(tasks.topicId),
         eq(tasks.priority, "HIGH"),
-        ne(tasks.type, "RECURRING")
+        ne(tasks.type, "RECURRING"),
+        notSnoozed
       )
     )
     .limit(1);
@@ -393,7 +405,8 @@ export async function forceSelectDailyQuest(
         eq(tasks.userId, userId),
         eq(tasks.type, "RECURRING"),
         isNotNull(tasks.nextDueDate),
-        lte(tasks.nextDueDate, today)
+        lte(tasks.nextDueDate, today),
+        notSnoozed
       )
     )
     .limit(1);
@@ -413,7 +426,8 @@ export async function forceSelectDailyQuest(
         or(
           eq(tasks.type, "ONE_TIME"),
           eq(tasks.type, "DAILY_ELIGIBLE")
-        )
+        ),
+        notSnoozed
       )
     );
 

@@ -112,6 +112,11 @@ export const UpdateTaskInputSchema = z
       .union([z.literal(5), z.literal(15), z.literal(30), z.literal(60)])
       .nullable()
       .optional(),
+    snoozedUntil: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Snoozed until must be in YYYY-MM-DD format")
+      .nullable()
+      .optional(),
   })
   .refine(
     (data) => {
@@ -127,6 +132,18 @@ export const UpdateTaskInputSchema = z
   );
 
 export type UpdateTaskInput = z.infer<typeof UpdateTaskInputSchema>;
+
+/**
+ * Schema for snoozing a task.
+ * Requires a future date in YYYY-MM-DD format.
+ */
+export const SnoozeTaskInputSchema = z.object({
+  snoozedUntil: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Must be in YYYY-MM-DD format"),
+});
+
+export type SnoozeTaskInput = z.infer<typeof SnoozeTaskInputSchema>;
 
 // ─── Topic Validators ─────────────────────────────────────────────────────────
 

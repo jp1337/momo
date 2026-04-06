@@ -18,7 +18,7 @@ import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCoins, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
+import { faCoins, faLayerGroup, faClock } from "@fortawesome/free-solid-svg-icons";
 import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
 
 interface TaskItemProps {
@@ -47,6 +47,12 @@ interface TaskItemProps {
   onGoToTopic?: (topicId: string) => void;
   /** Called after a successful task breakdown (task is deleted) */
   onBreakdown?: (id: string) => void;
+  /** Date until which this task is snoozed (YYYY-MM-DD), or null */
+  snoozedUntil?: string | null;
+  /** Called when the user snoozes a task until a specific date */
+  onSnooze?: (id: string, snoozedUntil: string) => void;
+  /** Called when the user unsnoozes (wakes up) a snoozed task */
+  onUnsnooze?: (id: string) => void;
 }
 
 /**
@@ -75,6 +81,9 @@ export function TaskItem({
   onPromote,
   onGoToTopic,
   onBreakdown,
+  snoozedUntil,
+  onSnooze,
+  onUnsnooze,
 }: TaskItemProps) {
   const t = useTranslations("tasks");
 
@@ -82,6 +91,7 @@ export function TaskItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(title);
   const [showBreakdownModal, setShowBreakdownModal] = useState(false);
+  const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
   const [swipeX, setSwipeX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -238,6 +248,21 @@ export function TaskItem({
       setIsEditing(false);
     }
   };
+
+  const isSnoozed = snoozedUntil != null && new Date(snoozedUntil + "T00:00:00") > new Date(new Date().toDateString());
+
+  /** Computes a YYYY-MM-DD date string N days from now */
+  function daysFromNow(days: number): string {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().split("T")[0];
+  }
+
+  /** Format a YYYY-MM-DD string as a short localized date for the badge */
+  function formatSnoozeDate(dateStr: string): string {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
 
   return (
     <div style={{ position: "relative", overflow: "hidden", borderRadius: "0.5rem" }}>
@@ -483,6 +508,22 @@ export function TaskItem({
               {t("badge_postponed")}
             </span>
           )}
+
+          {/* Snoozed until badge */}
+          {isSnoozed && snoozedUntil && (
+            <span
+              className="text-xs px-1.5 py-0.5 rounded inline-flex items-center gap-1"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+                backgroundColor: "color-mix(in srgb, var(--text-muted) 10%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--text-muted) 20%, transparent)",
+              }}
+            >
+              <FontAwesomeIcon icon={faClock} className="w-2.5 h-2.5" aria-hidden="true" />
+              {t("snooze_until", { date: formatSnoozeDate(snoozedUntil) })}
+            </span>
+          )}
         </div>
 
         {/* Secondary action buttons — contextual only (promote, goto-topic, breakdown) */}
@@ -537,9 +578,99 @@ export function TaskItem({
         ) : null}
         </div>
 
-      {/* Edit + Delete cluster — top-right, identical positioning to TopicCard */}
+      {/* Action cluster — top-right, identical positioning to TopicCard */}
       {!isEditing && (
-        <div className="flex gap-1 flex-shrink-0 items-start pt-0.5">
+        <div className="flex gap-1 flex-shrink-0 items-start pt-0.5 relative">
+          {/* Snooze / Unsnooze button — only for non-completed tasks */}
+          {!isCompleted && onSnooze && (
+            isSnoozed && onUnsnooze ? (
+              <button
+                onClick={() => onUnsnooze(id)}
+                className="p-1.5 rounded-lg transition-colors"
+                style={{
+                  color: "var(--accent-amber)",
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                }}
+                aria-label={t("unsnooze_btn")}
+                title={t("unsnooze_btn")}
+              >
+                <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
+              </button>
+            ) : !isSnoozed ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowSnoozeMenu((v) => !v)}
+                  className="p-1.5 rounded-lg transition-colors"
+                  style={{
+                    color: "var(--text-muted)",
+                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  }}
+                  aria-label={t("snooze_btn")}
+                  title={t("snooze_btn")}
+                >
+                  <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
+                </button>
+                {showSnoozeMenu && (
+                  <>
+                    {/* Backdrop to close menu */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowSnoozeMenu(false)}
+                    />
+                    <div
+                      className="absolute right-0 top-full mt-1 z-50 py-1 rounded-lg shadow-lg min-w-[160px]"
+                      style={{
+                        backgroundColor: "var(--bg-elevated)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      {[
+                        { label: t("snooze_tomorrow"), days: 1 },
+                        { label: t("snooze_next_week"), days: 7 },
+                        { label: t("snooze_next_month"), days: 30 },
+                      ].map(({ label, days }) => (
+                        <button
+                          key={days}
+                          onClick={() => {
+                            onSnooze(id, daysFromNow(days));
+                            setShowSnoozeMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm transition-colors hover:opacity-80"
+                          style={{
+                            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                            color: "var(--text-primary)",
+                          }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                      <div style={{ borderTop: "1px solid var(--border)", margin: "2px 0" }} />
+                      <label
+                        className="w-full text-left px-3 py-2 text-sm cursor-pointer block transition-colors hover:opacity-80"
+                        style={{
+                          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                          color: "var(--text-muted)",
+                        }}
+                      >
+                        {t("snooze_pick_date")}
+                        <input
+                          type="date"
+                          className="sr-only"
+                          min={daysFromNow(1)}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              onSnooze(id, e.target.value);
+                              setShowSnoozeMenu(false);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : null
+          )}
           <button
             onClick={() => onEdit(id)}
             className="p-1.5 rounded-lg transition-colors"
