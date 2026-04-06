@@ -10,6 +10,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 
 interface ProfileSettingsProps {
   initialName: string | null;
@@ -20,6 +21,11 @@ interface ProfileSettingsProps {
 
 /** Max file size before upload: 5 MB */
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+/** Returns true if the src is a data URL (base64-encoded image). */
+function isDataUrl(src: string): boolean {
+  return src.startsWith("data:");
+}
 
 /**
  * Profile editing section for the settings page.
@@ -148,17 +154,29 @@ export function ProfileSettings({
   if (!editing) {
     return (
       <div className="flex items-center gap-4">
-        {/* Avatar */}
+        {/* Avatar — next/image for remote URLs (proxied via /_next/image to avoid
+             CSP connect-src issues with the Service Worker), plain <img> for data URLs */}
         {imagePreview ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={imagePreview}
-            alt={initialName ?? "User avatar"}
-            width={56}
-            height={56}
-            className="rounded-full object-cover"
-            style={{ border: "2px solid var(--border)", width: 56, height: 56 }}
-          />
+          isDataUrl(imagePreview) ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={imagePreview}
+              alt={initialName ?? "User avatar"}
+              width={56}
+              height={56}
+              className="rounded-full object-cover"
+              style={{ border: "2px solid var(--border)", width: 56, height: 56 }}
+            />
+          ) : (
+            <Image
+              src={imagePreview}
+              alt={initialName ?? "User avatar"}
+              width={56}
+              height={56}
+              className="rounded-full object-cover"
+              style={{ border: "2px solid var(--border)" }}
+            />
+          )
         ) : (
           <div
             className="rounded-full flex items-center justify-center text-lg font-semibold"
@@ -240,15 +258,26 @@ export function ProfileSettings({
           title={t("profile_image_hint")}
         >
           {imagePreview ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={imagePreview}
-              alt="Avatar preview"
-              width={56}
-              height={56}
-              className="rounded-full object-cover group-hover:opacity-70 transition-opacity"
-              style={{ border: "2px solid var(--border)", width: 56, height: 56 }}
-            />
+            isDataUrl(imagePreview) ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={imagePreview}
+                alt="Avatar preview"
+                width={56}
+                height={56}
+                className="rounded-full object-cover group-hover:opacity-70 transition-opacity"
+                style={{ border: "2px solid var(--border)", width: 56, height: 56 }}
+              />
+            ) : (
+              <Image
+                src={imagePreview}
+                alt="Avatar preview"
+                width={56}
+                height={56}
+                className="rounded-full object-cover group-hover:opacity-70 transition-opacity"
+                style={{ border: "2px solid var(--border)" }}
+              />
+            )
           ) : (
             <div
               className="rounded-full flex items-center justify-center text-lg font-semibold group-hover:opacity-70 transition-opacity"
