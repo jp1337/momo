@@ -201,6 +201,7 @@
     "priority_nice": "Ce serait bien",
     "priority_someday": "Un jour",
     "card_bought": "Acheté",
+    "card_discarded": "Ignoré",
     "card_no_price": "Sans prix",
     "card_affordable": "✓ Dans le budget",
     "card_over_budget": "✗ Hors budget",

@@ -334,7 +334,7 @@ export function TaskItem({
         )}
       </button>
 
-      {/* Main content */}
+      {/* Main content — flex-1 so the edit/delete cluster stays at top-right */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
           {/* Title — double-click to edit inline */}
@@ -485,8 +485,9 @@ export function TaskItem({
           )}
         </div>
 
-        {/* Action buttons — below badges, full width */}
-        <div className="flex items-center gap-1 mt-2 -ml-1">
+        {/* Secondary action buttons — contextual only (promote, goto-topic, breakdown) */}
+        {(topicId === null && onPromote) || (topicId && onGoToTopic) || (!isCompleted && onBreakdown) ? (
+          <div className="flex items-center gap-1 mt-2 -ml-1">
             {/* Promote to topic — only for standalone tasks */}
             {topicId === null && onPromote && (
               <button
@@ -532,32 +533,39 @@ export function TaskItem({
                 <FontAwesomeIcon icon={faLayerGroup} className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             )}
-            <button
-              onClick={() => onEdit(id)}
-              className="p-1.5 rounded-lg transition-colors"
-              style={{
-                color: "var(--text-muted)",
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              }}
-              aria-label={t("aria_edit")}
-              title={t("aria_edit")}
-            >
-              ✎
-            </button>
-            <button
-              onClick={() => onDelete(id)}
-              className="p-1.5 rounded-lg transition-colors"
-              style={{
-                color: "var(--text-muted)",
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              }}
-              aria-label={t("aria_delete")}
-              title={t("aria_delete")}
-            >
-              ✕
-            </button>
           </div>
+        ) : null}
         </div>
+
+      {/* Edit + Delete cluster — top-right, identical positioning to TopicCard */}
+      {!isEditing && (
+        <div className="flex gap-1 flex-shrink-0 items-start pt-0.5">
+          <button
+            onClick={() => onEdit(id)}
+            className="p-1.5 rounded-lg transition-colors"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            }}
+            aria-label={t("aria_edit")}
+            title={t("aria_edit")}
+          >
+            ✎
+          </button>
+          <button
+            onClick={() => onDelete(id)}
+            className="p-1.5 rounded-lg transition-colors"
+            style={{
+              color: "var(--accent-red)",
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            }}
+            aria-label={t("aria_delete")}
+            title={t("aria_delete")}
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Breakdown modal */}
       {showBreakdownModal && (

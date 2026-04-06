@@ -105,10 +105,12 @@ export function TopicCard({
         {/* Title + description */}
         <div className="flex-1 min-w-0">
           <h3
-            className="text-base font-semibold truncate"
+            className="text-base font-semibold"
             style={{
               fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
               color: "var(--text-primary)",
+              overflowWrap: "break-word",
+              wordBreak: "break-word",
             }}
           >
             {title}
@@ -131,7 +133,10 @@ export function TopicCard({
           <button
             onClick={() => onEdit(id)}
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "var(--text-muted)" }}
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            }}
             aria-label={t("aria_edit")}
             title={t("aria_edit")}
           >
@@ -140,7 +145,10 @@ export function TopicCard({
           <button
             onClick={() => onDelete(id)}
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "var(--text-muted)" }}
+            style={{
+              color: "var(--accent-red)",
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            }}
             aria-label={t("aria_delete")}
             title={t("aria_delete")}
           >

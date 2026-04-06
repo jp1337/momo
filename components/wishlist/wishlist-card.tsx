@@ -242,34 +242,78 @@ export function WishlistCard({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Status badge for bought items */}
-      {isBought && (
-        <div
-          className="absolute top-3 right-3 text-xs px-2 py-0.5 rounded-full font-medium"
-          style={{
-            backgroundColor: "rgba(74,140,92,0.15)",
-            color: "var(--accent-green)",
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          }}
-        >
-          {t("card_bought")}
+      {/* Header row: title + status badge + edit/delete cluster (identical to TopicCard) */}
+      <div className="flex items-start gap-2">
+        <div className="flex-1 min-w-0">
+          <span
+            className="text-sm font-semibold leading-snug"
+            style={{
+              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+              color: isBought || isDiscarded ? "var(--text-muted)" : "var(--text-primary)",
+              textDecoration: isDiscarded ? "line-through" : "none",
+              display: "block",
+              overflowWrap: "break-word",
+              wordBreak: "break-word",
+            }}
+          >
+            {title}
+          </span>
+          {/* Inline status badge — shown below title */}
+          {isBought && (
+            <span
+              className="inline-block text-xs px-1.5 py-0.5 rounded-full font-medium mt-1"
+              style={{
+                backgroundColor: "rgba(74,140,92,0.15)",
+                color: "var(--accent-green)",
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              }}
+            >
+              {t("card_bought")}
+            </span>
+          )}
+          {isDiscarded && (
+            <span
+              className="inline-block text-xs px-1.5 py-0.5 rounded-full font-medium mt-1"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--text-muted) 12%, transparent)",
+                color: "var(--text-muted)",
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              }}
+            >
+              {t("card_discarded")}
+            </span>
+          )}
         </div>
-      )}
 
-      {/* Title */}
-      <div className="pr-16">
-        <span
-          className="text-sm font-semibold leading-snug"
-          style={{
-            fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-            color: isBought || isDiscarded
-              ? "var(--text-muted)"
-              : "var(--text-primary)",
-            textDecoration: isDiscarded ? "line-through" : "none",
-          }}
-        >
-          {title}
-        </span>
+        {/* Edit + Delete — always visible top-right, identical to TopicCard */}
+        <div className="flex gap-1 flex-shrink-0">
+          <button
+            onClick={() => onEdit(id)}
+            className="p-1.5 rounded-lg transition-colors"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            }}
+            aria-label={t("card_btn_edit")}
+            title={t("card_btn_edit")}
+          >
+            ✎
+          </button>
+          <button
+            onClick={() => handleAction(() => onDelete(id))}
+            disabled={isLoading}
+            className="p-1.5 rounded-lg transition-colors"
+            style={{
+              color: "var(--accent-red)",
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              cursor: isLoading ? "not-allowed" : "pointer",
+            }}
+            aria-label={t("card_btn_delete")}
+            title={t("card_btn_delete")}
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       {/* Price */}
@@ -383,67 +427,57 @@ export function WishlistCard({
         </a>
       )}
 
-      {/* Action buttons — always visible for touch and desktop accessibility */}
-      <div className="flex items-center gap-2 pt-1 flex-wrap">
-        {isOpen && (
-          <>
+      {/* Primary action buttons — status-specific, always visible */}
+      {(isOpen || isBought || isDiscarded) && (
+        <div className="flex items-center gap-2 pt-1 flex-wrap">
+          {isOpen && (
+            <>
+              <button
+                onClick={() => handleAction(() => onBuy(id))}
+                disabled={isLoading}
+                className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  backgroundColor: "rgba(74,140,92,0.15)",
+                  color: "var(--accent-green)",
+                  border: "1px solid rgba(74,140,92,0.3)",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                }}
+              >
+                {t("card_btn_bought")}
+              </button>
+              <button
+                onClick={() => handleAction(() => onDiscard(id))}
+                disabled={isLoading}
+                className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  backgroundColor: "rgba(122,144,127,0.1)",
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--border)",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                }}
+              >
+                {t("card_btn_discard")}
+              </button>
+            </>
+          )}
+          {isBought && (
             <button
-              onClick={() => handleAction(() => onBuy(id))}
+              onClick={() => handleAction(() => onUnbuy(id))}
               disabled={isLoading}
               className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
               style={{
                 fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                backgroundColor: "rgba(74,140,92,0.15)",
-                color: "var(--accent-green)",
-                border: "1px solid rgba(74,140,92,0.3)",
-                cursor: isLoading ? "not-allowed" : "pointer",
-              }}
-            >
-              {t("card_btn_bought")}
-            </button>
-            <button
-              onClick={() => handleAction(() => onDiscard(id))}
-              disabled={isLoading}
-              className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                backgroundColor: "rgba(122,144,127,0.1)",
                 color: "var(--text-muted)",
                 border: "1px solid var(--border)",
                 cursor: isLoading ? "not-allowed" : "pointer",
               }}
             >
-              {t("card_btn_discard")}
+              {t("card_btn_undo")}
             </button>
-            {/* Edit — icon button, consistent with task/topic pages */}
-            <button
-              onClick={() => onEdit(id)}
-              className="p-1.5 rounded-lg transition-colors"
-              style={{ color: "var(--text-muted)" }}
-              aria-label={t("card_btn_edit")}
-              title={t("card_btn_edit")}
-            >
-              ✎
-            </button>
-          </>
-        )}
-        {isBought && (
-          <button
-            onClick={() => handleAction(() => onUnbuy(id))}
-            disabled={isLoading}
-            className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-              border: "1px solid var(--border)",
-              cursor: isLoading ? "not-allowed" : "pointer",
-            }}
-          >
-            {t("card_btn_undo")}
-          </button>
-        )}
-        {isDiscarded && (
-          <>
+          )}
+          {isDiscarded && (
             <button
               onClick={() => handleAction(() => onUndiscard(id))}
               disabled={isLoading}
@@ -457,23 +491,9 @@ export function WishlistCard({
             >
               {t("card_btn_restore")}
             </button>
-            {/* Delete — icon button, consistent with task/topic pages */}
-            <button
-              onClick={() => handleAction(() => onDelete(id))}
-              disabled={isLoading}
-              className="p-1.5 rounded-lg transition-colors"
-              style={{
-                color: "var(--accent-red)",
-                cursor: isLoading ? "not-allowed" : "pointer",
-              }}
-              aria-label={t("card_btn_delete")}
-              title={t("card_btn_delete")}
-            >
-              ✕
-            </button>
-          </>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </motion.div>
     </div>
   );
