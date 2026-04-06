@@ -70,3 +70,20 @@ public/*.png
 # Drizzle migration SQL files — read only when debugging migration issues
 # The schema source of truth is lib/db/schema.ts, not the SQL files
 drizzle/*.sql
+
+# TypeScript build info — binary cache, ~350KB, never relevant
+tsconfig.tsbuildinfo
+
+# Auto-generated Next.js type declarations
+next-env.d.ts
+
+# Config files — rarely changed, standard boilerplate
+postcss.config.mjs
+eslint.config.mjs
+
+# CHANGELOG — large (30KB+), only relevant when writing release notes
+# Read it explicitly when needed rather than loading it into every session
+CHANGELOG.md
+
+# LICENSE — standard MIT, never needs editing
+LICENSE
