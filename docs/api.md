@@ -612,7 +612,7 @@ Request body:
 }
 ```
 
-Supported types: `ntfy` (more coming: `pushover`, `telegram`, `email`, `webhook`).
+Supported types: `ntfy`, `pushover` (more coming: `telegram`, `email`, `webhook`).
 
 **ntfy config:**
 
@@ -620,6 +620,13 @@ Supported types: `ntfy` (more coming: `pushover`, `telegram`, `email`, `webhook`
 |---|---|---|---|
 | `topic` | string | Yes | ntfy topic name (letters, numbers, hyphens, underscores) |
 | `server` | string (URL) | No | ntfy server URL (defaults to `https://ntfy.sh`) |
+
+**pushover config:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `userKey` | string | Yes | Pushover user key (alphanumeric, max 50 chars) |
+| `appToken` | string | Yes | Pushover application API token (alphanumeric, max 50 chars) |
 
 Response: `{ "success": true }`
 

@@ -142,7 +142,7 @@ One row is inserted each time the user postpones their daily quest. Used by the 
 
 **Config shapes by type:**
 - `ntfy`: `{ "topic": "my-momo", "server": "https://ntfy.sh" }` (server optional, defaults to ntfy.sh)
-- `pushover`: `{ "userKey": "...", "appToken": "..." }` (future)
+- `pushover`: `{ "userKey": "...", "appToken": "..." }`
 - `telegram`: `{ "chatId": "...", "botToken": "..." }` (future)
 - `email`: `{ "address": "..." }` (future)
 - `webhook`: `{ "url": "...", "secret": "..." }` (future)

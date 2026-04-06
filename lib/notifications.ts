@@ -7,6 +7,7 @@
  *
  * Currently supported channels:
  *  - ntfy: Push via ntfy.sh or self-hosted ntfy server
+ *  - pushover: Push via Pushover API (user key + app token)
  *
  * All channels use native `fetch` — no additional containers or npm packages.
  *
@@ -89,6 +90,60 @@ class NtfyChannel implements NotificationChannel {
   }
 }
 
+// ─── Channel: Pushover ──────────────────────────────────────────────────────
+
+/** JSONB config shape for the Pushover channel. */
+export interface PushoverConfig {
+  userKey: string;
+  appToken: string;
+}
+
+const PUSHOVER_API_URL = "https://api.pushover.net/1/messages.json";
+
+/**
+ * Pushover notification channel.
+ *
+ * Sends notifications via HTTP POST to the Pushover API.
+ * Requires a user key and application API token.
+ *
+ * @see https://pushover.net/api
+ */
+class PushoverChannel implements NotificationChannel {
+  private readonly userKey: string;
+  private readonly appToken: string;
+
+  constructor(config: PushoverConfig) {
+    this.userKey = config.userKey;
+    this.appToken = config.appToken;
+  }
+
+  async send(payload: NotificationPayload): Promise<void> {
+    const body: Record<string, string> = {
+      token: this.appToken,
+      user: this.userKey,
+      message: payload.body,
+      title: payload.title,
+    };
+
+    if (payload.url) {
+      body.url = payload.url;
+      body.url_title = "Open Momo";
+    }
+
+    const response = await fetch(PUSHOVER_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Pushover responded with ${response.status}: ${await response.text().catch(() => "no body")}`
+      );
+    }
+  }
+}
+
 // ─── Channel Registry ────────────────────────────────────────────────────────
 
 /**
@@ -106,8 +161,9 @@ export function createChannel(
   switch (type) {
     case "ntfy":
       return new NtfyChannel(config as unknown as NtfyConfig);
+    case "pushover":
+      return new PushoverChannel(config as unknown as PushoverConfig);
     // Future channels:
-    // case "pushover": return new PushoverChannel(config as unknown as PushoverConfig);
     // case "telegram": return new TelegramChannel(config as unknown as TelegramConfig);
     // case "email":    return new EmailChannel(config as unknown as EmailConfig);
     // case "webhook":  return new WebhookChannel(config as unknown as WebhookConfig);

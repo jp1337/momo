@@ -374,14 +374,47 @@ export const NtfyConfigSchema = z.object({
 export type NtfyConfig = z.infer<typeof NtfyConfigSchema>;
 
 /**
+ * Config schema for the Pushover notification channel.
+ * userKey: 30-character alphanumeric Pushover user key (required).
+ * appToken: 30-character alphanumeric Pushover application API token (required).
+ *
+ * @see https://pushover.net/api
+ */
+export const PushoverConfigSchema = z.object({
+  userKey: z
+    .string()
+    .min(1, "User key is required")
+    .max(50, "User key must be 50 characters or less")
+    .regex(
+      /^[a-zA-Z0-9]+$/,
+      "User key may only contain letters and numbers"
+    ),
+  appToken: z
+    .string()
+    .min(1, "App token is required")
+    .max(50, "App token must be 50 characters or less")
+    .regex(
+      /^[a-zA-Z0-9]+$/,
+      "App token may only contain letters and numbers"
+    ),
+});
+
+export type PushoverConfig = z.infer<typeof PushoverConfigSchema>;
+
+/**
  * Discriminated union for upserting a notification channel.
  * Each channel type has its own config schema. New types are added here
- * as they are implemented (pushover, telegram, email, webhook).
+ * as they are implemented (telegram, email, webhook).
  */
 export const UpsertNotificationChannelSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("ntfy"),
     config: NtfyConfigSchema,
+    enabled: z.boolean().optional().default(true),
+  }),
+  z.object({
+    type: z.literal("pushover"),
+    config: PushoverConfigSchema,
     enabled: z.boolean().optional().default(true),
   }),
 ]);
