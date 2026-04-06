@@ -74,6 +74,11 @@ description: Task management for people who struggle with procrastination. Open 
     <h3>Alexa Skill</h3>
     <p>Add tasks and check your quest by voice. "Alexa, add dentist to Momo." Works with any Echo device.</p>
   </div>
+  <div class="feature-card">
+    <div class="icon">📖</div>
+    <h3>Full Feature Guide</h3>
+    <p>Every feature explained with practical examples — tasks, quests, gamification, wishlist, API keys, and more. <a href="/momo/features">Read the guide →</a></p>
+  </div>
 </div>
 
 ## Quick Start
@@ -88,7 +93,7 @@ docker compose up -d
 
 Open [http://localhost:3000](http://localhost:3000) — done. Database migrations run automatically on first start.
 
-[Full getting started guide](/momo/getting-started)
+[Full getting started guide](/momo/getting-started) · [Explore all features →](/momo/features)
 
 ## Tech Stack
 
