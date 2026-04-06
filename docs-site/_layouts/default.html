@@ -14,14 +14,27 @@
   <header class="site-header">
     <nav class="nav-container">
       <a href="{{ '/' | relative_url }}" class="site-logo">🪶 Momo</a>
-      <div class="nav-links">
+      <div class="nav-links" id="nav-links">
         {% for item in site.nav %}
           <a href="{{ item.url }}" class="nav-link {% if page.url == item.url %}active{% endif %}">{{ item.title }}</a>
         {% endfor %}
       </div>
       <a href="https://github.com/jp1337/momo" class="github-link" target="_blank" rel="noopener">GitHub ↗</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
     </nav>
   </header>
+
+  <script>
+    (function() {
+      var toggle = document.getElementById('nav-toggle');
+      var links = document.getElementById('nav-links');
+      toggle.addEventListener('click', function() {
+        var open = links.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.textContent = open ? '✕' : '☰';
+      });
+    })();
+  </script>
 
   <main class="main-content">
     <div class="content-wrapper">
