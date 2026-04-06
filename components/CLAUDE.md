@@ -32,11 +32,13 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `settings/language-switcher.tsx` — UI language switcher (de/en/fr); POSTs to /api/locale
 - `settings/delete-account.tsx` — Danger zone: account deletion with confirmation dialog
 - `settings/quest-settings.tsx` — Slider to configure daily quest postpone limit (1–5, default 3)
+- `settings/emotional-closure-settings.tsx` — Toggle (An/Aus) to enable/disable affirmation/quote after daily quest completion; PATCHes /api/settings/quest
 - `shared/search-filter-bar.tsx` — Reusable search input + filter chip bar; used on Tasks and Wishlist pages; follows LanguageSwitcher chip pattern (amber active, elevated inactive)
 - `api-keys/api-keys-view.tsx` — API key management (create form, one-time key display, revoke)
 - `animations/confetti.tsx` — Confetti burst on task completion / level-up
 - `animations/achievement-toast.tsx` — Toast overlay when an achievement is unlocked
 - `animations/level-up-overlay.tsx` — Full-screen overlay animation on level-up
+- `animations/emotional-closure.tsx` — Affirmation/quote shown after daily quest completion; day-based deterministic pick (same quote all day), Framer Motion fade-in, Lora italic; 12 quotes per language via closure.quote_N i18n keys
 
 ## Patterns
 - Use CSS variables from `globals.css` for all colors (never hardcode hex)
