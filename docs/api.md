@@ -643,6 +643,7 @@ Adding a new cron job only requires adding an entry to the `CRON_JOBS` array in 
 |---|---|---|---|---|
 | `DELETE` | `/api/user` | Yes | 5/hour | Permanently delete account + all data |
 | `GET` | `/api/user/export` | Yes | 5/hour | Download all personal data as JSON |
+| `PATCH` | `/api/user/profile` | Yes | 10/min | Update profile (name, email, avatar) |
 
 ### DELETE /api/user
 
@@ -673,6 +674,37 @@ Response: JSON file attachment — `momo-export-YYYY-MM-DD.json`
   "achievements": [{ "key": "first_task_completed", "title": "...", "earnedAt": "..." }]
 }
 ```
+
+### PATCH /api/user/profile
+
+Updates the authenticated user's profile. All fields are optional — only provided fields are updated. Profile pictures are resized server-side to 200×200px WebP and stored as data URLs in the database.
+
+**Request body:**
+
+```json
+{
+  "name": "New Name",
+  "email": "new@example.com",
+  "image": "data:image/png;base64,..."
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | `string` (1–100 chars) | Display name |
+| `email` | `string` (valid email, max 255 chars) | Email address (must be unique) |
+| `image` | `string \| null` | Base64 data URL (PNG/JPEG/GIF/WebP/BMP) or `null` to remove |
+
+**Success response:** `{ "user": { "name": "...", "email": "...", "image": "..." } }`
+
+**Error responses:**
+
+| Status | Code | When |
+|---|---|---|
+| 409 | `EMAIL_TAKEN` | Email already in use by another account |
+| 422 | `INVALID_IMAGE` | Unsupported image format |
+| 422 | — | Validation error (details in `details` field) |
+| 429 | `RATE_LIMITED` | Exceeded 10 requests/minute |
 
 ---
 

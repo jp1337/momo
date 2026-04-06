@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Profil bearbeiten** — Name, E-Mail-Adresse und Profilbild können in den Einstellungen geändert werden. OAuth-Provider liefern oft Wegwerf-Mails oder Pseudonyme — User können das jetzt nachträglich korrigieren. Profilbild-Upload mit serverseitigem Resize (200×200, WebP) und Speicherung als Data-URL in der DB. Neuer API-Endpoint `PATCH /api/user/profile`. Dreisprachig (DE/EN/FR).
+
 - **Subtask-Reihenfolge (Drag & Drop)** — Aufgaben innerhalb eines Topics können per Drag & Drop umsortiert werden. Neue `sortOrder`-Spalte auf Tasks. Dedizierter Drag-Handle (6-Punkt Grip-Icon) links neben jeder Aufgabe — kein Konflikt mit Swipe-to-Complete. Touch-Support (200ms Delay), Tastatur-Support (Space + Pfeiltasten), optimistisches UI-Update mit automatischem Revert bei Fehler. Neuer API-Endpoint `PUT /api/topics/:id/reorder`. Neue Tasks erscheinen am Ende der Liste. Snoozed/Completed Sektionen bleiben unsortierbar. Dreisprachig (DE/EN/FR).
 
 - **Focus Mode** — Neue Seite (`/focus`) zeigt eine ablenkungsfreie Ansicht mit nur zwei Elementen: Tagesquest + Quick Wins (Aufgaben ≤ 15 Minuten). Volle Completion-Animationen (Konfetti, Coins, Level-Up, Achievements). "Alles geschafft"-Feierzustand wenn Quest und alle Quick Wins erledigt. Atmosphärischer Header mit grünem Glow. Neuer Einstiegspunkt auf dem Dashboard (grüner CTA-Banner). Navigation: Sidebar (Desktop), Mobile-Nav (ersetzt 5-Min), User-Menü. Dreisprachig (DE/EN/FR).

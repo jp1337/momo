@@ -329,7 +329,22 @@
     "delete_confirm_btn": "Ja, alles löschen",
     "delete_confirming": "Lösche...",
     "delete_cancel_btn": "Abbrechen",
-    "delete_err_generic": "Konto konnte nicht gelöscht werden — bitte erneut versuchen."
+    "delete_err_generic": "Konto konnte nicht gelöscht werden — bitte erneut versuchen.",
+    "profile_edit_btn": "Bearbeiten",
+    "profile_save_btn": "Speichern",
+    "profile_cancel_btn": "Abbrechen",
+    "profile_saving": "Speichere...",
+    "profile_saved": "Gespeichert",
+    "profile_name_label": "Name",
+    "profile_email_label": "E-Mail",
+    "profile_image_label": "Profilbild",
+    "profile_image_hint": "Klicke auf den Avatar um ein Bild hochzuladen",
+    "profile_image_remove": "Bild entfernen",
+    "profile_err_email_taken": "Diese E-Mail-Adresse wird bereits verwendet.",
+    "profile_err_image_too_large": "Bild zu groß (max. 5 MB).",
+    "profile_err_invalid_image": "Ungültiges Bildformat.",
+    "profile_err_name_empty": "Name darf nicht leer sein.",
+    "profile_err_email_invalid": "Bitte gib eine gültige E-Mail-Adresse ein."
   },
   "animations": {
     "achievement_title": "Achievement freigeschaltet!",
