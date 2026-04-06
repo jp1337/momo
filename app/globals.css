@@ -177,6 +177,124 @@ h6 {
   color: var(--bg-primary);
 }
 
+/* ─── Error Pages (404 / 500) ───────────────────────────────────────────────── */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-14px); }
+}
+
+.error-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.error-page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-code {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(6rem, 20vw, 11rem);
+  font-weight: 700;
+  color: var(--accent-amber);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 0 80px color-mix(in srgb, var(--accent-amber) 25%, transparent);
+}
+
+.error-divider {
+  width: 3rem;
+  height: 2px;
+  background-color: var(--border);
+  margin-bottom: 1.75rem;
+}
+
+.error-heading {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 4vw, 1.875rem);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem;
+  max-width: 32rem;
+}
+
+.error-subtext {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 26rem;
+  line-height: 1.75;
+  margin: 0 0 2.25rem;
+}
+
+.error-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.error-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--accent-green);
+  color: var(--bg-primary);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 0.7rem 1.75rem;
+  border-radius: 8px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.error-cta:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.error-cta--ghost {
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 1.5px solid var(--border);
+}
+
+.error-cta--ghost:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+  opacity: 1;
+}
+
+.error-dev-message {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--accent-red);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  max-width: 36rem;
+  width: 100%;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 1.5rem;
+}
+
 /* ─── Link defaults ─────────────────────────────────────────────────────────── */
 a {
   color: var(--accent-amber);
