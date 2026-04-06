@@ -1,0 +1,1 @@
+ALTER TABLE "tasks" ADD COLUMN "daily_quest_date" date;

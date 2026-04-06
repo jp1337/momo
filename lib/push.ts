@@ -20,6 +20,7 @@ import { db } from "@/lib/db";
 import { users, pushSubscriptions, taskCompletions } from "@/lib/db/schema";
 import { eq, and, gt, gte, sql } from "drizzle-orm";
 import { serverEnv } from "@/lib/env";
+import { getCurrentDailyQuest, selectDailyQuest } from "@/lib/daily-quest";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -190,6 +191,7 @@ export async function sendDailyQuestNotifications(): Promise<{
     .select({
       userId: pushSubscriptions.userId,
       subscription: pushSubscriptions.subscription,
+      timezone: users.timezone,
     })
     .from(pushSubscriptions)
     .innerJoin(users, eq(pushSubscriptions.userId, users.id))
@@ -206,17 +208,42 @@ export async function sendDailyQuestNotifications(): Promise<{
   let sent = 0;
   let failed = 0;
 
+  // Cache quests per user so multiple device subscriptions don't re-query
+  const questCache = new Map<string, string | null>();
+
   for (const row of eligibleSubscriptions) {
     try {
       const subscription = row.subscription as PushSubscriptionData;
 
-      await sendPushNotification(row.userId, subscription, {
-        title: "Your daily quest awaits",
-        body: "Open Momo to see today's mission. One small step forward.",
-        icon: "/icon-192.png",
-        url: "/dashboard",
-        tag: "daily-quest",
-      });
+      // Resolve quest title once per user
+      let questTitle: string | null;
+      if (questCache.has(row.userId)) {
+        questTitle = questCache.get(row.userId)!;
+      } else {
+        const quest =
+          (await getCurrentDailyQuest(row.userId)) ??
+          (await selectDailyQuest(row.userId, row.timezone));
+        questTitle = quest?.title ?? null;
+        questCache.set(row.userId, questTitle);
+      }
+
+      const payload = questTitle
+        ? {
+            title: "Deine Daily Quest wartet",
+            body: `Heutige Mission: ${questTitle}`,
+            icon: "/icon-192.png",
+            url: "/dashboard",
+            tag: "daily-quest",
+          }
+        : {
+            title: "Your daily quest awaits",
+            body: "Open Momo to see today's mission. One small step forward.",
+            icon: "/icon-192.png",
+            url: "/dashboard",
+            tag: "daily-quest",
+          };
+
+      await sendPushNotification(row.userId, subscription, payload);
 
       sent++;
     } catch (err) {
