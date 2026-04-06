@@ -526,8 +526,8 @@ export function TaskItem({
           )}
         </div>
 
-        {/* Secondary action buttons — contextual only (promote, goto-topic, breakdown) */}
-        {(topicId === null && onPromote) || (topicId && onGoToTopic) || (!isCompleted && onBreakdown) ? (
+        {/* Secondary action buttons — contextual only (promote, goto-topic, breakdown, snooze) */}
+        {(topicId === null && onPromote) || (topicId && onGoToTopic) || (!isCompleted && onBreakdown) || (!isCompleted && onSnooze) ? (
           <div className="flex items-center gap-1 mt-2 -ml-1">
             {/* Promote to topic — only for standalone tasks */}
             {topicId === null && onPromote && (
@@ -574,103 +574,103 @@ export function TaskItem({
                 <FontAwesomeIcon icon={faLayerGroup} className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             )}
+            {/* Snooze / Unsnooze — only for non-completed tasks */}
+            {!isCompleted && onSnooze && (
+              isSnoozed && onUnsnooze ? (
+                <button
+                  onClick={() => onUnsnooze(id)}
+                  className="p-1.5 rounded-lg transition-colors"
+                  style={{
+                    color: "var(--accent-amber)",
+                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  }}
+                  aria-label={t("unsnooze_btn")}
+                  title={t("unsnooze_btn")}
+                >
+                  <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
+                </button>
+              ) : !isSnoozed ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowSnoozeMenu((v) => !v)}
+                    className="p-1.5 rounded-lg transition-colors"
+                    style={{
+                      color: "var(--text-muted)",
+                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                    }}
+                    aria-label={t("snooze_btn")}
+                    title={t("snooze_btn")}
+                  >
+                    <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
+                  </button>
+                  {showSnoozeMenu && (
+                    <>
+                      {/* Backdrop to close menu */}
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowSnoozeMenu(false)}
+                      />
+                      <div
+                        className="absolute left-0 top-full mt-1 z-50 py-1 rounded-lg shadow-lg min-w-[160px]"
+                        style={{
+                          backgroundColor: "var(--bg-elevated)",
+                          border: "1px solid var(--border)",
+                        }}
+                      >
+                        {[
+                          { label: t("snooze_tomorrow"), days: 1 },
+                          { label: t("snooze_next_week"), days: 7 },
+                          { label: t("snooze_next_month"), days: 30 },
+                        ].map(({ label, days }) => (
+                          <button
+                            key={days}
+                            onClick={() => {
+                              onSnooze(id, daysFromNow(days));
+                              setShowSnoozeMenu(false);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm transition-colors hover:opacity-80"
+                            style={{
+                              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                              color: "var(--text-primary)",
+                            }}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                        <div style={{ borderTop: "1px solid var(--border)", margin: "2px 0" }} />
+                        <label
+                          className="w-full text-left px-3 py-2 text-sm cursor-pointer block transition-colors hover:opacity-80"
+                          style={{
+                            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                            color: "var(--text-muted)",
+                          }}
+                        >
+                          {t("snooze_pick_date")}
+                          <input
+                            type="date"
+                            className="sr-only"
+                            min={daysFromNow(1)}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                onSnooze(id, e.target.value);
+                                setShowSnoozeMenu(false);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : null
+            )}
           </div>
         ) : null}
         </div>
 
-      {/* Action cluster — top-right, identical positioning to TopicCard */}
+      {/* Edit + Delete cluster — top-right, identical positioning to TopicCard */}
       {!isEditing && (
-        <div className="flex gap-1 flex-shrink-0 items-start pt-0.5 relative">
-          {/* Snooze / Unsnooze button — only for non-completed tasks */}
-          {!isCompleted && onSnooze && (
-            isSnoozed && onUnsnooze ? (
-              <button
-                onClick={() => onUnsnooze(id)}
-                className="p-1.5 rounded-lg transition-colors"
-                style={{
-                  color: "var(--accent-amber)",
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                }}
-                aria-label={t("unsnooze_btn")}
-                title={t("unsnooze_btn")}
-              >
-                <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
-              </button>
-            ) : !isSnoozed ? (
-              <div className="relative">
-                <button
-                  onClick={() => setShowSnoozeMenu((v) => !v)}
-                  className="p-1.5 rounded-lg transition-colors"
-                  style={{
-                    color: "var(--text-muted)",
-                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  }}
-                  aria-label={t("snooze_btn")}
-                  title={t("snooze_btn")}
-                >
-                  <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
-                </button>
-                {showSnoozeMenu && (
-                  <>
-                    {/* Backdrop to close menu */}
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowSnoozeMenu(false)}
-                    />
-                    <div
-                      className="absolute right-0 top-full mt-1 z-50 py-1 rounded-lg shadow-lg min-w-[160px]"
-                      style={{
-                        backgroundColor: "var(--bg-elevated)",
-                        border: "1px solid var(--border)",
-                      }}
-                    >
-                      {[
-                        { label: t("snooze_tomorrow"), days: 1 },
-                        { label: t("snooze_next_week"), days: 7 },
-                        { label: t("snooze_next_month"), days: 30 },
-                      ].map(({ label, days }) => (
-                        <button
-                          key={days}
-                          onClick={() => {
-                            onSnooze(id, daysFromNow(days));
-                            setShowSnoozeMenu(false);
-                          }}
-                          className="w-full text-left px-3 py-2 text-sm transition-colors hover:opacity-80"
-                          style={{
-                            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                            color: "var(--text-primary)",
-                          }}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                      <div style={{ borderTop: "1px solid var(--border)", margin: "2px 0" }} />
-                      <label
-                        className="w-full text-left px-3 py-2 text-sm cursor-pointer block transition-colors hover:opacity-80"
-                        style={{
-                          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                          color: "var(--text-muted)",
-                        }}
-                      >
-                        {t("snooze_pick_date")}
-                        <input
-                          type="date"
-                          className="sr-only"
-                          min={daysFromNow(1)}
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              onSnooze(id, e.target.value);
-                              setShowSnoozeMenu(false);
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : null
-          )}
+        <div className="flex gap-1 flex-shrink-0 items-start pt-0.5">
           <button
             onClick={() => onEdit(id)}
             className="p-1.5 rounded-lg transition-colors"
