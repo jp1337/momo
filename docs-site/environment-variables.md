@@ -76,18 +76,18 @@ Copy each value to the corresponding variable in `.env.local`.
 
 | Variable | Default | Description |
 |---|---|---|
-| `CRON_SECRET` | — | Bearer token required by `/api/cron/*` routes. Include as `Authorization: Bearer <token>`. Generate with `openssl rand -hex 32`. If unset, cron routes are unprotected. |
+| `CRON_SECRET` | — | Bearer token required by `POST /api/cron`. Include as `Authorization: Bearer <token>`. Generate with `openssl rand -hex 32`. If unset, the cron route is unprotected. |
 
-Protect cron routes in production:
+Protect the cron route in production:
 
 ```bash
 CRON_SECRET=$(openssl rand -hex 32)
 ```
 
-Call cron routes with:
+Call the unified cron dispatcher:
 
 ```bash
-curl -X POST https://your-domain.com/api/cron/daily-quest \
+curl -X POST https://your-domain.com/api/cron \
   -H "Authorization: Bearer $CRON_SECRET"
 ```
 
