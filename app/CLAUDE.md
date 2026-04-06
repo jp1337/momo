@@ -28,6 +28,7 @@ api/
   tasks/route.ts                     → GET (list, ?topicId/type/completed filters), POST (create)
   tasks/[id]/route.ts                → GET (single), PATCH (update), DELETE
   tasks/[id]/complete/route.ts       → POST (complete + award coins, body: {timezone?}), DELETE (uncomplete + refund)
+  tasks/[id]/snooze/route.ts         → POST (snooze until date, body: {snoozedUntil}), DELETE (unsnooze/wake up)
   tasks/[id]/breakdown/route.ts      → POST (split task into subtasks under new topic)
   topics/route.ts                    → GET (list with task counts), POST (create)
   topics/[id]/route.ts               → GET (with tasks), PATCH, DELETE

@@ -81,6 +81,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `daily_quest_date` | date | Date (YYYY-MM-DD) on which this task was last assigned as the daily quest — used to reset stale incomplete quests each day so the same task does not repeat |
 | `postpone_count` | integer | How many times this task has been postponed as a quest |
 | `estimated_minutes` | integer | Optional time estimate: 5, 15, 30, or 60 minutes |
+| `snoozed_until` | date | Date (YYYY-MM-DD) until which this task is hidden from all active views. Null = visible. When snoozed_until <= today, the task reappears automatically |
 
 ### `topics`
 
