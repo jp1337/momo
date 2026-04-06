@@ -79,6 +79,23 @@ If your dashboard has qualifying tasks, a prominent **"I only have 5 minutes"** 
 
 > **Tip:** Set a 5-minute estimate on tiny tasks like "Take out the trash" or "Reply to that email". They become your go-to list for those moments between meetings.
 
+### Focus Mode
+
+When you want to block out everything except what matters right now, switch to **Focus Mode**. Open it from the sidebar (bullseye icon), the dashboard banner, or the avatar menu.
+
+Focus Mode shows exactly two things:
+
+1. **Your Daily Quest** — the hero card with complete, postpone, and energy check-in
+2. **Quick Wins** — up to 10 uncompleted tasks with a time estimate of 15 minutes or less
+
+There are no stats, no quick links, no search bar. Just the quest and the short tasks. All completion animations still work — confetti, coins, level-up, and achievements fire normally.
+
+When you complete the quest and all quick wins, a calm celebration message appears with a link back to the dashboard.
+
+On mobile, Focus Mode replaces the 5-Minute Mode in the bottom navigation bar. On desktop, both are available in the sidebar.
+
+> **Tip:** Use Focus Mode on days when your task list feels overwhelming. Seeing only the quest and a few quick wins removes the wall that triggers avoidance.
+
 ### Snooze — pause a task
 
 Sometimes you know a task matters but you don't want to see it right now. Click the **clock icon** on any task to snooze it. Momo offers quick options:

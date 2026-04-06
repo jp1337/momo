@@ -20,6 +20,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHouse,
   faBolt,
+  faBullseye,
   faListCheck,
   faFolderOpen,
   faStar,
@@ -44,6 +45,7 @@ export function Sidebar() {
   const NAV_ITEMS: NavItem[] = [
     { href: "/dashboard", label: t("dashboard"), icon: faHouse },
     { href: "/quick", label: t("quick_mode"), icon: faBolt },
+    { href: "/focus", label: t("focus_mode"), icon: faBullseye },
     { href: "/tasks", label: t("tasks"), icon: faListCheck },
     { href: "/topics", label: t("topics"), icon: faFolderOpen },
     { href: "/wishlist", label: t("wishlist"), icon: faStar },

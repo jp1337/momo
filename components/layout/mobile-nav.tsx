@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHouse,
-  faBolt,
+  faBullseye,
   faListCheck,
   faFolderOpen,
   faStar,
@@ -29,7 +29,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", labelKey: "dashboard", icon: faHouse },
-  { href: "/quick",     labelKey: "quick_mode", icon: faBolt },
+  { href: "/focus",     labelKey: "focus_mode", icon: faBullseye },
   { href: "/tasks",     labelKey: "tasks",     icon: faListCheck },
   { href: "/topics",    labelKey: "topics",    icon: faFolderOpen },
   { href: "/wishlist",  labelKey: "wishlist",  icon: faStar },

@@ -19,7 +19,8 @@
     "wishlist": "Wishlist",
     "settings": "Settings",
     "quick_mode": "5 Min",
-    "review": "Review"
+    "review": "Review",
+    "focus_mode": "Focus"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -52,6 +53,8 @@
     "section_quick_wins": "Quick wins",
     "quick_wins_hint": "under 15 minutes",
     "quick_wins_empty": "No short tasks yet — add time estimates to your tasks.",
+    "focus_cta": "Enter Focus Mode",
+    "focus_cta_hint": "Quest + Quick Wins only",
     "five_min_cta": "I only have 5 minutes",
     "five_min_cta_count": "{count, plural, one {# quick task} other {# quick tasks}}",
     "quest_postpones_left": "{count} postpone(s) left today",
@@ -357,6 +360,18 @@
     "empty_subtitle": "Add time estimates to your tasks — the quick ones will show up here.",
     "empty_link": "Go to tasks →",
     "completed_all": "All done! You crushed every quick task.",
+    "confirm_delete": "Delete this task?"
+  },
+  "focus": {
+    "page_title": "Focus Mode",
+    "page_subtitle": "Only what matters. One step at a time.",
+    "section_quest": "Your Daily Quest",
+    "section_quick_wins": "Quick Wins",
+    "quick_wins_hint": "under 15 minutes",
+    "empty_title": "All quiet here",
+    "empty_subtitle": "No open tasks. Enjoy the calm.",
+    "completed_all": "All done! Your focus paid off.",
+    "back_to_dashboard": "Back to Dashboard",
     "confirm_delete": "Delete this task?"
   },
   "landing": {

@@ -22,6 +22,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `topics/icon-picker.tsx` — 6-column FA icon grid picker; used in topic-form instead of emoji-picker
 - `dashboard/daily-quest-card.tsx` — Hero card: quest display, postpone (with daily limit counter), energy check-in (3 buttons before quest if not yet set today), energy-match badge on active quest, celebration state all day after completion; fires coinsEarned event
 - `quick/five-minute-view.tsx` — Focused 5-min task view: flat list of tasks with estimatedMinutes ≤ 5, reuses TaskItem, full completion animations (confetti, coins, level-up, achievements), AnimatePresence exit animation, empty state + "all done" celebration
+- `focus/focus-mode-view.tsx` — Distraction-free focus view: DailyQuestCard hero + flat quick-win task list (≤15 min), full completion flow (confetti, coins, level-up, achievements), "all done" celebration, empty state; combines dashboard quest logic with FiveMinuteView task management pattern
 - `layout/coin-counter.tsx` — Animated coin balance in navbar; listens for coinsEarned CustomEvent (delta: +N or -N) to update without full page reload
 - `wishlist/wishlist-card.tsx` — Single wishlist item: name, price, coin cost, buy/discard actions
 - `wishlist/wishlist-form.tsx` — Create/edit wishlist item modal
