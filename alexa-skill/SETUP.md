@@ -159,15 +159,22 @@ In der **Alexa Developer Console** → dein Skill → linkes Menü → **"Accoun
 1. Aktiviere den Schalter **"Do you allow users to create an account or link to an existing account with you?"**
 2. Wähle **Authorization Grant Type**: **"Implicit Grant"**
 3. Fülle aus:
-   - **Authorization URI**: `https://momotask.app/settings`
-   - **Client ID**: `momo-alexa` (beliebiger Wert)
+   - **Authorization URI**: `https://momotask.app/api/alexa/auth`
+   - **Client ID**: `momo-alexa`
    - **Scope**: leer lassen
    - **Domain List**: leer lassen
 4. Klicke auf **"Save"**
 
-> **Hinweis**: Da Momo keinen vollständigen OAuth-Server hat, funktioniert Account Linking
-> etwas anders als üblich. Der Nutzer wird auf die Settings-Seite geleitet und gibt dort
-> seinen API-Schlüssel manuell ein. Alexa speichert diesen dann als Access Token.
+> **So funktioniert es für alle User:**
+> Momo stellt unter `/api/alexa/auth` einen vollständigen OAuth 2.0 Implicit Grant Endpoint bereit.
+> Wenn ein User "Account verknüpfen" in der Alexa-App tippt:
+> 1. Alexa öffnet `https://momotask.app/api/alexa/auth?response_type=token&...`
+> 2. Momo prüft, ob der User eingeloggt ist — falls nicht, weiter zur Login-Seite
+> 3. Nach dem Login erstellt Momo automatisch einen API-Schlüssel namens "Alexa" für diesen User
+> 4. Alexa bekommt den Schlüssel und speichert ihn — fertig
+>
+> Der Schlüssel ist danach unter **Einstellungen → API-Schlüssel** sichtbar und kann dort
+> jederzeit widerrufen werden (= Alexa-Verbindung trennen).
 
 ---
 
