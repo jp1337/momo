@@ -10,8 +10,8 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `layout/mobile-nav.tsx` — Fixed bottom tab bar (mobile only, md:hidden): Dashboard/5 Min/Tasks/Topics/Wishlist
 - `layout/user-menu.tsx` — Avatar dropdown: Settings, API Keys, Stats, Admin (if isAdmin), Sign out
 - `ui/` — shadcn/ui base components (Button, Card, etc.) — heavily customized to use CSS variables
-- `tasks/task-item.tsx` — Single task row: checkbox, Framer Motion completion animation, priority badges, topic tag, due date, estimatedMinutes badge, postponeCount badge, breakdown button, snooze button (clock icon with popover: tomorrow/week/month/custom date), snoozed-until badge
-- `tasks/task-form.tsx` — Create/edit modal; fields: title, type, priority, topicId, dueDate, coinValue, estimatedMinutes (5/15/30/60 min), notes, recurrenceInterval
+- `tasks/task-item.tsx` — Single task row: checkbox, Framer Motion completion animation, priority badges, topic tag, due date, estimatedMinutes badge, energyLevel badge (⚡/☀/🌙), postponeCount badge, breakdown button, snooze button (clock icon with popover: tomorrow/week/month/custom date), snoozed-until badge
+- `tasks/task-form.tsx` — Create/edit modal; fields: title, type, priority, topicId, dueDate, coinValue, estimatedMinutes (5/15/30/60 min), energyLevel (HIGH/MEDIUM/LOW/null), notes, recurrenceInterval
 - `tasks/task-list.tsx` — Groups tasks into Today/Upcoming/No Date/Someday/Snoozed/Completed sections; manages client state, fires coinsEarned CustomEvent on complete/uncomplete, sends timezone in complete POST, renders live active/completed subtitle, handles snooze/unsnooze via /api/tasks/:id/snooze
 - `tasks/task-breakdown-modal.tsx` — Modal to split a task into 2–5 subtasks inside a new topic; POSTs to /api/tasks/:id/breakdown
 - `tasks/due-today-banner.tsx` — Banner shown on tasks page when tasks are overdue or due today
@@ -20,7 +20,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `topics/topics-grid.tsx` — Responsive grid (1/2/3 cols), handles topic CRUD state
 - `topics/topic-detail-view.tsx` — Scoped task list for a single topic; full parity with TaskList (confetti, coin events, level-up, achievements, timezone)
 - `topics/icon-picker.tsx` — 6-column FA icon grid picker; used in topic-form instead of emoji-picker
-- `dashboard/daily-quest-card.tsx` — Hero card: quest display, postpone (with daily limit counter), celebration state all day after completion; fires coinsEarned event
+- `dashboard/daily-quest-card.tsx` — Hero card: quest display, postpone (with daily limit counter), energy check-in (3 buttons before quest if not yet set today), energy-match badge on active quest, celebration state all day after completion; fires coinsEarned event
 - `quick/five-minute-view.tsx` — Focused 5-min task view: flat list of tasks with estimatedMinutes ≤ 5, reuses TaskItem, full completion animations (confetti, coins, level-up, achievements), AnimatePresence exit animation, empty state + "all done" celebration
 - `layout/coin-counter.tsx` — Animated coin balance in navbar; listens for coinsEarned CustomEvent (delta: +N or -N) to update without full page reload
 - `wishlist/wishlist-card.tsx` — Single wishlist item: name, price, coin cost, buy/discard actions
