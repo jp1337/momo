@@ -23,7 +23,7 @@ import { eq, count, lte, isNull, and, or } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { getTranslations } from "next-intl/server";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCoins, faFire, faTrophy, faCircleCheck } from "@fortawesome/free-solid-svg-icons";
+import { faCoins, faFire, faTrophy, faCircleCheck, faBolt } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import type { Metadata } from "next";
 
@@ -73,7 +73,7 @@ export default async function DashboardPage() {
   const todayStr = new Date().toISOString().split("T")[0];
 
   // Fetch quest, stats, completion count, postpone data, and quick wins in parallel
-  const [rawQuest, stats, completionCountRows, userPostponeData, quickWinTasks] = await Promise.all([
+  const [rawQuest, stats, completionCountRows, userPostponeData, quickWinTasks, fiveMinCountRows] = await Promise.all([
     // Try to get (or select) the daily quest
     selectDailyQuest(userId).catch(() => getDailyQuestIncludingCompleted(userId)),
     getUserStats(userId),
@@ -104,6 +104,18 @@ export default async function DashboardPage() {
         )
       )
       .limit(3),
+    // Count of 5-minute tasks for the "5 Min" CTA
+    db
+      .select({ count: count() })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          isNull(tasks.completedAt),
+          lte(tasks.estimatedMinutes, 5),
+          or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, todayStr))
+        )
+      ),
   ]);
 
   // Compute actual postponesToday (reset if date differs)
@@ -131,6 +143,7 @@ export default async function DashboardPage() {
     : null;
 
   const totalCompletions = completionCountRows[0]?.count ?? 0;
+  const fiveMinCount = fiveMinCountRows[0]?.count ?? 0;
 
   // Determine greeting based on time of day
   const hour = new Date().getHours();
@@ -207,6 +220,59 @@ export default async function DashboardPage() {
           postponeLimit={postponeLimit}
         />
       </section>
+
+      {/* ── 5-Minute CTA ── only shown when quick tasks exist ────────────────── */}
+      {fiveMinCount > 0 && (
+        <Link
+          href="/quick"
+          className="flex items-center gap-4 rounded-xl px-5 py-4 transition-all duration-150 no-underline group"
+          style={{
+            backgroundColor: "color-mix(in srgb, var(--accent-amber) 8%, var(--bg-surface))",
+            border: "1px solid color-mix(in srgb, var(--accent-amber) 25%, var(--border))",
+          }}
+        >
+          <div
+            className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
+            style={{
+              backgroundColor: "color-mix(in srgb, var(--accent-amber) 15%, transparent)",
+            }}
+          >
+            <FontAwesomeIcon
+              icon={faBolt}
+              className="w-5 h-5"
+              style={{ color: "var(--accent-amber)" }}
+              aria-hidden="true"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <span
+              className="text-sm font-semibold block"
+              style={{
+                fontFamily: "var(--font-display, 'Lora', serif)",
+                fontStyle: "italic",
+                color: "var(--text-primary)",
+              }}
+            >
+              {t("five_min_cta")}
+            </span>
+            <span
+              className="text-xs block mt-0.5"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+              }}
+            >
+              {t("five_min_cta_count", { count: fiveMinCount })}
+            </span>
+          </div>
+          <span
+            className="text-sm transition-transform group-hover:translate-x-1"
+            style={{ color: "var(--accent-amber)" }}
+          >
+            →
+          </span>
+        </Link>
+      )}
 
       {/* ── Quick Wins ── only shown if there are short tasks ────────────────── */}
       {quickWinTasks.length > 0 && (

@@ -19,6 +19,7 @@ import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHouse,
+  faBolt,
   faListCheck,
   faFolderOpen,
   faStar,
@@ -42,6 +43,7 @@ export function Sidebar() {
   /** Main navigation items — built inside the component so labels are translated */
   const NAV_ITEMS: NavItem[] = [
     { href: "/dashboard", label: t("dashboard"), icon: faHouse },
+    { href: "/quick", label: t("quick_mode"), icon: faBolt },
     { href: "/tasks", label: t("tasks"), icon: faListCheck },
     { href: "/topics", label: t("topics"), icon: faFolderOpen },
     { href: "/wishlist", label: t("wishlist"), icon: faStar },

@@ -50,6 +50,7 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **Immutable Statistics Counter** — `totalTasksCreated` is a cumulative counter that only ever increases. Deleting a task never decrements it, giving an accurate lifetime picture of your output.
 - **Time Estimates** — Assign a time estimate (5, 15, 30, or 60 minutes) to any task. Estimates are displayed as a badge on task cards.
 - **Quick Wins** — Dashboard section that surfaces all tasks estimated at 15 minutes or less, so a short window of focus never goes to waste.
+- **5-Minute Mode** — Dedicated focused view (`/quick`) showing only tasks with a 5-minute estimate. Prominent dashboard CTA, sidebar and mobile nav entry. Complete tasks directly with full animation support.
 - **Public Landing Page** — Atmospheric Momo-themed landing page (Lora italic, dark forest green, feather animation, Michael Ende quote) for unauthenticated visitors.
 - **Dark & Light Mode** — Cozy warm tones in both themes. Because productivity shouldn't feel clinical.
 - **DSGVO / GDPR Ready** — Data export (JSON), account deletion with full cascade, Impressum + Datenschutzerklärung pages, no tracking cookies.

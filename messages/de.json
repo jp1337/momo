@@ -17,7 +17,8 @@
     "tasks": "Aufgaben",
     "topics": "Themen",
     "wishlist": "Wunschliste",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "quick_mode": "5 Min"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -50,6 +51,8 @@
     "section_quick_wins": "Schnell erledigt",
     "quick_wins_hint": "unter 15 Minuten",
     "quick_wins_empty": "Keine kurzen Aufgaben vorhanden — füge Zeitschätzungen zu deinen Aufgaben hinzu.",
+    "five_min_cta": "Ich hab nur 5 Minuten",
+    "five_min_cta_count": "{count, plural, one {# schnelle Aufgabe} other {# schnelle Aufgaben}}",
     "quest_postpones_left": "Noch {count}× verschiebbar heute",
     "quest_postpones_none": "Heute nicht mehr verschiebbar",
     "quest_bonus_coins": "×2 Bonus — lange verschoben!",
@@ -330,6 +333,15 @@
     "no_results": "Keine Aufgaben gefunden.",
     "no_results_wishlist": "Keine Artikel gefunden.",
     "no_results_hint": "Versuch einen anderen Suchbegriff oder setze die Filter zurück."
+  },
+  "quick": {
+    "page_title": "Ich hab nur 5 Minuten",
+    "page_subtitle": "{count, plural, one {# Aufgabe wartet} other {# Aufgaben warten}}",
+    "empty_title": "Keine 5-Minuten-Aufgaben",
+    "empty_subtitle": "Füge Zeitschätzungen zu deinen Aufgaben hinzu — dann tauchen die schnellen hier auf.",
+    "empty_link": "Zu den Aufgaben →",
+    "completed_all": "Alles erledigt! Du hast alle schnellen Aufgaben geschafft.",
+    "confirm_delete": "Diese Aufgabe löschen?"
   },
   "landing": {
     "hero_heading": "Steal your time back.",

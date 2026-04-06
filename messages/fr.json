@@ -17,7 +17,8 @@
     "tasks": "Tâches",
     "topics": "Sujets",
     "wishlist": "Liste de souhaits",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "quick_mode": "5 Min"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -50,6 +51,8 @@
     "section_quick_wins": "Victoires rapides",
     "quick_wins_hint": "moins de 15 minutes",
     "quick_wins_empty": "Aucune tâche courte — ajoutez des estimations de temps.",
+    "five_min_cta": "J'ai seulement 5 minutes",
+    "five_min_cta_count": "{count, plural, one {# tâche rapide} other {# tâches rapides}}",
     "quest_postpones_left": "Encore {count} report(s) possible(s) aujourd'hui",
     "quest_postpones_none": "Plus de reports possibles aujourd'hui",
     "quest_bonus_coins": "×2 bonus — longtemps évité !",
@@ -330,6 +333,15 @@
     "no_results": "Aucune tâche trouvée.",
     "no_results_wishlist": "Aucun article trouvé.",
     "no_results_hint": "Essayez un autre terme ou réinitialisez les filtres."
+  },
+  "quick": {
+    "page_title": "J'ai seulement 5 minutes",
+    "page_subtitle": "{count, plural, one {# tâche en attente} other {# tâches en attente}}",
+    "empty_title": "Aucune tâche de 5 minutes",
+    "empty_subtitle": "Ajoute des estimations de temps à tes tâches — les rapides apparaîtront ici.",
+    "empty_link": "Voir les tâches →",
+    "completed_all": "Tout fait ! Tu as accompli toutes les tâches rapides.",
+    "confirm_delete": "Supprimer cette tâche ?"
   },
   "landing": {
     "hero_heading": "Reprenez votre temps.",
