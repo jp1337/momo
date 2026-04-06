@@ -502,6 +502,7 @@ Sets item status to `DISCARDED`. Response: `{ "item": WishlistItem }`
 |---|---|---|---|
 | `GET` | `/api/settings/budget` | Yes | Get current monthly budget + spending summary |
 | `PATCH` | `/api/settings/budget` | Yes | Update monthly budget |
+| `PATCH` | `/api/settings/quest` | Yes | Update quest settings (postpone limit, emotional closure) |
 
 ### GET /api/settings/budget
 
@@ -523,6 +524,21 @@ Response:
 ```
 
 Send `null` to remove the budget limit. Response: `{ "success": true }`
+
+### PATCH /api/settings/quest
+
+Updates quest-related user settings. At least one field must be provided.
+
+```json
+{ "postponeLimit": 3, "emotionalClosureEnabled": true }
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `postponeLimit` | number (1–5) | Max daily quest postponements (optional) |
+| `emotionalClosureEnabled` | boolean | Show affirmation/quote after quest completion (optional) |
+
+Response: `{ "success": true }`
 
 ---
 

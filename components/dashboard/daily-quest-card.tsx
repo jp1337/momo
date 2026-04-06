@@ -26,6 +26,7 @@ import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
 import type { AchievementItem } from "@/components/animations/achievement-toast";
 import { dispatchCoinsEarned } from "@/lib/client/coin-events";
+import { EmotionalClosure } from "@/components/animations/emotional-closure";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -54,6 +55,8 @@ interface DailyQuestCardProps {
   postponesToday: number;
   /** The user's configured daily postpone limit */
   postponeLimit: number;
+  /** Whether to show an affirmation/quote after quest completion */
+  emotionalClosureEnabled: boolean;
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -91,7 +94,7 @@ interface CompleteResponse {
  * Manages completing and postponing the quest via API calls.
  * Triggers confetti, level-up overlay, and achievement toasts on completion.
  */
-export function DailyQuestCard({ quest, postponesToday, postponeLimit }: DailyQuestCardProps) {
+export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotionalClosureEnabled }: DailyQuestCardProps) {
   const t = useTranslations("dashboard");
   const router = useRouter();
   const [isCompleting, setIsCompleting] = useState(false);
@@ -314,6 +317,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit }: DailyQu
               {t("quest_comeback")}
             </p>
           )}
+          <EmotionalClosure enabled={emotionalClosureEnabled} />
         </div>
       )}
 

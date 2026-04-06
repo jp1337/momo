@@ -139,6 +139,9 @@ export const users = pgTable("users", {
    */
   totalTasksCreated: integer("total_tasks_created").notNull().default(0),
 
+  /** Whether to show an affirmation/quote after completing the daily quest (default: on) */
+  emotionalClosureEnabled: boolean("emotional_closure_enabled").notNull().default(true),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -364,5 +364,24 @@
     "footer_tagline": "Momo — un petit pas, chaque jour.",
     "meta_title": "Momo — Reprenez votre temps",
     "meta_description": "Un gestionnaire de tâches pour les personnes sujettes à la procrastination. Une quête par jour."
+  },
+  "closure": {
+    "setting_label": "Clôture émotionnelle",
+    "setting_hint": "Afficher une citation ou un encouragement après avoir accompli la quête du jour.",
+    "setting_on": "Activé",
+    "setting_off": "Désactivé",
+    "quote_count": "12",
+    "quote_0": "« Le temps, c'est la vie. Et la vie habite dans le cœur. » — Michael Ende",
+    "quote_1": "« Parfois, on a une très longue route devant soi. On commence à se presser. On fait de plus en plus d'efforts — et pourtant la route ne raccourcit jamais. » — Michael Ende",
+    "quote_2": "« Momo savait écouter de telle sorte que les gens hésitants ou indécis savaient soudain très exactement ce qu'ils voulaient. » — Michael Ende",
+    "quote_3": "« Il existe un grand secret, et pourtant tout à fait quotidien. Tous les êtres humains y participent, chacun le connaît, mais bien peu y réfléchissent. » — Michael Ende",
+    "quote_4": "« On les appelle fleurs-des-heures, parce qu'elles éclosent à chaque heure. Mais on ne peut les voir que si l'on y prête attention. » — Michael Ende",
+    "quote_5": "« En réalité, le temps commence toujours maintenant. » — Michael Ende",
+    "quote_6": "Tu as pris du temps pour toi aujourd'hui — c'est ce qui compte.",
+    "quote_7": "Un pas après l'autre. C'est exactement comme ça que ça marche.",
+    "quote_8": "Ce n'est pas la taille de la tâche qui compte, mais le fait d'avoir commencé.",
+    "quote_9": "Tu as accompli aujourd'hui quelque chose qui était encore en attente hier.",
+    "quote_10": "Les petits pas mènent aussi à destination.",
+    "quote_11": "Bien joué. Demain viendra la prochaine étape."
   }
 }

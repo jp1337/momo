@@ -364,5 +364,24 @@
     "footer_tagline": "Momo — one small step, daily.",
     "meta_title": "Momo — Steal your time back",
     "meta_description": "A task manager for people with procrastination tendencies. One quest a day."
+  },
+  "closure": {
+    "setting_label": "Emotional Closure",
+    "setting_hint": "Show a quote or affirmation after completing your daily quest.",
+    "setting_on": "On",
+    "setting_off": "Off",
+    "quote_count": "12",
+    "quote_0": "\u201cTime is life. And life resides in the human heart.\u201d — Michael Ende",
+    "quote_1": "\u201cSometimes you have a very long road ahead of you. You start to hurry. You try harder and harder — and yet the road never gets any shorter.\u201d — Michael Ende",
+    "quote_2": "\u201cMomo could listen in a way that made uncertain or indecisive people suddenly know exactly what they wanted.\u201d — Michael Ende",
+    "quote_3": "\u201cThere is a great yet everyday secret. All people share in it, everyone knows it, but very few ever think about it.\u201d — Michael Ende",
+    "quote_4": "\u201cHour-lilies, they are called, because they bloom with every passing hour. But you can only see them when you pay attention.\u201d — Michael Ende",
+    "quote_5": "\u201cIn reality, time always begins right now.\u201d — Michael Ende",
+    "quote_6": "You took time for yourself today — that counts.",
+    "quote_7": "One step at a time. That's exactly how it works.",
+    "quote_8": "It's not the size of the task that matters, but that you started.",
+    "quote_9": "You accomplished something today that was still open yesterday.",
+    "quote_10": "Small steps lead to the finish line too.",
+    "quote_11": "Well done. Tomorrow brings the next step."
   }
 }

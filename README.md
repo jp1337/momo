@@ -36,6 +36,7 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **Wishlist & Budget** — Track things you want to buy, with a monthly budget indicator to spend more consciously.
 - **Search & Filter** — Real-time text search across tasks and wishlist, plus filter chips for priority and topic. Instantly narrow your list without a server round-trip.
 - **Snooze / Pause** — Hide tasks until a future date. Quick options (tomorrow, next week, month) or custom date picker. Snoozed tasks vanish from the list, Quick Wins, and Daily Quest — then reappear automatically.
+- **Emotional Closure** — After completing the daily quest, a gentle Michael Ende quote or affirmation appears. Day-based selection (same quote all day, new one tomorrow). Toggleable in Settings.
 - **Push Notifications** — Daily reminders via browser push. No third-party service, no subscription.
 - **PWA** — Install on your phone like a native app. Works offline. The task creation form is fully usable on mobile — a corrected z-index ensures it renders above the bottom navigation bar as a proper full-height modal.
 - **REST API & API Keys** — Full public REST API with personal access tokens (read-only flag, expiry dates). Interactive Swagger UI at `/api-docs`.

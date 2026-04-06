@@ -22,6 +22,7 @@ import { LanguageSwitcher } from "@/components/settings/language-switcher";
 import { DeleteAccount } from "@/components/settings/delete-account";
 import { LinkedAccounts } from "@/components/settings/linked-accounts";
 import { QuestSettings } from "@/components/settings/quest-settings";
+import { EmotionalClosureSettings } from "@/components/settings/emotional-closure-settings";
 import { serverEnv } from "@/lib/env";
 import { getTranslations, getLocale } from "next-intl/server";
 import { Suspense } from "react";
@@ -41,6 +42,7 @@ export default async function SettingsPage() {
   }
 
   const t = await getTranslations("settings");
+  const tClosure = await getTranslations("closure");
   const locale = await getLocale();
 
   // Fetch user preferences, linked accounts, and active push subscriptions from DB
@@ -54,6 +56,7 @@ export default async function SettingsPage() {
         notificationEnabled: users.notificationEnabled,
         notificationTime: users.notificationTime,
         questPostponeLimit: users.questPostponeLimit,
+        emotionalClosureEnabled: users.emotionalClosureEnabled,
       })
       .from(users)
       .where(eq(users.id, session.user.id))
@@ -260,6 +263,38 @@ export default async function SettingsPage() {
         </div>
 
         <QuestSettings initialPostponeLimit={user.questPostponeLimit} />
+      </section>
+
+      {/* Emotional Closure section */}
+      <section
+        className="rounded-xl p-6 flex flex-col gap-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            className="text-base font-semibold"
+            style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {tClosure("setting_label")}
+          </h2>
+          <p
+            className="text-sm"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui)",
+            }}
+          >
+            {tClosure("setting_hint")}
+          </p>
+        </div>
+
+        <EmotionalClosureSettings initialEnabled={user.emotionalClosureEnabled} />
       </section>
 
       {/* Language section */}

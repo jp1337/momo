@@ -159,6 +159,16 @@ If yesterday's quest went uncompleted, it does not carry over. Each morning brin
 
 Your daily reminder notification includes the quest title — e.g. "Today's mission: Call the dentist." Open the notification to go straight to the task.
 
+### Emotional closure
+
+After completing the daily quest, Momo shows a gentle quote or affirmation — a small moment of warmth before the celebration fades. The quotes alternate between passages from Michael Ende's novel *Momo* and encouraging affirmations that match the app's philosophy.
+
+- The quote changes **once per day** (the same quote shows all day, a new one tomorrow)
+- Available in **German, English, and French**
+- Toggle the feature on or off in **Settings → Emotional Closure**
+
+> **Why quotes from Momo?** The novel is about reclaiming your time from the "Grey Gentlemen" — a perfect metaphor for the small victory of completing your daily quest.
+
 ---
 
 ## Gamification

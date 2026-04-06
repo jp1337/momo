@@ -364,5 +364,24 @@
     "footer_tagline": "Momo — ein kleiner Schritt, täglich.",
     "meta_title": "Momo — Steal your time back",
     "meta_description": "Ein Aufgaben-Manager für Menschen, die zu Prokrastination neigen. Jeden Tag eine Quest."
+  },
+  "closure": {
+    "setting_label": "Emotionaler Abschluss",
+    "setting_hint": "Zeige nach der Tagesquest ein Zitat oder eine Aufmunterung.",
+    "setting_on": "An",
+    "setting_off": "Aus",
+    "quote_count": "12",
+    "quote_0": "\u201eZeit ist Leben. Und das Leben wohnt im Herzen.\u201c — Michael Ende",
+    "quote_1": "\u201eManchmal hat man eine sehr lange Straße vor sich. Und dann fängt man an, sich zu beeilen. Man strengt sich mehr und mehr an — und trotzdem wird die Straße nicht kürzer.\u201c — Michael Ende",
+    "quote_2": "\u201eMomo konnte so zuhören, dass ratlose oder unentschlossene Leute auf einmal ganz genau wussten, was sie wollten.\u201c — Michael Ende",
+    "quote_3": "\u201eEs gibt ein großes und doch ganz alltägliches Geheimnis. Alle Menschen haben daran teil, jeder kennt es, aber die wenigsten denken je darüber nach.\u201c — Michael Ende",
+    "quote_4": "\u201eStunden-Blumen nennt man sie, weil sie mit jeder Stunde aufblühen. Aber man kann sie nur sehen, wenn man darauf achtet.\u201c — Michael Ende",
+    "quote_5": "\u201eDenn in Wirklichkeit beginnt die Zeit immer genau jetzt.\u201c — Michael Ende",
+    "quote_6": "Du hast dir heute Zeit genommen — das zählt.",
+    "quote_7": "Ein Schritt nach dem anderen. Genau so geht es.",
+    "quote_8": "Nicht die Größe der Aufgabe zählt, sondern dass du angefangen hast.",
+    "quote_9": "Du hast heute etwas geschafft, das gestern noch offen war.",
+    "quote_10": "Kleine Schritte führen auch ans Ziel.",
+    "quote_11": "Gut gemacht. Morgen kommt der nächste Schritt."
   }
 }

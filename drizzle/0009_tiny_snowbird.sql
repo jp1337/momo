@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "emotional_closure_enabled" boolean DEFAULT true NOT NULL;

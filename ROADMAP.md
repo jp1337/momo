@@ -31,7 +31,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 - ✅ **Suche & Filter** — Volltextsuche über Tasks und Wunschliste; Filter nach Priorität, Topic, Status; nützlich ab ~20+ Einträgen
 - ✅ **Snooze / Aufgabe pausieren** — "Erinnere mich ab [Datum]" für Tasks die man nicht löschen, aber auch nicht ständig sehen will
 - ✅ **"Ich hab nur 5 Minuten"-Modus** — prominenter Einstiegspunkt der nur Tasks ≤5 min zeigt (über Quick Wins hinaus)
-- **Emotionaler Abschluss** — nach Tagesquest-Abschluss kurze Affirmation oder Michael-Ende-Zitat (optional, abschaltbar)
+- ✅ **Emotionaler Abschluss** — nach Tagesquest-Abschluss kurze Affirmation oder Michael-Ende-Zitat (optional, abschaltbar)
 
 ### Mittlerer Aufwand
 
@@ -62,7 +62,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 ### Stabilität
 
 - **Automatisierte Tests** — Integrationstests für `completeTask`, `selectDailyQuest`, `updateStreak` mit echter Test-DB
-- **Error-Tracking** — Sentry oder Axiom in Prod; aktuell läuft alles ohne Fehler-Visibility
+- **Error-Tracking & Observability** — Sentry, Axiom oder GlitchTip in Prod für Fehler-Visibility; alternativ oder ergänzend **OpenTelemetry** (Traces, Metrics, Logs) mit Grafana/Jaeger/Loki-Backend; Next.js hat experimentelles OTel-Instrumentation (`instrumentation.ts`); ideal für Selfhoster mit bestehendem Monitoring-Stack
 - **Database Backups** — automatisches `pg_dump` mit Retention in Docker Compose / K8s
 
 ### Authentifizierung erweitern
