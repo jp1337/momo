@@ -168,6 +168,21 @@ export const SnoozeTaskInputSchema = z.object({
 
 export type SnoozeTaskInput = z.infer<typeof SnoozeTaskInputSchema>;
 
+// ─── Reorder Validators ──────────────────────────────────────────────────────
+
+/**
+ * Schema for reordering tasks within a topic.
+ * Accepts an ordered array of task UUIDs — the array index becomes the new sortOrder.
+ */
+export const ReorderTasksInputSchema = z.object({
+  taskIds: z
+    .array(z.string().uuid("Invalid task ID"))
+    .min(1, "At least one task ID is required")
+    .max(200, "Too many tasks"),
+});
+
+export type ReorderTasksInput = z.infer<typeof ReorderTasksInputSchema>;
+
 // ─── Topic Validators ─────────────────────────────────────────────────────────
 
 /**

@@ -18,7 +18,9 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `topics/topic-card.tsx` — Topic card: FA icon (resolveTopicIcon), color, progress bar (X/Y subtasks), priority badge
 - `topics/topic-form.tsx` — Create/edit modal with local FA icon picker (IconPicker) + color swatches; no external emoji CDN
 - `topics/topics-grid.tsx` — Responsive grid (1/2/3 cols), handles topic CRUD state
-- `topics/topic-detail-view.tsx` — Scoped task list for a single topic; full parity with TaskList (confetti, coin events, level-up, achievements, timezone)
+- `topics/topic-detail-view.tsx` — Scoped task list for a single topic; full parity with TaskList (confetti, coin events, level-up, achievements, timezone); active tasks are drag-and-drop reorderable via SortableTaskList
+- `topics/sortable-task-list.tsx` — Drag-and-drop reorderable task list using @dnd-kit; PointerSensor (mouse), TouchSensor (200ms delay), KeyboardSensor; DragOverlay for smooth preview; restrictToVerticalAxis modifier; optimistic reorder via onReorder callback
+- `topics/sortable-task-item.tsx` — Wraps TaskItem with dnd-kit useSortable hook; renders drag handle (6-dot grip SVG) to the left; touch-action: none on handle to avoid swipe conflict
 - `topics/icon-picker.tsx` — 6-column FA icon grid picker; used in topic-form instead of emoji-picker
 - `dashboard/daily-quest-card.tsx` — Hero card: quest display, postpone (with daily limit counter), energy check-in (3 buttons before quest if not yet set today), energy-match badge on active quest, celebration state all day after completion; fires coinsEarned event
 - `quick/five-minute-view.tsx` — Focused 5-min task view: flat list of tasks with estimatedMinutes ≤ 5, reuses TaskItem, full completion animations (confetti, coins, level-up, achievements), AnimatePresence exit animation, empty state + "all done" celebration

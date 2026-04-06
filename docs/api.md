@@ -288,6 +288,7 @@ Response (201 Created):
 | `GET` | `/api/topics/:id` | Yes | — | Get topic with all its tasks |
 | `PATCH` | `/api/topics/:id` | Yes | — | Partially update a topic |
 | `DELETE` | `/api/topics/:id` | Yes | — | Delete topic (tasks become standalone) |
+| `PUT` | `/api/topics/:id/reorder` | Yes | 30/min | Reorder tasks within a topic |
 
 ### GET /api/topics
 
@@ -339,6 +340,19 @@ All fields optional. Same shape as POST body. Response: `{ "topic": Topic }`
 ### DELETE /api/topics/:id
 
 Deletes the topic. All associated tasks have their `topicId` set to `null` (they become standalone tasks, not deleted).
+
+Response: `{ "success": true }`
+
+### PUT /api/topics/:id/reorder
+
+Reorders active tasks within a topic. The array index of each task ID becomes the new `sortOrder` value.
+
+**Request body:**
+```json
+{ "taskIds": ["uuid-1", "uuid-2", "uuid-3"] }
+```
+
+All task IDs must belong to the given topic and the authenticated user.
 
 Response: `{ "success": true }`
 

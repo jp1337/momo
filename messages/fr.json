@@ -200,6 +200,8 @@
     "detail_empty": "Aucune tâche dans ce sujet. Ajoute ta première sous-tâche ci-dessus.",
     "detail_completed": "Terminé ({count})",
     "detail_snoozed": "En pause ({count})",
+    "drag_handle_aria": "Glisser pour réorganiser",
+    "reorder_error": "Impossible de sauvegarder l'ordre",
     "detail_confirm_delete": "Supprimer cette tâche ?",
     "form_title_edit": "Modifier le sujet",
     "form_title_new": "Nouveau sujet",

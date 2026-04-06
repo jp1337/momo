@@ -299,6 +299,9 @@ export const tasks = pgTable("tasks", {
   /** Energy level required to complete this task. Null = matches any energy state. */
   energyLevel: energyLevelEnum("energy_level"),
 
+  /** Sort position within a topic. Lower values appear first. Default 0, assigned sequentially on creation. */
+  sortOrder: integer("sort_order").notNull().default(0),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

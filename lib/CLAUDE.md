@@ -8,10 +8,10 @@ All server-side business logic and infrastructure. API routes import from here �
 - `env.ts` — Zod-validated env wrapper. **All** env var access must go through `serverEnv` or `clientEnv` exports here
 - `db/index.ts` — Drizzle client (postgres driver), singleton pattern
 - `db/schema.ts` — All table definitions: users, topics, tasks, task_completions, wishlist_items, achievements, user_achievements + Auth.js tables (accounts, sessions, verification_tokens)
-- `tasks.ts` — getUserTasks, getTaskById, createTask, updateTask, deleteTask, completeTask (coin award + streak + achievements, timezone-aware), uncompleteTask, breakdownTask, snoozeTask (hides task until date, clears isDailyQuest if active), unsnoozeTask
+- `tasks.ts` — getUserTasks, getTaskById, createTask (auto-assigns sortOrder within topic), updateTask, deleteTask, completeTask (coin award + streak + achievements, timezone-aware), uncompleteTask, breakdownTask (assigns sequential sortOrder), snoozeTask (hides task until date, clears isDailyQuest if active), unsnoozeTask, reorderTasks (bulk-updates sortOrder in transaction)
 - `topic-icons.ts` — TOPIC_ICONS map of 47 curated FA solid icons + resolveTopicIcon(key) with faFolder fallback
-- `topics.ts` — getUserTopics (with task counts), getTopicById (with tasks), createTopic, updateTopic, deleteTopic (reassigns tasks to null)
-- `validators/index.ts` — Zod schemas: CreateTaskInput, UpdateTaskInput, SnoozeTaskInput, EnergyCheckinInput, CreateTopicInput, UpdateTopicInput, CreateWishlistItemInput, UpdateWishlistItemInput
+- `topics.ts` — getUserTopics (with task counts), getTopicById (with tasks, ordered by sortOrder ASC), createTopic, updateTopic, deleteTopic (reassigns tasks to null)
+- `validators/index.ts` — Zod schemas: CreateTaskInput, UpdateTaskInput, SnoozeTaskInput, EnergyCheckinInput, ReorderTasksInput, CreateTopicInput, UpdateTopicInput, CreateWishlistItemInput, UpdateWishlistItemInput
 - `daily-quest.ts` — selectDailyQuest, getCurrentDailyQuest, postponeDailyQuest (timezone-aware), forceSelectDailyQuest. Energy-aware: pickBestTask prefers tasks matching user's daily energy check-in (soft preference, never blocks selection)
 - `gamification.ts` — updateStreak (timezone-aware), getLevelForCoins, checkAndUnlockAchievements, seedAchievements, getUserStats
 - `date-utils.ts` — getLocalDateString, getLocalTomorrowString, getLocalYesterdayString — all timezone-aware via Intl.DateTimeFormat("en-CA")

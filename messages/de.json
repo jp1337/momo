@@ -200,6 +200,8 @@
     "detail_empty": "Noch keine Aufgaben in diesem Thema. Füge oben deine erste Unteraufgabe hinzu.",
     "detail_completed": "Erledigt ({count})",
     "detail_snoozed": "Pausiert ({count})",
+    "drag_handle_aria": "Ziehen zum Umsortieren",
+    "reorder_error": "Reihenfolge konnte nicht gespeichert werden",
     "detail_confirm_delete": "Diese Aufgabe löschen?",
     "form_title_edit": "Thema bearbeiten",
     "form_title_new": "Neues Thema",

@@ -8,7 +8,7 @@
 
 import { db } from "@/lib/db";
 import { topics, tasks } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 import type { CreateTopicInput, UpdateTopicInput } from "@/lib/validators";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -94,7 +94,8 @@ export async function getTopicById(
   const taskRows = await db
     .select()
     .from(tasks)
-    .where(and(eq(tasks.topicId, topicId), eq(tasks.userId, userId)));
+    .where(and(eq(tasks.topicId, topicId), eq(tasks.userId, userId)))
+    .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt));
 
   return {
     ...topicRows[0],

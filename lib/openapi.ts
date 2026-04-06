@@ -1391,6 +1391,62 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       },
     },
 
+    "/api/topics/{id}/reorder": {
+      put: {
+        operationId: "reorderTopicTasks",
+        tags: ["Topics"],
+        summary: "Reorder tasks within a topic",
+        description:
+          "Updates the sort order of tasks within a topic. The array index " +
+          "of each task ID becomes its new sortOrder value. All task IDs " +
+          "must belong to the given topic and the authenticated user.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/topicId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["taskIds"],
+                properties: {
+                  taskIds: {
+                    type: "array",
+                    items: { type: "string", format: "uuid" },
+                    minItems: 1,
+                    maxItems: 200,
+                    description: "Ordered array of task UUIDs — index = new sortOrder",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Tasks reordered.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success"],
+                  properties: {
+                    success: { type: "boolean", example: true },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
     // ─── Daily Quest ─────────────────────────────────────────────────────────
 
     "/api/daily-quest": {

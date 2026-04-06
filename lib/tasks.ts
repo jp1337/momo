@@ -8,7 +8,7 @@
 
 import { db } from "@/lib/db";
 import { tasks, taskCompletions, users, topics } from "@/lib/db/schema";
-import { eq, and, isNull, desc, count, sql } from "drizzle-orm";
+import { eq, and, isNull, desc, max, count, sql } from "drizzle-orm";
 import type { CreateTaskInput, UpdateTaskInput } from "@/lib/validators";
 import {
   updateStreak,
@@ -132,6 +132,16 @@ export async function createTask(
   timezone?: string | null
 ): Promise<Task> {
   return db.transaction(async (tx) => {
+    // When adding a task to a topic, place it at the end of the sort order
+    let sortOrder = 0;
+    if (input.topicId) {
+      const [result] = await tx
+        .select({ maxOrder: max(tasks.sortOrder) })
+        .from(tasks)
+        .where(eq(tasks.topicId, input.topicId));
+      sortOrder = (result?.maxOrder ?? -1) + 1;
+    }
+
     const rows = await tx
       .insert(tasks)
       .values({
@@ -152,6 +162,7 @@ export async function createTask(
         coinValue: input.coinValue ?? 1,
         estimatedMinutes: input.estimatedMinutes ?? null,
         energyLevel: input.energyLevel ?? null,
+        sortOrder,
       })
       .returning();
 
@@ -570,17 +581,18 @@ export async function breakdownTask(
 
     const newTopic = topicRows[0];
 
-    // Create the subtasks
+    // Create the subtasks with sequential sortOrder
     const newTasks = await tx
       .insert(tasks)
       .values(
-        subtaskTitles.map((title) => ({
+        subtaskTitles.map((title, index) => ({
           userId,
           topicId: newTopic.id,
           title,
           type: "ONE_TIME" as const,
           priority: originalTask.priority,
           coinValue: originalTask.coinValue,
+          sortOrder: index,
         }))
       )
       .returning();
@@ -669,4 +681,47 @@ export async function unsnoozeTask(
   }
 
   return rows[0];
+}
+
+// ─── Reorder ─────────────────────────────────────────────────────────────────
+
+/**
+ * Reorders tasks within a topic by updating their sortOrder.
+ * The array index of each taskId becomes its new sortOrder value.
+ *
+ * All task IDs must belong to the given topic and user. The operation
+ * runs in a single transaction to ensure atomicity.
+ *
+ * @param topicId - The topic's UUID
+ * @param userId - The authenticated user's UUID (ownership check)
+ * @param taskIds - Ordered array of task UUIDs — index = new sortOrder
+ * @throws Error if any task is not found or not owned by user/topic
+ */
+export async function reorderTasks(
+  topicId: string,
+  userId: string,
+  taskIds: string[]
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    // Verify all tasks belong to this topic and user
+    const existingTasks = await tx
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(and(eq(tasks.topicId, topicId), eq(tasks.userId, userId)));
+
+    const existingIds = new Set(existingTasks.map((t) => t.id));
+    for (const id of taskIds) {
+      if (!existingIds.has(id)) {
+        throw new Error(`Task ${id} not found in topic or access denied`);
+      }
+    }
+
+    // Bulk update sortOrder for each task
+    for (let i = 0; i < taskIds.length; i++) {
+      await tx
+        .update(tasks)
+        .set({ sortOrder: i })
+        .where(and(eq(tasks.id, taskIds[i]), eq(tasks.userId, userId)));
+    }
+  });
 }
