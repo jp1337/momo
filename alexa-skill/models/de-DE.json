@@ -1,0 +1,109 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "momo",
+      "intents": [
+        {
+          "name": "AddTaskIntent",
+          "slots": [
+            {
+              "name": "taskName",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "füge {taskName} hinzu",
+            "füge Aufgabe {taskName} hinzu",
+            "erstelle Aufgabe {taskName}",
+            "erstelle eine Aufgabe für {taskName}",
+            "neue Aufgabe {taskName}",
+            "merke mir {taskName}",
+            "notiere {taskName}",
+            "trage {taskName} ein",
+            "schreib {taskName} auf",
+            "zu Momo {taskName} hinzufügen",
+            "Aufgabe {taskName} anlegen"
+          ]
+        },
+        {
+          "name": "GetQuestIntent",
+          "slots": [],
+          "samples": [
+            "was ist meine Quest",
+            "was ist meine heutige Quest",
+            "zeige meine Quest",
+            "meine tägliche Aufgabe",
+            "was soll ich heute tun",
+            "was ist mein daily quest",
+            "meine Quest",
+            "was steht heute an",
+            "heutige Mission"
+          ]
+        },
+        {
+          "name": "ListTasksIntent",
+          "slots": [],
+          "samples": [
+            "liste meine Aufgaben",
+            "zeige meine Aufgaben",
+            "welche Aufgaben habe ich",
+            "was habe ich zu tun",
+            "meine offenen Aufgaben",
+            "meine Aufgaben",
+            "was steht auf meiner Liste",
+            "offene Aufgaben"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent"
+        },
+        {
+          "name": "AMAZON.CancelIntent"
+        },
+        {
+          "name": "AMAZON.StopIntent"
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent"
+        }
+      ],
+      "types": []
+    },
+    "dialog": {
+      "intents": [
+        {
+          "name": "AddTaskIntent",
+          "confirmationRequired": false,
+          "prompts": {},
+          "slots": [
+            {
+              "name": "taskName",
+              "type": "AMAZON.SearchQuery",
+              "confirmationRequired": false,
+              "elicitationRequired": true,
+              "prompts": {
+                "elicitation": "Elicit.Slot.AddTaskIntent.taskName"
+              }
+            }
+          ]
+        }
+      ],
+      "delegationStrategy": "SKILL_RESPONSE"
+    },
+    "prompts": [
+      {
+        "id": "Elicit.Slot.AddTaskIntent.taskName",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Wie soll die Aufgabe heißen?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Für welche Aufgabe soll ich einen Eintrag erstellen?"
+          }
+        ]
+      }
+    ]
+  }
+}

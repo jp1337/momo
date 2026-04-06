@@ -1,0 +1,56 @@
+{
+  "manifest": {
+    "manifestVersion": "1.0",
+    "publishingInformation": {
+      "locales": {
+        "de-DE": {
+          "name": "Momo",
+          "summary": "Verwalte deine Aufgaben mit Momo",
+          "description": "Mit dem Momo Skill kannst du per Sprache Aufgaben hinzufügen, deine tägliche Quest abfragen und deine offenen Aufgaben hören. Verknüpfe einfach deinen Momo-Account über deinen persönlichen API-Schlüssel.",
+          "examplePhrases": [
+            "Alexa, öffne Momo",
+            "Alexa, sage Momo füge Zahnarzt hinzu",
+            "Alexa, frage Momo was ist meine Quest"
+          ],
+          "keywords": ["aufgaben", "tasks", "todo", "produktivität", "quest"],
+          "smallIconUri": "https://momotask.app/icon-108.png",
+          "largeIconUri": "https://momotask.app/icon-512.png"
+        },
+        "en-US": {
+          "name": "Momo",
+          "summary": "Manage your tasks with Momo",
+          "description": "With the Momo skill you can add tasks by voice, check your daily quest and hear your open task list. Simply link your Momo account using your personal API key.",
+          "examplePhrases": [
+            "Alexa, open Momo",
+            "Alexa, tell Momo add dentist appointment",
+            "Alexa, ask Momo what is my quest"
+          ],
+          "keywords": ["tasks", "todo", "productivity", "quest", "daily"],
+          "smallIconUri": "https://momotask.app/icon-108.png",
+          "largeIconUri": "https://momotask.app/icon-512.png"
+        }
+      },
+      "isAvailableWorldwide": false,
+      "distributionCountries": ["DE", "AT", "CH", "US", "GB"],
+      "distributionMode": "PRIVATE",
+      "category": "PRODUCTIVITY_AND_UTILITIES",
+      "testingInstructions": "1. Enable the skill. 2. Link your account using your Momo API key (Settings → API Keys in the Momo app). 3. Say: Alexa, open Momo."
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "uri": "arn:aws:lambda:eu-central-1:ACCOUNT_ID:function:momo-alexa-skill"
+        },
+        "interfaces": []
+      }
+    },
+    "permissions": [],
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "usesPersonalInfo": false,
+      "isChildDirected": false,
+      "isExportCompliant": true,
+      "containsAds": false
+    }
+  }
+}
