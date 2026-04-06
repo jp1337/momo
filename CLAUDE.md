@@ -63,37 +63,7 @@ Format: `<type>(<scope>): <description>`
 | `test`     | Adding or updating tests                                |
 | `db`       | Database schema or migration changes                    |
 
-**Examples:**
-
-```
-feat(auth): add GitHub OAuth provider via Auth.js v5
-feat(tasks): implement task CRUD API routes with Zod validation
-fix(daily-quest): correct algorithm priority order for recurring tasks
-docs(env): document all environment variables in .env.example
-chore(docker): add multi-stage Dockerfile with non-root user
-db(schema): add push_subscription column to users table
-style(dashboard): apply dark/light mode CSS variables to task cards
-```
-
-### Commit Scope Reference
-
-| Scope          | Area                               |
-| -------------- | ---------------------------------- |
-| `auth`         | Authentication, sessions, OAuth    |
-| `tasks`        | Task creation, editing, completion |
-| `topics`       | Topics and subtasks                |
-| `recurring`    | Recurring task logic               |
-| `daily-quest`  | Daily quest algorithm and UI       |
-| `gamification` | Coins, streaks, levels, animations |
-| `wishlist`     | Wishlist and budget features       |
-| `push`         | Web Push / VAPID notifications     |
-| `pwa`          | PWA manifest, service worker       |
-| `ui`           | Shared UI components               |
-| `db`           | Database schema, migrations        |
-| `api`          | API routes                         |
-| `deploy`       | Docker, Kubernetes, CI/CD          |
-| `docs`         | Documentation                      |
-| `config`       | Configuration files                |
+**Scopes:** `auth`, `tasks`, `topics`, `recurring`, `daily-quest`, `gamification`, `wishlist`, `push`, `pwa`, `ui`, `db`, `api`, `deploy`, `docs`, `config`
 
 ---
 
@@ -110,33 +80,7 @@ Documentation is not an afterthought — it is written alongside the code, in th
 - Every **database schema table/column** gets an inline comment if the purpose is not immediately obvious.
 - Every **complex algorithm** (e.g. daily quest selection, gamification logic) gets a detailed explanation comment above the implementation.
 
-**Example — API Route:**
-
-```typescript
-/**
- * POST /api/tasks
- * Creates a new task for the authenticated user.
- * Requires: authentication
- * Body: CreateTaskInput (validated with Zod)
- * Returns: { task: Task } | { error: string }
- */
-```
-
-**Example — Function:**
-
-```typescript
-/**
- * Selects the daily quest task for a user.
- * Priority order:
- *   1. Oldest overdue task
- *   2. High-priority topic subtask
- *   3. Due recurring task
- *   4. Random open task from pool
- *
- * @param userId - The user's UUID
- * @returns The selected Task, or null if no tasks exist
- */
-```
+Use JSDoc with `@param` and `@returns` tags. API routes get a header comment with method, path, auth, body, and response.
 
 ### 2. Environment Variables
 
@@ -169,31 +113,10 @@ When a **phase or major feature** is completed, update or create the relevant do
 | New user-facing feature    | `docs/features.md`              |
 | API route added/changed    | `docs/api.md`                   |
 
-### 5. README Project Status Table
+### 5. README & CHANGELOG
 
-After completing each phase, update the project status table in `README.md`:
-
-```markdown
-| Phase 1 – Foundation | ✅ Done | Next.js setup, Auth, DB schema |
-```
-
-### 6. CHANGELOG.md
-
-Maintain a `CHANGELOG.md` in the root. Add an entry for every commit that touches user-facing functionality or infrastructure:
-
-```markdown
-## [Unreleased]
-
-### Added
-- GitHub OAuth login via Auth.js v5
-- Dark/Light mode toggle with system preference detection
-
-### Changed
-- ...
-
-### Fixed
-- ...
-```
+- Update `README.md` status table when a full phase is completed
+- Update `CHANGELOG.md` under `[Unreleased]` for every user-facing or infrastructure change (Added/Changed/Fixed)
 
 ---
 
@@ -259,66 +182,28 @@ Maintain a `CHANGELOG.md` in the root. Add an entry for every commit that touche
 
 ## ✅ Definition of Done (per task/feature)
 
-A feature is only considered done when ALL of the following are true:
-
-- [ ] The feature works correctly
-- [ ] TypeScript compiles without errors
-- [ ] All new functions/routes have JSDoc comments
-- [ ] Relevant `docs/` file(s) have been updated
-- [ ] `.env.example` updated if new env vars were added
+- [ ] Feature works correctly, TypeScript compiles without errors
+- [ ] JSDoc comments on new functions/routes
+- [ ] Relevant `docs/` files updated, `.env.example` if new env vars
 - [ ] `CHANGELOG.md` updated
-- [ ] Changes committed to `dev` branch with a proper Conventional Commit message
+- [ ] Committed to `main` with Conventional Commit message
 - [ ] `README.md` status table updated if a full phase was completed
-
----
-
-*This file is the source of truth for how this project is developed.*
-*If in doubt: document it, commit it, keep it clean.*
 
 ---
 
 ## 🗂️ Project Structure (Quick Reference)
 
 ```
-app/
-  (app)/          → Authenticated routes: dashboard, quick, focus, tasks, topics, wishlist
-  (auth)/         → Unauthenticated routes: login
-  api/auth/       → Auth.js v5 catch-all handler
-  globals.css     → CSS variables (design system), font imports
-  layout.tsx      → Root layout with ThemeProvider
-
-lib/
-  auth.ts         → Auth.js v5 config (providers, Drizzle adapter)
-  env.ts          → Zod-validated env wrapper — ALL env access goes here
-  tasks.ts        → Task business logic (CRUD, complete/uncomplete, coin award)
-  topics.ts       → Topic business logic (CRUD, task counts)
-  db/
-    index.ts      → Drizzle client instance
-    schema.ts     → All DB table definitions + relations
-  validators/     → Zod schemas for API input validation
-
-components/
-  layout/         → Navbar, Sidebar
-  ui/             → shadcn/ui base components
-  theme-toggle.tsx → Dark/Light/System toggle
-  tasks/          → TaskItem, TaskForm, TaskList
-  quick/          → FiveMinuteView (5-min focused task view)
-  focus/          → FocusModeView (distraction-free: quest + quick wins ≤15 min)
-  topics/         → TopicCard, TopicForm, TopicsGrid, TopicDetailView, SortableTaskList, SortableTaskItem
-
-docs/             → Technical docs (api, database, deployment, oauth, env vars, gdpr)
-docs-site/        → User-facing GitHub Pages (Jekyll) — see .claudeignore
-public/           → Static assets (icons, manifest, PWA service worker)
-alexa-skill/      → Separate Lambda project for Alexa integration
+app/           → Next.js App Router — pages + API routes (see app/CLAUDE.md)
+lib/           → All server-side business logic (see lib/CLAUDE.md)
+components/    → UI components, dumb by design (see components/CLAUDE.md)
+docs/          → Technical docs for devs/selfhosters (see docs/CLAUDE.md)
+docs-site/     → User-facing GitHub Pages (Jekyll) — see .claudeignore
+deploy/        → Kubernetes manifests (see deploy/CLAUDE.md)
+drizzle/       → DB migrations (see drizzle/CLAUDE.md)
+messages/      → i18n translations de/en/fr (see messages/CLAUDE.md)
+scripts/       → Dev/ops scripts (see scripts/CLAUDE.md)
+alexa-skill/   → Separate Lambda project for Alexa integration
 ```
 
-## 🚫 What to Skip (never read these)
-
-- `node_modules/` — dependencies, never edit
-- `.next/` — build output, generated
-- `package-lock.json` — auto-managed
-- `public/` default SVGs (file.svg, globe.svg, next.svg, vercel.svg, window.svg) — Next.js defaults, not project assets
-- `drizzle/*.sql` — generated migrations, source of truth is `lib/db/schema.ts`
-- `drizzle/meta/` — auto-generated snapshots
-- `alexa-skill/dist/` — compiled Lambda output
-- `public/sw.js`, `public/workbox-*.js` — PWA build artifacts
+Skip list: see `.claudeignore`
