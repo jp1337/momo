@@ -335,7 +335,17 @@ Setup:
 
 Self-hosters can point to their own ntfy server by expanding the **Advanced** section and entering the server URL.
 
-More channels (Pushover, Telegram, Email, Webhooks) are planned — see the [Roadmap](https://github.com/jp1337/momo).
+**Pushover** — Receive instant push notifications via [Pushover](https://pushover.net) on iOS, Android, and desktop. Pushover is a paid service with a one-time purchase after a 30-day trial.
+
+Setup:
+1. Create a [Pushover](https://pushover.net) account and install the app on your device
+2. Note your **User Key** from the Pushover dashboard
+3. Create a new **Application/API Token** at [pushover.net/apps/build](https://pushover.net/apps/build)
+4. In Momo: go to **Settings → Additional Notification Channels** and click **+ Pushover**
+5. Enter your User Key and App Token, then click **Save**
+6. Click **Send test** to verify it works
+
+More channels (Telegram, Email, Webhooks) are planned — see the [Roadmap](https://github.com/jp1337/momo).
 
 ---
 

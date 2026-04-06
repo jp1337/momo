@@ -560,7 +560,7 @@ export const questPostponements = pgTable("quest_postponements", {
  *
  * Config shapes:
  *  - ntfy:     { topic: string, server?: string }
- *  - pushover: { userKey: string, appToken?: string }  (future)
+ *  - pushover: { userKey: string, appToken: string }
  *  - telegram: { chatId: string, botToken?: string }   (future)
  *  - email:    { address: string }                     (future)
  *  - webhook:  { url: string, secret?: string }        (future)

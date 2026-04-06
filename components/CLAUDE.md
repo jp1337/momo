@@ -35,7 +35,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `settings/language-switcher.tsx` — UI language switcher (de/en/fr); POSTs to /api/locale
 - `settings/delete-account.tsx` — Danger zone: account deletion with confirmation dialog
 - `settings/profile-settings.tsx` — Inline profile editor: name, email, avatar upload with preview; PATCHes /api/user/profile; uses next/image for remote URLs, plain img for data URLs (CSP-safe)
-- `settings/notification-channels.tsx` — Multi-channel notification settings: list/add/remove/test channels (ntfy.sh, future: Pushover, Telegram, Email, Webhook); inline NtfyForm with topic + optional server URL; toggle enable/disable per channel
+- `settings/notification-channels.tsx` — Multi-channel notification settings: list/add/remove/test channels (ntfy.sh, Pushover; future: Telegram, Email, Webhook); inline NtfyForm/PushoverForm; toggle enable/disable per channel
 - `settings/quest-settings.tsx` — Slider to configure daily quest postpone limit (1–5, default 3)
 - `settings/emotional-closure-settings.tsx` — Toggle (An/Aus) to enable/disable affirmation/quote after daily quest completion; PATCHes /api/settings/quest
 - `shared/search-filter-bar.tsx` — Reusable search input + filter chip bar; used on Tasks and Wishlist pages; follows LanguageSwitcher chip pattern (amber active, elevated inactive)

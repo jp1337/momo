@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Pushover Benachrichtigungskanal** — Push-Benachrichtigungen über die Pushover API (iOS, Android, Desktop). Konfigurierbar in den Einstellungen unter "Zusätzliche Benachrichtigungskanäle" mit User Key und App Token. Test-Button zum Verifizieren. Nutzt die bestehende Multi-Channel-Architektur — keine DB-Migration nötig. Dreisprachig (DE/EN/FR).
+
 - **ntfy.sh Benachrichtigungskanal** — Zusätzlicher Benachrichtigungskanal über ntfy.sh (öffentlich oder self-hosted). Konfigurierbar in den Einstellungen unter "Zusätzliche Benachrichtigungskanäle". Unterstützt Topic-Name und optionalen Server-URL. Test-Button zum Verifizieren der Konfiguration. Benachrichtigungen werden für Daily Quest, Streak-Erinnerungen und Wochenrückblick gesendet — unabhängig von Web-Push. Neue `notification_channels`-Tabelle mit JSONB-Config und Multi-Channel-Architektur: Neue Kanäle (Pushover, Telegram, E-Mail, Webhook) benötigen keine DB-Migration. Neues `NotificationChannel`-Interface in `lib/notifications.ts`. Dreisprachig (DE/EN/FR). API-Endpoints: `GET/PUT /api/settings/notification-channels`, `DELETE /api/settings/notification-channels/:type`, `POST /api/settings/notification-channels/:type/test`.
 
 - **Profil bearbeiten** — Name, E-Mail-Adresse und Profilbild können in den Einstellungen geändert werden. OAuth-Provider liefern oft Wegwerf-Mails oder Pseudonyme — User können das jetzt nachträglich korrigieren. Profilbild-Upload mit serverseitigem Resize (200×200, WebP) und Speicherung als Data-URL in der DB. Neuer API-Endpoint `PATCH /api/user/profile`. Dreisprachig (DE/EN/FR).

@@ -26,7 +26,7 @@ interface NotificationChannelsProps {
 /** Supported channel types with their i18n label keys */
 const AVAILABLE_CHANNEL_TYPES = [
   { type: "ntfy", labelKey: "channel_ntfy_label" as const },
-  // Future: { type: "pushover", labelKey: "channel_pushover_label" },
+  { type: "pushover", labelKey: "channel_pushover_label" as const },
   // Future: { type: "telegram", labelKey: "channel_telegram_label" },
 ] as const;
 
@@ -198,6 +198,9 @@ export function NotificationChannels({ initialChannels }: NotificationChannelsPr
           {channel.type === "ntfy" && (
             <NtfyConfigSummary config={channel.config} />
           )}
+          {channel.type === "pushover" && (
+            <PushoverConfigSummary config={channel.config} />
+          )}
 
           {/* Actions */}
           <div className="flex gap-2">
@@ -236,6 +239,12 @@ export function NotificationChannels({ initialChannels }: NotificationChannelsPr
           onCancel={() => setAddingType(null)}
         />
       )}
+      {addingType === "pushover" && (
+        <PushoverForm
+          onSave={(config) => handleSaved("pushover", config)}
+          onCancel={() => setAddingType(null)}
+        />
+      )}
 
       {/* Add channel button */}
       {availableToAdd.length > 0 && !addingType && (
@@ -268,6 +277,201 @@ export function NotificationChannels({ initialChannels }: NotificationChannelsPr
         </p>
       )}
     </div>
+  );
+}
+
+// ─── Pushover Config Summary ────────────────────────────────────────────────
+
+function PushoverConfigSummary({ config }: { config: Record<string, unknown> }) {
+  const userKey = (config.userKey as string) || "—";
+  const masked = userKey.length > 6
+    ? `${userKey.slice(0, 3)}${"•".repeat(userKey.length - 6)}${userKey.slice(-3)}`
+    : "•••";
+  return (
+    <p
+      className="text-xs"
+      style={{
+        fontFamily: "var(--font-body)",
+        color: "var(--text-muted)",
+      }}
+    >
+      User Key: {masked}
+    </p>
+  );
+}
+
+// ─── Pushover Configuration Form ────────────────────────────────────────────
+
+function PushoverForm({
+  onSave,
+  onCancel,
+}: {
+  onSave: (config: Record<string, unknown>) => void;
+  onCancel: () => void;
+}) {
+  const t = useTranslations("settings");
+  const tCommon = useTranslations("common");
+  const [userKey, setUserKey] = useState("");
+  const [appToken, setAppToken] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!userKey.trim() || !appToken.trim()) return;
+    if (!/^[a-zA-Z0-9]+$/.test(userKey.trim())) {
+      setError("User key may only contain letters and numbers.");
+      return;
+    }
+    if (!/^[a-zA-Z0-9]+$/.test(appToken.trim())) {
+      setError("App token may only contain letters and numbers.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const config: Record<string, unknown> = {
+        userKey: userKey.trim(),
+        appToken: appToken.trim(),
+      };
+
+      const res = await fetch("/api/settings/notification-channels", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "pushover", config, enabled: true }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save");
+      }
+
+      onSave(config);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("channel_err_save"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const inputStyle = {
+    fontFamily: "var(--font-body)",
+    backgroundColor: "var(--bg-primary)",
+    color: "var(--text-primary)",
+    border: "1px solid var(--border)",
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-lg p-4 flex flex-col gap-3"
+      style={{
+        backgroundColor: "var(--bg-elevated)",
+        border: "1px solid var(--border)",
+      }}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span
+          className="text-sm font-medium"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
+        >
+          {t("channel_pushover_label")}
+        </span>
+      </div>
+      <p
+        className="text-xs -mt-2"
+        style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
+      >
+        {t("channel_pushover_hint")}
+      </p>
+
+      {/* User Key input */}
+      <div className="flex flex-col gap-1">
+        <label
+          className="text-xs font-medium"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-secondary)" }}
+        >
+          {t("pushover_userkey_label")}
+        </label>
+        <input
+          type="text"
+          value={userKey}
+          onChange={(e) => setUserKey(e.target.value)}
+          placeholder={t("pushover_userkey_placeholder")}
+          className="w-full px-3 py-2 rounded-md text-sm"
+          style={inputStyle}
+          maxLength={50}
+          required
+        />
+      </div>
+
+      {/* App Token input */}
+      <div className="flex flex-col gap-1">
+        <label
+          className="text-xs font-medium"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-secondary)" }}
+        >
+          {t("pushover_apptoken_label")}
+        </label>
+        <input
+          type="text"
+          value={appToken}
+          onChange={(e) => setAppToken(e.target.value)}
+          placeholder={t("pushover_apptoken_placeholder")}
+          className="w-full px-3 py-2 rounded-md text-sm"
+          style={inputStyle}
+          maxLength={50}
+          required
+        />
+        <p
+          className="text-xs"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
+        >
+          {t("pushover_apptoken_hint")}
+        </p>
+      </div>
+
+      {/* Error message */}
+      {error && (
+        <p
+          className="text-xs"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--color-error, #ef4444)" }}
+        >
+          {error}
+        </p>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={saving || !userKey.trim() || !appToken.trim()}
+          className="text-sm px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+          style={{
+            fontFamily: "var(--font-ui)",
+            backgroundColor: "var(--color-accent, #f0a500)",
+            color: "var(--bg-primary)",
+          }}
+        >
+          {saving ? "..." : tCommon("save")}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-sm px-4 py-2 rounded-lg transition-colors"
+          style={{
+            fontFamily: "var(--font-ui)",
+            backgroundColor: "var(--bg-surface)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {tCommon("cancel")}
+        </button>
+      </div>
+    </form>
   );
 }
 
