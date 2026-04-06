@@ -18,7 +18,8 @@
     "topics": "Sujets",
     "wishlist": "Liste de souhaits",
     "settings": "Paramètres",
-    "quick_mode": "5 Min"
+    "quick_mode": "5 Min",
+    "review": "Bilan"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -70,7 +71,14 @@
     "quest_label_eligible": "Éligible quête",
     "quest_label_high": "Haute",
     "quest_label_normal": "Normale",
-    "quest_label_someday": "Un jour"
+    "quest_label_someday": "Un jour",
+    "energy_checkin_title": "Comment te sens-tu aujourd'hui ?",
+    "energy_checkin_subtitle": "Momo adapte ta quête à ton niveau d'énergie.",
+    "energy_high": "Plein d'énergie",
+    "energy_medium": "Normal",
+    "energy_low": "Peu d'énergie",
+    "energy_match_badge": "Correspond à ton niveau",
+    "energy_checking_in": "Chargement..."
   },
   "tasks": {
     "page_title": "Tâches",
@@ -137,6 +145,14 @@
     "time_15min": "15 min",
     "time_30min": "30 min",
     "time_60min": "60 min",
+    "form_label_energy": "Niveau d'énergie",
+    "energy_any": "Peu importe",
+    "energy_high": "Haut",
+    "energy_medium": "Moyen",
+    "energy_low": "Bas",
+    "badge_energy_high": "Haut",
+    "badge_energy_medium": "Moyen",
+    "badge_energy_low": "Bas",
     "badge_postponed": "Souvent reporté",
     "section_snoozed": "En pause",
     "snooze_btn": "Reporter",
@@ -383,5 +399,28 @@
     "quote_9": "Tu as accompli aujourd'hui quelque chose qui était encore en attente hier.",
     "quote_10": "Les petits pas mènent aussi à destination.",
     "quote_11": "Bien joué. Demain viendra la prochaine étape."
+  },
+  "review": {
+    "page_title": "Bilan de la semaine",
+    "page_subtitle": "{start} — {end}",
+    "section_summary": "Résumé",
+    "completed": "Terminées",
+    "postponed": "Reportées",
+    "coins_earned": "Coins gagnés",
+    "streak": "Streak",
+    "streak_max": "Meilleur streak",
+    "tasks_created": "Nouvelles tâches",
+    "vs_last_week_up": "+{delta} vs. la semaine dernière",
+    "vs_last_week_down": "{delta} vs. la semaine dernière",
+    "vs_last_week_same": "Comme la semaine dernière",
+    "section_topics": "Top sujets",
+    "no_topics": "Aucune activité de sujet cette semaine.",
+    "completions": "{count, plural, one {# achèvement} other {# achèvements}}",
+    "motivation_great": "Quelle semaine ! Tu as vraiment assuré.",
+    "motivation_good": "Bon progrès — continue comme ça !",
+    "motivation_ok": "Chaque pas compte. La semaine prochaine, tu en feras plus.",
+    "motivation_zero": "Nouvelle semaine, nouvelle chance. Un petit pas suffit.",
+    "push_title": "Ton bilan de la semaine",
+    "push_body": "Cette semaine : {completed} terminées, {postponed} reportées, streak {streak}"
   }
 }

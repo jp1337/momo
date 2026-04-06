@@ -12,6 +12,7 @@
  *  - user_achievements  Junction: which achievements a user has earned
  *  - api_keys           Personal Access Tokens for programmatic API access
  *  - linking_requests   Short-lived tokens for OAuth account linking flow
+ *  - quest_postponements  Log of daily quest postponement events (for weekly review)
  */
 
 import {
@@ -45,6 +46,9 @@ export const taskTypeEnum = pgEnum("task_type", [
   "RECURRING",
   "DAILY_ELIGIBLE",
 ]);
+
+/** Task/user energy level — how much effort a task requires or the user has today */
+export const energyLevelEnum = pgEnum("energy_level", ["HIGH", "MEDIUM", "LOW"]);
 
 /** Wishlist item priority */
 export const wishlistPriorityEnum = pgEnum("wishlist_priority", [
@@ -141,6 +145,12 @@ export const users = pgTable("users", {
 
   /** Whether to show an affirmation/quote after completing the daily quest (default: on) */
   emotionalClosureEnabled: boolean("emotional_closure_enabled").notNull().default(true),
+
+  /** Today's self-reported energy level for daily quest matching. Null = not yet checked in today. */
+  energyLevel: energyLevelEnum("energy_level"),
+
+  /** Date on which energyLevel was set (YYYY-MM-DD in user's timezone) — used for daily reset */
+  energyLevelDate: date("energy_level_date"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -285,6 +295,9 @@ export const tasks = pgTable("tasks", {
 
   /** Date until which this task is snoozed/hidden (YYYY-MM-DD). Null = active/visible. */
   snoozedUntil: date("snoozed_until"),
+
+  /** Energy level required to complete this task. Null = matches any energy state. */
+  energyLevel: energyLevelEnum("energy_level"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -512,6 +525,28 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Quest postponement log — one row per daily quest postponement.
+ * Used to compute precise weekly postponement counts for the weekly review feature.
+ * Historical data starts accumulating from the migration date forward.
+ */
+export const questPostponements = pgTable("quest_postponements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  /** The user who postponed the quest */
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  /** The task that was postponed */
+  taskId: uuid("task_id")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+
+  /** When the postponement happened */
+  postponedAt: timestamp("postponed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -525,6 +560,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   apiKeys: many(apiKeys),
   linkingRequests: many(linkingRequests),
   pushSubscriptions: many(pushSubscriptions),
+  questPostponements: many(questPostponements),
 }));
 
 export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
@@ -580,4 +616,9 @@ export const userAchievementsRelations = relations(
 
 export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one }) => ({
   user: one(users, { fields: [pushSubscriptions.userId], references: [users.id] }),
+}));
+
+export const questPostponementsRelations = relations(questPostponements, ({ one }) => ({
+  user: one(users, { fields: [questPostponements.userId], references: [users.id] }),
+  task: one(tasks, { fields: [questPostponements.taskId], references: [tasks.id] }),
 }));

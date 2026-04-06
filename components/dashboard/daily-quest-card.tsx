@@ -45,6 +45,7 @@ interface QuestTask {
   coinValue: number;
   completedAt: string | null;
   postponeCount: number;
+  energyLevel: "HIGH" | "MEDIUM" | "LOW" | null;
   topic: Topic | null;
 }
 
@@ -57,6 +58,8 @@ interface DailyQuestCardProps {
   postponeLimit: number;
   /** Whether to show an affirmation/quote after quest completion */
   emotionalClosureEnabled: boolean;
+  /** The user's self-reported energy level for today, or null if not yet checked in */
+  userEnergyToday: "HIGH" | "MEDIUM" | "LOW" | null;
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -94,11 +97,12 @@ interface CompleteResponse {
  * Manages completing and postponing the quest via API calls.
  * Triggers confetti, level-up overlay, and achievement toasts on completion.
  */
-export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotionalClosureEnabled }: DailyQuestCardProps) {
+export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotionalClosureEnabled, userEnergyToday }: DailyQuestCardProps) {
   const t = useTranslations("dashboard");
   const router = useRouter();
   const [isCompleting, setIsCompleting] = useState(false);
   const [isPostponing, setIsPostponing] = useState(false);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [localPostponesToday, setLocalPostponesToday] = useState(postponesToday);
   const postponesLeft = postponeLimit - localPostponesToday;
   const isPostponeLimitReached = postponesLeft <= 0;
@@ -212,6 +216,38 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
     }
   }
 
+  /**
+   * Calls POST /api/energy-checkin with the selected energy level, then refreshes.
+   */
+  async function handleEnergyCheckin(level: "HIGH" | "MEDIUM" | "LOW") {
+    if (isCheckingIn) return;
+    setIsCheckingIn(true);
+
+    try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const res = await fetch("/api/energy-checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ energyLevel: level, timezone }),
+      });
+
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        console.error("Energy check-in failed:", data.error);
+        return;
+      }
+
+      router.refresh();
+    } catch (err) {
+      console.error("Error during energy check-in:", err);
+    } finally {
+      setIsCheckingIn(false);
+    }
+  }
+
+  // Whether to show the energy check-in prompt
+  const showEnergyCheckin = !quest && userEnergyToday === null;
+
   const priorityStyle = quest ? PRIORITY_STYLES[quest.priority] : null;
   const priorityLabel = quest ? PRIORITY_LABELS[quest.priority] : null;
   const typeLabel = quest ? TYPE_LABELS[quest.type] : null;
@@ -247,8 +283,71 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
           "0 0 20px color-mix(in srgb, var(--accent-amber) 15%, transparent), var(--shadow-md)",
       }}
     >
-      {/* No quest — empty state */}
-      {!quest && (
+      {/* Energy check-in — shown before quest selection when no energy is set today */}
+      {showEnergyCheckin && (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <h3
+              className="text-lg font-semibold"
+              style={{
+                fontFamily: "var(--font-display, 'Lora', serif)",
+                fontStyle: "italic",
+                color: "var(--text-primary)",
+              }}
+            >
+              {t("energy_checkin_title")}
+            </h3>
+            <p
+              className="text-sm"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+              }}
+            >
+              {t("energy_checkin_subtitle")}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {(
+              [
+                { level: "HIGH" as const, color: "var(--accent-amber)", icon: "⚡" },
+                { level: "MEDIUM" as const, color: "var(--accent-green)", icon: "☀" },
+                { level: "LOW" as const, color: "var(--text-muted)", icon: "🌙" },
+              ] as const
+            ).map(({ level, color, icon }) => (
+              <button
+                key={level}
+                onClick={() => handleEnergyCheckin(level)}
+                disabled={isCheckingIn}
+                className="flex-1 min-w-[100px] px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  backgroundColor: `color-mix(in srgb, ${color} 10%, var(--bg-elevated))`,
+                  border: `1px solid color-mix(in srgb, ${color} 30%, var(--border))`,
+                  color: color,
+                }}
+              >
+                <span className="block text-lg mb-1">{icon}</span>
+                {t(`energy_${level.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low")}
+              </button>
+            ))}
+          </div>
+          {isCheckingIn && (
+            <p
+              className="text-xs text-center"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+              }}
+            >
+              {t("energy_checking_in")}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* No quest — empty state (shown after energy check-in when no tasks exist) */}
+      {!quest && !showEnergyCheckin && (
         <div className="flex flex-col gap-3">
           <p
             className="text-base"
@@ -387,6 +486,21 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
                   }}
                 >
                   {typeLabel}
+                </span>
+              )}
+
+              {/* Energy match badge */}
+              {quest.energyLevel && userEnergyToday && quest.energyLevel === userEnergyToday && (
+                <span
+                  className="text-xs px-2 py-0.5 rounded"
+                  style={{
+                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                    color: "var(--accent-green)",
+                    backgroundColor: "color-mix(in srgb, var(--accent-green) 10%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--accent-green) 25%, transparent)",
+                  }}
+                >
+                  {t("energy_match_badge")}
                 </span>
               )}
 

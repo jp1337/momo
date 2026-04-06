@@ -44,6 +44,7 @@ interface Task {
   createdAt: string;
   postponeCount?: number;
   estimatedMinutes?: number | null;
+  energyLevel?: "HIGH" | "MEDIUM" | "LOW" | null;
   recurrenceInterval?: number | null;
   snoozedUntil?: string | null;
 }
@@ -633,6 +634,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                 onGoToTopic={handleGoToTopic}
                 postponeCount={task.postponeCount}
                 estimatedMinutes={task.estimatedMinutes}
+                energyLevel={task.energyLevel}
                 onBreakdown={handleBreakdown}
                 snoozedUntil={task.snoozedUntil}
                 onSnooze={handleSnooze}
@@ -671,6 +673,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               onGoToTopic={handleGoToTopic}
               postponeCount={task.postponeCount}
               estimatedMinutes={task.estimatedMinutes}
+              energyLevel={task.energyLevel}
               onBreakdown={handleBreakdown}
               snoozedUntil={task.snoozedUntil}
               onSnooze={handleSnooze}
@@ -708,6 +711,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               onGoToTopic={handleGoToTopic}
               postponeCount={task.postponeCount}
               estimatedMinutes={task.estimatedMinutes}
+              energyLevel={task.energyLevel}
               onBreakdown={handleBreakdown}
               snoozedUntil={task.snoozedUntil}
               onSnooze={handleSnooze}
@@ -745,6 +749,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               onGoToTopic={handleGoToTopic}
               postponeCount={task.postponeCount}
               estimatedMinutes={task.estimatedMinutes}
+              energyLevel={task.energyLevel}
               onBreakdown={handleBreakdown}
               snoozedUntil={task.snoozedUntil}
               onSnooze={handleSnooze}
@@ -816,6 +821,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                     onGoToTopic={handleGoToTopic}
                     postponeCount={task.postponeCount}
                     estimatedMinutes={task.estimatedMinutes}
+                    energyLevel={task.energyLevel}
                     onBreakdown={handleBreakdown}
                     snoozedUntil={task.snoozedUntil}
                     onSnooze={handleSnooze}

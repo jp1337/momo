@@ -22,6 +22,7 @@ The full schema is defined in `lib/db/schema.ts`.
 | `api_keys` | Personal Access Tokens for programmatic API access |
 | `linking_requests` | Short-lived tokens for OAuth account linking |
 | `cron_runs` | Log of push-notification cron job executions (30-day retention) |
+| `quest_postponements` | Log of daily quest postponement events (for weekly review analytics) |
 
 ### Auth.js Adapter Tables
 
@@ -61,6 +62,8 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `quest_postpone_limit` | integer | Max daily postponements the user allows themselves (1–5, default 3) |
 | `total_tasks_created` | integer | Immutable cumulative counter — incremented on every task creation (including via breakdown), never decremented on deletion. Used for statistics. |
 | `emotional_closure_enabled` | boolean | Whether to show an affirmation/quote after completing the daily quest (default: true) |
+| `energy_level` | enum | Today's self-reported energy level: `HIGH`, `MEDIUM`, `LOW`. Null = not yet checked in today. Reset daily via `energy_level_date` comparison |
+| `energy_level_date` | date | Date (YYYY-MM-DD) on which the energy level was last set. Used for daily reset |
 
 ### `tasks`
 
@@ -83,6 +86,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `postpone_count` | integer | How many times this task has been postponed as a quest |
 | `estimated_minutes` | integer | Optional time estimate: 5, 15, 30, or 60 minutes |
 | `snoozed_until` | date | Date (YYYY-MM-DD) until which this task is hidden from all active views. Null = visible. When snoozed_until <= today, the task reappears automatically |
+| `energy_level` | enum | Energy required: `HIGH`, `MEDIUM`, `LOW`. Null = matches any energy level. Used by the daily quest algorithm to prefer tasks matching the user's daily check-in |
 
 ### `topics`
 
@@ -108,6 +112,17 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `priority` | enum | `WANT`, `NICE_TO_HAVE`, `SOMEDAY` |
 | `status` | enum | `OPEN`, `BOUGHT`, `DISCARDED` |
 | `coin_unlock_threshold` | integer | Minimum coins required to mark as bought |
+
+### `quest_postponements`
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | FK → users (cascade) |
+| `task_id` | uuid | FK → tasks (cascade) |
+| `postponed_at` | timestamp (tz) | When the postponement happened |
+
+One row is inserted each time the user postpones their daily quest. Used by the weekly review feature to compute "postponements this week". Historical data starts accumulating from the migration date forward.
 
 ---
 

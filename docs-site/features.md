@@ -22,6 +22,7 @@ Click **New Task** from the dashboard or the task list. You can set:
 - **Notes** — optional extra context or instructions
 - **Due date** — a specific date you want it done by
 - **Estimated time** — choose 5, 15, 30, or 60 minutes so you can plan realistically
+- **Energy level** — tag tasks as `High`, `Medium`, or `Low` energy. Momo uses this to match your daily quest to how you are feeling that day
 - **Priority** — `High`, `Normal`, or `Someday`
 - **Topic** — optionally group the task under a project (e.g. "Health")
 - **Coins** — how many coins completing the task earns (1–10)
@@ -144,6 +145,18 @@ Every morning Momo selects a single task to be your quest for the day. The selec
 4. A random task from your open pool (if nothing else applies)
 
 The quest is shown prominently on your **Dashboard** so it is the first thing you see when you open Momo.
+
+### Energy check-in
+
+Before showing your quest each day, Momo asks: **"How are you feeling today?"** You choose between three energy levels:
+
+- **⚡ High energy** — you are ready to tackle something demanding
+- **☀ Medium** — a normal day
+- **🌙 Low energy** — you want something light
+
+Momo then prefers tasks that match your energy level when picking the quest. If no matching tasks exist, it picks any eligible task — you will never get an empty quest screen because of energy mismatch.
+
+To make the most of this feature, **tag your tasks with an energy level** when creating or editing them. Tasks without an energy tag are treated as suitable for any energy state.
 
 ### Postponing the quest
 
@@ -377,6 +390,25 @@ Use the theme toggle in the navbar to switch between:
 - **System** — follows your operating system preference automatically
 
 The theme preference is saved and persists across sessions.
+
+---
+
+## Weekly Review
+
+Visit **/review** from the avatar menu to see a summary of how your week went:
+
+- **Completed** — how many tasks you finished this week, with a comparison to last week (+3 / -2 / same)
+- **Postponed** — how many daily quests you pushed to another day
+- **Coins earned** — total coins collected through completions this week
+- **Streak** — your current streak and all-time best
+- **New tasks** — how many tasks you created this week
+- **Top topics** — the three topics with the most activity this week
+
+A motivational message at the bottom reflects your performance level — from "Strong week!" to "New week, new chance."
+
+### Weekly push notification
+
+If push notifications are enabled, Momo sends a summary notification every **Sunday at 18:00** in your local time. The notification includes your completion count, postponements, and streak. Tap it to open the full review page.
 
 ---
 

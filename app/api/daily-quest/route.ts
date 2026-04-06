@@ -14,7 +14,7 @@
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { selectDailyQuest, forceSelectDailyQuest } from "@/lib/daily-quest";
-import { TimezoneSchema } from "@/lib/validators";
+import { TimezoneSchema, EnergyLevelSchema } from "@/lib/validators";
 
 /**
  * GET /api/daily-quest
@@ -27,9 +27,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const tzResult = TimezoneSchema.safeParse(searchParams.get("timezone"));
   const timezone = tzResult.success ? tzResult.data : null;
+  const energyResult = EnergyLevelSchema.safeParse(searchParams.get("energyLevel"));
+  const energyLevel = energyResult.success ? energyResult.data : null;
 
   try {
-    const quest = await selectDailyQuest(user.userId, timezone);
+    const quest = await selectDailyQuest(user.userId, timezone, energyLevel);
     return Response.json({ quest });
   } catch (error) {
     console.error("[GET /api/daily-quest]", error);
@@ -48,16 +50,19 @@ export async function POST(request: Request) {
   if (user.readonly) return readonlyKeyResponse();
 
   let timezone: string | null | undefined = null;
+  let energyLevel: "HIGH" | "MEDIUM" | "LOW" | null | undefined = null;
   try {
     const body = await request.json() as Record<string, unknown>;
     const tzResult = TimezoneSchema.safeParse(body?.timezone);
     if (tzResult.success) timezone = tzResult.data;
+    const energyResult = EnergyLevelSchema.safeParse(body?.energyLevel);
+    if (energyResult.success) energyLevel = energyResult.data;
   } catch {
     // Body is optional for this endpoint
   }
 
   try {
-    const quest = await forceSelectDailyQuest(user.userId, timezone);
+    const quest = await forceSelectDailyQuest(user.userId, timezone, energyLevel);
     return Response.json({ quest });
   } catch (error) {
     console.error("[POST /api/daily-quest]", error);

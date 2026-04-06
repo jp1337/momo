@@ -35,6 +35,7 @@ interface TaskItemProps {
   topicId?: string | null;
   postponeCount?: number;
   estimatedMinutes?: number | null;
+  energyLevel?: "HIGH" | "MEDIUM" | "LOW" | null;
   onComplete: (id: string) => void;
   onUncomplete: (id: string) => void;
   onEdit: (id: string) => void;
@@ -73,6 +74,7 @@ export function TaskItem({
   coinValue,
   postponeCount = 0,
   estimatedMinutes,
+  energyLevel,
   onComplete,
   onUncomplete,
   onEdit,
@@ -491,6 +493,34 @@ export function TaskItem({
               }}
             >
               {estimatedMinutes} min
+            </span>
+          )}
+
+          {/* Energy level badge */}
+          {energyLevel && (
+            <span
+              className="text-xs px-1.5 py-0.5 rounded"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: energyLevel === "HIGH"
+                  ? "var(--accent-amber)"
+                  : energyLevel === "MEDIUM"
+                  ? "var(--accent-green)"
+                  : "var(--text-muted)",
+                backgroundColor: energyLevel === "HIGH"
+                  ? "color-mix(in srgb, var(--accent-amber) 10%, transparent)"
+                  : energyLevel === "MEDIUM"
+                  ? "color-mix(in srgb, var(--accent-green) 10%, transparent)"
+                  : "color-mix(in srgb, var(--text-muted) 10%, transparent)",
+                border: energyLevel === "HIGH"
+                  ? "1px solid color-mix(in srgb, var(--accent-amber) 20%, transparent)"
+                  : energyLevel === "MEDIUM"
+                  ? "1px solid color-mix(in srgb, var(--accent-green) 20%, transparent)"
+                  : "1px solid color-mix(in srgb, var(--text-muted) 20%, transparent)",
+              }}
+            >
+              {energyLevel === "HIGH" ? "⚡" : energyLevel === "MEDIUM" ? "☀" : "🌙"}{" "}
+              {t(`badge_energy_${energyLevel.toLowerCase()}` as "badge_energy_high" | "badge_energy_medium" | "badge_energy_low")}
             </span>
           )}
 

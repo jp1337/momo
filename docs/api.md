@@ -351,6 +351,7 @@ Response: `{ "success": true }`
 | `GET` | `/api/daily-quest` | Yes | — | Get today's quest (auto-selects if none active) |
 | `POST` | `/api/daily-quest` | Yes | — | Force a new quest selection |
 | `POST` | `/api/daily-quest/postpone` | Yes | 10/min | Postpone today's quest to tomorrow |
+| `POST` | `/api/energy-checkin` | Yes | 30/min | Set daily energy level and select matching quest |
 
 ### GET /api/daily-quest
 
@@ -417,6 +418,22 @@ Request body:
 `timezone` is optional — omit to use UTC.
 
 Response: `{ "ok": true, "postponesToday": 2, "postponeLimit": 3 }`
+
+### POST /api/energy-checkin
+
+Records the user's daily energy level and selects a matching daily quest in one round-trip.
+The daily quest algorithm will prefer tasks whose `energyLevel` matches the user's check-in
+(or tasks with no energy level set). If no matching tasks exist, any eligible task is selected.
+
+Request body:
+```json
+{ "energyLevel": "HIGH", "timezone": "Europe/Berlin" }
+```
+
+- `energyLevel` — required: `"HIGH"`, `"MEDIUM"`, or `"LOW"`
+- `timezone` — optional IANA timezone string (omit to use UTC)
+
+Response: `{ "quest": { ... } | null }`
 
 ---
 
@@ -588,12 +605,21 @@ If `CRON_SECRET` is not set, these routes are unprotected — set it in producti
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/api/cron/daily-quest` | CRON_SECRET | Send daily quest push notifications to all eligible users |
-| `POST` | `/api/cron/streak-reminder` | CRON_SECRET | Send streak reminder push notifications |
+| `POST` | `/api/cron` | CRON_SECRET | Unified cron dispatcher — runs all registered jobs |
 
-Response format for both: `{ "sent": 5, "failed": 0, "durationMs": 42 }`
+The Docker cron container calls `POST /api/cron` every 5 minutes. The server-side dispatcher in `lib/cron.ts` runs all registered jobs sequentially, each with its own idempotency guard:
 
-The `daily-quest` cron also persists each run to the `cron_runs` table (visible on the admin page and via `GET /api/health`). Rows older than 30 days are pruned automatically.
+| Job | Guard | Description |
+|---|---|---|
+| `daily-quest` | 5-min bucket | Send daily quest push notifications based on user's local notification time |
+| `streak-reminder` | Once per day | Send streak-at-risk reminders to users who haven't completed a task today |
+| `weekly-review` | 5-min bucket | Send weekly review summary (Sunday 18:00 local time only) |
+
+Response format: `{ "jobs": [{ "name": "daily-quest", "sent": 5, "failed": 0, "durationMs": 42, "skipped": false }, ...] }`
+
+Jobs with `logToDb: true` persist each run to the `cron_runs` table (visible on the admin page and via `GET /api/health`). Rows older than 30 days are pruned automatically.
+
+Adding a new cron job only requires adding an entry to the `CRON_JOBS` array in `lib/cron.ts` — no Docker Compose or endpoint changes needed.
 
 ---
 

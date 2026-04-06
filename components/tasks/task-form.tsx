@@ -27,6 +27,7 @@ interface TaskFormData {
   dueDate: string;
   coinValue: string;
   estimatedMinutes: 5 | 15 | 30 | 60 | null;
+  energyLevel: "HIGH" | "MEDIUM" | "LOW" | null;
 }
 
 interface TaskFormProps {
@@ -55,6 +56,7 @@ const DEFAULT_FORM: TaskFormData = {
   dueDate: "",
   coinValue: "1",
   estimatedMinutes: null,
+  energyLevel: null,
 };
 
 /**
@@ -126,6 +128,7 @@ export function TaskForm({
       dueDate: formData.dueDate || null,
       coinValue: parseInt(formData.coinValue, 10) || 1,
       estimatedMinutes: formData.estimatedMinutes,
+      energyLevel: formData.energyLevel,
     };
 
     setIsSubmitting(true);
@@ -407,6 +410,40 @@ export function TaskForm({
                     }}
                   >
                     {min === null ? t("duration_unknown") : `${min} min`}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Energy level */}
+          <div>
+            <label style={labelStyle}>{t("form_label_energy")}</label>
+            <div className="flex gap-2 flex-wrap">
+              {([null, "HIGH", "MEDIUM", "LOW"] as const).map((level) => {
+                const isSelected = formData.energyLevel === level;
+                return (
+                  <button
+                    key={String(level)}
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, energyLevel: level }))
+                    }
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150"
+                    style={{
+                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                      border: isSelected
+                        ? "1px solid var(--accent-amber)"
+                        : "1px solid var(--border)",
+                      backgroundColor: isSelected
+                        ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-elevated))"
+                        : "var(--bg-elevated)",
+                      color: isSelected ? "var(--accent-amber)" : "var(--text-muted)",
+                    }}
+                  >
+                    {level === null
+                      ? t("energy_any")
+                      : t(`energy_${level.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low")}
                   </button>
                 );
               })}
