@@ -65,6 +65,8 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
     createdAt: t.createdAt.toISOString(),
     recurrenceInterval: t.recurrenceInterval ?? null,
     estimatedMinutes: t.estimatedMinutes ?? null,
+    snoozedUntil: t.snoozedUntil ?? null,
+    sortOrder: t.sortOrder ?? 0,
   }));
 
   const accentColor = topic.color ?? "var(--accent-amber)";

@@ -38,7 +38,8 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 - ✅ **Wöchentlicher Rückblick** — Seite `/review` + wöchentliche Push-Benachrichtigung (Sonntag 18:00 Ortszeit) mit Zusammenfassung: Abschlüsse, Verschiebungen, Coins, Streak, Top-Themen
 - **Aufgaben-Vorlagen (Templates)** — vordefinierte Topic-Vorlagen ("Umzug", "Steuern", "Sport-Routine") als One-Click-Import
 - ✅ **Focus Mode** — reduzierte Ansicht: nur Tagesquest + Quick Wins, alles andere ausgeblendet
-- **Subtask-Reihenfolge** — Drag & Drop Sortierung innerhalb eines Topics
+- ✅ **Subtask-Reihenfolge** — Drag & Drop Sortierung innerhalb eines Topics
+- **Profil bearbeiten** — Name, E-Mail-Adresse und Profilbild in den Einstellungen änderbar; OAuth-Provider liefern oft Wegwerf-Mail oder Pseudonym, User soll das nachträglich korrigieren können
 - ✅ **Energie-Filter** — Tasks mit Energie-Level taggen (hoch/mittel/niedrig); Daily Quest berücksichtigt Tagesverfassung
 - **Geteilte Topics / Collaboration** — ein Topic mit einer anderen Person teilen; beide können Aufgaben abhaken
 

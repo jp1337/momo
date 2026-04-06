@@ -200,6 +200,8 @@
     "detail_empty": "No tasks in this topic yet. Add your first subtask above.",
     "detail_completed": "Completed ({count})",
     "detail_snoozed": "Snoozed ({count})",
+    "drag_handle_aria": "Drag to reorder",
+    "reorder_error": "Failed to save order",
     "detail_confirm_delete": "Delete this task?",
     "form_title_edit": "Edit Topic",
     "form_title_new": "New Topic",

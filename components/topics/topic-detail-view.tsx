@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { TaskItem } from "@/components/tasks/task-item";
 import { TaskForm } from "@/components/tasks/task-form";
+import { SortableTaskList } from "@/components/topics/sortable-task-list";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
 import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
@@ -33,6 +34,7 @@ interface Task {
   recurrenceInterval?: number | null;
   estimatedMinutes?: number | null;
   snoozedUntil?: string | null;
+  sortOrder: number;
 }
 
 interface TopicDetailViewProps {
@@ -169,6 +171,41 @@ export function TopicDetailView({
     }
   }, []);
 
+  const handleReorder = useCallback(
+    async (taskIds: string[]) => {
+      // Optimistic update — reorder tasks in local state
+      const snapshot = [...tasks];
+      setTasks((prev) => {
+        const taskMap = new Map(prev.map((t) => [t.id, t]));
+        const reordered = taskIds
+          .map((id, index) => {
+            const task = taskMap.get(id);
+            return task ? { ...task, sortOrder: index } : null;
+          })
+          .filter(Boolean) as Task[];
+        // Keep non-active tasks (completed, snoozed) unchanged
+        const activeIds = new Set(taskIds);
+        const rest = prev.filter((t) => !activeIds.has(t.id));
+        return [...reordered, ...rest];
+      });
+
+      try {
+        const res = await fetch(`/api/topics/${topicId}/reorder`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ taskIds }),
+        });
+        if (!res.ok) {
+          // Revert on failure
+          setTasks(snapshot);
+        }
+      } catch {
+        setTasks(snapshot);
+      }
+    },
+    [tasks, topicId]
+  );
+
   const handleFormSuccess = useCallback(async () => {
     setEditingTaskId(null);
     setShowCreateForm(false);
@@ -182,7 +219,9 @@ export function TopicDetailView({
     return new Date(task.snoozedUntil + "T00:00:00") > today;
   });
   const snoozedIds = new Set(snoozedTasks.map((t) => t.id));
-  const activeTasks = tasks.filter((task) => task.completedAt === null && !snoozedIds.has(task.id));
+  const activeTasks = tasks
+    .filter((task) => task.completedAt === null && !snoozedIds.has(task.id))
+    .sort((a, b) => a.sortOrder - b.sortOrder || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   const completedTasks = tasks.filter((task) => task.completedAt !== null);
 
   return (
@@ -249,32 +288,22 @@ export function TopicDetailView({
         </div>
       )}
 
-      {/* Active tasks */}
+      {/* Active tasks — drag-and-drop reorderable */}
       {activeTasks.length > 0 && (
-        <div className="flex flex-col gap-2 mb-4">
-          {activeTasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              id={task.id}
-              title={task.title}
-              type={task.type}
-              priority={task.priority}
-              completedAt={task.completedAt}
-              dueDate={task.dueDate}
-              nextDueDate={task.nextDueDate}
-              topicTitle={topicTitle}
-              topicColor={topicColor}
-              coinValue={task.coinValue}
-              onComplete={handleComplete}
-              onUncomplete={handleUncomplete}
-              onEdit={setEditingTaskId}
-              onDelete={handleDelete}
-              onBreakdown={handleBreakdown}
-              snoozedUntil={task.snoozedUntil}
-              onSnooze={handleSnooze}
-              onUnsnooze={handleUnsnooze}
-            />
-          ))}
+        <div className="mb-4">
+          <SortableTaskList
+            tasks={activeTasks}
+            topicTitle={topicTitle}
+            topicColor={topicColor}
+            onReorder={handleReorder}
+            onComplete={handleComplete}
+            onUncomplete={handleUncomplete}
+            onEdit={setEditingTaskId}
+            onDelete={handleDelete}
+            onBreakdown={handleBreakdown}
+            onSnooze={handleSnooze}
+            onUnsnooze={handleUnsnooze}
+          />
         </div>
       )}
 

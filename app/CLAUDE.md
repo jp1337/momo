@@ -34,7 +34,8 @@ api/
   tasks/[id]/snooze/route.ts         → POST (snooze until date, body: {snoozedUntil}), DELETE (unsnooze/wake up)
   tasks/[id]/breakdown/route.ts      → POST (split task into subtasks under new topic)
   topics/route.ts                    → GET (list with task counts), POST (create)
-  topics/[id]/route.ts               → GET (with tasks), PATCH, DELETE
+  topics/[id]/route.ts               → GET (with tasks sorted by sortOrder), PATCH, DELETE
+  topics/[id]/reorder/route.ts       → PUT (reorder tasks within topic, body: {taskIds: string[]})
   daily-quest/route.ts               → GET (fetch today's quest, returns completed quest all day), POST (force new quest)
   daily-quest/postpone/route.ts      → POST (postpone quest, body: {taskId, timezone?}, enforces daily limit)
   energy-checkin/route.ts            → POST (set daily energy level + select matching quest, body: {energyLevel, timezone?})
