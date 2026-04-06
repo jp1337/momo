@@ -108,6 +108,8 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 ## What's New
 
+**Branded error pages** — A wrong URL or server hiccup now shows a custom Momo 404 or 500 page — same warm forest aesthetic, same fonts, with a direct link back to the app. No more bare Next.js error screens.
+
 **Swipe gestures on mobile** — On any task list, swipe right to complete a task (green) or left to delete it (red). The same works for wishlist items: swipe right to mark as bought, swipe left to discard. No need to open a menu.
 
 **Confetti on wishlist purchases** — Marking a wishlist item as bought triggers a short celebration animation. Small wins deserve it.
