@@ -281,7 +281,7 @@ A feature is only considered done when ALL of the following are true:
 
 ```
 app/
-  (app)/          → Authenticated routes: dashboard, tasks, topics, wishlist
+  (app)/          → Authenticated routes: dashboard, quick, tasks, topics, wishlist
   (auth)/         → Unauthenticated routes: login
   api/auth/       → Auth.js v5 catch-all handler
   globals.css     → CSS variables (design system), font imports
@@ -302,6 +302,7 @@ components/
   ui/             → shadcn/ui base components
   theme-toggle.tsx → Dark/Light/System toggle
   tasks/          → TaskItem, TaskForm, TaskList
+  quick/          → FiveMinuteView (5-min focused task view)
   topics/         → TopicCard, TopicForm, TopicsGrid, TopicDetailView
 
 docs/             → Markdown docs (api, database, deployment, oauth, env vars)

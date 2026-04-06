@@ -6,8 +6,8 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 ## Contents
 - `theme-toggle.tsx` — Cycles dark → light → system using next-themes
 - `layout/navbar.tsx` — Top bar: app name (Lora font), ThemeToggle, coin display, user avatar dropdown
-- `layout/sidebar.tsx` — Left navigation (hidden on mobile), active route highlighting
-- `layout/mobile-nav.tsx` — Fixed bottom tab bar (mobile only, md:hidden): Dashboard/Tasks/Topics/Wishlist
+- `layout/sidebar.tsx` — Left navigation (hidden on mobile), active route highlighting; includes 5-Min quick mode entry (faBolt)
+- `layout/mobile-nav.tsx` — Fixed bottom tab bar (mobile only, md:hidden): Dashboard/5 Min/Tasks/Topics/Wishlist
 - `layout/user-menu.tsx` — Avatar dropdown: Settings, API Keys, Stats, Admin (if isAdmin), Sign out
 - `ui/` — shadcn/ui base components (Button, Card, etc.) — heavily customized to use CSS variables
 - `tasks/task-item.tsx` — Single task row: checkbox, Framer Motion completion animation, priority badges, topic tag, due date, estimatedMinutes badge, postponeCount badge, breakdown button, snooze button (clock icon with popover: tomorrow/week/month/custom date), snoozed-until badge
@@ -21,6 +21,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `topics/topic-detail-view.tsx` — Scoped task list for a single topic; full parity with TaskList (confetti, coin events, level-up, achievements, timezone)
 - `topics/icon-picker.tsx` — 6-column FA icon grid picker; used in topic-form instead of emoji-picker
 - `dashboard/daily-quest-card.tsx` — Hero card: quest display, postpone (with daily limit counter), celebration state all day after completion; fires coinsEarned event
+- `quick/five-minute-view.tsx` — Focused 5-min task view: flat list of tasks with estimatedMinutes ≤ 5, reuses TaskItem, full completion animations (confetti, coins, level-up, achievements), AnimatePresence exit animation, empty state + "all done" celebration
 - `layout/coin-counter.tsx` — Animated coin balance in navbar; listens for coinsEarned CustomEvent (delta: +N or -N) to update without full page reload
 - `wishlist/wishlist-card.tsx` — Single wishlist item: name, price, coin cost, buy/discard actions
 - `wishlist/wishlist-form.tsx` — Create/edit wishlist item modal
