@@ -10,11 +10,13 @@
  * - URL link (if set): external link icon, truncated
  * - Affordability indicator (if price + budget set)
  * - Coin-unlock indicator (if threshold set and user coins < threshold)
- * - Action buttons: "Bought", "Discard", "Edit" (hover reveal)
- * - Bought/Discarded items: distinct visual treatment
+ * - Action buttons: "Bought", "Discard", "Edit" (always visible)
+ * - Swipe gestures (OPEN items only): right = buy (green), left = discard (red)
+ * - Bought/Discarded items: distinct visual treatment, no swipe
  */
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 interface WishlistCardProps {
@@ -83,6 +85,46 @@ export function WishlistCard({
 }: WishlistCardProps) {
   const t = useTranslations("wishlist");
   const [isLoading, setIsLoading] = useState(false);
+  const [swipeX, setSwipeX] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const SWIPE_THRESHOLD = 80;
+  const SWIPE_MAX = 110;
+
+  /** Begin tracking a potential horizontal swipe (OPEN items only). */
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isOpen) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    if (Math.abs(deltaY) > Math.abs(deltaX) + 10) {
+      touchStartX.current = null;
+      touchStartY.current = null;
+      return;
+    }
+    setIsSwiping(true);
+    setSwipeX(Math.max(-SWIPE_MAX, Math.min(SWIPE_MAX, deltaX)));
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current !== null) {
+      if (swipeX > SWIPE_THRESHOLD) {
+        handleAction(() => onBuy(id)); // buy
+      } else if (swipeX < -SWIPE_THRESHOLD) {
+        handleAction(() => onDiscard(id)); // discard
+      }
+    }
+    setSwipeX(0);
+    setIsSwiping(false);
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
 
   const PRIORITY_LABELS: Record<"WANT" | "NICE_TO_HAVE" | "SOMEDAY", string> = {
     WANT: t("priority_want"),
@@ -144,9 +186,61 @@ export function WishlistCard({
   };
 
   return (
-    <div
+    <div style={{ position: "relative", overflow: "hidden", borderRadius: "0.75rem" }}>
+      {/* Right-swipe reveal: buy (green) — OPEN items only */}
+      {isOpen && (
+        <div
+          className="absolute inset-y-0 left-0 flex items-center gap-2 px-5"
+          style={{
+            backgroundColor: "var(--accent-green)",
+            opacity: Math.max(0, Math.min(swipeX / SWIPE_THRESHOLD, 1)),
+            color: "var(--bg-primary)",
+            minWidth: "90px",
+            pointerEvents: "none",
+          }}
+        >
+          <svg width="16" height="13" viewBox="0 0 10 8" fill="none" aria-hidden="true">
+            <path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {swipeX > 40 && (
+            <span style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", fontSize: "0.75rem", fontWeight: 600 }}>
+              Gekauft
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Left-swipe reveal: discard (muted red) — OPEN items only */}
+      {isOpen && (
+        <div
+          className="absolute inset-y-0 right-0 flex items-center justify-end gap-2 px-5"
+          style={{
+            backgroundColor: "var(--accent-red)",
+            opacity: Math.max(0, Math.min(-swipeX / SWIPE_THRESHOLD, 0.8)),
+            color: "var(--bg-primary)",
+            minWidth: "90px",
+            pointerEvents: "none",
+          }}
+        >
+          {-swipeX > 40 && (
+            <span style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", fontSize: "0.75rem", fontWeight: 600 }}>
+              Ablegen
+            </span>
+          )}
+          <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </div>
+      )}
+
+    <motion.div
+      animate={{ x: swipeX }}
+      transition={isSwiping ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 35 }}
       className="group relative rounded-xl p-4 flex flex-col gap-3"
-      style={cardStyle}
+      style={{ ...cardStyle, touchAction: isOpen ? "pan-y" : "auto", position: "relative", zIndex: 1 }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Status badge for bought items */}
       {isBought && (
@@ -380,6 +474,7 @@ export function WishlistCard({
           </>
         )}
       </div>
+    </motion.div>
     </div>
   );
 }

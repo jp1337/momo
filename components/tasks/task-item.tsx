@@ -82,7 +82,13 @@ export function TaskItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(title);
   const [showBreakdownModal, setShowBreakdownModal] = useState(false);
+  const [swipeX, setSwipeX] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const SWIPE_THRESHOLD = 80;
+  const SWIPE_MAX = 110;
 
   const isCompleted = completedAt !== null;
 
@@ -168,6 +174,46 @@ export function TaskItem({
     }, 300);
   };
 
+  /** Begin tracking a potential horizontal swipe gesture. */
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isEditing || isCompleted) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  /**
+   * Update swipe offset while the finger moves.
+   * Cancels if the gesture is more vertical than horizontal (page scroll).
+   */
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    // If mostly vertical → abort so the page can scroll
+    if (Math.abs(deltaY) > Math.abs(deltaX) + 10) {
+      touchStartX.current = null;
+      touchStartY.current = null;
+      return;
+    }
+    setIsSwiping(true);
+    setSwipeX(Math.max(-SWIPE_MAX, Math.min(SWIPE_MAX, deltaX)));
+  };
+
+  /** Commit the swipe action or snap back if below threshold. */
+  const handleTouchEnd = () => {
+    if (touchStartX.current !== null) {
+      if (swipeX > SWIPE_THRESHOLD) {
+        handleCheckboxChange(); // complete
+      } else if (swipeX < -SWIPE_THRESHOLD) {
+        onDelete(id); // delete
+      }
+    }
+    setSwipeX(0);
+    setIsSwiping(false);
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
   const handleTitleDoubleClick = () => {
     if (isCompleted || !onInlineEdit) return;
     setEditValue(title);
@@ -194,17 +240,70 @@ export function TaskItem({
   };
 
   return (
+    <div style={{ position: "relative", overflow: "hidden", borderRadius: "0.5rem" }}>
+      {/* Right-swipe reveal: complete (green) */}
+      {!isCompleted && (
+        <div
+          className="absolute inset-y-0 left-0 flex items-center gap-2 px-5"
+          style={{
+            backgroundColor: "var(--accent-green)",
+            opacity: Math.max(0, Math.min(swipeX / SWIPE_THRESHOLD, 1)),
+            color: "var(--bg-primary)",
+            minWidth: "90px",
+            pointerEvents: "none",
+          }}
+        >
+          <svg width="16" height="13" viewBox="0 0 10 8" fill="none" aria-hidden="true">
+            <path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {swipeX > 40 && (
+            <span style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", fontSize: "0.75rem", fontWeight: 600 }}>
+              Erledigt
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Left-swipe reveal: delete (red) */}
+      <div
+        className="absolute inset-y-0 right-0 flex items-center justify-end gap-2 px-5"
+        style={{
+          backgroundColor: "var(--accent-red)",
+          opacity: Math.max(0, Math.min(-swipeX / SWIPE_THRESHOLD, 1)),
+          color: "var(--bg-primary)",
+          minWidth: "90px",
+          pointerEvents: "none",
+        }}
+      >
+        {-swipeX > 40 && (
+          <span style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", fontSize: "0.75rem", fontWeight: 600 }}>
+            Löschen
+          </span>
+        )}
+        <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      </div>
+
     <motion.div
       layout
       initial={{ opacity: 1 }}
-      animate={{ opacity: isAnimating ? 0.4 : 1 }}
-      transition={{ duration: 0.25 }}
+      animate={{ opacity: isAnimating ? 0.4 : isCompleted ? 0.6 : 1, x: swipeX }}
+      transition={{
+        opacity: { duration: 0.25 },
+        x: isSwiping ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 35 },
+      }}
       className="group flex items-start gap-3 px-4 py-3 rounded-lg transition-colors"
       style={{
         backgroundColor: isCompleted ? "transparent" : "var(--bg-surface)",
         border: "1px solid var(--border)",
-        opacity: isCompleted ? 0.6 : 1,
+        touchAction: isCompleted ? "auto" : "pan-y",
+        position: "relative",
+        zIndex: 1,
       }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Checkbox */}
       <button
@@ -472,5 +571,6 @@ export function TaskItem({
         />
       )}
     </motion.div>
+    </div>
   );
 }
