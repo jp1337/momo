@@ -31,6 +31,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `settings/language-switcher.tsx` — UI language switcher (de/en/fr); POSTs to /api/locale
 - `settings/delete-account.tsx` — Danger zone: account deletion with confirmation dialog
 - `settings/quest-settings.tsx` — Slider to configure daily quest postpone limit (1–5, default 3)
+- `shared/search-filter-bar.tsx` — Reusable search input + filter chip bar; used on Tasks and Wishlist pages; follows LanguageSwitcher chip pattern (amber active, elevated inactive)
 - `api-keys/api-keys-view.tsx` — API key management (create form, one-time key display, revoke)
 - `animations/confetti.tsx` — Confetti burst on task completion / level-up
 - `animations/achievement-toast.tsx` — Toast overlay when an achievement is unlocked
