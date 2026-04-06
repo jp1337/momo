@@ -81,13 +81,15 @@ export default async function DashboardPage() {
       .select({ count: count() })
       .from(taskCompletions)
       .where(eq(taskCompletions.userId, userId)),
-    // Fetch postpone counters from users table
+    // Fetch postpone counters and energy check-in state from users table
     db
       .select({
         questPostponesToday: users.questPostponesToday,
         questPostponedDate: users.questPostponedDate,
         questPostponeLimit: users.questPostponeLimit,
         emotionalClosureEnabled: users.emotionalClosureEnabled,
+        energyLevel: users.energyLevel,
+        energyLevelDate: users.energyLevelDate,
       })
       .from(users)
       .where(eq(users.id, userId))
@@ -126,6 +128,11 @@ export default async function DashboardPage() {
     : 0;
   const postponeLimit = postponeData?.questPostponeLimit ?? 3;
   const emotionalClosureEnabled = postponeData?.emotionalClosureEnabled ?? true;
+
+  // Energy check-in: if set today, pass it; otherwise null triggers the check-in prompt
+  const userEnergyToday = postponeData?.energyLevelDate === todayStr
+    ? (postponeData?.energyLevel ?? null)
+    : null;
 
   // Serialize Date fields — Next.js cannot pass Date objects from Server to Client Components
   const quest = rawQuest
@@ -221,6 +228,7 @@ export default async function DashboardPage() {
           postponesToday={postponesToday}
           postponeLimit={postponeLimit}
           emotionalClosureEnabled={emotionalClosureEnabled}
+          userEnergyToday={userEnergyToday}
         />
       </section>
 

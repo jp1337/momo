@@ -38,6 +38,7 @@ interface Task {
   createdAt: string;
   postponeCount?: number;
   estimatedMinutes?: number | null;
+  energyLevel?: "HIGH" | "MEDIUM" | "LOW" | null;
   snoozedUntil?: string | null;
 }
 
@@ -233,6 +234,7 @@ export function FiveMinuteView({ initialTasks, topics }: FiveMinuteViewProps) {
                 coinValue={task.coinValue}
                 postponeCount={task.postponeCount}
                 estimatedMinutes={task.estimatedMinutes}
+                energyLevel={task.energyLevel}
                 onComplete={handleComplete}
                 onUncomplete={handleUncomplete}
                 onEdit={handleEdit}

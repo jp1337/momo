@@ -18,7 +18,8 @@
     "topics": "Themen",
     "wishlist": "Wunschliste",
     "settings": "Einstellungen",
-    "quick_mode": "5 Min"
+    "quick_mode": "5 Min",
+    "review": "Rückblick"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -70,7 +71,14 @@
     "quest_label_eligible": "Quest-geeignet",
     "quest_label_high": "Hoch",
     "quest_label_normal": "Normal",
-    "quest_label_someday": "Irgendwann"
+    "quest_label_someday": "Irgendwann",
+    "energy_checkin_title": "Wie fühlst du dich heute?",
+    "energy_checkin_subtitle": "Momo passt deine Quest an dein Energielevel an.",
+    "energy_high": "Viel Energie",
+    "energy_medium": "Normal",
+    "energy_low": "Wenig Energie",
+    "energy_match_badge": "Passt zu deinem Level",
+    "energy_checking_in": "Wird geladen..."
   },
   "tasks": {
     "page_title": "Aufgaben",
@@ -137,6 +145,14 @@
     "time_15min": "15 min",
     "time_30min": "30 min",
     "time_60min": "60 min",
+    "form_label_energy": "Energielevel",
+    "energy_any": "Egal",
+    "energy_high": "Hoch",
+    "energy_medium": "Mittel",
+    "energy_low": "Niedrig",
+    "badge_energy_high": "Hoch",
+    "badge_energy_medium": "Mittel",
+    "badge_energy_low": "Niedrig",
     "badge_postponed": "Oft verschoben",
     "section_snoozed": "Pausiert",
     "snooze_btn": "Pausieren",
@@ -383,5 +399,28 @@
     "quote_9": "Du hast heute etwas geschafft, das gestern noch offen war.",
     "quote_10": "Kleine Schritte führen auch ans Ziel.",
     "quote_11": "Gut gemacht. Morgen kommt der nächste Schritt."
+  },
+  "review": {
+    "page_title": "Wochenrückblick",
+    "page_subtitle": "{start} — {end}",
+    "section_summary": "Zusammenfassung",
+    "completed": "Erledigt",
+    "postponed": "Verschoben",
+    "coins_earned": "Coins verdient",
+    "streak": "Streak",
+    "streak_max": "Bester Streak",
+    "tasks_created": "Neue Aufgaben",
+    "vs_last_week_up": "+{delta} vs. letzte Woche",
+    "vs_last_week_down": "{delta} vs. letzte Woche",
+    "vs_last_week_same": "Wie letzte Woche",
+    "section_topics": "Top-Themen",
+    "no_topics": "Diese Woche keine Themen-Aktivität.",
+    "completions": "{count, plural, one {# Abschluss} other {# Abschlüsse}}",
+    "motivation_great": "Starke Woche! Du hast richtig Gas gegeben.",
+    "motivation_good": "Solider Fortschritt — weiter so!",
+    "motivation_ok": "Jeder Schritt zählt. Nächste Woche packst du mehr.",
+    "motivation_zero": "Neue Woche, neue Chance. Ein kleiner Schritt reicht.",
+    "push_title": "Dein Wochenrückblick",
+    "push_body": "Diese Woche: {completed} erledigt, {postponed} verschoben, Streak {streak}"
   }
 }

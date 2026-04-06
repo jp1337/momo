@@ -18,7 +18,8 @@
     "topics": "Topics",
     "wishlist": "Wishlist",
     "settings": "Settings",
-    "quick_mode": "5 Min"
+    "quick_mode": "5 Min",
+    "review": "Review"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -70,7 +71,14 @@
     "quest_label_eligible": "Quest eligible",
     "quest_label_high": "High",
     "quest_label_normal": "Normal",
-    "quest_label_someday": "Someday"
+    "quest_label_someday": "Someday",
+    "energy_checkin_title": "How are you feeling today?",
+    "energy_checkin_subtitle": "Momo adapts your quest to your energy level.",
+    "energy_high": "High energy",
+    "energy_medium": "Medium",
+    "energy_low": "Low energy",
+    "energy_match_badge": "Matches your energy",
+    "energy_checking_in": "Loading..."
   },
   "tasks": {
     "page_title": "Tasks",
@@ -137,6 +145,14 @@
     "time_15min": "15 min",
     "time_30min": "30 min",
     "time_60min": "60 min",
+    "form_label_energy": "Energy level",
+    "energy_any": "Any",
+    "energy_high": "High",
+    "energy_medium": "Medium",
+    "energy_low": "Low",
+    "badge_energy_high": "High",
+    "badge_energy_medium": "Medium",
+    "badge_energy_low": "Low",
     "badge_postponed": "Often postponed",
     "section_snoozed": "Snoozed",
     "snooze_btn": "Snooze",
@@ -383,5 +399,28 @@
     "quote_9": "You accomplished something today that was still open yesterday.",
     "quote_10": "Small steps lead to the finish line too.",
     "quote_11": "Well done. Tomorrow brings the next step."
+  },
+  "review": {
+    "page_title": "Weekly Review",
+    "page_subtitle": "{start} — {end}",
+    "section_summary": "Summary",
+    "completed": "Completed",
+    "postponed": "Postponed",
+    "coins_earned": "Coins Earned",
+    "streak": "Streak",
+    "streak_max": "Best Streak",
+    "tasks_created": "New Tasks",
+    "vs_last_week_up": "+{delta} vs. last week",
+    "vs_last_week_down": "{delta} vs. last week",
+    "vs_last_week_same": "Same as last week",
+    "section_topics": "Top Topics",
+    "no_topics": "No topic activity this week.",
+    "completions": "{count, plural, one {# completion} other {# completions}}",
+    "motivation_great": "Strong week! You really crushed it.",
+    "motivation_good": "Solid progress — keep it up!",
+    "motivation_ok": "Every step counts. You'll do more next week.",
+    "motivation_zero": "New week, new chance. One small step is enough.",
+    "push_title": "Your Weekly Review",
+    "push_body": "This week: {completed} completed, {postponed} postponed, streak {streak}"
   }
 }

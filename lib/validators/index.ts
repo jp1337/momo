@@ -18,6 +18,25 @@ export const TimezoneSchema = z.string().max(64).optional().nullable();
 
 export type Timezone = z.infer<typeof TimezoneSchema>;
 
+/**
+ * Schema for an optional energy level (HIGH / MEDIUM / LOW).
+ * Used on tasks (how much effort required) and for the daily energy check-in.
+ */
+export const EnergyLevelSchema = z.enum(["HIGH", "MEDIUM", "LOW"]).nullable().optional();
+
+export type EnergyLevel = z.infer<typeof EnergyLevelSchema>;
+
+/**
+ * Schema for the daily energy check-in.
+ * User reports their current energy level before seeing the daily quest.
+ */
+export const EnergyCheckinSchema = z.object({
+  energyLevel: z.enum(["HIGH", "MEDIUM", "LOW"]),
+  timezone: TimezoneSchema,
+});
+
+export type EnergyCheckinInput = z.infer<typeof EnergyCheckinSchema>;
+
 // ─── Task Validators ──────────────────────────────────────────────────────────
 
 /**
@@ -64,6 +83,8 @@ export const CreateTaskInputSchema = z
       ])
       .nullable()
       .optional(),
+    /** Energy level required (HIGH / MEDIUM / LOW / null = any) */
+    energyLevel: EnergyLevelSchema,
   })
   .refine(
     (data) => {
@@ -117,6 +138,8 @@ export const UpdateTaskInputSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Snoozed until must be in YYYY-MM-DD format")
       .nullable()
       .optional(),
+    /** Energy level required (HIGH / MEDIUM / LOW / null = any) */
+    energyLevel: EnergyLevelSchema,
   })
   .refine(
     (data) => {

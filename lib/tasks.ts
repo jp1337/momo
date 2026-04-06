@@ -151,6 +151,7 @@ export async function createTask(
           : null,
         coinValue: input.coinValue ?? 1,
         estimatedMinutes: input.estimatedMinutes ?? null,
+        energyLevel: input.energyLevel ?? null,
       })
       .returning();
 
@@ -193,6 +194,7 @@ export async function updateTask(
   if (input.coinValue !== undefined) updateValues.coinValue = input.coinValue;
   if (input.estimatedMinutes !== undefined) updateValues.estimatedMinutes = input.estimatedMinutes;
   if (input.snoozedUntil !== undefined) updateValues.snoozedUntil = input.snoozedUntil;
+  if (input.energyLevel !== undefined) updateValues.energyLevel = input.energyLevel;
 
   const rows = await db
     .update(tasks)

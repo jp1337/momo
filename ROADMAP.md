@@ -35,11 +35,11 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ### Mittlerer Aufwand
 
-- **Wöchentlicher Rückblick** — Seite / Push mit "Diese Woche: 12 erledigt, 3 verschoben, längster Streak X"
+- ✅ **Wöchentlicher Rückblick** — Seite `/review` + wöchentliche Push-Benachrichtigung (Sonntag 18:00 Ortszeit) mit Zusammenfassung: Abschlüsse, Verschiebungen, Coins, Streak, Top-Themen
 - **Aufgaben-Vorlagen (Templates)** — vordefinierte Topic-Vorlagen ("Umzug", "Steuern", "Sport-Routine") als One-Click-Import
 - **Focus Mode** — reduzierte Ansicht: nur Tagesquest + Quick Wins, alles andere ausgeblendet
 - **Subtask-Reihenfolge** — Drag & Drop Sortierung innerhalb eines Topics
-- **Energie-Filter** — Tasks mit Energie-Level taggen (hoch/mittel/niedrig); Daily Quest berücksichtigt Tagesverfassung
+- ✅ **Energie-Filter** — Tasks mit Energie-Level taggen (hoch/mittel/niedrig); Daily Quest berücksichtigt Tagesverfassung
 - **Geteilte Topics / Collaboration** — ein Topic mit einer anderen Person teilen; beide können Aufgaben abhaken
 
 ### Größere Features

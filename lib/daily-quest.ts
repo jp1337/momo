@@ -15,7 +15,7 @@
 
 import { db } from "@/lib/db";
 import type { Database } from "@/lib/db";
-import { tasks, users, topics } from "@/lib/db/schema";
+import { tasks, users, topics, questPostponements } from "@/lib/db/schema";
 import { eq, and, isNull, isNotNull, lte, lt, gte, or, ne, sql } from "drizzle-orm";
 import { getLocalDateString, getLocalTomorrowString } from "@/lib/date-utils";
 
@@ -120,7 +120,7 @@ async function getCurrentDailyQuestTx(
 
 /**
  * Picks the highest-priority eligible task for the daily quest using the algorithm,
- * without assigning the flag. All reads go through the provided transaction client.
+ * without assigning the flag. All reads go through the provided client (transaction or db).
  *
  * Priority order:
  *   1. Oldest overdue task (due_date < today, not completed, not recurring)
@@ -128,89 +128,122 @@ async function getCurrentDailyQuestTx(
  *   3. Due recurring task (next_due_date <= today)
  *   4. Random open task from the pool (ONE_TIME or DAILY_ELIGIBLE, not completed)
  *
+ * Energy-aware: within each tier, tasks matching the user's energy level (or with
+ * no energy level set) are preferred. If none match, any task in the tier is used.
+ *
  * @param userId - The user's UUID
- * @param tx - The active Drizzle transaction
+ * @param client - A Drizzle transaction or the base db instance
+ * @param timezone - Optional IANA timezone string
+ * @param userEnergy - The user's self-reported energy level for today (null = no preference)
  * @returns The candidate task row, or null if no eligible task exists
  */
-async function pickBestTask(userId: string, tx: Tx, timezone?: string | null): Promise<Task | null> {
+async function pickBestTask(
+  userId: string,
+  client: Tx | typeof db,
+  timezone?: string | null,
+  userEnergy?: "HIGH" | "MEDIUM" | "LOW" | null
+): Promise<Task | null> {
   const today = getLocalDateString(timezone);
 
   // Exclude snoozed tasks from all quest candidates
   const notSnoozed = or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, today));
 
-  // Priority 1: Oldest overdue task
-  const overdueRows = await tx
-    .select()
-    .from(tasks)
-    .where(
-      and(
-        eq(tasks.userId, userId),
-        isNull(tasks.completedAt),
-        isNotNull(tasks.dueDate),
-        lt(tasks.dueDate, today),
-        ne(tasks.type, "RECURRING"),
-        notSnoozed
-      )
-    )
-    .orderBy(tasks.dueDate)
-    .limit(1);
+  // Energy preference filter: matches user energy or untagged tasks
+  const energyPreferred = userEnergy
+    ? or(eq(tasks.energyLevel, userEnergy), isNull(tasks.energyLevel))
+    : undefined;
 
-  if (overdueRows[0]) return overdueRows[0];
+  /**
+   * Two-pass helper: tries energy-preferred candidates first, falls back to any.
+   * For tiers returning a single ordered row (1–3), picks the first match.
+   */
+  async function pickFromTier(
+    baseConditions: ReturnType<typeof and>,
+    options?: { orderBy?: typeof tasks.dueDate; randomPool?: boolean }
+  ): Promise<Task | null> {
+    // Pass 1: energy-preferred
+    if (energyPreferred) {
+      if (options?.randomPool) {
+        const preferred = await client
+          .select().from(tasks)
+          .where(and(baseConditions, energyPreferred));
+        if (preferred.length > 0) {
+          return preferred[Math.floor(Math.random() * preferred.length)];
+        }
+      } else {
+        const query = client.select().from(tasks).where(and(baseConditions, energyPreferred));
+        const rows = options?.orderBy
+          ? await query.orderBy(options.orderBy).limit(1)
+          : await query.limit(1);
+        if (rows[0]) return rows[0];
+      }
+    }
 
-  // Priority 2: High-priority topic subtask
-  const highPriorityRows = await tx
-    .select()
-    .from(tasks)
-    .where(
-      and(
-        eq(tasks.userId, userId),
-        isNull(tasks.completedAt),
-        isNotNull(tasks.topicId),
-        eq(tasks.priority, "HIGH"),
-        ne(tasks.type, "RECURRING"),
-        notSnoozed
-      )
-    )
-    .limit(1);
+    // Pass 2: any energy
+    if (options?.randomPool) {
+      const all = await client.select().from(tasks).where(baseConditions);
+      if (all.length > 0) {
+        return all[Math.floor(Math.random() * all.length)];
+      }
+      return null;
+    }
 
-  if (highPriorityRows[0]) return highPriorityRows[0];
-
-  // Priority 3: Due recurring task
-  const recurringRows = await tx
-    .select()
-    .from(tasks)
-    .where(
-      and(
-        eq(tasks.userId, userId),
-        eq(tasks.type, "RECURRING"),
-        isNotNull(tasks.nextDueDate),
-        lte(tasks.nextDueDate, today),
-        notSnoozed
-      )
-    )
-    .limit(1);
-
-  if (recurringRows[0]) return recurringRows[0];
-
-  // Priority 4: Random open task
-  const poolRows = await tx
-    .select()
-    .from(tasks)
-    .where(
-      and(
-        eq(tasks.userId, userId),
-        isNull(tasks.completedAt),
-        or(eq(tasks.type, "ONE_TIME"), eq(tasks.type, "DAILY_ELIGIBLE")),
-        notSnoozed
-      )
-    );
-
-  if (poolRows.length > 0) {
-    const randomIndex = Math.floor(Math.random() * poolRows.length);
-    return poolRows[randomIndex];
+    const query = client.select().from(tasks).where(baseConditions);
+    const rows = options?.orderBy
+      ? await query.orderBy(options.orderBy).limit(1)
+      : await query.limit(1);
+    return rows[0] ?? null;
   }
 
-  return null;
+  // Priority 1: Oldest overdue task
+  const overdue = await pickFromTier(
+    and(
+      eq(tasks.userId, userId),
+      isNull(tasks.completedAt),
+      isNotNull(tasks.dueDate),
+      lt(tasks.dueDate, today),
+      ne(tasks.type, "RECURRING"),
+      notSnoozed
+    ),
+    { orderBy: tasks.dueDate }
+  );
+  if (overdue) return overdue;
+
+  // Priority 2: High-priority topic subtask
+  const highPriority = await pickFromTier(
+    and(
+      eq(tasks.userId, userId),
+      isNull(tasks.completedAt),
+      isNotNull(tasks.topicId),
+      eq(tasks.priority, "HIGH"),
+      ne(tasks.type, "RECURRING"),
+      notSnoozed
+    )
+  );
+  if (highPriority) return highPriority;
+
+  // Priority 3: Due recurring task
+  const recurring = await pickFromTier(
+    and(
+      eq(tasks.userId, userId),
+      eq(tasks.type, "RECURRING"),
+      isNotNull(tasks.nextDueDate),
+      lte(tasks.nextDueDate, today),
+      notSnoozed
+    )
+  );
+  if (recurring) return recurring;
+
+  // Priority 4: Random open task
+  return pickFromTier(
+    and(
+      eq(tasks.userId, userId),
+      isNull(tasks.completedAt),
+      or(eq(tasks.type, "ONE_TIME"), eq(tasks.type, "DAILY_ELIGIBLE")),
+      notSnoozed
+    ),
+    { randomPool: true }
+  );
 }
 
 /**
@@ -234,11 +267,13 @@ async function pickBestTask(userId: string, tx: Tx, timezone?: string | null): P
  *
  * @param userId - The user's UUID
  * @param timezone - Optional IANA timezone string (e.g. "Europe/Berlin"). Falls back to UTC.
+ * @param energyLevel - Optional energy level to prefer matching tasks
  * @returns The selected Task (with topic), or null if no eligible tasks exist
  */
 export async function selectDailyQuest(
   userId: string,
-  timezone?: string | null
+  timezone?: string | null,
+  energyLevel?: "HIGH" | "MEDIUM" | "LOW" | null
 ): Promise<TaskWithTopic | null> {
   const today = getLocalDateString(timezone);
   const todayStart = new Date(`${today}T00:00:00Z`);
@@ -302,7 +337,7 @@ export async function selectDailyQuest(
     }
 
     // Run the priority algorithm using the transaction client
-    const candidate = await pickBestTask(userId, tx, timezone);
+    const candidate = await pickBestTask(userId, tx, timezone, energyLevel);
     if (!candidate) return null;
 
     // Assign — the isDailyQuest = false predicate acts as an optimistic lock.
@@ -331,11 +366,13 @@ export async function selectDailyQuest(
  *
  * @param userId - The user's UUID
  * @param timezone - Optional IANA timezone string. Falls back to UTC.
+ * @param energyLevel - Optional energy level to prefer matching tasks
  * @returns The newly selected Task (with topic), or null if no eligible tasks
  */
 export async function forceSelectDailyQuest(
   userId: string,
-  timezone?: string | null
+  timezone?: string | null,
+  energyLevel?: "HIGH" | "MEDIUM" | "LOW" | null
 ): Promise<TaskWithTopic | null> {
   // Clear any existing daily quest flag (completed or not)
   await db
@@ -350,93 +387,11 @@ export async function forceSelectDailyQuest(
 
   const today = getLocalDateString(timezone);
 
-  // Exclude snoozed tasks from all quest candidates
-  const notSnoozed = or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, today));
+  // Reuse the shared priority algorithm (no transaction needed — no TOCTOU concern for force-select)
+  const candidate = await pickBestTask(userId, db, timezone, energyLevel);
+  if (!candidate) return null;
 
-  // Run the same priority algorithm as selectDailyQuest (no existing check)
-
-  // Priority 1: Oldest overdue task
-  const overdueRows = await db
-    .select()
-    .from(tasks)
-    .where(
-      and(
-        eq(tasks.userId, userId),
-        isNull(tasks.completedAt),
-        isNotNull(tasks.dueDate),
-        lt(tasks.dueDate, today),
-        ne(tasks.type, "RECURRING"),
-        notSnoozed
-      )
-    )
-    .orderBy(tasks.dueDate)
-    .limit(1);
-
-  if (overdueRows[0]) {
-    return await assignDailyQuest(overdueRows[0], userId, today);
-  }
-
-  // Priority 2: High-priority topic subtask
-  const highPriorityRows = await db
-    .select()
-    .from(tasks)
-    .where(
-      and(
-        eq(tasks.userId, userId),
-        isNull(tasks.completedAt),
-        isNotNull(tasks.topicId),
-        eq(tasks.priority, "HIGH"),
-        ne(tasks.type, "RECURRING"),
-        notSnoozed
-      )
-    )
-    .limit(1);
-
-  if (highPriorityRows[0]) {
-    return await assignDailyQuest(highPriorityRows[0], userId, today);
-  }
-
-  // Priority 3: Due recurring task
-  const recurringRows = await db
-    .select()
-    .from(tasks)
-    .where(
-      and(
-        eq(tasks.userId, userId),
-        eq(tasks.type, "RECURRING"),
-        isNotNull(tasks.nextDueDate),
-        lte(tasks.nextDueDate, today),
-        notSnoozed
-      )
-    )
-    .limit(1);
-
-  if (recurringRows[0]) {
-    return await assignDailyQuest(recurringRows[0], userId, today);
-  }
-
-  // Priority 4: Random open task
-  const poolRows = await db
-    .select()
-    .from(tasks)
-    .where(
-      and(
-        eq(tasks.userId, userId),
-        isNull(tasks.completedAt),
-        or(
-          eq(tasks.type, "ONE_TIME"),
-          eq(tasks.type, "DAILY_ELIGIBLE")
-        ),
-        notSnoozed
-      )
-    );
-
-  if (poolRows.length > 0) {
-    const randomIndex = Math.floor(Math.random() * poolRows.length);
-    return await assignDailyQuest(poolRows[randomIndex], userId, today);
-  }
-
-  return null;
+  return await assignDailyQuest(candidate, userId, today);
 }
 
 /**
@@ -530,6 +485,9 @@ export async function postponeDailyQuest(
         questPostponedDate: todayStr,
       })
       .where(eq(users.id, userId));
+
+    // Log the postponement event for weekly review analytics
+    await tx.insert(questPostponements).values({ userId, taskId });
   });
 
   return {
