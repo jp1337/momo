@@ -158,6 +158,23 @@ On first login, a user account is created automatically in the database.
 
 You'll need to configure VAPID keys first — see the [Environment Variables](/momo/environment-variables) page.
 
+## Voice Control with Alexa (Optional)
+
+Momo has an Alexa skill that lets you add tasks, manage your wishlist, and hear your Daily Quest without touching your phone.
+
+Example commands:
+
+- "Alexa, ask Momo to add call the dentist"
+- "Alexa, ask Momo to add milk to the shopping list"
+- "Alexa, ask Momo what is my quest?"
+- "Alexa, ask Momo to list my tasks"
+
+Account linking is handled automatically — when you tap "Link Account" in the Alexa app, you log in to Momo and an API key is created for you. No manual copy-paste required.
+
+The skill runs on AWS Lambda (free tier) and connects to your self-hosted Momo instance via the REST API. Full setup takes about 30 minutes.
+
+[Full Alexa Skill guide →](/momo/alexa-skill)
+
 ---
 
 ## Stopping Momo
