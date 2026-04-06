@@ -19,7 +19,8 @@
     "wishlist": "Liste de souhaits",
     "settings": "Paramètres",
     "quick_mode": "5 Min",
-    "review": "Bilan"
+    "review": "Bilan",
+    "focus_mode": "Focus"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -52,6 +53,8 @@
     "section_quick_wins": "Victoires rapides",
     "quick_wins_hint": "moins de 15 minutes",
     "quick_wins_empty": "Aucune tâche courte — ajoutez des estimations de temps.",
+    "focus_cta": "Lancer le mode focus",
+    "focus_cta_hint": "Quête + victoires rapides",
     "five_min_cta": "J'ai seulement 5 minutes",
     "five_min_cta_count": "{count, plural, one {# tâche rapide} other {# tâches rapides}}",
     "quest_postpones_left": "Encore {count} report(s) possible(s) aujourd'hui",
@@ -357,6 +360,18 @@
     "empty_subtitle": "Ajoute des estimations de temps à tes tâches — les rapides apparaîtront ici.",
     "empty_link": "Voir les tâches →",
     "completed_all": "Tout fait ! Tu as accompli toutes les tâches rapides.",
+    "confirm_delete": "Supprimer cette tâche ?"
+  },
+  "focus": {
+    "page_title": "Mode Focus",
+    "page_subtitle": "Seulement l'essentiel. Une chose à la fois.",
+    "section_quest": "Ta quête du jour",
+    "section_quick_wins": "Victoires rapides",
+    "quick_wins_hint": "moins de 15 minutes",
+    "empty_title": "Tout est calme",
+    "empty_subtitle": "Aucune tâche ouverte. Profite du calme.",
+    "completed_all": "Tout accompli ! Ton focus a payé.",
+    "back_to_dashboard": "Retour au tableau de bord",
     "confirm_delete": "Supprimer cette tâche ?"
   },
   "landing": {

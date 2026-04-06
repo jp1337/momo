@@ -9,6 +9,7 @@ Next.js 15 App Router pages and API routes. Thin layer — validates input, call
   layout.tsx    → Auth guard (redirects to /login if no session) + Navbar/Sidebar
   dashboard/    → Daily Quest hero card + stats + 5-Min CTA
   quick/        → "5-Minute Mode" — focused view for tasks with estimatedMinutes ≤ 5
+  focus/        → Focus Mode — distraction-free view: Daily Quest + Quick Wins (≤ 15 min) only
   tasks/        → Task list and management
   topics/       → Topics + subtasks
   wishlist/     → Wishlist + budget tracker

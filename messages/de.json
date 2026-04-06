@@ -19,7 +19,8 @@
     "wishlist": "Wunschliste",
     "settings": "Einstellungen",
     "quick_mode": "5 Min",
-    "review": "Rückblick"
+    "review": "Rückblick",
+    "focus_mode": "Fokus"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -52,6 +53,8 @@
     "section_quick_wins": "Schnell erledigt",
     "quick_wins_hint": "unter 15 Minuten",
     "quick_wins_empty": "Keine kurzen Aufgaben vorhanden — füge Zeitschätzungen zu deinen Aufgaben hinzu.",
+    "focus_cta": "Fokus-Modus starten",
+    "focus_cta_hint": "Nur Quest + Quick Wins",
     "five_min_cta": "Ich hab nur 5 Minuten",
     "five_min_cta_count": "{count, plural, one {# schnelle Aufgabe} other {# schnelle Aufgaben}}",
     "quest_postpones_left": "Noch {count}× verschiebbar heute",
@@ -357,6 +360,18 @@
     "empty_subtitle": "Füge Zeitschätzungen zu deinen Aufgaben hinzu — dann tauchen die schnellen hier auf.",
     "empty_link": "Zu den Aufgaben →",
     "completed_all": "Alles erledigt! Du hast alle schnellen Aufgaben geschafft.",
+    "confirm_delete": "Diese Aufgabe löschen?"
+  },
+  "focus": {
+    "page_title": "Fokus-Modus",
+    "page_subtitle": "Nur das Wichtigste. Eins nach dem anderen.",
+    "section_quest": "Deine Tagesquest",
+    "section_quick_wins": "Quick Wins",
+    "quick_wins_hint": "unter 15 Minuten",
+    "empty_title": "Alles ruhig hier",
+    "empty_subtitle": "Keine offenen Aufgaben. Genieß die Ruhe.",
+    "completed_all": "Alles geschafft! Dein Fokus hat sich gelohnt.",
+    "back_to_dashboard": "Zurück zum Dashboard",
     "confirm_delete": "Diese Aufgabe löschen?"
   },
   "landing": {

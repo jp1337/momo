@@ -23,7 +23,7 @@ import { eq, count, lte, isNull, and, or } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { getTranslations } from "next-intl/server";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCoins, faFire, faTrophy, faCircleCheck, faBolt } from "@fortawesome/free-solid-svg-icons";
+import { faCoins, faFire, faTrophy, faCircleCheck, faBolt, faBullseye } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import type { Metadata } from "next";
 
@@ -231,6 +231,57 @@ export default async function DashboardPage() {
           userEnergyToday={userEnergyToday}
         />
       </section>
+
+      {/* ── Focus Mode CTA ──────────────────────────────────────────────────── */}
+      <Link
+        href="/focus"
+        className="flex items-center gap-4 rounded-xl px-5 py-4 transition-all duration-150 no-underline group"
+        style={{
+          backgroundColor: "color-mix(in srgb, var(--accent-green) 8%, var(--bg-surface))",
+          border: "1px solid color-mix(in srgb, var(--accent-green) 25%, var(--border))",
+        }}
+      >
+        <div
+          className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
+          style={{
+            backgroundColor: "color-mix(in srgb, var(--accent-green) 15%, transparent)",
+          }}
+        >
+          <FontAwesomeIcon
+            icon={faBullseye}
+            className="w-5 h-5"
+            style={{ color: "var(--accent-green)" }}
+            aria-hidden="true"
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span
+            className="text-sm font-semibold block"
+            style={{
+              fontFamily: "var(--font-display, 'Lora', serif)",
+              fontStyle: "italic",
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("focus_cta")}
+          </span>
+          <span
+            className="text-xs block mt-0.5"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+            }}
+          >
+            {t("focus_cta_hint")}
+          </span>
+        </div>
+        <span
+          className="text-sm transition-transform group-hover:translate-x-1"
+          style={{ color: "var(--accent-green)" }}
+        >
+          →
+        </span>
+      </Link>
 
       {/* ── 5-Minute CTA ── only shown when quick tasks exist ────────────────── */}
       {fiveMinCount > 0 && (
