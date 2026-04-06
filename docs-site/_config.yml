@@ -38,5 +38,7 @@ nav:
     url: /momo/oauth-setup
   - title: Kubernetes
     url: /momo/kubernetes
+  - title: Alexa Skill
+    url: /momo/alexa-skill
   - title: Contributing
     url: /momo/contributing
