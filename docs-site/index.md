@@ -101,6 +101,20 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 | API | OpenAPI 3.1.0, Personal Access Tokens |
 | Container | Docker + Kubernetes |
 
+## What's New
+
+**Swipe gestures on mobile** — On any task list, swipe right to complete a task (green) or left to delete it (red). The same works for wishlist items: swipe right to mark as bought, swipe left to discard. No need to open a menu.
+
+**Confetti on wishlist purchases** — Marking a wishlist item as bought triggers a short celebration animation. Small wins deserve it.
+
+**Daily Quest resets every day** — An uncompleted quest is replaced the next morning so you never wake up to the same task two days in a row. The quest title is also included in your daily push notification: "Today's mission: Call the dentist."
+
+**Alexa Skill** — Add tasks and check your quest by voice. Supports task creation, wishlist additions, quest reading, and task listing. Account linking is automatic — no manual API key setup needed. [Learn more →](/momo/alexa-skill)
+
+**Consistent edit and delete controls** — Every card (tasks, topics, wishlist items) now has the edit (✎) and delete (✕) buttons in the same top-right position. Full titles are always visible, never cut off.
+
+---
+
 ## The Name
 
 Named after **Momo** by Michael Ende — a story about a small girl who fights the Grey Gentlemen stealing people's time. When anxiety turns every task into a wall, Momo asks you to do just one thing. That's enough for today.
