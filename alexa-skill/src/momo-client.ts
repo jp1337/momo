@@ -118,3 +118,33 @@ export async function getOpenTasks(apiKey: string): Promise<MomoTask[]> {
   const data = await momoFetch<{ tasks: MomoTask[] }>(apiKey, "/api/tasks");
   return data.tasks.filter((t) => t.completedAt === null);
 }
+
+export interface MomoWishlistItem {
+  id: string;
+  title: string;
+  price: number | null;
+  priority: "WANT" | "NICE_TO_HAVE" | "SOMEDAY";
+  status: "OPEN" | "BOUGHT" | "DISCARDED";
+}
+
+/**
+ * Adds a new item to the authenticated user's wishlist.
+ *
+ * @param apiKey - Momo Personal API Key
+ * @param title  - Item title (1–200 chars)
+ * @returns The created wishlist item
+ */
+export async function addWishlistItem(
+  apiKey: string,
+  title: string
+): Promise<MomoWishlistItem> {
+  const data = await momoFetch<{ item: MomoWishlistItem }>(
+    apiKey,
+    "/api/wishlist",
+    {
+      method: "POST",
+      body: JSON.stringify({ title, priority: "WANT" }),
+    }
+  );
+  return data.item;
+}

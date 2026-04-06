@@ -24,6 +24,7 @@ import { AddTaskIntentHandler } from "./handlers/add-task";
 import { GetQuestIntentHandler } from "./handlers/get-quest";
 import { ListTasksIntentHandler } from "./handlers/list-tasks";
 import { HelpIntentHandler } from "./handlers/help";
+import { AddWishlistItemIntentHandler } from "./handlers/add-wishlist-item";
 import {
   CancelAndStopIntentHandler,
   SessionEndedRequestHandler,
@@ -42,6 +43,7 @@ export const handler = Alexa.SkillBuilders.custom()
     GetQuestIntentHandler,
     ListTasksIntentHandler,
     HelpIntentHandler,
+    AddWishlistItemIntentHandler,
     CancelAndStopIntentHandler,
     SessionEndedRequestHandler
   )

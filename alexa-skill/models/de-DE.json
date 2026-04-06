@@ -26,6 +26,29 @@
           ]
         },
         {
+          "name": "AddWishlistItemIntent",
+          "slots": [
+            {
+              "name": "itemName",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "füge {itemName} zur Wunschliste hinzu",
+            "füge {itemName} zur Einkaufsliste hinzu",
+            "setze {itemName} auf die Wunschliste",
+            "setze {itemName} auf die Einkaufsliste",
+            "trage {itemName} in die Wunschliste ein",
+            "trage {itemName} in die Einkaufsliste ein",
+            "schreib {itemName} auf die Einkaufsliste",
+            "schreib {itemName} auf die Wunschliste",
+            "{itemName} auf die Wunschliste",
+            "{itemName} auf die Einkaufsliste",
+            "Wunschliste {itemName} hinzufügen",
+            "merke {itemName} für die Wunschliste"
+          ]
+        },
+        {
           "name": "GetQuestIntent",
           "slots": [],
           "samples": [
@@ -86,6 +109,22 @@
               }
             }
           ]
+        },
+        {
+          "name": "AddWishlistItemIntent",
+          "confirmationRequired": false,
+          "prompts": {},
+          "slots": [
+            {
+              "name": "itemName",
+              "type": "AMAZON.SearchQuery",
+              "confirmationRequired": false,
+              "elicitationRequired": true,
+              "prompts": {
+                "elicitation": "Elicit.Slot.AddWishlistItemIntent.itemName"
+              }
+            }
+          ]
         }
       ],
       "delegationStrategy": "SKILL_RESPONSE"
@@ -101,6 +140,19 @@
           {
             "type": "PlainText",
             "value": "Für welche Aufgabe soll ich einen Eintrag erstellen?"
+          }
+        ]
+      },
+      {
+        "id": "Elicit.Slot.AddWishlistItemIntent.itemName",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Was soll ich auf die Wunschliste setzen?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Welchen Artikel soll ich hinzufügen?"
           }
         ]
       }

@@ -19,15 +19,17 @@ export const HelpIntentHandler: RequestHandler = {
     const speech =
       "Mit Momo kannst du Folgendes tun: " +
       'Sage "Fuege Zahnarzt hinzu", um eine neue Aufgabe zu erstellen. ' +
+      'Sage "Fuege Milch zur Einkaufsliste hinzu", um etwas auf die Wunschliste zu setzen. ' +
       'Sage "Was ist meine Quest?", um deine heutige Aufgabe zu hoeren. ' +
-      'Sage "Liste meine Aufgaben", um alle offenen Aufgaben zu hoeren. ' +
+      'Oder sage "Liste meine Aufgaben", um alle offenen Aufgaben zu hoeren. ' +
       "Was moechtest du tun?";
 
-    const reprompt = "Sage zum Beispiel: Fuege eine Aufgabe hinzu.";
+    const reprompt = "Sage zum Beispiel: Fuege Milch zur Einkaufsliste hinzu.";
 
     const cardText =
       "Befehle:\n" +
       '* "Fuege [Aufgabe] hinzu"\n' +
+      '* "Fuege [Artikel] zur Einkaufsliste hinzu"\n' +
       '* "Was ist meine Quest?"\n' +
       '* "Liste meine Aufgaben"\n' +
       '* "Beenden"';
