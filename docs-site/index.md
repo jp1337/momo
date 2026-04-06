@@ -108,6 +108,8 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 ## What's New
 
+**Search & Filter** — The task list and wishlist now have a search bar and filter chips. Search titles (and notes for tasks) in real time, then narrow by priority or topic. Filters combine and show a live result count. [See Features →](/momo/features#search-and-filter)
+
 **Branded error pages** — A wrong URL or server hiccup now shows a custom Momo 404 or 500 page — same warm forest aesthetic, same fonts, with a direct link back to the app. No more bare Next.js error screens.
 
 **Swipe gestures on mobile** — On any task list, swipe right to complete a task (green) or left to delete it (red). The same works for wishlist items: swipe right to mark as bought, swipe left to discard. No need to open a menu.

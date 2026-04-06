@@ -14,12 +14,16 @@
  * complete/uncomplete/edit/delete actions.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { TaskItem } from "./task-item";
 import { TaskForm } from "./task-form";
+import { SearchFilterBar } from "@/components/shared/search-filter-bar";
+import type { FilterGroup } from "@/components/shared/search-filter-bar";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
 import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
@@ -238,11 +242,82 @@ interface CompleteApiResponse {
 export function TaskList({ initialTasks, topics }: TaskListProps) {
   const router = useRouter();
   const t = useTranslations("tasks");
+  const tSearch = useTranslations("search");
+  const tCommon = useTranslations("common");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
+
+  /* ─── Search & Filter state ─────────────────────────────────────────────── */
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
+  const [topicFilter, setTopicFilter] = useState<string | null>(null);
+
+  const filteredTasks = useMemo(() => {
+    let result = tasks;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          (t.notes && t.notes.toLowerCase().includes(q)),
+      );
+    }
+    if (priorityFilter) {
+      result = result.filter((t) => t.priority === priorityFilter);
+    }
+    if (topicFilter) {
+      result = result.filter((t) => t.topicId === topicFilter);
+    }
+    return result;
+  }, [tasks, searchQuery, priorityFilter, topicFilter]);
+
+  const isFiltering =
+    searchQuery.length > 0 || priorityFilter !== null || topicFilter !== null;
+
+  const filterGroups: FilterGroup[] = useMemo(
+    () => [
+      {
+        key: "priority",
+        label: tSearch("filter_priority"),
+        options: [
+          { value: "HIGH", label: tCommon("priority_high") },
+          { value: "NORMAL", label: tCommon("priority_normal") },
+          { value: "SOMEDAY", label: tCommon("priority_someday") },
+        ],
+      },
+      ...(topics.length > 0
+        ? [
+            {
+              key: "topic",
+              label: tSearch("filter_topic"),
+              options: topics.map((tp) => ({
+                value: tp.id,
+                label: tp.title,
+                color: tp.color,
+              })),
+            },
+          ]
+        : []),
+    ],
+    [topics, tSearch, tCommon],
+  );
+
+  const handleFilterChange = useCallback(
+    (key: string, value: string | null) => {
+      if (key === "priority") setPriorityFilter(value);
+      if (key === "topic") setTopicFilter(value);
+    },
+    [],
+  );
+
+  const clearAllFilters = useCallback(() => {
+    setSearchQuery("");
+    setPriorityFilter(null);
+    setTopicFilter(null);
+  }, []);
 
   const editingTask = tasks.find((t) => t.id === editingTaskId);
 
@@ -365,11 +440,12 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
   }, []);
 
   const topicMap = new Map(topics.map((t) => [t.id, t]));
-  const grouped = groupTasks(tasks);
+  const grouped = groupTasks(filteredTasks);
   const hasAnyTasks = tasks.length > 0;
+  const hasFilteredTasks = filteredTasks.length > 0;
 
-  const activeCount = tasks.filter((task) => task.completedAt === null).length;
-  const completedCount = tasks.filter((task) => task.completedAt !== null).length;
+  const activeCount = filteredTasks.filter((task) => task.completedAt === null).length;
+  const completedCount = filteredTasks.filter((task) => task.completedAt !== null).length;
   const subtitle =
     tasks.length === 0
       ? t("page_subtitle_empty")
@@ -420,8 +496,68 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
         </button>
       </div>
 
-      {/* Empty state */}
+      {/* Search & Filter bar — only shown when there are tasks */}
+      {hasAnyTasks && (
+        <SearchFilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          placeholder={tSearch("placeholder_tasks")}
+          filters={filterGroups}
+          activeFilters={{ priority: priorityFilter, topic: topicFilter }}
+          onFilterChange={handleFilterChange}
+          resultCount={filteredTasks.length}
+          totalCount={tasks.length}
+          onClearAll={clearAllFilters}
+        />
+      )}
+
+      {/* Empty state — no tasks at all */}
       {!hasAnyTasks && <EmptyState />}
+
+      {/* No results from search/filter */}
+      {hasAnyTasks && !hasFilteredTasks && isFiltering && (
+        <div
+          className="rounded-2xl p-12 text-center"
+          style={{
+            backgroundColor: "var(--bg-surface)",
+            border: "1px dashed var(--border)",
+          }}
+        >
+          <FontAwesomeIcon
+            icon={faMagnifyingGlass}
+            className="text-2xl mb-3"
+            style={{ color: "var(--text-muted)" }}
+          />
+          <p
+            className="text-base font-medium mb-1"
+            style={{
+              fontFamily: "var(--font-display, 'Lora', serif)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {tSearch("no_results")}
+          </p>
+          <p
+            className="text-sm mb-4"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+            }}
+          >
+            {tSearch("no_results_hint")}
+          </p>
+          <button
+            onClick={clearAllFilters}
+            className="text-sm font-medium underline transition-opacity hover:opacity-80"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--accent-amber)",
+            }}
+          >
+            {tSearch("clear_filters")}
+          </button>
+        </div>
+      )}
 
       {/* Today */}
       <SectionHeader title={t("section_today")} count={grouped.today.length} />

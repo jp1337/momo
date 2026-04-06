@@ -310,6 +310,18 @@
     "fr": "Français",
     "label": "Sprache"
   },
+  "search": {
+    "placeholder_tasks": "Aufgaben durchsuchen...",
+    "placeholder_wishlist": "Wunschliste durchsuchen...",
+    "all": "Alle",
+    "filter_priority": "Priorität",
+    "filter_topic": "Thema",
+    "clear": "Suche löschen",
+    "clear_filters": "Filter zurücksetzen",
+    "no_results": "Keine Aufgaben gefunden.",
+    "no_results_wishlist": "Keine Artikel gefunden.",
+    "no_results_hint": "Versuch einen anderen Suchbegriff oder setze die Filter zurück."
+  },
   "landing": {
     "hero_heading": "Steal your time back.",
     "hero_sub": "> eine kleine Aufgabe. täglich.",

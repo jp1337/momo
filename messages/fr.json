@@ -310,6 +310,18 @@
     "fr": "Français",
     "label": "Langue"
   },
+  "search": {
+    "placeholder_tasks": "Rechercher des tâches...",
+    "placeholder_wishlist": "Rechercher dans la liste...",
+    "all": "Tout",
+    "filter_priority": "Priorité",
+    "filter_topic": "Sujet",
+    "clear": "Effacer la recherche",
+    "clear_filters": "Réinitialiser les filtres",
+    "no_results": "Aucune tâche trouvée.",
+    "no_results_wishlist": "Aucun article trouvé.",
+    "no_results_hint": "Essayez un autre terme ou réinitialisez les filtres."
+  },
   "landing": {
     "hero_heading": "Reprenez votre temps.",
     "hero_sub": "> une petite tâche. chaque jour.",

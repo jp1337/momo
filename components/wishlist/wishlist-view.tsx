@@ -12,11 +12,15 @@
  * - History section (bought + discarded, collapsed by default)
  */
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import { BudgetBar } from "@/components/wishlist/budget-bar";
 import { WishlistCard } from "@/components/wishlist/wishlist-card";
 import { WishlistForm } from "@/components/wishlist/wishlist-form";
+import { SearchFilterBar } from "@/components/shared/search-filter-bar";
+import type { FilterGroup } from "@/components/shared/search-filter-bar";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
 
 /** Serialised wishlist item shape passed from the server page */
@@ -54,16 +58,62 @@ export function WishlistView({
   userCoins,
 }: WishlistViewProps) {
   const t = useTranslations("wishlist");
+  const tSearch = useTranslations("search");
   const [items, setItems] = useState<SerializedWishlistItem[]>(initialItems);
   const [budget, setBudget] = useState<SerializedBudgetSummary>(initialBudget);
   const [showForm, setShowForm] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
-  // Derive open vs history items
-  const openItems = items.filter((i) => i.status === "OPEN");
-  const historyItems = items.filter(
-    (i) => i.status === "BOUGHT" || i.status === "DISCARDED"
+  /* ─── Search & Filter state ─────────────────────────────────────────────── */
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
+
+  const filteredItems = useMemo(() => {
+    let result = items;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((i) => i.title.toLowerCase().includes(q));
+    }
+    if (priorityFilter) {
+      result = result.filter((i) => i.priority === priorityFilter);
+    }
+    return result;
+  }, [items, searchQuery, priorityFilter]);
+
+  const isFiltering = searchQuery.length > 0 || priorityFilter !== null;
+
+  const filterGroups: FilterGroup[] = useMemo(
+    () => [
+      {
+        key: "priority",
+        label: tSearch("filter_priority"),
+        options: [
+          { value: "WANT", label: t("priority_want") },
+          { value: "NICE_TO_HAVE", label: t("priority_nice") },
+          { value: "SOMEDAY", label: t("priority_someday") },
+        ],
+      },
+    ],
+    [t, tSearch],
+  );
+
+  const handleFilterChange = useCallback(
+    (key: string, value: string | null) => {
+      if (key === "priority") setPriorityFilter(value);
+    },
+    [],
+  );
+
+  const clearAllFilters = useCallback(() => {
+    setSearchQuery("");
+    setPriorityFilter(null);
+  }, []);
+
+  // Derive open vs history items from filtered list
+  const openItems = filteredItems.filter((i) => i.status === "OPEN");
+  const historyItems = filteredItems.filter(
+    (i) => i.status === "BOUGHT" || i.status === "DISCARDED",
   );
 
   /** Reload all items + budget from the API */
@@ -222,8 +272,68 @@ export function WishlistView({
         </button>
       </div>
 
+      {/* Search & Filter bar — only shown when there are items */}
+      {items.length > 0 && (
+        <SearchFilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          placeholder={tSearch("placeholder_wishlist")}
+          filters={filterGroups}
+          activeFilters={{ priority: priorityFilter }}
+          onFilterChange={handleFilterChange}
+          resultCount={filteredItems.length}
+          totalCount={items.length}
+          onClearAll={clearAllFilters}
+        />
+      )}
+
+      {/* No results from search/filter */}
+      {items.length > 0 && filteredItems.length === 0 && isFiltering && (
+        <div
+          className="rounded-2xl p-12 text-center"
+          style={{
+            backgroundColor: "var(--bg-surface)",
+            border: "1px dashed var(--border)",
+          }}
+        >
+          <FontAwesomeIcon
+            icon={faMagnifyingGlass}
+            className="text-2xl mb-3"
+            style={{ color: "var(--text-muted)" }}
+          />
+          <p
+            className="text-base font-medium mb-1"
+            style={{
+              fontFamily: "var(--font-display, 'Lora', serif)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {tSearch("no_results_wishlist")}
+          </p>
+          <p
+            className="text-sm mb-4"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+            }}
+          >
+            {tSearch("no_results_hint")}
+          </p>
+          <button
+            onClick={clearAllFilters}
+            className="text-sm font-medium underline transition-opacity hover:opacity-80"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--accent-amber)",
+            }}
+          >
+            {tSearch("clear_filters")}
+          </button>
+        </div>
+      )}
+
       {/* Open items grid */}
-      {openItems.length === 0 ? (
+      {openItems.length === 0 && !isFiltering ? (
         <div
           className="rounded-2xl p-8 text-center"
           style={{
@@ -241,7 +351,7 @@ export function WishlistView({
             {t("view_empty")}
           </p>
         </div>
-      ) : (
+      ) : openItems.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {openItems.map((item) => (
             <WishlistCard
@@ -265,7 +375,7 @@ export function WishlistView({
             />
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* History section */}
       {historyItems.length > 0 && (

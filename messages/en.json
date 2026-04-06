@@ -310,6 +310,18 @@
     "fr": "Français",
     "label": "Language"
   },
+  "search": {
+    "placeholder_tasks": "Search tasks...",
+    "placeholder_wishlist": "Search wishlist...",
+    "all": "All",
+    "filter_priority": "Priority",
+    "filter_topic": "Topic",
+    "clear": "Clear search",
+    "clear_filters": "Clear filters",
+    "no_results": "No tasks match your search.",
+    "no_results_wishlist": "No items match your search.",
+    "no_results_hint": "Try a different search term or clear the filters."
+  },
   "landing": {
     "hero_heading": "Steal your time back.",
     "hero_sub": "> one small task. daily.",
