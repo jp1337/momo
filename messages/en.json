@@ -17,7 +17,8 @@
     "tasks": "Tasks",
     "topics": "Topics",
     "wishlist": "Wishlist",
-    "settings": "Settings"
+    "settings": "Settings",
+    "quick_mode": "5 Min"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -50,6 +51,8 @@
     "section_quick_wins": "Quick wins",
     "quick_wins_hint": "under 15 minutes",
     "quick_wins_empty": "No short tasks yet — add time estimates to your tasks.",
+    "five_min_cta": "I only have 5 minutes",
+    "five_min_cta_count": "{count, plural, one {# quick task} other {# quick tasks}}",
     "quest_postpones_left": "{count} postpone(s) left today",
     "quest_postpones_none": "No more postponements today",
     "quest_bonus_coins": "×2 bonus — long avoided!",
@@ -330,6 +333,15 @@
     "no_results": "No tasks match your search.",
     "no_results_wishlist": "No items match your search.",
     "no_results_hint": "Try a different search term or clear the filters."
+  },
+  "quick": {
+    "page_title": "I only have 5 minutes",
+    "page_subtitle": "{count, plural, one {# task waiting} other {# tasks waiting}}",
+    "empty_title": "No 5-minute tasks",
+    "empty_subtitle": "Add time estimates to your tasks — the quick ones will show up here.",
+    "empty_link": "Go to tasks →",
+    "completed_all": "All done! You crushed every quick task.",
+    "confirm_delete": "Delete this task?"
   },
   "landing": {
     "hero_heading": "Steal your time back.",

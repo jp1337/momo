@@ -68,6 +68,16 @@ When filters are active, Momo shows how many tasks match out of the total. Click
 
 The same search and filter bar appears on the **Wishlist** page, where you can search item titles and filter by priority (Want, Nice to Have, Someday).
 
+### 5-Minute Mode
+
+When you only have a few minutes to spare, click the **5 Min** entry in the sidebar or mobile navigation (the bolt icon). This opens a focused view showing only tasks with a time estimate of 5 minutes or less.
+
+The 5-minute page strips away everything except the tasks you can finish right now — no search bar, no filters, no create button. Complete a task directly from this view and enjoy the same confetti, coin, and level-up animations as the regular task list.
+
+If your dashboard has qualifying tasks, a prominent **"I only have 5 minutes"** banner appears between the Daily Quest and Quick Wins sections. Click it to jump straight into the mode.
+
+> **Tip:** Set a 5-minute estimate on tiny tasks like "Take out the trash" or "Reply to that email". They become your go-to list for those moments between meetings.
+
 ### Snooze — pause a task
 
 Sometimes you know a task matters but you don't want to see it right now. Click the **clock icon** on any task to snooze it. Momo offers quick options:
