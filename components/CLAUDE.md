@@ -34,6 +34,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `settings/linked-accounts.tsx` — Connected OAuth providers list; uses `signIn()` from next-auth/react (not window.location) to trigger linking flow
 - `settings/language-switcher.tsx` — UI language switcher (de/en/fr); POSTs to /api/locale
 - `settings/delete-account.tsx` — Danger zone: account deletion with confirmation dialog
+- `settings/profile-settings.tsx` — Inline profile editor: name, email, avatar upload with preview; PATCHes /api/user/profile; uses next/image for remote URLs, plain img for data URLs (CSP-safe)
 - `settings/quest-settings.tsx` — Slider to configure daily quest postpone limit (1–5, default 3)
 - `settings/emotional-closure-settings.tsx` — Toggle (An/Aus) to enable/disable affirmation/quote after daily quest completion; PATCHes /api/settings/quest
 - `shared/search-filter-bar.tsx` — Reusable search input + filter chip bar; used on Tasks and Wishlist pages; follows LanguageSwitcher chip pattern (amber active, elevated inactive)

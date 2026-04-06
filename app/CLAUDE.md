@@ -52,6 +52,7 @@ api/
   auth/link-request/route.ts         → POST (initiate OAuth account linking flow)
   auth/link-callback/route.ts        → GET (complete OAuth account linking by token)
   user/export/route.ts               → GET (GDPR data export as JSON download)
+  user/profile/route.ts              → PATCH (update profile: name, email, avatar with server-side resize)
   user/delete/route.ts               → DELETE (full account deletion)
   locale/route.ts                    → POST (set UI locale cookie)
   settings/quest/route.ts            → PATCH (save quest settings: postpone limit, emotional closure toggle)

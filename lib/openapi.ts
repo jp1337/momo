@@ -2013,6 +2013,96 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       },
     },
 
+    "/api/user/profile": {
+      patch: {
+        operationId: "updateProfile",
+        tags: ["User"],
+        summary: "Update profile",
+        description:
+          "Updates the authenticated user's profile (name, email, profile picture). " +
+          "All fields are optional — only provided fields are updated. " +
+          "Profile pictures are resized server-side to 200×200px WebP and stored as data URLs.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  name: {
+                    type: "string",
+                    minLength: 1,
+                    maxLength: 100,
+                    description: "Display name",
+                    example: "Jane Doe",
+                  },
+                  email: {
+                    type: "string",
+                    format: "email",
+                    maxLength: 255,
+                    description: "Email address (must be unique)",
+                    example: "jane@example.com",
+                  },
+                  image: {
+                    type: "string",
+                    nullable: true,
+                    maxLength: 200000,
+                    description:
+                      "Base64 data URL (PNG/JPEG/GIF/WebP/BMP) or null to remove. " +
+                      "Resized to 200×200px WebP server-side.",
+                    example: null,
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Profile updated successfully.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["user"],
+                  properties: {
+                    user: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string", nullable: true },
+                        email: { type: "string", nullable: true },
+                        image: { type: "string", nullable: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "409": {
+            description: "Email already in use by another account.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string", example: "Email is already in use" },
+                    code: { type: "string", example: "EMAIL_TAKEN" },
+                  },
+                },
+              },
+            },
+          },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
     // ─── API Keys ─────────────────────────────────────────────────────────────
 
     "/api/user/api-keys": {

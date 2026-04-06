@@ -105,6 +105,11 @@ docker compose up -d   # starts app + db + cron together
 docker compose logs -f cron
 ```
 
+**Troubleshooting:** The cron container logs the HTTP status code and response body on failures (e.g. `[cron] FAILED (HTTP 401)`). Common issues:
+- **HTTP 401** — `CRON_SECRET` mismatch between cron container and app
+- **HTTP 500** — server error; check app logs (`docker compose logs app`)
+- **Connection refused** — app container not running or wrong URL
+
 ---
 
 ## Production Checklist
