@@ -16,8 +16,8 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { users, accounts, pushSubscriptions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import Image from "next/image";
 import { NotificationSettings } from "@/components/settings/notification-settings";
+import { ProfileSettings } from "@/components/settings/profile-settings";
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
 import { DeleteAccount } from "@/components/settings/delete-account";
 import { LinkedAccounts } from "@/components/settings/linked-accounts";
@@ -137,64 +137,12 @@ export default async function SettingsPage() {
           {t("section_account")}
         </h2>
 
-        <div className="flex items-center gap-4">
-          {/* Avatar */}
-          {user.image ? (
-            <Image
-              src={user.image}
-              alt={user.name ?? "User avatar"}
-              width={56}
-              height={56}
-              className="rounded-full"
-              style={{ border: "2px solid var(--border)" }}
-            />
-          ) : (
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-semibold"
-              style={{
-                backgroundColor: "var(--bg-elevated)",
-                color: "var(--accent-amber)",
-                fontFamily: "var(--font-display)",
-              }}
-            >
-              {(user.name ?? "?").charAt(0).toUpperCase()}
-            </div>
-          )}
-
-          {/* Name + email */}
-          <div className="flex flex-col gap-0.5">
-            <span
-              className="font-medium"
-              style={{
-                color: "var(--text-primary)",
-                fontFamily: "var(--font-ui)",
-              }}
-            >
-              {user.name ?? t("account_anonymous")}
-            </span>
-            <span
-              className="text-sm"
-              style={{
-                color: "var(--text-muted)",
-                fontFamily: "var(--font-ui)",
-              }}
-            >
-              {user.email ?? "—"}
-            </span>
-            {/* Provider badge */}
-            <span
-              className="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium w-fit"
-              style={{
-                backgroundColor: "var(--bg-elevated)",
-                color: "var(--text-muted)",
-                fontFamily: "var(--font-ui)",
-                border: "1px solid var(--border)",
-              }}
-            >
-              {providerBadgeLabel}
-            </span>
-          </div>
-        </div>
+        <ProfileSettings
+          initialName={user.name}
+          initialEmail={user.email}
+          initialImage={user.image}
+          providerBadgeLabel={providerBadgeLabel}
+        />
       </section>
 
       {/* Push Notifications section */}

@@ -424,6 +424,31 @@ The theme preference is saved and persists across sessions.
 
 ---
 
+## Profile Editing
+
+OAuth providers often set your display name to a username or abbreviation, and your email might be a no-reply address. You can update all of these in Momo.
+
+### Editing your profile
+
+Go to **Settings → Account** and click **Edit**. You can change:
+
+- **Name** — your display name shown in the navbar and throughout the app
+- **Email** — your contact email address (must be unique across all users)
+- **Profile picture** — click the avatar to upload an image from your device
+
+### Profile picture
+
+When you upload an image, Momo automatically:
+- Resizes it to 200×200 pixels (center crop)
+- Converts it to WebP format for optimal file size
+- Stores it directly in the database (no external storage needed)
+
+Supported formats: PNG, JPEG, GIF, WebP, BMP. Maximum upload size: 5 MB.
+
+To remove your profile picture, click **Remove picture** while in edit mode. The app will show your name initial as a fallback.
+
+---
+
 ## Weekly Review
 
 Visit **/review** from the avatar menu to see a summary of how your week went:

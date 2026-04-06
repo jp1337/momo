@@ -329,7 +329,22 @@
     "delete_confirm_btn": "Oui, tout supprimer",
     "delete_confirming": "Suppression...",
     "delete_cancel_btn": "Annuler",
-    "delete_err_generic": "Impossible de supprimer le compte — veuillez réessayer."
+    "delete_err_generic": "Impossible de supprimer le compte — veuillez réessayer.",
+    "profile_edit_btn": "Modifier",
+    "profile_save_btn": "Enregistrer",
+    "profile_cancel_btn": "Annuler",
+    "profile_saving": "Enregistrement...",
+    "profile_saved": "Enregistré",
+    "profile_name_label": "Nom",
+    "profile_email_label": "E-mail",
+    "profile_image_label": "Photo de profil",
+    "profile_image_hint": "Cliquez sur l'avatar pour télécharger une photo",
+    "profile_image_remove": "Supprimer la photo",
+    "profile_err_email_taken": "Cette adresse e-mail est déjà utilisée.",
+    "profile_err_image_too_large": "Image trop grande (max. 5 Mo).",
+    "profile_err_invalid_image": "Format d'image non valide.",
+    "profile_err_name_empty": "Le nom ne peut pas être vide.",
+    "profile_err_email_invalid": "Veuillez entrer une adresse e-mail valide."
   },
   "animations": {
     "achievement_title": "Succès débloqué !",

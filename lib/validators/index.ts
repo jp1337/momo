@@ -318,3 +318,32 @@ export const UpdateBudgetInputSchema = z.object({
 });
 
 export type UpdateBudgetInput = z.infer<typeof UpdateBudgetInputSchema>;
+
+// ─── Profile Validators ──────────────────────────────────────────────────────
+
+/**
+ * Schema for updating the user's profile.
+ * All fields are optional — only provided fields are updated.
+ * Image accepts a data URL (base64) or null to remove the profile picture.
+ */
+export const UpdateProfileInputSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name must not be empty")
+    .max(100, "Name must be 100 characters or less")
+    .optional(),
+  email: z
+    .string()
+    .trim()
+    .email("Must be a valid email address")
+    .max(255, "Email must be 255 characters or less")
+    .optional(),
+  image: z
+    .string()
+    .max(200_000, "Image data is too large")
+    .nullable()
+    .optional(),
+});
+
+export type UpdateProfileInput = z.infer<typeof UpdateProfileInputSchema>;
