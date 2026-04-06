@@ -60,9 +60,13 @@ Click the **break-down (🔧) button** on any task card to split it into 2–10 
 
 > **Tip:** Use the break-down feature when a task feels too big to start. "Prepare tax return" becomes five small steps, and suddenly the wall is gone.
 
-### Filtering tasks
+### Search and filter
 
-Use the filter bar above the task list to narrow tasks by topic, type (one-time / recurring / daily eligible), or completion status (open / done). Filters combine — you can show only open recurring tasks in a specific topic, for example.
+A search bar and filter chips sit above the task list. Type a keyword to search titles and notes in real time. Use the **Priority** chips (High, Normal, Someday) or the **Topic** chips to narrow the list further. Filters combine — you can search for "dentist" while filtering to only High-priority tasks, for example.
+
+When filters are active, Momo shows how many tasks match out of the total. Click **Clear filters** to reset everything.
+
+The same search and filter bar appears on the **Wishlist** page, where you can search item titles and filter by priority (Want, Nice to Have, Someday).
 
 ### Swipe gestures on mobile
 

@@ -28,7 +28,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 - ✅ **Custom Error Pages** — eigene 404- und 500-Seiten im Momo-Design (Lora-Schrift, Waldgrün-Ästhetik, Rücklink zur App); Next.js `not-found.tsx` + `error.tsx`
 - ✅ **Swipe-to-complete auf Mobile** — Wischgeste auf Task-Items: rechts = erledigen, links = löschen; Wishlist: rechts = kaufen, links = ablegen
 - ✅ **UI/UX-Konsistenz** — einheitliche Edit/Delete-Buttons (oben rechts) auf Tasks, Topics und Wishlist; vollständige Titelanzeige
-- **Suche & Filter** — Volltextsuche über Tasks und Wunschliste; Filter nach Priorität, Topic, Status; nützlich ab ~20+ Einträgen
+- ✅ **Suche & Filter** — Volltextsuche über Tasks und Wunschliste; Filter nach Priorität, Topic, Status; nützlich ab ~20+ Einträgen
 - **Snooze / Aufgabe pausieren** — "Erinnere mich ab [Datum]" für Tasks die man nicht löschen, aber auch nicht ständig sehen will
 - **"Ich hab nur 5 Minuten"-Modus** — prominenter Einstiegspunkt der nur Tasks ≤5 min zeigt (über Quick Wins hinaus)
 - **Emotionaler Abschluss** — nach Tagesquest-Abschluss kurze Affirmation oder Michael-Ende-Zitat (optional, abschaltbar)
