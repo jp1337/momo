@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faChevronDown, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { TaskItem } from "./task-item";
 import { TaskForm } from "./task-form";
 import { SearchFilterBar } from "@/components/shared/search-filter-bar";
@@ -45,6 +45,7 @@ interface Task {
   postponeCount?: number;
   estimatedMinutes?: number | null;
   recurrenceInterval?: number | null;
+  snoozedUntil?: string | null;
 }
 
 interface TopicOption {
@@ -63,6 +64,7 @@ interface GroupedTasks {
   upcoming: Task[];
   noDate: Task[];
   someday: Task[];
+  snoozed: Task[];
   completed: Task[];
 }
 
@@ -73,7 +75,15 @@ function groupTasks(tasks: Task[]): GroupedTasks {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const active = tasks.filter((t) => t.completedAt === null);
+  // Extract snoozed tasks first (uncompleted tasks with a future snooze date)
+  const snoozed = tasks.filter((t) => {
+    if (!t.snoozedUntil || t.completedAt !== null) return false;
+    const snoozeDate = new Date(t.snoozedUntil + "T00:00:00");
+    return snoozeDate > today;
+  });
+  const snoozedIds = new Set(snoozed.map((t) => t.id));
+
+  const active = tasks.filter((t) => t.completedAt === null && !snoozedIds.has(t.id));
   const completed = tasks.filter((t) => t.completedAt !== null);
 
   const todayTasks: Task[] = [];
@@ -115,11 +125,15 @@ function groupTasks(tasks: Task[]): GroupedTasks {
     return 0;
   });
 
+  // Sort snoozed by snooze date ascending (earliest wake-up first)
+  snoozed.sort((a, b) => (a.snoozedUntil! < b.snoozedUntil! ? -1 : 1));
+
   return {
     today: todayTasks,
     upcoming: upcomingTasks,
     noDate: noDateTasks,
     someday: somedayTasks,
+    snoozed,
     completed,
   };
 }
@@ -249,6 +263,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
+  const [snoozedExpanded, setSnoozedExpanded] = useState(false);
 
   /* ─── Search & Filter state ─────────────────────────────────────────────── */
   const [searchQuery, setSearchQuery] = useState("");
@@ -439,6 +454,36 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
     }
   }, []);
 
+  const handleSnooze = useCallback(async (id: string, snoozedUntil: string) => {
+    try {
+      const res = await fetch(`/api/tasks/${id}/snooze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ snoozedUntil }),
+      });
+      if (res.ok) {
+        setTasks((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, snoozedUntil } : t))
+        );
+      }
+    } catch {
+      // silent fail
+    }
+  }, []);
+
+  const handleUnsnooze = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/tasks/${id}/snooze`, { method: "DELETE" });
+      if (res.ok) {
+        setTasks((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, snoozedUntil: null } : t))
+        );
+      }
+    } catch {
+      // silent fail
+    }
+  }, []);
+
   const topicMap = new Map(topics.map((t) => [t.id, t]));
   const grouped = groupTasks(filteredTasks);
   const hasAnyTasks = tasks.length > 0;
@@ -589,6 +634,9 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                 postponeCount={task.postponeCount}
                 estimatedMinutes={task.estimatedMinutes}
                 onBreakdown={handleBreakdown}
+                snoozedUntil={task.snoozedUntil}
+                onSnooze={handleSnooze}
+                onUnsnooze={handleUnsnooze}
               />
             );
           })}
@@ -624,6 +672,9 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               postponeCount={task.postponeCount}
               estimatedMinutes={task.estimatedMinutes}
               onBreakdown={handleBreakdown}
+              snoozedUntil={task.snoozedUntil}
+              onSnooze={handleSnooze}
+              onUnsnooze={handleUnsnooze}
             />
           );
         })}
@@ -658,6 +709,9 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               postponeCount={task.postponeCount}
               estimatedMinutes={task.estimatedMinutes}
               onBreakdown={handleBreakdown}
+              snoozedUntil={task.snoozedUntil}
+              onSnooze={handleSnooze}
+              onUnsnooze={handleUnsnooze}
             />
           );
         })}
@@ -692,10 +746,87 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
               postponeCount={task.postponeCount}
               estimatedMinutes={task.estimatedMinutes}
               onBreakdown={handleBreakdown}
+              snoozedUntil={task.snoozedUntil}
+              onSnooze={handleSnooze}
+              onUnsnooze={handleUnsnooze}
             />
           );
         })}
       </div>
+
+      {/* Snoozed — collapsible section */}
+      {grouped.snoozed.length > 0 && (
+        <>
+          <div
+            className="flex items-center gap-3 mb-3 mt-6 cursor-pointer select-none"
+            onClick={() => setSnoozedExpanded((v) => !v)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setSnoozedExpanded((v) => !v)}
+          >
+            <FontAwesomeIcon
+              icon={snoozedExpanded ? faChevronDown : faChevronRight}
+              className="w-3 h-3"
+              style={{ color: "var(--text-muted)" }}
+            />
+            <h2
+              className="text-sm font-semibold uppercase tracking-wide"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+              }}
+            >
+              {t("section_snoozed")}
+            </h2>
+            <span
+              className="text-xs px-1.5 py-0.5 rounded-full"
+              style={{
+                backgroundColor: "var(--bg-elevated)",
+                color: "var(--text-muted)",
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              }}
+            >
+              {grouped.snoozed.length}
+            </span>
+          </div>
+          {snoozedExpanded && (
+            <div className="flex flex-col gap-2">
+              {grouped.snoozed.map((task) => {
+                const topic = task.topicId ? topicMap.get(task.topicId) : null;
+                return (
+                  <TaskItem
+                    key={task.id}
+                    id={task.id}
+                    title={task.title}
+                    type={task.type}
+                    priority={task.priority}
+                    completedAt={task.completedAt}
+                    dueDate={task.dueDate}
+                    nextDueDate={task.nextDueDate}
+                    topicTitle={topic?.title}
+                    topicColor={topic?.color}
+                    topicId={task.topicId}
+                    coinValue={task.coinValue}
+                    onComplete={handleComplete}
+                    onUncomplete={handleUncomplete}
+                    onEdit={setEditingTaskId}
+                    onDelete={handleDelete}
+                    onInlineEdit={handleInlineEdit}
+                    onPromote={handlePromote}
+                    onGoToTopic={handleGoToTopic}
+                    postponeCount={task.postponeCount}
+                    estimatedMinutes={task.estimatedMinutes}
+                    onBreakdown={handleBreakdown}
+                    snoozedUntil={task.snoozedUntil}
+                    onSnooze={handleSnooze}
+                    onUnsnooze={handleUnsnooze}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
 
       {/* Completed */}
       {grouped.completed.length > 0 && (

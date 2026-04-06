@@ -68,6 +68,19 @@ When filters are active, Momo shows how many tasks match out of the total. Click
 
 The same search and filter bar appears on the **Wishlist** page, where you can search item titles and filter by priority (Want, Nice to Have, Someday).
 
+### Snooze — pause a task
+
+Sometimes you know a task matters but you don't want to see it right now. Click the **clock icon** on any task to snooze it. Momo offers quick options:
+
+- **Tomorrow** — hides the task until tomorrow
+- **Next week** — hides for 7 days
+- **In a month** — hides for 30 days
+- **Pick a date…** — choose any future date
+
+Snoozed tasks disappear from the main list, Quick Wins, and the Daily Quest. They move into a collapsible **Snoozed** section at the bottom of your task list. When the snooze date passes, the task reappears automatically — no action needed.
+
+To wake a task up early, expand the Snoozed section and click the amber clock icon on the task.
+
 ### Swipe gestures on mobile
 
 On a phone or tablet:

@@ -192,6 +192,7 @@ export async function updateTask(
   if (input.dueDate !== undefined) updateValues.dueDate = input.dueDate;
   if (input.coinValue !== undefined) updateValues.coinValue = input.coinValue;
   if (input.estimatedMinutes !== undefined) updateValues.estimatedMinutes = input.estimatedMinutes;
+  if (input.snoozedUntil !== undefined) updateValues.snoozedUntil = input.snoozedUntil;
 
   const rows = await db
     .update(tasks)
@@ -596,4 +597,74 @@ export async function breakdownTask(
 
     return { topicId: newTopic.id, tasks: newTasks };
   });
+}
+
+// ─── Snooze ──────────────────────────────────────────────────────────────────
+
+/**
+ * Snoozes a task until the given date. The task will be hidden from all
+ * active views (task list, Quick Wins, Daily Quest) until snoozedUntil <= today.
+ *
+ * If the task is currently the active Daily Quest, isDailyQuest is cleared
+ * so a new quest can be selected.
+ *
+ * @param taskId - The task's UUID
+ * @param userId - The authenticated user's UUID
+ * @param snoozedUntil - Date in YYYY-MM-DD format
+ * @returns The updated task
+ * @throws Error if task not found or not owned by user
+ */
+export async function snoozeTask(
+  taskId: string,
+  userId: string,
+  snoozedUntil: string
+): Promise<Task> {
+  const task = await getTaskById(taskId, userId);
+  if (!task) {
+    throw new Error("Task not found or access denied");
+  }
+
+  if (task.completedAt !== null) {
+    throw new Error("Cannot snooze a completed task");
+  }
+
+  const updateValues: Partial<typeof tasks.$inferInsert> = { snoozedUntil };
+
+  // If this task is the active daily quest, clear it so a new quest is selected
+  if (task.isDailyQuest) {
+    updateValues.isDailyQuest = false;
+  }
+
+  const rows = await db
+    .update(tasks)
+    .set(updateValues)
+    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+    .returning();
+
+  return rows[0];
+}
+
+/**
+ * Removes the snooze from a task, making it immediately visible again.
+ *
+ * @param taskId - The task's UUID
+ * @param userId - The authenticated user's UUID
+ * @returns The updated task
+ * @throws Error if task not found or not owned by user
+ */
+export async function unsnoozeTask(
+  taskId: string,
+  userId: string
+): Promise<Task> {
+  const rows = await db
+    .update(tasks)
+    .set({ snoozedUntil: null })
+    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+    .returning();
+
+  if (!rows[0]) {
+    throw new Error("Task not found or access denied");
+  }
+
+  return rows[0];
 }

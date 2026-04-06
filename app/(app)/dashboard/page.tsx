@@ -19,7 +19,7 @@ import { getDailyQuestIncludingCompleted, selectDailyQuest } from "@/lib/daily-q
 import { getUserStats } from "@/lib/gamification";
 import { db } from "@/lib/db";
 import { taskCompletions, users, tasks } from "@/lib/db/schema";
-import { eq, count, lte, isNull, and } from "drizzle-orm";
+import { eq, count, lte, isNull, and, or } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { getTranslations } from "next-intl/server";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
       .from(users)
       .where(eq(users.id, userId))
       .limit(1),
-    // Quick wins: uncompleted tasks with estimatedMinutes <= 15
+    // Quick wins: uncompleted, non-snoozed tasks with estimatedMinutes <= 15
     db
       .select({ id: tasks.id, title: tasks.title, estimatedMinutes: tasks.estimatedMinutes, coinValue: tasks.coinValue })
       .from(tasks)
@@ -99,7 +99,8 @@ export default async function DashboardPage() {
         and(
           eq(tasks.userId, userId),
           isNull(tasks.completedAt),
-          lte(tasks.estimatedMinutes, 15)
+          lte(tasks.estimatedMinutes, 15),
+          or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, todayStr))
         )
       )
       .limit(3),

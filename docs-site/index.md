@@ -108,6 +108,8 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 ## What's New
 
+**Snooze / Pause tasks** — Don't want to see a task right now but don't want to delete it either? Click the clock icon and snooze it until tomorrow, next week, next month, or any date you choose. Snoozed tasks vanish from your list, Quick Wins, and Daily Quest — then reappear automatically when the time comes. [See Features →](/momo/features#snooze--pause-a-task)
+
 **Search & Filter** — The task list and wishlist now have a search bar and filter chips. Search titles (and notes for tasks) in real time, then narrow by priority or topic. Filters combine and show a live result count. [See Features →](/momo/features#search-and-filter)
 
 **Branded error pages** — A wrong URL or server hiccup now shows a custom Momo 404 or 500 page — same warm forest aesthetic, same fonts, with a direct link back to the app. No more bare Next.js error screens.
