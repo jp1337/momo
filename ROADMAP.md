@@ -13,7 +13,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 | Passkeys (WebAuthn)              | Auth             | M       | `@simplewebauthn`-Adapter für Auth.js; keine externen Provider nötig    |
 | 2FA — TOTP                       | Auth             | M       | Authenticator-App (Google Authenticator, Authy); TOTP als zweiter Faktor nach OAuth-Login |
 | E-Mail-Benachrichtigungen        | Notifications    | M       | Resend oder SMTP; täglicher Quest-Reminder + Streak-Warnung             |
-| ntfy.sh Integration              | Notifications    | S       | URL-basierte Push-Benachrichtigungen; gut für Selfhoster                |
+| ntfy.sh Integration              | Notifications    | ✅      | URL-basierte Push-Benachrichtigungen; gut für Selfhoster                |
 | Pushover Integration             | Notifications    | S       | API Token + User Key in Settings; sofortige Push-Alerts                 |
 | Telegram-Bot                     | Notifications    | M       | Bot Token + Chat ID in Settings; Benachrichtigungen + ggf. Task-Eingabe |
 | Push-Benachrichtigungen debuggen | Technisch        | ✅      | 4 Bugs behoben: K8s CronJob, notificationTime-Filter, PATCH-Endpoint, Idempotenz-Guard |

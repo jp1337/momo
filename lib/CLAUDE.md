@@ -15,7 +15,8 @@ All server-side business logic and infrastructure. API routes import from here �
 - `daily-quest.ts` — selectDailyQuest, getCurrentDailyQuest, postponeDailyQuest (timezone-aware), forceSelectDailyQuest. Energy-aware: pickBestTask prefers tasks matching user's daily energy check-in (soft preference, never blocks selection)
 - `gamification.ts` — updateStreak (timezone-aware), getLevelForCoins, checkAndUnlockAchievements, seedAchievements, getUserStats
 - `date-utils.ts` — getLocalDateString, getLocalTomorrowString, getLocalYesterdayString — all timezone-aware via Intl.DateTimeFormat("en-CA")
-- `push.ts` — savePushSubscription, sendPushNotification, sendStreakReminder, sendWeeklyReviewNotifications — Web Push via VAPID
+- `push.ts` — savePushSubscription, sendPushNotification, sendStreakReminder, sendWeeklyReviewNotifications — Web Push via VAPID + multi-channel fan-out via lib/notifications.ts
+- `notifications.ts` — Multi-channel notification system: NotificationChannel interface, NtfyChannel class, createChannel registry, sendToAllChannels fan-out, sendTestNotification
 - `weekly-review.ts` — getWeeklyReview(userId, timezone) — weekly performance summary (completions, postponements, coins, streak, top topics)
 - `cron.ts` — Unified cron dispatcher. CRON_JOBS registry + runAllJobs(). Add new periodic jobs here — no Docker/endpoint changes needed
 - `rate-limit.ts` — In-memory rate limiter (sliding window) applied to mutation API routes

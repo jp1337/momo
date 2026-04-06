@@ -319,6 +319,24 @@ Push notifications require VAPID keys to be configured on the server. If you are
 
 Notifications work in all modern browsers and through the PWA on both iPhone and Android.
 
+### Additional notification channels
+
+Beyond browser push notifications, Momo supports additional notification channels. Go to **Settings → Additional Notification Channels** to configure them.
+
+**ntfy.sh** — Receive notifications via [ntfy.sh](https://ntfy.sh), a simple HTTP-based pub/sub service. Works on any device with the ntfy app (Android, iOS, desktop). Great for self-hosters who want notifications without configuring VAPID keys.
+
+Setup:
+1. Install the [ntfy app](https://ntfy.sh) on your phone
+2. Choose a unique topic name (e.g. `my-momo-notifications`)
+3. Subscribe to that topic in the ntfy app
+4. In Momo: go to **Settings → Additional Notification Channels** and click **+ ntfy.sh**
+5. Enter the same topic name and click **Save**
+6. Click **Send test** to verify it works
+
+Self-hosters can point to their own ntfy server by expanding the **Advanced** section and entering the server URL.
+
+More channels (Pushover, Telegram, Email, Webhooks) are planned — see the [Roadmap](https://github.com/jp1337/momo).
+
 ---
 
 ## Installing Momo as an App (PWA)

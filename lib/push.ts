@@ -17,11 +17,12 @@
 
 import webpush from "web-push";
 import { db } from "@/lib/db";
-import { users, pushSubscriptions, taskCompletions } from "@/lib/db/schema";
+import { users, pushSubscriptions, taskCompletions, notificationChannels } from "@/lib/db/schema";
 import { eq, and, gt, gte, sql } from "drizzle-orm";
 import { serverEnv } from "@/lib/env";
 import { getCurrentDailyQuest, selectDailyQuest } from "@/lib/daily-quest";
 import { getWeeklyReview } from "@/lib/weekly-review";
+import { sendToAllChannels, type NotificationPayload as ChannelPayload } from "@/lib/notifications";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -180,75 +181,96 @@ export async function sendDailyQuestNotifications(): Promise<{
   sent: number;
   failed: number;
 }> {
-  if (!isVapidConfigured()) {
-    console.warn("[push] VAPID keys not configured — skipping daily quest notifications");
-    return { sent: 0, failed: 0 };
-  }
-
-  // Match subscriptions whose user's notification_time falls in the current 5-minute
-  // bucket, evaluated in the user's own timezone (COALESCE to UTC if unset).
-  // This ensures "08:00" means 08:00 local time, not 08:00 UTC.
-  const eligibleSubscriptions = await db
-    .select({
-      userId: pushSubscriptions.userId,
-      subscription: pushSubscriptions.subscription,
-      timezone: users.timezone,
-    })
-    .from(pushSubscriptions)
-    .innerJoin(users, eq(pushSubscriptions.userId, users.id))
-    .where(
-      and(
-        eq(users.notificationEnabled, true),
-        sql`EXTRACT(HOUR FROM ${users.notificationTime})
-            = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
-        sql`FLOOR(EXTRACT(MINUTE FROM ${users.notificationTime}) / 5)
-            = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
-      )
-    );
-
   let sent = 0;
   let failed = 0;
+
+  // Time-bucket WHERE clause (reused for both Web Push and channels)
+  const timeBucketCondition = and(
+    sql`EXTRACT(HOUR FROM ${users.notificationTime})
+        = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
+    sql`FLOOR(EXTRACT(MINUTE FROM ${users.notificationTime}) / 5)
+        = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
+  );
 
   // Cache quests per user so multiple device subscriptions don't re-query
   const questCache = new Map<string, string | null>();
 
-  for (const row of eligibleSubscriptions) {
-    try {
-      const subscription = row.subscription as PushSubscriptionData;
+  /** Resolve quest title once per user, using cache. */
+  async function resolveQuestTitle(userId: string, timezone: string | null): Promise<string | null> {
+    if (questCache.has(userId)) return questCache.get(userId)!;
+    const quest =
+      (await getCurrentDailyQuest(userId)) ??
+      (await selectDailyQuest(userId, timezone));
+    const title = quest?.title ?? null;
+    questCache.set(userId, title);
+    return title;
+  }
 
-      // Resolve quest title once per user
-      let questTitle: string | null;
-      if (questCache.has(row.userId)) {
-        questTitle = questCache.get(row.userId)!;
-      } else {
-        const quest =
-          (await getCurrentDailyQuest(row.userId)) ??
-          (await selectDailyQuest(row.userId, row.timezone));
-        questTitle = quest?.title ?? null;
-        questCache.set(row.userId, questTitle);
+  /** Build the notification payload for a user's daily quest. */
+  function buildPayload(questTitle: string | null): NotificationPayload & ChannelPayload {
+    return questTitle
+      ? {
+          title: "Deine Daily Quest wartet",
+          body: `Heutige Mission: ${questTitle}`,
+          icon: "/icon-192.png",
+          url: "/dashboard",
+          tag: "daily-quest",
+        }
+      : {
+          title: "Your daily quest awaits",
+          body: "Open Momo to see today's mission. One small step forward.",
+          icon: "/icon-192.png",
+          url: "/dashboard",
+          tag: "daily-quest",
+        };
+  }
+
+  // ── Web Push block (only if VAPID is configured) ──
+  if (isVapidConfigured()) {
+    const eligibleSubscriptions = await db
+      .select({
+        userId: pushSubscriptions.userId,
+        subscription: pushSubscriptions.subscription,
+        timezone: users.timezone,
+      })
+      .from(pushSubscriptions)
+      .innerJoin(users, eq(pushSubscriptions.userId, users.id))
+      .where(and(eq(users.notificationEnabled, true), timeBucketCondition));
+
+    for (const row of eligibleSubscriptions) {
+      try {
+        const questTitle = await resolveQuestTitle(row.userId, row.timezone);
+        await sendPushNotification(
+          row.userId,
+          row.subscription as PushSubscriptionData,
+          buildPayload(questTitle)
+        );
+        sent++;
+      } catch (err) {
+        console.error("[push] Failed to send daily quest notification to", row.userId, err);
+        failed++;
       }
+    }
+  }
 
-      const payload = questTitle
-        ? {
-            title: "Deine Daily Quest wartet",
-            body: `Heutige Mission: ${questTitle}`,
-            icon: "/icon-192.png",
-            url: "/dashboard",
-            tag: "daily-quest",
-          }
-        : {
-            title: "Your daily quest awaits",
-            body: "Open Momo to see today's mission. One small step forward.",
-            icon: "/icon-192.png",
-            url: "/dashboard",
-            tag: "daily-quest",
-          };
+  // ── Notification channels block (ntfy, pushover, telegram, etc.) ──
+  const channelUsers = await db
+    .selectDistinct({
+      userId: notificationChannels.userId,
+      timezone: users.timezone,
+    })
+    .from(notificationChannels)
+    .innerJoin(users, eq(notificationChannels.userId, users.id))
+    .where(and(eq(notificationChannels.enabled, true), timeBucketCondition));
 
-      await sendPushNotification(row.userId, subscription, payload);
-
-      sent++;
+  for (const row of channelUsers) {
+    try {
+      const questTitle = await resolveQuestTitle(row.userId, row.timezone);
+      const result = await sendToAllChannels(row.userId, buildPayload(questTitle));
+      sent += result.sent;
+      failed += result.failed;
     } catch (err) {
-      console.error("[push] Failed to send daily quest notification to", row.userId, err);
+      console.error("[channels] Failed to send daily quest notification to", row.userId, err);
       failed++;
     }
   }
@@ -273,61 +295,101 @@ export async function sendStreakReminders(): Promise<{
   sent: number;
   failed: number;
 }> {
-  if (!isVapidConfigured()) {
-    console.warn("[push] VAPID keys not configured — skipping streak reminders");
-    return { sent: 0, failed: 0 };
-  }
+  let sent = 0;
+  let failed = 0;
 
   // Start of today in UTC
   const todayStart = new Date();
   todayStart.setUTCHours(0, 0, 0, 0);
 
-  // Fetch all subscriptions for users with active streaks and notifications enabled
-  const eligibleSubscriptions = await db
-    .select({
-      userId: pushSubscriptions.userId,
-      subscription: pushSubscriptions.subscription,
+  // Cache: has user completed a task today? (avoid re-querying for multi-device + channels)
+  const completionCache = new Map<string, boolean>();
+
+  /** Check if a user completed a task today, with caching. */
+  async function hasCompletedToday(userId: string): Promise<boolean> {
+    if (completionCache.has(userId)) return completionCache.get(userId)!;
+    const rows = await db
+      .select({ id: taskCompletions.id })
+      .from(taskCompletions)
+      .where(
+        and(
+          eq(taskCompletions.userId, userId),
+          gte(taskCompletions.completedAt, todayStart)
+        )
+      )
+      .limit(1);
+    const done = rows.length > 0;
+    completionCache.set(userId, done);
+    return done;
+  }
+
+  /** Build streak reminder payload. */
+  function buildPayload(streakCurrent: number): NotificationPayload & ChannelPayload {
+    return {
+      title: `Keep your ${streakCurrent}-day streak alive!`,
+      body: "You haven't completed a task today yet. Don't let your streak slip.",
+      icon: "/icon-192.png",
+      url: "/dashboard",
+      tag: "streak-reminder",
+    };
+  }
+
+  // ── Web Push block ──
+  if (isVapidConfigured()) {
+    const eligibleSubscriptions = await db
+      .select({
+        userId: pushSubscriptions.userId,
+        subscription: pushSubscriptions.subscription,
+        streakCurrent: users.streakCurrent,
+      })
+      .from(pushSubscriptions)
+      .innerJoin(users, eq(pushSubscriptions.userId, users.id))
+      .where(
+        and(
+          eq(users.notificationEnabled, true),
+          gt(users.streakCurrent, 0)
+        )
+      );
+
+    for (const row of eligibleSubscriptions) {
+      try {
+        if (await hasCompletedToday(row.userId)) continue;
+        await sendPushNotification(
+          row.userId,
+          row.subscription as PushSubscriptionData,
+          buildPayload(row.streakCurrent)
+        );
+        sent++;
+      } catch (err) {
+        console.error("[push] Failed to send streak reminder to", row.userId, err);
+        failed++;
+      }
+    }
+  }
+
+  // ── Notification channels block ──
+  const channelUsers = await db
+    .selectDistinct({
+      userId: notificationChannels.userId,
       streakCurrent: users.streakCurrent,
     })
-    .from(pushSubscriptions)
-    .innerJoin(users, eq(pushSubscriptions.userId, users.id))
+    .from(notificationChannels)
+    .innerJoin(users, eq(notificationChannels.userId, users.id))
     .where(
       and(
-        eq(users.notificationEnabled, true),
+        eq(notificationChannels.enabled, true),
         gt(users.streakCurrent, 0)
       )
     );
 
-  let sent = 0;
-  let failed = 0;
-
-  for (const row of eligibleSubscriptions) {
+  for (const row of channelUsers) {
     try {
-      // Check whether the user has already completed a task today
-      const completionsToday = await db
-        .select({ id: taskCompletions.id })
-        .from(taskCompletions)
-        .where(
-          and(
-            eq(taskCompletions.userId, row.userId),
-            gte(taskCompletions.completedAt, todayStart)
-          )
-        )
-        .limit(1);
-
-      if (completionsToday.length > 0) continue;
-
-      await sendPushNotification(row.userId, row.subscription as PushSubscriptionData, {
-        title: `Keep your ${row.streakCurrent}-day streak alive!`,
-        body: "You haven't completed a task today yet. Don't let your streak slip.",
-        icon: "/icon-192.png",
-        url: "/dashboard",
-        tag: "streak-reminder",
-      });
-
-      sent++;
+      if (await hasCompletedToday(row.userId)) continue;
+      const result = await sendToAllChannels(row.userId, buildPayload(row.streakCurrent));
+      sent += result.sent;
+      failed += result.failed;
     } catch (err) {
-      console.error("[push] Failed to send streak reminder to", row.userId, err);
+      console.error("[channels] Failed to send streak reminder to", row.userId, err);
       failed++;
     }
   }
@@ -354,65 +416,89 @@ export async function sendWeeklyReviewNotifications(): Promise<{
   sent: number;
   failed: number;
 }> {
-  if (!isVapidConfigured()) {
-    console.warn("[push] VAPID keys not configured — skipping weekly review notifications");
-    return { sent: 0, failed: 0 };
-  }
-
-  // Match subscriptions whose user's local time is Sunday 18:00–18:04
-  // DOW in PostgreSQL: 0 = Sunday
-  const eligibleSubscriptions = await db
-    .select({
-      userId: pushSubscriptions.userId,
-      subscription: pushSubscriptions.subscription,
-      timezone: users.timezone,
-    })
-    .from(pushSubscriptions)
-    .innerJoin(users, eq(pushSubscriptions.userId, users.id))
-    .where(
-      and(
-        eq(users.notificationEnabled, true),
-        sql`EXTRACT(DOW FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) = 0`,
-        sql`EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) = 18`,
-        sql`FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5) = 0`
-      )
-    );
-
   let sent = 0;
   let failed = 0;
 
-  // Cache review data per user for multi-device fan-out
+  // Sunday 18:00–18:04 in user's local timezone
+  const sundayCondition = and(
+    sql`EXTRACT(DOW FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) = 0`,
+    sql`EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) = 18`,
+    sql`FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5) = 0`
+  );
+
+  // Cache review data per user for multi-device + channel fan-out
   const reviewCache = new Map<string, { completed: number; postponed: number; streak: number }>();
 
-  for (const row of eligibleSubscriptions) {
-    try {
-      const subscription = row.subscription as PushSubscriptionData;
+  /** Resolve weekly review once per user, using cache. */
+  async function resolveReview(userId: string, timezone: string | null) {
+    if (reviewCache.has(userId)) return reviewCache.get(userId)!;
+    const review = await getWeeklyReview(userId, timezone);
+    const summary = {
+      completed: review.completionsThisWeek,
+      postponed: review.postponementsThisWeek,
+      streak: review.streakCurrent,
+    };
+    reviewCache.set(userId, summary);
+    return summary;
+  }
 
-      // Resolve weekly review once per user
-      let summary: { completed: number; postponed: number; streak: number };
-      if (reviewCache.has(row.userId)) {
-        summary = reviewCache.get(row.userId)!;
-      } else {
-        const review = await getWeeklyReview(row.userId, row.timezone);
-        summary = {
-          completed: review.completionsThisWeek,
-          postponed: review.postponementsThisWeek,
-          streak: review.streakCurrent,
-        };
-        reviewCache.set(row.userId, summary);
+  /** Build weekly review payload. */
+  function buildPayload(summary: { completed: number; postponed: number; streak: number }): NotificationPayload & ChannelPayload {
+    return {
+      title: "Dein Wochenrückblick",
+      body: `Diese Woche: ${summary.completed} erledigt, ${summary.postponed} verschoben, Streak ${summary.streak}`,
+      icon: "/icon-192.png",
+      url: "/review",
+      tag: "weekly-review",
+    };
+  }
+
+  // ── Web Push block ──
+  if (isVapidConfigured()) {
+    const eligibleSubscriptions = await db
+      .select({
+        userId: pushSubscriptions.userId,
+        subscription: pushSubscriptions.subscription,
+        timezone: users.timezone,
+      })
+      .from(pushSubscriptions)
+      .innerJoin(users, eq(pushSubscriptions.userId, users.id))
+      .where(and(eq(users.notificationEnabled, true), sundayCondition));
+
+    for (const row of eligibleSubscriptions) {
+      try {
+        const summary = await resolveReview(row.userId, row.timezone);
+        await sendPushNotification(
+          row.userId,
+          row.subscription as PushSubscriptionData,
+          buildPayload(summary)
+        );
+        sent++;
+      } catch (err) {
+        console.error("[push] Failed to send weekly review notification to", row.userId, err);
+        failed++;
       }
+    }
+  }
 
-      await sendPushNotification(row.userId, subscription, {
-        title: "Dein Wochenrückblick",
-        body: `Diese Woche: ${summary.completed} erledigt, ${summary.postponed} verschoben, Streak ${summary.streak}`,
-        icon: "/icon-192.png",
-        url: "/review",
-        tag: "weekly-review",
-      });
+  // ── Notification channels block ──
+  const channelUsers = await db
+    .selectDistinct({
+      userId: notificationChannels.userId,
+      timezone: users.timezone,
+    })
+    .from(notificationChannels)
+    .innerJoin(users, eq(notificationChannels.userId, users.id))
+    .where(and(eq(notificationChannels.enabled, true), sundayCondition));
 
-      sent++;
+  for (const row of channelUsers) {
+    try {
+      const summary = await resolveReview(row.userId, row.timezone);
+      const result = await sendToAllChannels(row.userId, buildPayload(summary));
+      sent += result.sent;
+      failed += result.failed;
     } catch (err) {
-      console.error("[push] Failed to send weekly review notification to", row.userId, err);
+      console.error("[channels] Failed to send weekly review notification to", row.userId, err);
       failed++;
     }
   }

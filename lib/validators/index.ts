@@ -347,3 +347,45 @@ export const UpdateProfileInputSchema = z.object({
 });
 
 export type UpdateProfileInput = z.infer<typeof UpdateProfileInputSchema>;
+
+// ─── Notification Channel Validators ─────────────────────────────────────────
+
+/**
+ * Config schema for the ntfy.sh notification channel.
+ * Topic: alphanumeric with hyphens/underscores, required.
+ * Server: optional URL, defaults to https://ntfy.sh when omitted.
+ */
+export const NtfyConfigSchema = z.object({
+  topic: z
+    .string()
+    .min(1, "Topic is required")
+    .max(200, "Topic must be 200 characters or less")
+    .regex(
+      /^[a-zA-Z0-9_\-]+$/,
+      "Topic may only contain letters, numbers, hyphens, and underscores"
+    ),
+  server: z
+    .preprocess(
+      (val) => (val === "" ? undefined : val),
+      z.string().url("Must be a valid URL").max(500).optional()
+    ),
+});
+
+export type NtfyConfig = z.infer<typeof NtfyConfigSchema>;
+
+/**
+ * Discriminated union for upserting a notification channel.
+ * Each channel type has its own config schema. New types are added here
+ * as they are implemented (pushover, telegram, email, webhook).
+ */
+export const UpsertNotificationChannelSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("ntfy"),
+    config: NtfyConfigSchema,
+    enabled: z.boolean().optional().default(true),
+  }),
+]);
+
+export type UpsertNotificationChannelInput = z.infer<
+  typeof UpsertNotificationChannelSchema
+>;

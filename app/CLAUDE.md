@@ -56,6 +56,9 @@ api/
   user/delete/route.ts               → DELETE (full account deletion)
   locale/route.ts                    → POST (set UI locale cookie)
   settings/quest/route.ts            → PATCH (save quest settings: postpone limit, emotional closure toggle)
+  settings/notification-channels/route.ts     → GET (list channels), PUT (upsert channel)
+  settings/notification-channels/[type]/route.ts → DELETE (remove channel)
+  settings/notification-channels/[type]/test/route.ts → POST (send test notification)
   openapi.json/route.ts              → GET (OpenAPI 3.1.0 spec, public)
 globals.css     → Design system CSS variables, Tailwind v4, Google Fonts
 layout.tsx      → Root layout: ThemeProvider (next-themes), font variables

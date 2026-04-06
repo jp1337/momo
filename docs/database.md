@@ -23,6 +23,7 @@ The full schema is defined in `lib/db/schema.ts`.
 | `linking_requests` | Short-lived tokens for OAuth account linking |
 | `cron_runs` | Log of push-notification cron job executions (30-day retention) |
 | `quest_postponements` | Log of daily quest postponement events (for weekly review analytics) |
+| `notification_channels` | User-configured notification channels (ntfy, pushover, telegram, etc.) |
 
 ### Auth.js Adapter Tables
 
