@@ -271,6 +271,9 @@ export const tasks = pgTable("tasks", {
   /** Whether this task is currently selected as the daily quest */
   isDailyQuest: boolean("is_daily_quest").notNull().default(false),
 
+  /** Date on which this task was last assigned as the daily quest (YYYY-MM-DD in user's timezone) */
+  dailyQuestDate: date("daily_quest_date"),
+
   /** How many times this task has been postponed as a daily quest (across all days) */
   postponeCount: integer("postpone_count").notNull().default(0),
 

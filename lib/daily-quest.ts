@@ -269,6 +269,24 @@ export async function selectDailyQuest(
       )
     );
 
+  // Clear is_daily_quest on quests from PREVIOUS days that were never completed
+  // (dailyQuestDate < today, or null for pre-migration rows). Without this,
+  // an uncompleted quest would persist indefinitely as the active quest.
+  await db
+    .update(tasks)
+    .set({ isDailyQuest: false, dailyQuestDate: null })
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        eq(tasks.isDailyQuest, true),
+        isNull(tasks.completedAt),
+        or(
+          isNull(tasks.dailyQuestDate),
+          lt(tasks.dailyQuestDate, today)
+        )
+      )
+    );
+
   return db.transaction(async (tx) => {
     // Re-check inside the transaction to close the TOCTOU window
     const existingTask = await getCurrentDailyQuestTx(userId, tx);
@@ -284,7 +302,7 @@ export async function selectDailyQuest(
     // If another concurrent request already set the flag this UPDATE returns 0 rows.
     const [updated] = await tx
       .update(tasks)
-      .set({ isDailyQuest: true })
+      .set({ isDailyQuest: true, dailyQuestDate: today })
       .where(
         and(
           eq(tasks.id, candidate.id),
@@ -315,7 +333,7 @@ export async function forceSelectDailyQuest(
   // Clear any existing daily quest flag (completed or not)
   await db
     .update(tasks)
-    .set({ isDailyQuest: false })
+    .set({ isDailyQuest: false, dailyQuestDate: null })
     .where(
       and(
         eq(tasks.userId, userId),
@@ -344,7 +362,7 @@ export async function forceSelectDailyQuest(
     .limit(1);
 
   if (overdueRows[0]) {
-    return await assignDailyQuest(overdueRows[0], userId);
+    return await assignDailyQuest(overdueRows[0], userId, today);
   }
 
   // Priority 2: High-priority topic subtask
@@ -363,7 +381,7 @@ export async function forceSelectDailyQuest(
     .limit(1);
 
   if (highPriorityRows[0]) {
-    return await assignDailyQuest(highPriorityRows[0], userId);
+    return await assignDailyQuest(highPriorityRows[0], userId, today);
   }
 
   // Priority 3: Due recurring task
@@ -381,7 +399,7 @@ export async function forceSelectDailyQuest(
     .limit(1);
 
   if (recurringRows[0]) {
-    return await assignDailyQuest(recurringRows[0], userId);
+    return await assignDailyQuest(recurringRows[0], userId, today);
   }
 
   // Priority 4: Random open task
@@ -401,7 +419,7 @@ export async function forceSelectDailyQuest(
 
   if (poolRows.length > 0) {
     const randomIndex = Math.floor(Math.random() * poolRows.length);
-    return await assignDailyQuest(poolRows[randomIndex], userId);
+    return await assignDailyQuest(poolRows[randomIndex], userId, today);
   }
 
   return null;
@@ -509,19 +527,22 @@ export async function postponeDailyQuest(
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
 /**
- * Sets is_daily_quest = true on the given task and returns it enriched with topic data.
+ * Sets is_daily_quest = true and daily_quest_date = today on the given task,
+ * then returns it enriched with topic data.
  *
  * @param task - The raw task row to mark as daily quest
  * @param userId - The owning user's UUID (for safety check)
+ * @param today - Today's date string (YYYY-MM-DD) in the user's timezone
  * @returns The updated task enriched with topic data
  */
 async function assignDailyQuest(
   task: Task,
-  userId: string
+  userId: string,
+  today: string
 ): Promise<TaskWithTopic> {
   await db
     .update(tasks)
-    .set({ isDailyQuest: true })
+    .set({ isDailyQuest: true, dailyQuestDate: today })
     .where(
       and(
         eq(tasks.id, task.id),
