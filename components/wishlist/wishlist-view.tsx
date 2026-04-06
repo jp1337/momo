@@ -17,6 +17,7 @@ import { useTranslations } from "next-intl";
 import { BudgetBar } from "@/components/wishlist/budget-bar";
 import { WishlistCard } from "@/components/wishlist/wishlist-card";
 import { WishlistForm } from "@/components/wishlist/wishlist-form";
+import { triggerSmallConfetti } from "@/components/animations/confetti";
 
 /** Serialised wishlist item shape passed from the server page */
 export interface SerializedWishlistItem {
@@ -86,6 +87,7 @@ export function WishlistView({
     try {
       await fetch(`/api/wishlist/${id}/buy`, { method: "POST" });
       await refresh();
+      triggerSmallConfetti();
     } catch {
       // no-op
     }
