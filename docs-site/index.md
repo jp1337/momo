@@ -69,6 +69,11 @@ description: Task management for people who struggle with procrastination. Open 
     <h3>Self-Hostable</h3>
     <p>Your data, your server, your rules. Docker Compose in minutes — migrations run automatically.</p>
   </div>
+  <div class="feature-card">
+    <div class="icon">🔊</div>
+    <h3>Alexa Skill</h3>
+    <p>Add tasks and check your quest by voice. "Alexa, add dentist to Momo." Works with any Echo device.</p>
+  </div>
 </div>
 
 ## Quick Start
