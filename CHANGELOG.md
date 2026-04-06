@@ -36,6 +36,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Profilbild-Ladeprobleme (CSP)** — Profilbilder von OAuth-Providern (GitHub, Discord, Google) wurden vom Service Worker blockiert (`connect-src 'self'`). Fix: Remote-URLs werden jetzt über `next/image` proxied (same-origin), Data-URLs (hochgeladene Bilder) verwenden `<img>`.
+- **Cron-Fehlerdiagnose** — Der Cron-Container loggt jetzt den HTTP-Statuscode und die Response bei Fehlern (z.B. `FAILED (HTTP 401)`). Vorher wurde der Fehlergrund von `curl -sf` verschluckt.
 - **Cron-Status auf Admin-Seite**: Status-Banner (grün/rot) und History-Tabelle mit den letzten 20 Push-Cron-Läufen (Zeitpunkt, Gesendet, Fehler, Dauer). Rot wenn letzter Lauf älter als 15 Minuten.
 - **Cron-Status im Health-Endpoint**: `GET /api/health` enthält jetzt ein nicht-blockierendes `cron`-Objekt mit `lastRunAt` und `minutesSinceLastRun`.
 - **PATCH /api/push/subscribe**: Neuer Endpoint zum Aktualisieren der Benachrichtigungszeit ohne erneutes Subscriben.
