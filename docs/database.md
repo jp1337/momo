@@ -87,6 +87,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `estimated_minutes` | integer | Optional time estimate: 5, 15, 30, or 60 minutes |
 | `snoozed_until` | date | Date (YYYY-MM-DD) until which this task is hidden from all active views. Null = visible. When snoozed_until <= today, the task reappears automatically |
 | `energy_level` | enum | Energy required: `HIGH`, `MEDIUM`, `LOW`. Null = matches any energy level. Used by the daily quest algorithm to prefer tasks matching the user's daily check-in |
+| `sort_order` | integer | Position within a topic (0-based). Lower values appear first. Auto-assigned on creation; updated by the reorder endpoint |
 
 ### `topics`
 
