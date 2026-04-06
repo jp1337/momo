@@ -30,6 +30,8 @@ nav:
     url: /momo/
   - title: Getting Started
     url: /momo/getting-started
+  - title: Features
+    url: /momo/features
   - title: Deployment
     url: /momo/deployment
   - title: Environment Variables

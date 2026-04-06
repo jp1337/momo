@@ -193,6 +193,7 @@ docker compose down -v
 
 ## Next Steps
 
+- [Explore Features →](/momo/features) — a complete guide to everything Momo can do
 - [Full Deployment Guide](/momo/deployment) — production setup with TLS and reverse proxy
 - [Environment Variables](/momo/environment-variables) — all configuration options
 - [OAuth Setup](/momo/oauth-setup) — register OAuth apps for your domain
