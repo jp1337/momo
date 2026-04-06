@@ -57,6 +57,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 ### Akut / Geplant
 
 - ✅ **Push-Benachrichtigungen** — Daily Quest Reminder mit Task-Titel in Notification; täglicher Quest-Wechsel (daily_quest_date)
+- **SEO für öffentliche Momo-Instanz** — `<meta>` Tags (OG, Twitter Cards), `sitemap.xml`, `robots.txt`, strukturierte Daten (JSON-LD); wichtig für Sichtbarkeit der gehosteten Demo auf `momotask.app`
 
 ### Stabilität
 
