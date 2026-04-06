@@ -74,7 +74,7 @@ services:
       retries: 3
       start_period: 30s
 
-  # ─── Cron — stündlicher Push-Notifier ──────────────────────────────────────
+  # ─── Cron — unified dispatcher ──────────────────────────────────────────────
   cron:
     image: alpine:3
     container_name: momo-cron
@@ -84,9 +84,9 @@ services:
         condition: service_healthy
     environment:
       CRON_SECRET: ${CRON_SECRET}
-    # Läuft alle 5 Minuten zur vollen 5-Minuten-Marke.
-    # Der App-seitige Filter matcht EXTRACT(HOUR) + FLOOR(EXTRACT(MINUTE)/5).
-    # Nutzer können beliebige HH:MM[0,5]-Zeiten einstellen (Granularität: 5 Min).
+    # Calls the unified cron endpoint every 5 minutes.
+    # All job scheduling logic (idempotency, day-of-week checks) lives server-side.
+    # Adding new cron jobs only requires a code change in lib/cron.ts — no Docker edits.
     entrypoint:
       - sh
       - -c
@@ -99,7 +99,7 @@ services:
           curl -sf \
             -X POST \
             -H "Authorization: Bearer $${CRON_SECRET}" \
-            http://app:3000/api/cron/daily-quest \
+            http://app:3000/api/cron \
           || echo "[cron] FAILED at $$(date -u) (non-fatal)"
         done
 

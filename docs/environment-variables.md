@@ -46,7 +46,7 @@ npx web-push generate-vapid-keys
 
 | Variable | Type | Default | Description |
 |---|---|---|---|
-| `CRON_SECRET` | string | — | Bearer token required by `/api/cron/*` routes. Include as `Authorization: Bearer <token>`. Generate with `openssl rand -hex 32`. Optional — if unset, cron routes are unprotected. |
+| `CRON_SECRET` | string | — | Bearer token required by `POST /api/cron` (unified cron dispatcher). Include as `Authorization: Bearer <token>`. Generate with `openssl rand -hex 32`. Optional — if unset, the cron route is unprotected. |
 
 ## Application
 

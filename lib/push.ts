@@ -21,6 +21,7 @@ import { users, pushSubscriptions, taskCompletions } from "@/lib/db/schema";
 import { eq, and, gt, gte, sql } from "drizzle-orm";
 import { serverEnv } from "@/lib/env";
 import { getCurrentDailyQuest, selectDailyQuest } from "@/lib/daily-quest";
+import { getWeeklyReview } from "@/lib/weekly-review";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -171,7 +172,7 @@ export async function sendPushNotification(
  *  - notification_enabled = true
  *  - notification_time matching the current local time (in the user's timezone)
  *
- * The cron runs every 5 minutes. Called by POST /api/cron/daily-quest.
+ * The cron runs every 5 minutes. Called by the unified dispatcher in lib/cron.ts.
  *
  * @returns Object with sent and failed counts
  */
@@ -264,7 +265,7 @@ export async function sendDailyQuestNotifications(): Promise<{
  *  - streak_current > 0
  *  - No task completion recorded today
  *
- * Called by the POST /api/cron/streak-reminder route.
+ * Called by the unified dispatcher in lib/cron.ts.
  *
  * @returns Object with sent and failed counts
  */
@@ -327,6 +328,91 @@ export async function sendStreakReminders(): Promise<{
       sent++;
     } catch (err) {
       console.error("[push] Failed to send streak reminder to", row.userId, err);
+      failed++;
+    }
+  }
+
+  return { sent, failed };
+}
+
+/**
+ * Sends weekly review notifications to all eligible device subscriptions
+ * whose local time is Sunday between 18:00–18:04 (the 5-minute bucket).
+ *
+ * Eligible subscriptions belong to users with:
+ *  - notification_enabled = true
+ *  - Current local time is Sunday 18:00–18:04
+ *
+ * The cron runs every 5 minutes. On non-Sunday/non-18:00 calls, the query
+ * returns 0 rows, making this effectively a no-op.
+ *
+ * Called by the unified dispatcher in lib/cron.ts.
+ *
+ * @returns Object with sent and failed counts
+ */
+export async function sendWeeklyReviewNotifications(): Promise<{
+  sent: number;
+  failed: number;
+}> {
+  if (!isVapidConfigured()) {
+    console.warn("[push] VAPID keys not configured — skipping weekly review notifications");
+    return { sent: 0, failed: 0 };
+  }
+
+  // Match subscriptions whose user's local time is Sunday 18:00–18:04
+  // DOW in PostgreSQL: 0 = Sunday
+  const eligibleSubscriptions = await db
+    .select({
+      userId: pushSubscriptions.userId,
+      subscription: pushSubscriptions.subscription,
+      timezone: users.timezone,
+    })
+    .from(pushSubscriptions)
+    .innerJoin(users, eq(pushSubscriptions.userId, users.id))
+    .where(
+      and(
+        eq(users.notificationEnabled, true),
+        sql`EXTRACT(DOW FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) = 0`,
+        sql`EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) = 18`,
+        sql`FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5) = 0`
+      )
+    );
+
+  let sent = 0;
+  let failed = 0;
+
+  // Cache review data per user for multi-device fan-out
+  const reviewCache = new Map<string, { completed: number; postponed: number; streak: number }>();
+
+  for (const row of eligibleSubscriptions) {
+    try {
+      const subscription = row.subscription as PushSubscriptionData;
+
+      // Resolve weekly review once per user
+      let summary: { completed: number; postponed: number; streak: number };
+      if (reviewCache.has(row.userId)) {
+        summary = reviewCache.get(row.userId)!;
+      } else {
+        const review = await getWeeklyReview(row.userId, row.timezone);
+        summary = {
+          completed: review.completionsThisWeek,
+          postponed: review.postponementsThisWeek,
+          streak: review.streakCurrent,
+        };
+        reviewCache.set(row.userId, summary);
+      }
+
+      await sendPushNotification(row.userId, subscription, {
+        title: "Dein Wochenrückblick",
+        body: `Diese Woche: ${summary.completed} erledigt, ${summary.postponed} verschoben, Streak ${summary.streak}`,
+        icon: "/icon-192.png",
+        url: "/review",
+        tag: "weekly-review",
+      });
+
+      sent++;
+    } catch (err) {
+      console.error("[push] Failed to send weekly review notification to", row.userId, err);
       failed++;
     }
   }
