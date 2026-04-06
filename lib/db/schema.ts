@@ -13,6 +13,7 @@
  *  - api_keys           Personal Access Tokens for programmatic API access
  *  - linking_requests   Short-lived tokens for OAuth account linking flow
  *  - quest_postponements  Log of daily quest postponement events (for weekly review)
+ *  - notification_channels  User-configured notification channels (ntfy, pushover, telegram, email, webhook)
  */
 
 import {
@@ -550,6 +551,47 @@ export const questPostponements = pgTable("quest_postponements", {
   postponedAt: timestamp("postponed_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * User-configured notification channels (ntfy.sh, Pushover, Telegram, etc.).
+ *
+ * Each user may have at most one channel per type. The channel-specific
+ * configuration is stored as JSONB — adding new channel types requires no
+ * schema migration.
+ *
+ * Config shapes:
+ *  - ntfy:     { topic: string, server?: string }
+ *  - pushover: { userKey: string, appToken?: string }  (future)
+ *  - telegram: { chatId: string, botToken?: string }   (future)
+ *  - email:    { address: string }                     (future)
+ *  - webhook:  { url: string, secret?: string }        (future)
+ */
+export const notificationChannels = pgTable(
+  "notification_channels",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    /** The user who configured this channel */
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+
+    /** Channel type identifier (e.g. "ntfy", "pushover", "telegram") */
+    type: text("type").notNull(),
+
+    /** Channel-specific configuration as JSONB */
+    config: jsonb("config").notNull(),
+
+    /** Whether this channel is currently active */
+    enabled: boolean("enabled").notNull().default(true),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique("notification_channels_user_id_type_unique").on(table.userId, table.type),
+  ]
+);
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -564,6 +606,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   linkingRequests: many(linkingRequests),
   pushSubscriptions: many(pushSubscriptions),
   questPostponements: many(questPostponements),
+  notificationChannels: many(notificationChannels),
 }));
 
 export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
@@ -624,4 +667,8 @@ export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one })
 export const questPostponementsRelations = relations(questPostponements, ({ one }) => ({
   user: one(users, { fields: [questPostponements.userId], references: [users.id] }),
   task: one(tasks, { fields: [questPostponements.taskId], references: [tasks.id] }),
+}));
+
+export const notificationChannelsRelations = relations(notificationChannels, ({ one }) => ({
+  user: one(users, { fields: [notificationChannels.userId], references: [users.id] }),
 }));

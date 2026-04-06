@@ -14,9 +14,10 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { users, accounts, pushSubscriptions } from "@/lib/db/schema";
+import { users, accounts, pushSubscriptions, notificationChannels } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NotificationSettings } from "@/components/settings/notification-settings";
+import { NotificationChannels } from "@/components/settings/notification-channels";
 import { ProfileSettings } from "@/components/settings/profile-settings";
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
 import { DeleteAccount } from "@/components/settings/delete-account";
@@ -45,8 +46,8 @@ export default async function SettingsPage() {
   const tClosure = await getTranslations("closure");
   const locale = await getLocale();
 
-  // Fetch user preferences, linked accounts, and active push subscriptions from DB
-  const [userRows, linkedAccountRows, activeSubs] = await Promise.all([
+  // Fetch user preferences, linked accounts, push subscriptions, and notification channels from DB
+  const [userRows, linkedAccountRows, activeSubs, channelRows] = await Promise.all([
     db
       .select({
         name: users.name,
@@ -70,6 +71,14 @@ export default async function SettingsPage() {
       .from(pushSubscriptions)
       .where(eq(pushSubscriptions.userId, session.user.id))
       .limit(1),
+    db
+      .select({
+        type: notificationChannels.type,
+        config: notificationChannels.config,
+        enabled: notificationChannels.enabled,
+      })
+      .from(notificationChannels)
+      .where(eq(notificationChannels.userId, session.user.id)),
   ]);
 
   const user = userRows[0];
@@ -178,6 +187,44 @@ export default async function SettingsPage() {
           initialEnabled={user.notificationEnabled && activeSubs.length > 0}
           initialTime={user.notificationTime ?? "08:00"}
           vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
+        />
+      </section>
+
+      {/* Notification Channels section */}
+      <section
+        className="rounded-xl p-6 flex flex-col gap-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            className="text-base font-semibold"
+            style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("section_channels")}
+          </h2>
+          <p
+            className="text-sm"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui)",
+            }}
+          >
+            {t("channels_hint")}
+          </p>
+        </div>
+
+        <NotificationChannels
+          initialChannels={channelRows.map((ch) => ({
+            type: ch.type,
+            config: ch.config as Record<string, unknown>,
+            enabled: ch.enabled,
+          }))}
         />
       </section>
 

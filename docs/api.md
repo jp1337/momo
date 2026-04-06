@@ -573,6 +573,68 @@ Response: `{ "success": true }`
 
 ---
 
+## Notification Channel Routes
+
+| Method | Path | Auth | Rate Limit | Description |
+|---|---|---|---|---|
+| `GET` | `/api/settings/notification-channels` | Yes | — | List all configured channels |
+| `PUT` | `/api/settings/notification-channels` | Yes | 10/min | Create or update a channel (upsert by type) |
+| `DELETE` | `/api/settings/notification-channels/:type` | Yes | — | Remove a channel |
+| `POST` | `/api/settings/notification-channels/:type/test` | Yes | 3/min | Send test notification via channel |
+
+### GET /api/settings/notification-channels
+
+Response:
+```json
+{
+  "channels": [
+    {
+      "type": "ntfy",
+      "config": { "topic": "my-momo", "server": "https://ntfy.sh" },
+      "enabled": true,
+      "createdAt": "2026-04-06T10:00:00Z",
+      "updatedAt": "2026-04-06T10:00:00Z"
+    }
+  ]
+}
+```
+
+### PUT /api/settings/notification-channels
+
+Upserts a channel by type. Each user can have at most one channel per type.
+
+Request body:
+```json
+{
+  "type": "ntfy",
+  "config": { "topic": "my-momo-channel", "server": "https://ntfy.sh" },
+  "enabled": true
+}
+```
+
+Supported types: `ntfy` (more coming: `pushover`, `telegram`, `email`, `webhook`).
+
+**ntfy config:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `topic` | string | Yes | ntfy topic name (letters, numbers, hyphens, underscores) |
+| `server` | string (URL) | No | ntfy server URL (defaults to `https://ntfy.sh`) |
+
+Response: `{ "success": true }`
+
+### DELETE /api/settings/notification-channels/:type
+
+Removes the channel. Response: `{ "success": true }`
+
+### POST /api/settings/notification-channels/:type/test
+
+Sends a test notification to verify the channel works. Rate limited to 3/min.
+
+Response: `{ "success": true }` or `400` if channel not configured.
+
+---
+
 ## Push Notification Routes
 
 | Method | Path | Auth | Description |

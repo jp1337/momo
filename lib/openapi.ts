@@ -68,6 +68,7 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
     { name: "Settings", description: "User settings (budget)" },
     { name: "User", description: "Account management and data export" },
     { name: "API Keys", description: "Personal Access Token management" },
+    { name: "Notification Channels", description: "Multi-channel notification management (ntfy.sh, etc.)" },
   ],
   components: {
     securitySchemes: {
@@ -2222,6 +2223,178 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           "404": { $ref: "#/components/responses/NotFound" },
           "429": { $ref: "#/components/responses/TooManyRequests" },
           "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    // ─── Notification Channels ─────────────────────────────────────────────────
+
+    "/api/settings/notification-channels": {
+      get: {
+        summary: "List notification channels",
+        description: "Returns all configured notification channels for the authenticated user.",
+        tags: ["Notification Channels"],
+        "x-readonly-safe": true,
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "Channel list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["channels"],
+                  properties: {
+                    channels: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        required: ["type", "config", "enabled"],
+                        properties: {
+                          type: { type: "string", example: "ntfy" },
+                          config: { type: "object", example: { topic: "my-momo", server: "https://ntfy.sh" } },
+                          enabled: { type: "boolean", example: true },
+                          createdAt: { type: "string", format: "date-time" },
+                          updatedAt: { type: "string", format: "date-time" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+        },
+      },
+      put: {
+        summary: "Create or update a notification channel",
+        description: "Upserts a notification channel by type. Each user can have one channel per type.",
+        tags: ["Notification Channels"],
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["type", "config"],
+                properties: {
+                  type: { type: "string", enum: ["ntfy"], description: "Channel type" },
+                  config: {
+                    type: "object",
+                    description: "Channel-specific config. For ntfy: { topic: string, server?: string }",
+                    properties: {
+                      topic: { type: "string", example: "my-momo-channel" },
+                      server: { type: "string", example: "https://ntfy.sh" },
+                    },
+                    required: ["topic"],
+                  },
+                  enabled: { type: "boolean", default: true },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Channel saved",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success"],
+                  properties: { success: { type: "boolean", example: true } },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+        },
+      },
+    },
+
+    "/api/settings/notification-channels/{type}": {
+      delete: {
+        summary: "Remove a notification channel",
+        description: "Deletes the notification channel of the specified type for the authenticated user.",
+        tags: ["Notification Channels"],
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [
+          {
+            name: "type",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "ntfy" },
+            description: "Channel type to remove",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Channel removed",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success"],
+                  properties: { success: { type: "boolean", example: true } },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+        },
+      },
+    },
+
+    "/api/settings/notification-channels/{type}/test": {
+      post: {
+        summary: "Send a test notification",
+        description: "Sends a test notification via the specified channel. Rate limited to 3/min.",
+        tags: ["Notification Channels"],
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [
+          {
+            name: "type",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "ntfy" },
+            description: "Channel type to test",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Test sent",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success"],
+                  properties: { success: { type: "boolean", example: true } },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Channel not configured or send failed",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["error"],
+                  properties: { error: { type: "string" } },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
         },
       },
     },
