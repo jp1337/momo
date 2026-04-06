@@ -9,6 +9,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Alexa Skill** — Spracheingabe für Momo via Amazon Echo: Tasks hinzufügen ("füge Zahnarzt hinzu"), Daily Quest abfragen ("was ist meine Quest?"), Aufgaben auflisten ("liste meine Aufgaben"), Wunschliste befüllen ("füge Milch zur Einkaufsliste hinzu"). Lambda-Code und Interaction Models in `alexa-skill/`.
+- **Alexa Account Linking** — Alle Momo-User können ihren Account über die Alexa-App verknüpfen. Neuer OAuth 2.0 Implicit Grant Endpoint `GET /api/alexa/auth`: User wird eingeloggt, Momo erstellt automatisch einen API-Schlüssel "Alexa" und übergibt ihn an Amazon.
+- **Swipe-Gesten auf Mobile** — Wischgeste auf Task-Items: rechts = erledigen (grüner Hintergrund), links = löschen (roter Hintergrund). Wishlist-Items (Status OPEN): rechts = kaufen, links = ablegen. Vertikales Scrollen bleibt unberührt.
+- **Confetti beim Wishlist-Kauf** — Konfetti-Animation beim Markieren eines Wunschlisten-Artikels als gekauft, analog zu Task-Abschlüssen.
+- **Daily Quest wechselt täglich** — Eine nicht abgeschlossene Quest wird am nächsten Tag zurückgesetzt und neu vergeben. Neue DB-Spalte `daily_quest_date` auf `tasks` verhindert, dass dieselbe Quest mehrere Tage in Folge erscheint.
+- **Task-Titel in Push-Benachrichtigungen** — Die tägliche Quest-Benachrichtigung enthält jetzt den Namen der Quest, z. B. "Heutige Mission: Zahnarzt anrufen".
+
+### Changed
+
+- **Einheitliche Edit/Delete-Buttons** — Tasks, Topics und Wishlist-Kacheln zeigen Edit (✎) und Delete (✕) jetzt an derselben Position (oben rechts) mit derselben Stilistik. Lange Titel werden nicht mehr abgeschnitten und laufen nicht in die Icons.
+- **CI/CD Pipeline ~25 s schneller** — Registry-Pushes (GHCR, Docker Hub, Quay.io) laufen jetzt parallel im merge-Job. `node_modules` wird gecacht und `npm ci` bei unverändertem Lock-File übersprungen. TypeScript-Check und ESLint laufen im lint-Job parallel.
+
+### Fixed
+
 - **Cron-Status auf Admin-Seite**: Status-Banner (grün/rot) und History-Tabelle mit den letzten 20 Push-Cron-Läufen (Zeitpunkt, Gesendet, Fehler, Dauer). Rot wenn letzter Lauf älter als 15 Minuten.
 - **Cron-Status im Health-Endpoint**: `GET /api/health` enthält jetzt ein nicht-blockierendes `cron`-Objekt mit `lastRunAt` und `minutesSinceLastRun`.
 - **PATCH /api/push/subscribe**: Neuer Endpoint zum Aktualisieren der Benachrichtigungszeit ohne erneutes Subscriben.

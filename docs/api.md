@@ -26,6 +26,35 @@ All routes (except `/api/health`) require authentication via one of:
 
 Create and manage API keys at [`/api-keys`](/api-keys) or via the navbar → avatar → "API Keys".
 
+## Alexa Account Linking
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/alexa/auth` | Session (redirect) | OAuth 2.0 Implicit Grant — issues an API key to Alexa on behalf of the logged-in user |
+
+### GET /api/alexa/auth
+
+OAuth 2.0 Implicit Grant authorization endpoint for the Momo Alexa Skill.
+Amazon redirects every user here when they tap "Link Account" in the Alexa app.
+
+Required query parameters (sent by Amazon):
+
+| Parameter | Description |
+|---|---|
+| `response_type` | Must be `token` |
+| `redirect_uri` | Amazon's callback URI — validated against known Alexa domains |
+| `state` | Opaque value forwarded unchanged to the redirect |
+
+**Flow:**
+1. Validates parameters and checks that `redirect_uri` is an official Amazon Alexa domain
+2. If the user has no active Momo session → redirects to `/login?callbackUrl=...` and returns here after login
+3. Creates a new API key named `"Alexa"` for the user
+4. Redirects to `redirect_uri#access_token=<key>&token_type=Bearer&state=<state>`
+
+The generated key is visible under **Settings → API Keys** and can be revoked at any time to disconnect the skill.
+
+---
+
 ## Authentication Routes
 
 Managed by Auth.js v5. These routes are handled internally by the framework.
