@@ -126,6 +126,29 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 
 One row is inserted each time the user postpones their daily quest. Used by the weekly review feature to compute "postponements this week". Historical data starts accumulating from the migration date forward.
 
+### `notification_channels`
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | FK → users (cascade) |
+| `type` | text | Channel type identifier: `"ntfy"`, `"pushover"`, `"telegram"`, `"email"`, `"webhook"` |
+| `config` | jsonb | Channel-specific configuration (see below) |
+| `enabled` | boolean | Whether this channel is currently active |
+| `created_at` | timestamp (tz) | When the channel was configured |
+| `updated_at` | timestamp (tz) | When the channel was last modified |
+
+**Unique constraint:** `(user_id, type)` — one channel per type per user.
+
+**Config shapes by type:**
+- `ntfy`: `{ "topic": "my-momo", "server": "https://ntfy.sh" }` (server optional, defaults to ntfy.sh)
+- `pushover`: `{ "userKey": "...", "appToken": "..." }` (future)
+- `telegram`: `{ "chatId": "...", "botToken": "..." }` (future)
+- `email`: `{ "address": "..." }` (future)
+- `webhook`: `{ "url": "...", "secret": "..." }` (future)
+
+Adding new channel types requires no schema migration — only new code in `lib/notifications.ts` and `lib/validators/index.ts`.
+
 ---
 
 ## Migrations
