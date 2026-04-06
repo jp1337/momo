@@ -60,6 +60,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `quest_postponed_date` | date | Date of the last postpone (used to reset the daily counter) |
 | `quest_postpone_limit` | integer | Max daily postponements the user allows themselves (1–5, default 3) |
 | `total_tasks_created` | integer | Immutable cumulative counter — incremented on every task creation (including via breakdown), never decremented on deletion. Used for statistics. |
+| `emotional_closure_enabled` | boolean | Whether to show an affirmation/quote after completing the daily quest (default: true) |
 
 ### `tasks`
 

@@ -64,6 +64,13 @@
       "when": 1775487327349,
       "tag": "0008_blushing_white_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775491700557,
+      "tag": "0009_tiny_snowbird",
+      "breakpoints": true
     }
   ]
 }

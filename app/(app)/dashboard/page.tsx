@@ -87,6 +87,7 @@ export default async function DashboardPage() {
         questPostponesToday: users.questPostponesToday,
         questPostponedDate: users.questPostponedDate,
         questPostponeLimit: users.questPostponeLimit,
+        emotionalClosureEnabled: users.emotionalClosureEnabled,
       })
       .from(users)
       .where(eq(users.id, userId))
@@ -124,6 +125,7 @@ export default async function DashboardPage() {
     ? (postponeData?.questPostponesToday ?? 0)
     : 0;
   const postponeLimit = postponeData?.questPostponeLimit ?? 3;
+  const emotionalClosureEnabled = postponeData?.emotionalClosureEnabled ?? true;
 
   // Serialize Date fields — Next.js cannot pass Date objects from Server to Client Components
   const quest = rawQuest
@@ -218,6 +220,7 @@ export default async function DashboardPage() {
           quest={quest}
           postponesToday={postponesToday}
           postponeLimit={postponeLimit}
+          emotionalClosureEnabled={emotionalClosureEnabled}
         />
       </section>
 

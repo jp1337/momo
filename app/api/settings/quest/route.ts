@@ -1,8 +1,8 @@
 /**
  * PATCH /api/settings/quest
- * Updates the user's daily quest postpone limit.
+ * Updates the user's quest-related settings (postpone limit, emotional closure toggle).
  * Requires: authentication
- * Body: { postponeLimit: number } (1–5)
+ * Body: { postponeLimit?: number (1–5), emotionalClosureEnabled?: boolean }
  * Returns: { success: true }
  */
 
@@ -18,11 +18,16 @@ const QuestSettingsSchema = z.object({
     .number()
     .int()
     .min(1, "Minimum 1 postponement per day")
-    .max(5, "Maximum 5 postponements per day"),
-});
+    .max(5, "Maximum 5 postponements per day")
+    .optional(),
+  emotionalClosureEnabled: z.boolean().optional(),
+}).refine(
+  (data) => data.postponeLimit !== undefined || data.emotionalClosureEnabled !== undefined,
+  { message: "At least one field must be provided" }
+);
 
 /**
- * PATCH — Update the user's daily quest postpone limit.
+ * PATCH — Update the user's quest-related settings.
  */
 export async function PATCH(req: NextRequest): Promise<NextResponse> {
   const user = await resolveApiUser(req);
@@ -48,9 +53,17 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    const updates: Record<string, unknown> = {};
+    if (parsed.data.postponeLimit !== undefined) {
+      updates.questPostponeLimit = parsed.data.postponeLimit;
+    }
+    if (parsed.data.emotionalClosureEnabled !== undefined) {
+      updates.emotionalClosureEnabled = parsed.data.emotionalClosureEnabled;
+    }
+
     await db
       .update(users)
-      .set({ questPostponeLimit: parsed.data.postponeLimit })
+      .set(updates)
       .where(eq(users.id, user.userId));
 
     return NextResponse.json({ success: true });
