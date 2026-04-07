@@ -87,3 +87,7 @@ CHANGELOG.md
 
 # LICENSE — standard MIT, never needs editing
 LICENSE
+
+# Full OpenAPI 3.1.0 spec object — ~83KB, mostly route schemas.
+# Read explicitly when changing API endpoints. Purpose is documented in lib/CLAUDE.md.
+lib/openapi.ts
