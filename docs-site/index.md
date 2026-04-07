@@ -82,7 +82,12 @@ description: Task management for people who struggle with procrastination. Open 
   <div class="feature-card">
     <div class="icon">🔐</div>
     <h3>Two-Factor Auth</h3>
-    <p>Optional TOTP via any authenticator app, 10 single-use backup codes, instance-wide enforcement. <a href="/momo/two-factor-auth">Read the guide →</a></p>
+    <p>Optional TOTP via any authenticator app plus 10 single-use backup codes, or <strong>passkeys</strong> (Face ID, Touch ID, Windows Hello, YubiKey). Instance-wide enforcement. <a href="/momo/two-factor-auth">TOTP</a> · <a href="/momo/passkeys">Passkeys</a></p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🗝️</div>
+    <h3>Passwordless Login</h3>
+    <p>Register a passkey and sign in with just your fingerprint, face or device PIN — no OAuth round-trip required. <a href="/momo/passkeys">Read the guide →</a></p>
   </div>
   <div class="feature-card">
     <div class="icon">🔑</div>

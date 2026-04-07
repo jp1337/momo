@@ -26,7 +26,7 @@ import {
   enableTotpForUser,
   verifyTotpCode,
   verifySetupToken,
-  markSessionTotpVerified,
+  markSessionSecondFactorVerified,
   readSessionTokenFromCookieStore,
   SETUP_COOKIE_NAME,
 } from "@/lib/totp";
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // the user can keep browsing without an immediate bounce to /login/2fa.
   const sessionToken = readSessionTokenFromCookieStore(cookieStore);
   if (sessionToken) {
-    await markSessionTotpVerified(sessionToken);
+    await markSessionSecondFactorVerified(sessionToken);
   }
 
   const res = NextResponse.json({ backupCodes: result.codes });

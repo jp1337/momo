@@ -158,11 +158,13 @@ Optional. The TOTP feature is fully self-contained — no external services requ
 | Variable | Default | Description |
 |---|---|---|
 | `TOTP_ENCRYPTION_KEY` | — | AES-256-GCM key used to encrypt TOTP secrets at rest in the database. **Required** as soon as any user enables 2FA, or when `REQUIRE_2FA=true`. Must be exactly 64 hex characters (32 bytes). Generate with `openssl rand -hex 32`. **Treat this as critical secret material** — rotating it invalidates every existing TOTP secret and forces every user to re-enroll. |
-| `REQUIRE_2FA` | `false` | When `true`, every user must register a second factor (TOTP — Passkeys later) before they can access any protected route. Existing users without 2FA are hard-locked to a forced setup page on their next login. The "disable 2FA" button is hidden in the UI and the corresponding API endpoint returns `403`. |
+| `REQUIRE_2FA` | `false` | When `true`, every user must register a second factor (TOTP **or** Passkey) before they can access any protected route. Existing users without a second factor are hard-locked to a forced setup page on their next login. Removing the last remaining second factor is blocked, both in the UI and by a `403` at the API. |
+| `WEBAUTHN_RP_ID` | hostname of `NEXT_PUBLIC_APP_URL` | WebAuthn Relying Party ID. Must be the eTLD+1 hostname of your site (no scheme, no port, no path) — for example `momotask.app`, or `localhost` during development. A mismatch with the actual origin breaks passkey registration and login. |
+| `WEBAUTHN_RP_NAME` | `Momo` | Display name shown in the OS / browser passkey prompt. Purely cosmetic. |
 
 > Setting `REQUIRE_2FA=true` without `TOTP_ENCRYPTION_KEY` will refuse to start. Make sure both are present.
 
-End-user guide → [Two-Factor Authentication](/momo/two-factor-auth)
+End-user guide → [Two-Factor Authentication](/momo/two-factor-auth) · [Passkeys](/momo/passkeys)
 Operator guide → [Self-Hosting → Enforcing two-factor authentication](/momo/self-hosting#enforcing-two-factor-authentication)
 
 ---
@@ -262,6 +264,10 @@ CRON_SECRET=your-hex-cron-secret
 # Two-factor authentication (required if any user enables 2FA, or REQUIRE_2FA=true)
 TOTP_ENCRYPTION_KEY=64-hex-characters-from-openssl-rand-hex-32
 REQUIRE_2FA=false
+
+# Passkeys (optional — auto-derived from NEXT_PUBLIC_APP_URL when unset)
+WEBAUTHN_RP_ID=momo.example.com
+WEBAUTHN_RP_NAME=Momo
 
 # URLs
 NEXT_PUBLIC_APP_URL=https://momo.example.com

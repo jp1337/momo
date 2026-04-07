@@ -21,7 +21,12 @@ import QRCode from "qrcode";
 import { randomBytes, createHmac, timingSafeEqual as nodeTimingSafeEqual } from "crypto";
 import { eq, and, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { users, totpBackupCodes, sessions } from "@/lib/db/schema";
+import {
+  users,
+  totpBackupCodes,
+  sessions,
+  authenticators,
+} from "@/lib/db/schema";
 import { serverEnv } from "@/lib/env";
 import {
   encryptSecret,
@@ -339,45 +344,48 @@ export function readSessionTokenFromCookieStore(
 }
 
 /**
- * Marks a specific session row as having passed the second-factor challenge.
- * Idempotent — calling it on an already-verified session is a no-op upsert.
+ * Marks a specific session row as having passed the second-factor challenge
+ * (TOTP, backup code, or passkey). Idempotent — calling it on an already-
+ * verified session is a no-op upsert.
  *
  * @param sessionToken - Primary key of the sessions row (from the Auth.js cookie)
  */
-export async function markSessionTotpVerified(
+export async function markSessionSecondFactorVerified(
   sessionToken: string
 ): Promise<void> {
   await db
     .update(sessions)
-    .set({ totpVerifiedAt: new Date() })
+    .set({ secondFactorVerifiedAt: new Date() })
     .where(eq(sessions.sessionToken, sessionToken));
 }
 
 /**
- * Returns true if the given session row has passed the 2FA challenge.
- * Used by the layout-level enforcement gate.
+ * Returns true if the given session row has passed the second-factor
+ * challenge (via any method). Used by the layout-level enforcement gate.
  *
  * @param sessionToken - Primary key of the sessions row
  */
-export async function isSessionTotpVerified(
+export async function isSessionSecondFactorVerified(
   sessionToken: string
 ): Promise<boolean> {
   const [row] = await db
-    .select({ totpVerifiedAt: sessions.totpVerifiedAt })
+    .select({ secondFactorVerifiedAt: sessions.secondFactorVerifiedAt })
     .from(sessions)
     .where(eq(sessions.sessionToken, sessionToken))
     .limit(1);
-  return !!row?.totpVerifiedAt;
+  return !!row?.secondFactorVerifiedAt;
 }
 
 /**
  * Method-agnostic check used by every enforcement gate (REQUIRE_2FA hard-lock,
  * settings re-display, etc.). Returns true if the user has *any* registered
- * second factor.
+ * second factor — TOTP or at least one WebAuthn/Passkey credential.
  *
- * **Single touchpoint for the future Passkey feature.** When passkeys ship,
- * extend this function to also return true when the user has at least one
- * registered passkey credential. No call site needs to change.
+ * This is the single touchpoint gate used across the codebase: the layout
+ * enforcement in `app/(app)/layout.tsx`, the forced-setup check at
+ * `/setup/2fa`, and the settings UI all go through this helper so that a
+ * user with only a passkey and no TOTP (or vice versa) is treated
+ * equivalently.
  *
  * @param userId - Owning user
  */
@@ -387,7 +395,14 @@ export async function userHasSecondFactor(userId: string): Promise<boolean> {
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
-  return !!row?.totpEnabledAt;
+  if (row?.totpEnabledAt) return true;
+
+  const passkey = await db
+    .select({ id: authenticators.credentialID })
+    .from(authenticators)
+    .where(eq(authenticators.userId, userId))
+    .limit(1);
+  return passkey.length > 0;
 }
 
 // ─── Internal Helpers ─────────────────────────────────────────────────────────

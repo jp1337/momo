@@ -396,18 +396,18 @@ Once installed, Momo opens in full-screen with no browser chrome. The home scree
 
 ## Two-Factor Authentication
 
-Momo can ask for an extra 6-digit code from an authenticator app every time you sign in — on top of your normal OAuth login. This protects your account even if someone gains access to your GitHub, Google, Discord or Microsoft account.
+Momo can ask for a second factor every time you sign in — on top of your normal OAuth login. Two options are supported, and you can use one or both:
 
-See the dedicated guide: [**Two-Factor Authentication →**](two-factor-auth)
+- **TOTP** — a 6-digit code from an authenticator app (Aegis, 2FAS, Google Authenticator, Authy, 1Password, …). See [**Two-Factor Authentication →**](two-factor-auth)
+- **Passkeys** — Face ID, Touch ID, Windows Hello, Android biometrics, iCloud Keychain or a hardware security key (YubiKey, SoloKey). Passkeys additionally enable **passwordless primary login** — once registered, you can sign in with just your fingerprint or device PIN, skipping the OAuth provider entirely. See [**Passkeys →**](passkeys)
 
 In short:
 
-- Open **Settings → Two-factor authentication** and click **Enable 2FA**.
-- Scan the QR code with any authenticator app (Aegis, 2FAS, Google Authenticator, Authy, 1Password, …).
-- Save the 10 backup codes Momo gives you — they are your safety net if you lose your phone.
-- From then on, every new sign-in asks for a code.
+- Open **Settings → Two-factor authentication** and pick your method — enable TOTP, register a passkey, or both.
+- Save the 10 TOTP backup codes Momo gives you — they are your safety net if you lose your phone.
+- From then on, every new sign-in asks for a code or a passkey assertion.
 
-If you self-host Momo, you can require 2FA for everyone by setting the `REQUIRE_2FA=true` environment variable. New and existing users will be guided through the setup the next time they sign in.
+If you self-host Momo, you can require a second factor for everyone by setting the `REQUIRE_2FA=true` environment variable. New and existing users will be guided through the setup the next time they sign in.
 
 ---
 

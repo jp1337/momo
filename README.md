@@ -72,9 +72,12 @@ Sign in with the account you already have. No new password to forget.
 | **Microsoft** (private accounts only — Outlook/Hotmail/Live/Xbox) | ✅ | ✅ (own Azure App) |
 | **OIDC** (Authentik, Keycloak, …) | — | ✅ |
 
-Optional **two-factor authentication (TOTP)** on top of any provider —
-works with Aegis, 2FAS, Google Authenticator, Authy, 1Password, etc.
-Self-hosters can enforce 2FA for every account by setting `REQUIRE_2FA=true`.
+Optional **two-factor authentication** — either **TOTP** (Aegis, 2FAS,
+Google Authenticator, Authy, 1Password, …) or **Passkeys** (Touch ID,
+Windows Hello, iCloud Keychain, YubiKey, …). Passkeys additionally enable
+**passwordless primary login**: once registered, you can sign in with just
+a fingerprint or PIN — no OAuth round-trip required. Self-hosters can
+enforce a second factor for every account by setting `REQUIRE_2FA=true`.
 See [Two-Factor Auth Guide](docs/two-factor-auth.md) for the technical
 details and [OAuth Setup Guide](docs/oauth-setup.md) for provider setup.
 

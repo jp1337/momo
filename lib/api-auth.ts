@@ -17,13 +17,10 @@ import { auth } from "@/lib/auth";
 import { resolveApiKeyUser } from "@/lib/api-keys";
 import { cookies } from "next/headers";
 import {
-  isSessionTotpVerified,
+  isSessionSecondFactorVerified,
   readSessionTokenFromCookieStore,
   userHasSecondFactor,
 } from "@/lib/totp";
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import { serverEnv } from "@/lib/env";
 
 /** Resolved caller identity returned by resolveApiUser() */
@@ -126,17 +123,15 @@ export async function resolveVerifiedApiUser(
     return { ok: false, reason: "TOTP_SETUP_REQUIRED" };
   }
 
-  const [row] = await db
-    .select({ totpEnabledAt: users.totpEnabledAt })
-    .from(users)
-    .where(eq(users.id, session.user.id))
-    .limit(1);
-  if (row?.totpEnabledAt) {
+  // If the user has *any* second factor configured (TOTP or passkey), the
+  // current session must have passed the challenge — otherwise the browser
+  // is told to bounce to /login/2fa via the TOTP_REQUIRED reason code.
+  if (await userHasSecondFactor(session.user.id)) {
     const cookieStore = await cookies();
     const sessionToken = readSessionTokenFromCookieStore(cookieStore);
     const verified =
       sessionToken !== undefined &&
-      (await isSessionTotpVerified(sessionToken));
+      (await isSessionSecondFactorVerified(sessionToken));
     if (!verified) return { ok: false, reason: "TOTP_REQUIRED" };
   }
 

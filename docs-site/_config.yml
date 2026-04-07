@@ -34,6 +34,8 @@ nav:
     url: /momo/features
   - title: Two-Factor Auth
     url: /momo/two-factor-auth
+  - title: Passkeys
+    url: /momo/passkeys
   - title: Self-Hosting
     url: /momo/self-hosting
   - title: Deployment

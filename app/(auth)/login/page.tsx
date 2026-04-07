@@ -15,6 +15,7 @@
 import { auth, signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PasskeyLoginButton } from "@/components/auth/passkey-login-button";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -147,6 +148,22 @@ export default async function LoginPage() {
         >
           {t("sign_in_with")}
         </p>
+
+        {/* Passwordless passkey button — prominent above OAuth providers */}
+        <PasskeyLoginButton />
+
+        {/* Divider */}
+        <div
+          className="flex items-center gap-3 text-xs uppercase tracking-wider my-1"
+          style={{
+            color: "var(--text-muted)",
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+          }}
+        >
+          <span className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
+          <span>{t("passkey_or")}</span>
+          <span className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
+        </div>
 
         {/* Provider buttons */}
         {enabledProviders.length > 0 ? (

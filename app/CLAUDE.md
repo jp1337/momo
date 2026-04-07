@@ -35,6 +35,13 @@ api/
   auth/2fa/verify/route.ts           → POST (login-time challenge — accepts 6-digit code XOR 10-char backup code, marks sessions.totp_verified_at)
   auth/2fa/disable/route.ts          → POST (re-verify code, then wipe secret + all backup codes; 403 TOTP_REQUIRED_BY_ADMIN when REQUIRE_2FA=true)
   auth/2fa/regenerate-backup-codes/route.ts → POST (re-verify code, replace all 10 backup codes; backup codes not accepted as auth here)
+  auth/passkey/register/options/route.ts    → POST (generate WebAuthn registration options, stash challenge in signed cookie; session required)
+  auth/passkey/register/verify/route.ts     → POST (verify attestation, persist to `authenticators` table; session required)
+  auth/passkey/login/options/route.ts       → POST (passwordless primary login — discoverable credentials assertion options, public endpoint, rate-limited by IP)
+  auth/passkey/login/verify/route.ts        → POST (verify assertion, create Auth.js session row with `second_factor_verified_at = now()`, set session cookie — public endpoint)
+  auth/passkey/second-factor/options/route.ts → POST (assertion options for a known user — allow-list scoped; session required)
+  auth/passkey/second-factor/verify/route.ts  → POST (verify assertion, mark current session as second-factor-verified; session required)
+  auth/passkey/[id]/route.ts                → PATCH (rename credential), DELETE (revoke credential; blocks last-factor removal when REQUIRE_2FA=true)
   tasks/route.ts                     → GET (list, ?topicId/type/completed filters), POST (create)
   tasks/[id]/route.ts                → GET (single), PATCH (update), DELETE
   tasks/[id]/complete/route.ts       → POST (complete + award coins, body: {timezone?}), DELETE (uncomplete + refund)

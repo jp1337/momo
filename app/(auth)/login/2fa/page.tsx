@@ -22,13 +22,15 @@ import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { users, authenticators } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import {
-  isSessionTotpVerified,
+  isSessionSecondFactorVerified,
   readSessionTokenFromCookieStore,
+  userHasSecondFactor,
 } from "@/lib/totp";
 import { TotpVerifyForm } from "@/components/auth/totp-verify-form";
+import { PasskeySecondFactorButton } from "@/components/auth/passkey-second-factor-button";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 
@@ -40,18 +42,34 @@ export default async function LoginTwoFactorPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const [row] = await db
-    .select({ totpEnabledAt: users.totpEnabledAt })
-    .from(users)
-    .where(eq(users.id, session.user.id))
-    .limit(1);
-  if (!row?.totpEnabledAt) redirect("/dashboard");
+  // Accept any configured second factor (TOTP or Passkey). If the user has
+  // none, there's nothing to verify — let them through.
+  if (!(await userHasSecondFactor(session.user.id))) {
+    redirect("/dashboard");
+  }
 
   const cookieStore = await cookies();
   const sessionToken = readSessionTokenFromCookieStore(cookieStore);
-  if (sessionToken && (await isSessionTotpVerified(sessionToken))) {
+  if (sessionToken && (await isSessionSecondFactorVerified(sessionToken))) {
     redirect("/dashboard");
   }
+
+  // Fetch per-method availability so the challenge UI knows which options
+  // to render. A user may have TOTP, a passkey, or both.
+  const [totpRow, passkeyRow] = await Promise.all([
+    db
+      .select({ totpEnabledAt: users.totpEnabledAt })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1),
+    db
+      .select({ id: authenticators.credentialID })
+      .from(authenticators)
+      .where(eq(authenticators.userId, session.user.id))
+      .limit(1),
+  ]);
+  const hasTotp = !!totpRow[0]?.totpEnabledAt;
+  const hasPasskey = passkeyRow.length > 0;
 
   const t = await getTranslations("auth");
 
@@ -89,7 +107,26 @@ export default async function LoginTwoFactorPage() {
         </p>
       </div>
 
-      <TotpVerifyForm />
+      {hasTotp && <TotpVerifyForm />}
+
+      {hasPasskey && (
+        <div className="flex flex-col gap-3">
+          {hasTotp && (
+            <div
+              className="flex items-center gap-3 text-xs uppercase tracking-wider"
+              style={{
+                color: "var(--text-muted)",
+                fontFamily: "var(--font-ui)",
+              }}
+            >
+              <span className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
+              <span>{t("passkey_or")}</span>
+              <span className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
+            </div>
+          )}
+          <PasskeySecondFactorButton />
+        </div>
+      )}
 
       <form action={doSignOut} className="self-end">
         <button

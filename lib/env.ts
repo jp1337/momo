@@ -110,7 +110,18 @@ const serverEnvSchema = z.object({
       z.boolean().optional().default(false)
     )
     .describe(
-      "When true, every user must register a second factor (TOTP, later also Passkeys) before they can access any protected route. Existing users without 2FA are hard-locked to /setup/2fa on next login."
+      "When true, every user must register a second factor (TOTP or Passkey) before they can access any protected route. Existing users without a second factor are hard-locked to /setup/2fa on next login."
+    ),
+
+  // WebAuthn / Passkeys (optional — auto-derived from NEXT_PUBLIC_APP_URL when unset)
+  WEBAUTHN_RP_ID: emptyToUndefined.describe(
+    "WebAuthn Relying Party ID — must match the eTLD+1 of the site (e.g. 'momotask.app' or 'localhost'). Defaults to the hostname of NEXT_PUBLIC_APP_URL."
+  ),
+  WEBAUTHN_RP_NAME: z
+    .preprocess((val) => (val === "" ? undefined : val), z.string().optional())
+    .default("Momo")
+    .describe(
+      "Display name shown in the OS / browser passkey prompt. Defaults to 'Momo'."
     ),
 
   // Runtime

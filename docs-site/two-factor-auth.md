@@ -129,8 +129,8 @@ Yes — they are unaffected. API keys (Personal Access Tokens) are themselves a 
 **Why does Momo not just use SMS codes?**
 SMS-based 2FA is widely considered weaker than authenticator apps because phone numbers can be hijacked via SIM swapping, and operators can intercept messages. Authenticator apps generate codes locally on your device with no network involved.
 
-**Can I use a hardware key (YubiKey)?**
-Not yet — Momo currently only supports authenticator-app-based 2FA. **Passkeys (WebAuthn)** are on the roadmap and will support hardware keys when they ship.
+**Can I use a hardware key (YubiKey) or a Face ID / Touch ID passkey?**
+Yes — Momo supports **Passkeys (WebAuthn)** as well. Passkeys work with Face ID, Touch ID, Windows Hello, Android biometrics, iCloud Keychain and hardware security keys like a YubiKey. You can use a passkey *instead* of an authenticator-app code, or in addition to it. Passkeys also enable **passwordless sign-in** — once registered, you can sign in with just your fingerprint or device PIN, without going through GitHub / Google / Discord at all. See [the Passkey guide](passkeys) for setup.
 
 **My code keeps being rejected even though I just typed it.**
 Authenticator codes are time-based, so if your phone's clock or your server's clock is wrong, codes will not match. Most apps have a "Sync time" option in the settings — try that first. Momo allows ±30 seconds of clock drift, but anything beyond that will fail.

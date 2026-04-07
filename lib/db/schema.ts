@@ -15,6 +15,7 @@
  *  - quest_postponements  Log of daily quest postponement events (for weekly review)
  *  - notification_channels  User-configured notification channels (ntfy, pushover, telegram, email; webhook future)
  *  - totp_backup_codes  One-time recovery codes for TOTP-based 2FA
+ *  - authenticators     WebAuthn/Passkey credentials (passwordless login + 2FA)
  */
 
 import {
@@ -31,6 +32,7 @@ import {
   jsonb,
   unique,
   uniqueIndex,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -211,12 +213,21 @@ export const sessions = pgTable("sessions", {
   expires: timestamp("expires", { mode: "date" }).notNull(),
 
   /**
-   * Timestamp at which the second factor (TOTP / backup code) was verified
-   * for this specific session. NULL means the user is logged in via OAuth
-   * but has not yet completed the 2FA challenge — protected routes must
-   * redirect to /login/2fa in that case. Reset to NULL on every new session.
+   * Timestamp at which the second factor (TOTP / backup code / passkey) was
+   * verified for this specific session. NULL means the user is logged in
+   * via OAuth but has not yet completed the second-factor challenge —
+   * protected routes must redirect to /login/2fa in that case. Reset to
+   * NULL on every new session. A session created by a passwordless passkey
+   * login is treated as inherently second-factor-satisfied and is written
+   * with this column already set.
+   *
+   * Historically named `totp_verified_at` (legacy drizzle field
+   * `totpVerifiedAt`). Renamed when Passkeys were added. The on-disk column
+   * is now `second_factor_verified_at`.
    */
-  totpVerifiedAt: timestamp("totp_verified_at", { withTimezone: true }),
+  secondFactorVerifiedAt: timestamp("second_factor_verified_at", {
+    withTimezone: true,
+  }),
 });
 
 /** Magic link / email verification tokens */
@@ -641,6 +652,82 @@ export const totpBackupCodes = pgTable("totp_backup_codes", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * WebAuthn / Passkey credentials.
+ *
+ * Follows the Auth.js authenticators schema but is managed directly by the
+ * Momo webauthn module (`lib/webauthn.ts`) — we do not use the Auth.js
+ * Passkey provider because it requires `session: "jwt"` and Momo uses
+ * database sessions. Instead, the custom endpoints under
+ * `app/api/auth/passkey/*` drive registration, login, and second-factor
+ * assertions using `@simplewebauthn/server`.
+ *
+ * One user can have multiple passkeys (e.g. iPhone Touch ID, Windows Hello,
+ * hardware key). Deleting a user cascades to all of their passkeys. Deleting
+ * a single passkey revokes it — authentication attempts with that credential
+ * ID will fail afterwards.
+ *
+ * Presence of a row in this table counts as a registered second factor for
+ * the purposes of `userHasSecondFactor()` in `lib/totp.ts`.
+ */
+export const authenticators = pgTable(
+  "authenticators",
+  {
+    /** Credential ID issued by the authenticator (base64url of raw bytes). */
+    credentialID: text("credential_id").notNull().unique(),
+
+    /** Owning user — cascades on delete. */
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+
+    /**
+     * Mirrors the Auth.js adapter column. We set this to the same value as
+     * credentialID because Momo does not use the Auth.js Passkey provider,
+     * but the column is kept for adapter compatibility and potential future
+     * migration.
+     */
+    providerAccountId: text("provider_account_id").notNull(),
+
+    /** COSE public key (base64url). */
+    credentialPublicKey: text("credential_public_key").notNull(),
+
+    /** Signature counter — incremented on every successful assertion. */
+    counter: integer("counter").notNull(),
+
+    /** "singleDevice" | "multiDevice" (synced passkey). */
+    credentialDeviceType: text("credential_device_type").notNull(),
+
+    /** Whether the credential is backed up to a cloud keychain. */
+    credentialBackedUp: boolean("credential_backed_up").notNull(),
+
+    /**
+     * Comma-separated list of AuthenticatorTransport values
+     * (e.g. "internal,hybrid"). Used to hint the browser during assertion.
+     */
+    transports: text("transports"),
+
+    /**
+     * User-provided display name ("iPhone", "YubiKey 5C"). Editable from
+     * the settings page. NULL when the user skipped the name prompt.
+     */
+    name: text("name"),
+
+    /** When this credential was registered. */
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+
+    /** Last time this credential was used for an assertion. */
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  },
+  (table) => ({
+    compositePk: primaryKey({
+      columns: [table.userId, table.credentialID],
+    }),
+  })
+);
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -657,6 +744,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   questPostponements: many(questPostponements),
   notificationChannels: many(notificationChannels),
   totpBackupCodes: many(totpBackupCodes),
+  authenticators: many(authenticators),
 }));
 
 export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
@@ -725,4 +813,8 @@ export const notificationChannelsRelations = relations(notificationChannels, ({ 
 
 export const totpBackupCodesRelations = relations(totpBackupCodes, ({ one }) => ({
   user: one(users, { fields: [totpBackupCodes.userId], references: [users.id] }),
+}));
+
+export const authenticatorsRelations = relations(authenticators, ({ one }) => ({
+  user: one(users, { fields: [authenticators.userId], references: [users.id] }),
 }));
