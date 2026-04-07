@@ -69,6 +69,7 @@ Sign in with the account you already have. No new password to forget.
 | **GitHub** | ✅ | ✅ (own OAuth App) |
 | **Discord** | ✅ | ✅ (own OAuth App) |
 | **Google** | ✅ | ✅ (own OAuth App) |
+| **Microsoft** (private accounts only — Outlook/Hotmail/Live/Xbox) | ✅ | ✅ (own Azure App) |
 | **OIDC** (Authentik, Keycloak, …) | — | ✅ |
 
 See [OAuth Setup Guide](docs/oauth-setup.md) for configuration instructions.
@@ -81,7 +82,7 @@ See [OAuth Setup Guide](docs/oauth-setup.md) for configuration instructions.
 |---|---|
 | **Frontend** | Next.js 16 (App Router) + React 19, TypeScript, Tailwind CSS v4 |
 | **Animations** | Framer Motion |
-| **Auth** | Auth.js v5 (GitHub, Discord, Google, OIDC) |
+| **Auth** | Auth.js v5 (GitHub, Discord, Google, Microsoft (private accounts), OIDC) |
 | **Database** | PostgreSQL 18 + Drizzle ORM |
 | **i18n** | next-intl — German, English, French (cookie-based, no URL prefix) |
 | **Push Notifications** | Web Push API (VAPID, no third-party) |
@@ -190,7 +191,7 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 |---|---|
 | [Deployment](docs/deployment.md) | Docker Compose, production checklist, Kubernetes reference |
 | [Environment Variables](docs/environment-variables.md) | All configuration options |
-| [OAuth Setup](docs/oauth-setup.md) | GitHub, Discord, Google & OIDC configuration |
+| [OAuth Setup](docs/oauth-setup.md) | GitHub, Discord, Google, Microsoft & OIDC configuration |
 | [API Reference](docs/api.md) | All REST endpoints — interactive Swagger UI at `/api-docs` |
 | [Database](docs/database.md) | Schema overview, migrations, Drizzle Studio |
 | [DSGVO / GDPR](docs/gdpr.md) | Compliance guide for operators |
