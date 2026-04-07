@@ -32,8 +32,13 @@ drizzle/meta/
 # CI/CD agent reports — historical, not relevant to coding tasks
 .claude/reports/
 
-# Documentation site — Jekyll-based static site, not the app itself
-docs-site/
+# Documentation site (docs-site/) is INTENTIONALLY NOT ignored.
+# Per project rule (memory feedback_user_docs): every user-facing change
+# must update docs-site/ alongside docs/. Hiding it from Claude would
+# silently break that rule. Only Jekyll build/cache artifacts are excluded:
+docs-site/Gemfile.lock
+docs-site/_site/
+docs-site/.jekyll-cache/
 
 # Large project plan (reference only, not needed for most tasks)
 MOMO_PROJEKT_PLAN.md
