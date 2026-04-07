@@ -20,8 +20,13 @@ FROM node:22-alpine AS base
 FROM base AS deps
 WORKDIR /app
 
-# Copy package manifests first for layer caching
-COPY package.json package-lock.json ./
+# Copy package manifests + .npmrc first for layer caching.
+# .npmrc carries `legacy-peer-deps=true` to tolerate the React 19 vs
+# react-debounce-input@3.3.0 (abandoned, hard React 18 cap) peer mismatch.
+# Without .npmrc here, `npm ci` runs in strict mode and rejects the
+# lockfile because peer-only entries (e.g. webpack from
+# workbox-webpack-plugin's peerDependencies) aren't recorded.
+COPY package.json package-lock.json .npmrc ./
 
 # Install all dependencies (including dev, needed for build)
 # --mount=type=cache persists the npm cache across builds (GHA cache via type=gha)
