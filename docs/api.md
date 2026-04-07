@@ -134,6 +134,105 @@ using one would consume one of the codes being replaced).
 - **Response:** `200 { "backupCodes": ["ABCDEFGHJK", …] }` — plaintext, returned exactly once
 - **Errors:** `400`, `401 UNAUTHORIZED`, `409 TOTP_NOT_ENABLED`, `422 INVALID_CODE`, `429 RATE_LIMITED`
 
+### Passkeys (WebAuthn)
+
+Passwordless primary login *and* alternative second factor. Built directly
+on `@simplewebauthn/server` on top of the existing Auth.js database-session
+strategy — Momo does **not** use the Auth.js Passkey provider because it
+requires JWT sessions.
+
+All challenges are stashed in a short-lived signed httpOnly cookie
+(`momo_webauthn_challenge`, 5 min TTL, purpose-tagged `reg`/`login`/`sf`
+to prevent cross-flow replay). RP ID + origin are resolved from
+`WEBAUTHN_RP_ID` / `NEXT_PUBLIC_APP_URL` in `lib/webauthn.ts::getRpConfig`.
+See [two-factor-auth.md](two-factor-auth.md) for the lifecycle overview.
+
+#### POST /api/auth/passkey/register/options
+
+Starts a passkey registration. Generates WebAuthn `PublicKeyCredentialCreationOptionsJSON`,
+stashes the raw challenge in the signed challenge cookie (`kind=reg`), and returns the
+options JSON for `@simplewebauthn/browser::startRegistration`.
+
+- **Auth:** session cookie required
+- **Body:** none
+- **Response:** `200 PublicKeyCredentialCreationOptionsJSON`
+- **Errors:** `401 UNAUTHORIZED`, `429 RATE_LIMITED`
+
+#### POST /api/auth/passkey/register/verify
+
+Verifies the attestation and persists the credential in `authenticators`.
+
+- **Auth:** session cookie required
+- **Body:** `{ "name": "iPhone", "response": RegistrationResponseJSON }`
+- **Response:** `200 { "credentialID": "…", "name": "iPhone", "deviceType": "multiDevice" | "singleDevice", "backedUp": true }`
+- **Errors:** `400`, `401 UNAUTHORIZED`, `410 CHALLENGE_EXPIRED`, `422 REGISTRATION_FAILED`, `429 RATE_LIMITED`
+
+#### POST /api/auth/passkey/login/options
+
+Starts a **passwordless primary login**. Generates an assertion challenge
+with empty `allowCredentials` so the browser offers any discoverable
+credential registered for this RP.
+
+- **Auth:** none (public endpoint — this IS the login entry)
+- **Body:** none
+- **Response:** `200 PublicKeyCredentialRequestOptionsJSON`
+- **Errors:** `429 RATE_LIMITED`
+
+#### POST /api/auth/passkey/login/verify
+
+Completes passwordless primary login. Verifies the assertion, creates a
+fresh Auth.js database session row with `second_factor_verified_at = now()`
+(a passkey is inherently MFA), and sets the Auth.js session cookie
+(`authjs.session-token` / `__Secure-authjs.session-token`).
+
+- **Auth:** none
+- **Body:** `{ "response": AuthenticationResponseJSON }`
+- **Response:** `200 { "success": true }` + session cookie
+- **Errors:** `400`, `410 CHALLENGE_EXPIRED`, `422 ASSERTION_FAILED`, `429 RATE_LIMITED`
+
+#### POST /api/auth/passkey/second-factor/options
+
+Generates an assertion challenge for a user who already completed the
+primary (OAuth) login but has not yet satisfied the second-factor gate.
+Uses `allowCredentials` scoped to the user's registered passkeys.
+
+- **Auth:** session cookie required
+- **Body:** none
+- **Response:** `200 PublicKeyCredentialRequestOptionsJSON`
+- **Errors:** `401 UNAUTHORIZED`, `409 NO_PASSKEYS`, `429 RATE_LIMITED`
+
+#### POST /api/auth/passkey/second-factor/verify
+
+Marks the current session row as second-factor verified on a successful
+assertion. Never creates a new session.
+
+- **Auth:** session cookie required
+- **Body:** `{ "response": AuthenticationResponseJSON }`
+- **Response:** `200 { "success": true }`
+- **Errors:** `400`, `401 UNAUTHORIZED`, `410 CHALLENGE_EXPIRED`, `422 ASSERTION_FAILED`, `429 RATE_LIMITED`
+
+#### PATCH /api/auth/passkey/[id]
+
+Renames a registered passkey. `[id]` is the base64url credential ID.
+Silently no-ops when the credential is not owned by the session user
+(matches the TOTP surface's "hide existence" pattern).
+
+- **Auth:** session cookie required
+- **Body:** `{ "name": "YubiKey 5C" }`
+- **Response:** `200 { "success": true }`
+- **Errors:** `400`, `401 UNAUTHORIZED`, `429 RATE_LIMITED`
+
+#### DELETE /api/auth/passkey/[id]
+
+Revokes a registered passkey. Blocked with `403 SECOND_FACTOR_REQUIRED_BY_ADMIN`
+when `REQUIRE_2FA=true` and the deletion would leave the account without
+any second factor (no TOTP and no other passkey).
+
+- **Auth:** session cookie required
+- **Body:** none
+- **Response:** `200 { "success": true }`
+- **Errors:** `401 UNAUTHORIZED`, `403 SECOND_FACTOR_REQUIRED_BY_ADMIN`, `429 RATE_LIMITED`
+
 ---
 
 ## System Routes

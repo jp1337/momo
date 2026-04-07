@@ -25,6 +25,7 @@ The full schema is defined in `lib/db/schema.ts`.
 | `quest_postponements` | Log of daily quest postponement events (for weekly review analytics) |
 | `notification_channels` | User-configured notification channels (ntfy, pushover, telegram, etc.) |
 | `totp_backup_codes` | One-time recovery codes for TOTP-based 2FA (SHA-256 hashed, single-use) |
+| `authenticators` | WebAuthn / Passkey credentials — one row per registered device (Auth.js-compatible schema + Momo display label) |
 
 ### Auth.js Adapter Tables
 
@@ -69,11 +70,11 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `totp_secret` | text | TOTP secret encrypted with AES-256-GCM (`iv:tag:cipher`, base64-segmented). NULL when 2FA is off. The plaintext secret is never stored. See [two-factor-auth.md](two-factor-auth.md) |
 | `totp_enabled_at` | timestamptz | **Source of truth** for "is 2FA active". NULL means off, even if `totp_secret` is non-NULL |
 
-### `sessions` (2FA-relevant columns)
+### `sessions` (second-factor column)
 
 | Column | Type | Description |
 |---|---|---|
-| `totp_verified_at` | timestamptz | Per-session second-factor verification timestamp. NULL on every fresh session until the user passes the `/login/2fa` challenge. The `(app)` layout gate redirects to `/login/2fa` when `users.totp_enabled_at IS NOT NULL` and this is NULL |
+| `second_factor_verified_at` | timestamptz | Per-session second-factor verification timestamp (TOTP, backup code, or passkey assertion). NULL on every fresh OAuth session until the user passes the `/login/2fa` challenge. The `(app)` layout gate redirects to `/login/2fa` when `userHasSecondFactor(userId)` is true and this is NULL. Sessions created by the passwordless-passkey primary login flow are inserted with this column already set because a passkey is inherently MFA. *(Historically named `totp_verified_at`; renamed in migration `0015_passkeys` when Passkey support landed.)* |
 
 ### `totp_backup_codes`
 
@@ -88,6 +89,33 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 10 codes are generated per setup or regeneration. Codes are 10 characters
 from the unambiguous alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (no
 `I`/`O`/`0`/`1`).
+
+### `authenticators`
+
+WebAuthn / Passkey credentials. One row per registered device. Schema is
+compatible with the Auth.js adapter's `authenticators` table plus Momo
+additions for a display label and usage tracking.
+
+| Column | Type | Description |
+|---|---|---|
+| `credential_id` | text | Credential ID returned by the authenticator (base64url). Unique across all users |
+| `user_id` | uuid | FK → users (cascade) |
+| `provider_account_id` | text | Mirrors the Auth.js column. Always equal to `credential_id` because Momo does not use the Auth.js Passkey provider |
+| `credential_public_key` | text | COSE-encoded public key (base64url). Fed back into `verifyAuthenticationResponse` on every assertion |
+| `counter` | integer | Signature counter — incremented on every successful assertion. A non-monotonic counter signals a cloned authenticator and fails verification |
+| `credential_device_type` | text | `singleDevice` (hardware-bound, e.g. a physical security key) or `multiDevice` (synced via a cloud keychain like iCloud Keychain) |
+| `credential_backed_up` | boolean | Whether the credential is backed up to the platform's cloud keychain |
+| `transports` | text | Comma-separated list of `AuthenticatorTransport` values (`internal`, `hybrid`, `usb`, `nfc`, `ble`, `cable`, `smart-card`). Hints to the browser which channels to try |
+| `name` | text | User-provided display label ("iPhone", "YubiKey 5C"). NULL when the user skipped the name prompt |
+| `created_at` | timestamptz | When the credential was registered |
+| `last_used_at` | timestamptz | Last successful assertion — used to show "last used" in settings |
+
+Primary key: composite `(user_id, credential_id)`. A `UNIQUE` constraint
+on `credential_id` ensures no two users share the same credential.
+
+Presence of at least one row in this table counts as a registered second
+factor for `lib/totp.ts::userHasSecondFactor` and therefore for the
+`(app)` layout enforcement gate.
 
 ### `tasks`
 

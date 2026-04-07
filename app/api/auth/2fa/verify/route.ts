@@ -22,7 +22,7 @@ import { auth } from "@/lib/auth";
 import {
   verifyUserTotpCode,
   consumeBackupCode,
-  markSessionTotpVerified,
+  markSessionSecondFactorVerified,
   readSessionTokenFromCookieStore,
 } from "@/lib/totp";
 import { TotpVerifyInputSchema } from "@/lib/validators";
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: 500 }
     );
   }
-  await markSessionTotpVerified(sessionToken);
+  await markSessionSecondFactorVerified(sessionToken);
 
   return NextResponse.json({ success: true, usedBackupCode });
 }

@@ -15,11 +15,8 @@ import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { getUserStats } from "@/lib/gamification";
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import {
-  isSessionTotpVerified,
+  isSessionSecondFactorVerified,
   readSessionTokenFromCookieStore,
   userHasSecondFactor,
 } from "@/lib/totp";
@@ -45,29 +42,27 @@ export default async function AppLayout({
 
   const { user } = session;
 
-  // ── 2FA enforcement gate ───────────────────────────────────────────────
+  // ── Second-factor enforcement gate ─────────────────────────────────────
   // 1) When REQUIRE_2FA=true and the user has no second factor at all,
-  //    hard-lock to /setup/2fa. Existing users without 2FA hit this on
-  //    their next request after the env var is enabled.
-  // 2) When the user has 2FA configured but the current session row has
-  //    not yet been verified, redirect to /login/2fa for the second-factor
-  //    challenge. Triggered on every fresh OAuth login.
+  //    hard-lock to /setup/2fa. Existing users without a second factor hit
+  //    this on their next request after the env var is enabled.
+  // 2) When the user has any second factor configured (TOTP or Passkey)
+  //    but the current session row has not yet been verified, redirect to
+  //    /login/2fa for the second-factor challenge. Triggered on every
+  //    fresh OAuth login. Passwordless passkey logins skip this because
+  //    their sessions are created with `second_factor_verified_at` pre-set.
   // The /setup/2fa and /login/2fa routes mount their own minimal layouts
   // outside this hierarchy to avoid a redirect loop.
-  if (serverEnv.REQUIRE_2FA && !(await userHasSecondFactor(user.id!))) {
+  const hasSecondFactor = await userHasSecondFactor(user.id!);
+  if (serverEnv.REQUIRE_2FA && !hasSecondFactor) {
     redirect("/setup/2fa");
   }
-  const [userRow] = await db
-    .select({ totpEnabledAt: users.totpEnabledAt })
-    .from(users)
-    .where(eq(users.id, user.id!))
-    .limit(1);
-  if (userRow?.totpEnabledAt) {
+  if (hasSecondFactor) {
     const cookieStore = await cookies();
     const sessionToken = readSessionTokenFromCookieStore(cookieStore);
     const verified =
       sessionToken !== undefined &&
-      (await isSessionTotpVerified(sessionToken));
+      (await isSessionSecondFactorVerified(sessionToken));
     if (!verified) redirect("/login/2fa");
   }
 

@@ -9,7 +9,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 | Feature                          | Kategorie        | Aufwand | Notizen                                                                 |
 | -------------------------------- | ---------------- | ------- | ----------------------------------------------------------------------- |
 | Microsoft Sign In                | Auth             | ✅      | Auth.js `microsoft-entra-id`-Provider; Tenant hart auf `consumers` gepinnt — nur private MS-Accounts (Outlook/Hotmail/Live/Xbox), keine Work/School Accounts |
-| Passkeys (WebAuthn)              | Auth             | M       | `@simplewebauthn`-Adapter für Auth.js; keine externen Provider nötig    |
+| Passkeys (WebAuthn)              | Auth             | ✅      | `@simplewebauthn/server` + `@simplewebauthn/browser` v13 auf Auth.js-DB-Sessions; passwortloser Primary-Login auf `/login` UND Passkey als Alternative zum TOTP-Code auf `/login/2fa`; `authenticators`-Tabelle, 7 Endpoints unter `/api/auth/passkey/*`, signiertes Challenge-Cookie (5 min, purpose-tag), `userHasSecondFactor()` methodenagnostisch erweitert |
 | 2FA — TOTP                       | Auth             | ✅      | RFC-6238 TOTP via `otplib`; AES-256-GCM-verschlüsseltes Secret + SHA-256-gehashte Backup-Codes; Setup-Wizard, `/login/2fa`-Challenge, optionales Admin-Enforcement via `REQUIRE_2FA`; methoden-agnostischer Gate (`userHasSecondFactor`) bereit für Passkeys |
 | E-Mail-Benachrichtigungen        | Notifications    | ✅      | nodemailer + SMTP_*-Env-Vars; stilisiertes Newsletter-Template; Adresse pro User |
 | ntfy.sh Integration              | Notifications    | ✅      | URL-basierte Push-Benachrichtigungen; gut für Selfhoster                |
@@ -66,7 +66,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ### Authentifizierung erweitern
 
-- **Passkeys (WebAuthn)** — passwordloser Login ohne externen Provider; Auth.js hat `@simplewebauthn`-Adapter; ideal für PWA-Nutzer
+- ✅ **Passkeys (WebAuthn)** — passwortloser Primary-Login UND methodenagnostischer zweiter Faktor via `@simplewebauthn/server` + `@simplewebauthn/browser` v13; eigene Endpoints (kein Auth.js-Passkey-Provider, weil der JWT-Sessions erzwingen würde — Momo bleibt auf DB-Sessions für Revocation); `authenticators`-Tabelle, Settings-UI (`PasskeysSection`), Login-Buttons, `/login/2fa`-Alternative; Sessions aus dem passwordless-Login sind inhärent MFA-satisfied; `userHasSecondFactor()` erweitert
 - ✅ **2FA — TOTP** — Authenticator-App (Aegis, 2FAS, Google Authenticator, Authy, 1Password) als zweiter Faktor *nach* dem OAuth-Login; kein Passkey-Ersatz; via `otplib` + QR-Code-Setup; 10 SHA-256-gehashte Backup-Codes; AES-256-GCM-Verschlüsselung der Secrets; optionales Admin-Enforcement via `REQUIRE_2FA=true` (Hard-Lock auf `/setup/2fa`)
 - **Microsoft / Azure AD** — Auth.js `AzureAD`-Provider; relevant für Windows/Office-Nutzer; geringer Aufwand
 
