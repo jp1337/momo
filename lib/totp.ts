@@ -18,10 +18,11 @@
 
 import { generateSecret, generateURI, verify } from "otplib";
 import QRCode from "qrcode";
-import { randomBytes } from "crypto";
+import { randomBytes, createHmac, timingSafeEqual as nodeTimingSafeEqual } from "crypto";
 import { eq, and, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { users, totpBackupCodes } from "@/lib/db/schema";
+import { users, totpBackupCodes, sessions } from "@/lib/db/schema";
+import { serverEnv } from "@/lib/env";
 import {
   encryptSecret,
   decryptSecret,
@@ -49,6 +50,13 @@ const TOTP_EPOCH_TOLERANCE = 30;
 
 /** Issuer label that appears in the user's authenticator app. */
 const TOTP_ISSUER = "Momo";
+
+/** Lifetime of the setup cookie in seconds. The user must finish the wizard
+ *  within this window or restart the setup. */
+export const SETUP_TOKEN_TTL_SECONDS = 10 * 60;
+
+/** Cookie name carrying the signed setup token. */
+export const SETUP_COOKIE_NAME = "momo_totp_setup";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -304,6 +312,65 @@ export async function getUserTotpStatus(userId: string): Promise<TotpStatus> {
 }
 
 /**
+ * Names of the Auth.js v5 session cookie depending on deployment environment.
+ * The "__Secure-" prefixed variant is set automatically when the request is
+ * served over HTTPS.
+ */
+export const AUTH_SESSION_COOKIE_NAMES = [
+  "authjs.session-token",
+  "__Secure-authjs.session-token",
+];
+
+/**
+ * Reads the raw Auth.js session token from the request cookies. Returns
+ * undefined if no session cookie is present.
+ *
+ * Accepts the Next.js `cookies()` store (from `next/headers`) so the helper
+ * is decoupled from request lifecycle.
+ */
+export function readSessionTokenFromCookieStore(
+  cookieStore: { get: (name: string) => { value: string } | undefined }
+): string | undefined {
+  for (const name of AUTH_SESSION_COOKIE_NAMES) {
+    const c = cookieStore.get(name);
+    if (c?.value) return c.value;
+  }
+  return undefined;
+}
+
+/**
+ * Marks a specific session row as having passed the second-factor challenge.
+ * Idempotent — calling it on an already-verified session is a no-op upsert.
+ *
+ * @param sessionToken - Primary key of the sessions row (from the Auth.js cookie)
+ */
+export async function markSessionTotpVerified(
+  sessionToken: string
+): Promise<void> {
+  await db
+    .update(sessions)
+    .set({ totpVerifiedAt: new Date() })
+    .where(eq(sessions.sessionToken, sessionToken));
+}
+
+/**
+ * Returns true if the given session row has passed the 2FA challenge.
+ * Used by the layout-level enforcement gate.
+ *
+ * @param sessionToken - Primary key of the sessions row
+ */
+export async function isSessionTotpVerified(
+  sessionToken: string
+): Promise<boolean> {
+  const [row] = await db
+    .select({ totpVerifiedAt: sessions.totpVerifiedAt })
+    .from(sessions)
+    .where(eq(sessions.sessionToken, sessionToken))
+    .limit(1);
+  return !!row?.totpVerifiedAt;
+}
+
+/**
  * Method-agnostic check used by every enforcement gate (REQUIRE_2FA hard-lock,
  * settings re-display, etc.). Returns true if the user has *any* registered
  * second factor.
@@ -345,4 +412,104 @@ function randomCode(): string {
     s += BACKUP_CODE_ALPHABET[bytes[i] % BACKUP_CODE_ALPHABET.length];
   }
   return s;
+}
+
+// ─── Setup-Token Cookie ───────────────────────────────────────────────────────
+//
+// During the setup wizard the plaintext TOTP secret must survive between the
+// /api/auth/2fa/setup call (which generates it) and the /api/auth/2fa/verify-
+// setup call (which commits it). We deliberately do NOT persist the secret in
+// the database before the user has proven they can compute a valid code, to
+// avoid leaving a half-configured plaintext path on disk.
+//
+// Format: base64url(json({ uid, sec, exp })) + "." + base64url(HMAC-SHA256)
+// Signing key: AUTH_SECRET (already required for the project).
+// The cookie is httpOnly + SameSite=Strict + 10 min TTL.
+
+interface SetupTokenPayload {
+  /** User the setup belongs to — guards against cookie reuse across users. */
+  uid: string;
+  /** Plaintext TOTP secret. */
+  sec: string;
+  /** Expiry as unix seconds. */
+  exp: number;
+}
+
+function b64urlEncode(buf: Buffer): string {
+  return buf
+    .toString("base64")
+    .replace(/=+$/, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+}
+
+function b64urlDecode(s: string): Buffer {
+  const pad = s.length % 4 === 0 ? "" : "=".repeat(4 - (s.length % 4));
+  return Buffer.from(
+    s.replace(/-/g, "+").replace(/_/g, "/") + pad,
+    "base64"
+  );
+}
+
+function getAuthSecret(): string {
+  if (!serverEnv.AUTH_SECRET) {
+    throw new Error("AUTH_SECRET is not configured");
+  }
+  return serverEnv.AUTH_SECRET;
+}
+
+/**
+ * Signs a setup payload into a short-lived token suitable for an httpOnly
+ * cookie. Bound to the user ID so a token issued for user A cannot be
+ * replayed against user B.
+ */
+export function signSetupToken(userId: string, secret: string): string {
+  const payload: SetupTokenPayload = {
+    uid: userId,
+    sec: secret,
+    exp: Math.floor(Date.now() / 1000) + SETUP_TOKEN_TTL_SECONDS,
+  };
+  const body = b64urlEncode(Buffer.from(JSON.stringify(payload), "utf8"));
+  const sig = b64urlEncode(
+    createHmac("sha256", getAuthSecret()).update(body).digest()
+  );
+  return `${body}.${sig}`;
+}
+
+/**
+ * Verifies and decodes a setup token. Returns the embedded plaintext secret
+ * if the signature is valid, the user ID matches, and the token has not
+ * expired. Returns null otherwise.
+ */
+export function verifySetupToken(
+  token: string,
+  expectedUserId: string
+): string | null {
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [body, sig] = parts;
+
+  const expected = createHmac("sha256", getAuthSecret()).update(body).digest();
+  let provided: Buffer;
+  try {
+    provided = b64urlDecode(sig);
+  } catch {
+    return null;
+  }
+  if (
+    expected.length !== provided.length ||
+    !nodeTimingSafeEqual(expected, provided)
+  ) {
+    return null;
+  }
+
+  let payload: SetupTokenPayload;
+  try {
+    payload = JSON.parse(b64urlDecode(body).toString("utf8"));
+  } catch {
+    return null;
+  }
+  if (payload.uid !== expectedUserId) return null;
+  if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+  return payload.sec;
 }
