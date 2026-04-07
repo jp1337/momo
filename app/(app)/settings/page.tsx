@@ -25,6 +25,8 @@ import { DeleteAccount } from "@/components/settings/delete-account";
 import { LinkedAccounts } from "@/components/settings/linked-accounts";
 import { QuestSettings } from "@/components/settings/quest-settings";
 import { EmotionalClosureSettings } from "@/components/settings/emotional-closure-settings";
+import { SecuritySection } from "@/components/settings/security-section";
+import { getUserTotpStatus } from "@/lib/totp";
 import { serverEnv } from "@/lib/env";
 import { getTranslations, getLocale } from "next-intl/server";
 import { Suspense } from "react";
@@ -47,8 +49,8 @@ export default async function SettingsPage() {
   const tClosure = await getTranslations("closure");
   const locale = await getLocale();
 
-  // Fetch user preferences, linked accounts, push subscriptions, and notification channels from DB
-  const [userRows, linkedAccountRows, activeSubs, channelRows] = await Promise.all([
+  // Fetch user preferences, linked accounts, push subscriptions, notification channels, and 2FA status from DB
+  const [userRows, linkedAccountRows, activeSubs, channelRows, totpStatus] = await Promise.all([
     db
       .select({
         name: users.name,
@@ -80,6 +82,7 @@ export default async function SettingsPage() {
       })
       .from(notificationChannels)
       .where(eq(notificationChannels.userId, session.user.id)),
+    getUserTotpStatus(session.user.id),
   ]);
 
   const user = userRows[0];
@@ -229,6 +232,45 @@ export default async function SettingsPage() {
           }))}
           emailAvailable={isEmailChannelAvailable()}
           defaultEmailAddress={user.email ?? ""}
+        />
+      </section>
+
+      {/* Security / Two-Factor Authentication section */}
+      <section
+        className="rounded-xl p-6 flex flex-col gap-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            className="text-base font-semibold"
+            style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("section_security")}
+          </h2>
+          <p
+            className="text-sm"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui)",
+            }}
+          >
+            {t("security_hint")}
+          </p>
+        </div>
+
+        <SecuritySection
+          initialEnabled={totpStatus.enabled}
+          initialEnabledAt={
+            totpStatus.enabledAt ? totpStatus.enabledAt.toISOString() : null
+          }
+          initialUnusedBackupCodes={totpStatus.unusedBackupCodes}
+          required={serverEnv.REQUIRE_2FA ?? false}
         />
       </section>
 
