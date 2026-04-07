@@ -13,7 +13,12 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGithub, faDiscord, faGoogle } from "@fortawesome/free-brands-svg-icons";
+import {
+  faGithub,
+  faDiscord,
+  faGoogle,
+  faMicrosoft,
+} from "@fortawesome/free-brands-svg-icons";
 import { faKey, faCheck } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
@@ -27,6 +32,7 @@ const PROVIDERS: ProviderInfo[] = [
   { id: "github", label: "GitHub", icon: faGithub },
   { id: "discord", label: "Discord", icon: faDiscord },
   { id: "google", label: "Google", icon: faGoogle },
+  { id: "microsoft-entra-id", label: "Microsoft", icon: faMicrosoft },
   { id: "keycloak", label: "SSO (OIDC)", icon: faKey },
 ];
 

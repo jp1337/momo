@@ -23,6 +23,8 @@ At least one provider must be configured for login to work.
 | `DISCORD_CLIENT_SECRET` | string | Optional | Discord Application Client Secret |
 | `GOOGLE_CLIENT_ID` | string | Optional | Google OAuth 2.0 Client ID |
 | `GOOGLE_CLIENT_SECRET` | string | Optional | Google OAuth 2.0 Client Secret |
+| `MICROSOFT_CLIENT_ID` | string | Optional | Microsoft Application (Client) ID. **Private accounts only** — work / school / Microsoft 365 accounts are intentionally not supported (tenant pinned to `consumers`). See [oauth-setup.md](oauth-setup.md#microsoft-private-accounts-only). |
+| `MICROSOFT_CLIENT_SECRET` | string | Optional | Microsoft Client Secret **Value** (not the Secret ID — that's a common mistake). |
 | `OIDC_CLIENT_ID` | string | Optional | Generic OIDC Client ID (Authentik, Keycloak, etc.) |
 | `OIDC_CLIENT_SECRET` | string | Optional | Generic OIDC Client Secret |
 | `OIDC_ISSUER` | string (URL) | Optional | OIDC Issuer URL. Enabling this activates the OIDC login button. |

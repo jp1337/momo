@@ -34,6 +34,8 @@ At least one provider must be configured for login to work.
 | `DISCORD_CLIENT_SECRET` | Optional | Discord Application Client Secret |
 | `GOOGLE_CLIENT_ID` | Optional | Google OAuth 2.0 Client ID |
 | `GOOGLE_CLIENT_SECRET` | Optional | Google OAuth 2.0 Client Secret |
+| `MICROSOFT_CLIENT_ID` | Optional | Microsoft Application (Client) ID — **private accounts only** (Outlook.com, Hotmail, Live, Xbox). Work / school / Microsoft 365 accounts are intentionally not supported (tenant pinned to `consumers`). See the [Microsoft setup guide](/momo/oauth-setup#microsoft-private-accounts-only). |
+| `MICROSOFT_CLIENT_SECRET` | Optional | Microsoft Client Secret **Value** — make sure you copy the *Value* column in the Azure portal, **not** the *Secret ID* (very common mistake). |
 | `OIDC_CLIENT_ID` | Optional | Generic OIDC Client ID (Authentik, Keycloak, Zitadel, etc.) |
 | `OIDC_CLIENT_SECRET` | Optional | Generic OIDC Client Secret |
 | `OIDC_ISSUER` | Optional | OIDC Issuer URL. Setting this activates the OIDC login button. |

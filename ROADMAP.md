@@ -8,8 +8,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 | Feature                          | Kategorie        | Aufwand | Notizen                                                                 |
 | -------------------------------- | ---------------- | ------- | ----------------------------------------------------------------------- |
-| Microsoft Sign In                | Auth             | S       | Auth.js `AzureAD`-Provider; braucht App-Registrierung in Azure          |
-| Apple Sign In                    | Auth             | M       | Auth.js `Apple`-Provider; erfordert Apple Developer Account (99 $/Jahr) |
+| Microsoft Sign In                | Auth             | ✅      | Auth.js `microsoft-entra-id`-Provider; Tenant hart auf `consumers` gepinnt — nur private MS-Accounts (Outlook/Hotmail/Live/Xbox), keine Work/School Accounts |
 | Passkeys (WebAuthn)              | Auth             | M       | `@simplewebauthn`-Adapter für Auth.js; keine externen Provider nötig    |
 | 2FA — TOTP                       | Auth             | M       | Authenticator-App (Google Authenticator, Authy); TOTP als zweiter Faktor nach OAuth-Login |
 | E-Mail-Benachrichtigungen        | Notifications    | ✅      | nodemailer + SMTP_*-Env-Vars; stilisiertes Newsletter-Template; Adresse pro User |
@@ -70,7 +69,6 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 - **Passkeys (WebAuthn)** — passwordloser Login ohne externen Provider; Auth.js hat `@simplewebauthn`-Adapter; ideal für PWA-Nutzer
 - **2FA — TOTP** — Authenticator-App (Google Authenticator, Authy) als zweiter Faktor *nach* dem OAuth-Login; kein Passkey-Ersatz; via `otplib` + QR-Code-Setup; Backup-Codes empfohlen
 - **Microsoft / Azure AD** — Auth.js `AzureAD`-Provider; relevant für Windows/Office-Nutzer; geringer Aufwand
-- **Apple Sign In** — Auth.js `Apple`-Provider; wichtig für iOS/macOS-Nutzer; erfordert Apple Developer Account
 
 ### Benachrichtigungen erweitern
 
@@ -89,38 +87,11 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 - **Webhook-System** — ausgehende Webhooks bei Task-erstellt / Task-abgeschlossen
 - **Notification-Scheduler erweitern** — "Fällig heute"-Reminder, Weekly Review Push, konfigurierbare Uhrzeit
-- **CLI-Tool** — `momo add "Aufgabe"` aus dem Terminal (nutzt API Keys)
-
----
-
-## Alexa Skill — Architektur
-
-```
-Nutzer: "Alexa, sage Momo: füge Aufgabe Zahnarzt hinzu"
-         ↓
-Alexa Skills Kit (Amazon Developer Console)
-         ↓
-AWS Lambda (Node.js) — Account Linking via API Key
-         ↓
-POST https://momotask.app/api/tasks
-Authorization: Bearer momo_live_...
-{ "title": "Zahnarzt", "type": "ONE_TIME" }
-```
-
-**Benötigt:**
-
-1. Alexa Skill im Amazon Developer Console registrieren (Invocation: "Momo")
-2. Account Linking: User gibt API Key einmalig in der Alexa App ein
-3. Lambda-Funktion (Node.js/TypeScript) mit Intent-Handling
-4. Intents: `AddTaskIntent`, `GetQuestIntent`, `ListTasksIntent`
-5. Optional: Momo OAuth-Flow statt API Key (komplexer, aber nahtloser)
 
 ---
 
 ## Ideen-Backlog (noch nicht bewertet)
 
-- Watch companion app (WearOS / Apple Watch)
-- Desktop App (Tauri)
 - Pomodoro-Timer Integration
 - AI-gestützte Aufgaben-Priorisierung
 - Markdown in Task-Notes

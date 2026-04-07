@@ -11,7 +11,7 @@ This guide will get Momo running on your machine in under 10 minutes using Docke
 ## Prerequisites
 
 - **Docker Engine 24+** and **Docker Compose v2** — [Install Docker](https://docs.docker.com/get-docker/)
-- **At least one OAuth app** — you need GitHub, Discord, Google, or an OIDC provider configured so you can log in. See the [OAuth Setup guide](/momo/oauth-setup).
+- **At least one OAuth app** — you need GitHub, Discord, Google, Microsoft (private accounts only), or an OIDC provider configured so you can log in. See the [OAuth Setup guide](/momo/oauth-setup).
 - A terminal on Linux, macOS, or WSL on Windows.
 
 ---

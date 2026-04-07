@@ -5,6 +5,9 @@
  *  - GitHub  (always enabled if GITHUB_CLIENT_ID is set)
  *  - Discord (always enabled if DISCORD_CLIENT_ID is set)
  *  - Google  (always enabled if GOOGLE_CLIENT_ID is set)
+ *  - Microsoft (private accounts only — outlook.com / hotmail / live / xbox;
+ *    enabled if MICROSOFT_CLIENT_ID is set; tenant pinned to "consumers" so
+ *    work / school / Microsoft 365 accounts are intentionally NOT supported)
  *  - Generic OIDC (enabled only if OIDC_ISSUER is set — for Authentik, Keycloak, etc.)
  *
  * Uses the Drizzle adapter to persist users, sessions, and accounts in PostgreSQL.
@@ -15,6 +18,7 @@ import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Discord from "next-auth/providers/discord";
 import Google from "next-auth/providers/google";
+import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import Keycloak from "next-auth/providers/keycloak";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/lib/db";
@@ -49,6 +53,22 @@ function buildProviders() {
       Google({
         clientId: serverEnv.GOOGLE_CLIENT_ID,
         clientSecret: serverEnv.GOOGLE_CLIENT_SECRET,
+      })
+    );
+  }
+
+  // Microsoft (private accounts only) — pinned to the "consumers" tenant so
+  // only personal Microsoft accounts (outlook.com, hotmail, live, xbox, skype)
+  // can sign in. Work / school / Microsoft 365 accounts are intentionally
+  // rejected at the Auth.js layer regardless of how the Azure app is configured.
+  if (serverEnv.MICROSOFT_CLIENT_ID && serverEnv.MICROSOFT_CLIENT_SECRET) {
+    providers.push(
+      MicrosoftEntraID({
+        clientId: serverEnv.MICROSOFT_CLIENT_ID,
+        clientSecret: serverEnv.MICROSOFT_CLIENT_SECRET,
+        // "consumers" tenant => only personal Microsoft accounts.
+        // (Default would be "/common/v2.0/", which also accepts work/school accounts.)
+        issuer: "https://login.microsoftonline.com/consumers/v2.0/",
       })
     );
   }
