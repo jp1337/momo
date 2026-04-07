@@ -47,16 +47,21 @@ COPY . .
 # Disable telemetry in CI/build contexts
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Stub env vars for build — real values injected at runtime
-# AUTH_SECRET must be set so auth.ts can initialize (even if unused at build time)
-ENV AUTH_SECRET="build-time-placeholder-not-used-in-production"
-ENV DATABASE_URL="postgresql://momo:password@localhost:5432/momo"
-ENV NEXT_PUBLIC_APP_URL="http://localhost:3000"
-
 # --mount=type=cache on .next/cache persists the Next.js incremental build cache.
 # On warm cache (no source changes), next build skips unchanged pages — typically
 # cuts build time from ~3 min to ~30-60 s.
+#
+# AUTH_SECRET / DATABASE_URL / NEXT_PUBLIC_APP_URL are placeholder values that only
+# need to exist long enough for `next build` to evaluate `lib/env.ts` at module load.
+# They are inlined on the RUN line (not declared via ENV) so they exist only for
+# the duration of this command and are never baked into a layer of the final image.
+# This silences the dockerfile-rules SecretsUsedInArgOrEnv warning and is cleaner
+# than persisting bogus secret-shaped values into image metadata. Real values are
+# injected at runtime via the container's environment / .env.local.
 RUN --mount=type=cache,target=/app/.next/cache \
+    AUTH_SECRET="build-time-placeholder-not-used-in-production" \
+    DATABASE_URL="postgresql://momo:password@localhost:5432/momo" \
+    NEXT_PUBLIC_APP_URL="http://localhost:3000" \
     npm run build
 
 # ─── Stage 3: Production runner ──────────────────────────────────────────────
