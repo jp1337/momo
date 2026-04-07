@@ -14,6 +14,7 @@
  *  - linking_requests   Short-lived tokens for OAuth account linking flow
  *  - quest_postponements  Log of daily quest postponement events (for weekly review)
  *  - notification_channels  User-configured notification channels (ntfy, pushover, telegram, email; webhook future)
+ *  - totp_backup_codes  One-time recovery codes for TOTP-based 2FA
  */
 
 import {
@@ -153,6 +154,22 @@ export const users = pgTable("users", {
   /** Date on which energyLevel was set (YYYY-MM-DD in user's timezone) — used for daily reset */
   energyLevelDate: date("energy_level_date"),
 
+  /**
+   * TOTP secret for two-factor authentication, encrypted at rest with
+   * AES-256-GCM (see lib/utils/crypto.ts and TOTP_ENCRYPTION_KEY env var).
+   * NULL when 2FA is not configured. The plaintext secret is never stored.
+   */
+  totpSecret: text("totp_secret"),
+
+  /**
+   * Timestamp when the user successfully verified their TOTP setup with
+   * the first valid code. While NULL, 2FA is treated as inactive even if
+   * totpSecret is set (defensive — should not occur in practice because
+   * setup is committed atomically). Acts as the source of truth for
+   * "is 2FA enabled for this user".
+   */
+  totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -192,6 +209,14 @@ export const sessions = pgTable("sessions", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   expires: timestamp("expires", { mode: "date" }).notNull(),
+
+  /**
+   * Timestamp at which the second factor (TOTP / backup code) was verified
+   * for this specific session. NULL means the user is logged in via OAuth
+   * but has not yet completed the 2FA challenge — protected routes must
+   * redirect to /login/2fa in that case. Reset to NULL on every new session.
+   */
+  totpVerifiedAt: timestamp("totp_verified_at", { withTimezone: true }),
 });
 
 /** Magic link / email verification tokens */
@@ -592,6 +617,30 @@ export const notificationChannels = pgTable(
   ]
 );
 
+/**
+ * One-time backup codes for TOTP recovery.
+ * Each row stores the SHA-256 hash of a single 10-character alphanumeric
+ * code (mirrors the api_keys hashing pattern). Codes are generated in
+ * batches of 10 during setup or regeneration; the plaintext is shown to
+ * the user exactly once. `usedAt` flips a code to consumed — codes are
+ * single-use to prevent replay.
+ */
+export const totpBackupCodes = pgTable("totp_backup_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  /** SHA-256 hex digest of the plaintext code */
+  codeHash: text("code_hash").notNull(),
+
+  /** Set when the code is consumed; NULL means the code is still valid */
+  usedAt: timestamp("used_at", { withTimezone: true }),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -607,6 +656,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   pushSubscriptions: many(pushSubscriptions),
   questPostponements: many(questPostponements),
   notificationChannels: many(notificationChannels),
+  totpBackupCodes: many(totpBackupCodes),
 }));
 
 export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
@@ -671,4 +721,8 @@ export const questPostponementsRelations = relations(questPostponements, ({ one 
 
 export const notificationChannelsRelations = relations(notificationChannels, ({ one }) => ({
   user: one(users, { fields: [notificationChannels.userId], references: [users.id] }),
+}));
+
+export const totpBackupCodesRelations = relations(totpBackupCodes, ({ one }) => ({
+  user: one(users, { fields: [totpBackupCodes.userId], references: [users.id] }),
 }));
