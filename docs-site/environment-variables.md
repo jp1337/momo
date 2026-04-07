@@ -72,6 +72,45 @@ Copy each value to the corresponding variable in `.env.local`.
 
 ---
 
+## Email Notifications (SMTP)
+
+Optional. These variables enable the **Email** notification channel that users can opt into from **Settings → Additional Notification Channels**. The channel is hidden in the UI when `SMTP_HOST` is unset, so leaving these blank is a safe no-op.
+
+| Variable | Default | Description |
+|---|---|---|
+| `SMTP_HOST` | — | SMTP server hostname (e.g. `smtp.gmail.com`). Leave empty to disable email notifications. |
+| `SMTP_PORT` | `587` | SMTP port. `587` for STARTTLS, `465` for implicit TLS. |
+| `SMTP_USER` | — | SMTP authentication username. Optional if your SMTP server allows unauthenticated relay (e.g. local Mailpit). |
+| `SMTP_PASS` | — | SMTP authentication password / app password. |
+| `SMTP_FROM` | — | Sender address used as the `From:` header, e.g. `"Momo <noreply@momotask.app>"`. Required for delivery. |
+| `SMTP_SECURE` | `false` | `true` for implicit TLS (port 465), `false` for STARTTLS (port 587). |
+
+**Gmail with App Password:**
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=you@gmail.com
+SMTP_PASS=xxxxxxxxxxxxxxxx          # 16-char Google App Password
+SMTP_FROM="Momo <you@gmail.com>"
+SMTP_SECURE=false
+```
+
+**Mailpit (local development, no auth):**
+
+```env
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_FROM="Momo <noreply@localhost>"
+SMTP_SECURE=false
+```
+
+Run Mailpit with `docker run -p 1025:1025 -p 8025:8025 axllent/mailpit` and view captured emails at `http://localhost:8025`.
+
+> The other notification channels (ntfy.sh, Pushover, Telegram) are configured per user in the settings UI — no environment variables needed.
+
+---
+
 ## Cron Job Protection
 
 | Variable | Default | Description |
@@ -107,6 +146,22 @@ In production, set both `NEXT_PUBLIC_APP_URL` and `NEXTAUTH_URL` to your public 
 NEXT_PUBLIC_APP_URL=https://momo.example.com
 NEXTAUTH_URL=https://momo.example.com
 ```
+
+---
+
+## Admin Access
+
+| Variable | Default | Description |
+|---|---|---|
+| `ADMIN_USER_IDS` | — | Comma-separated list of user UUIDs that can access the `/admin` aggregate-statistics page. If unset or empty, the admin page is inaccessible to everyone. |
+
+Example with two admins:
+
+```env
+ADMIN_USER_IDS=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx,yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy
+```
+
+Find a user's UUID in the database with `SELECT id, email FROM users;`.
 
 ---
 
@@ -174,6 +229,14 @@ DISCORD_CLIENT_SECRET=your-discord-client-secret
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=your-vapid-public-key
 VAPID_PRIVATE_KEY=your-vapid-private-key
 VAPID_CONTACT=mailto:admin@example.com
+
+# Email notifications (optional — enables the Email channel in user settings)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=you@gmail.com
+SMTP_PASS=your-smtp-app-password
+SMTP_FROM="Momo <you@gmail.com>"
+SMTP_SECURE=false
 
 # Cron protection
 CRON_SECRET=your-hex-cron-secret

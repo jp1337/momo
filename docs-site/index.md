@@ -22,12 +22,27 @@ description: Task management for people who struggle with procrastination. Open 
   <div class="feature-card">
     <div class="icon">🌟</div>
     <h3>Daily Quest</h3>
-    <p>One task per day, chosen for you. No overwhelm — just one step forward.</p>
+    <p>One task per day, picked for you — energy-aware, with an emotional closure quote on completion.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🎯</div>
+    <h3>Focus Mode</h3>
+    <p>Distraction-free view: only your quest and short tasks. Nothing else.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">⏱</div>
+    <h3>5-Minute Mode</h3>
+    <p>Only have a few minutes? See just the tasks you can finish right now.</p>
   </div>
   <div class="feature-card">
     <div class="icon">📁</div>
     <h3>Topics & Subtasks</h3>
-    <p>Break big projects into tiny, manageable pieces.</p>
+    <p>Group related tasks. Drag-and-drop reordering, break-down into smaller steps.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">⏰</div>
+    <h3>Snooze Tasks</h3>
+    <p>Pause anything you're not ready for. It comes back when you're ready.</p>
   </div>
   <div class="feature-card">
     <div class="icon">🔁</div>
@@ -37,47 +52,62 @@ description: Task management for people who struggle with procrastination. Open 
   <div class="feature-card">
     <div class="icon">🪙</div>
     <h3>Gamification</h3>
-    <p>Earn coins, build streaks, level up. Small wins deserve real celebration.</p>
+    <p>Coins, streaks, levels, achievements. Small wins deserve real celebration.</p>
   </div>
   <div class="feature-card">
     <div class="icon">💰</div>
     <h3>Wishlist & Budget</h3>
-    <p>Track things you want to buy with a monthly budget indicator.</p>
+    <p>Earn coins through tasks, then spend them on things you actually want.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">📊</div>
+    <h3>Weekly Review</h3>
+    <p>A Sunday recap of completions, postponements, coins, streak, and top topics.</p>
   </div>
   <div class="feature-card">
     <div class="icon">🔔</div>
-    <h3>Push Notifications</h3>
-    <p>Daily reminders via browser push. No third-party service needed.</p>
+    <h3>Multi-Channel Notifications</h3>
+    <p>Browser push, ntfy.sh, Pushover, Telegram, and Email — pick whatever fits your workflow.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🔍</div>
+    <h3>Search & Filter</h3>
+    <p>Live search across tasks and wishlist with priority and topic chips.</p>
   </div>
   <div class="feature-card">
     <div class="icon">📱</div>
-    <h3>PWA</h3>
-    <p>Install on your phone like a native app. Works offline.</p>
+    <h3>PWA & Swipe Gestures</h3>
+    <p>Install on your phone like a native app. Swipe to complete or delete on mobile.</p>
   </div>
   <div class="feature-card">
     <div class="icon">🔑</div>
     <h3>REST API & API Keys</h3>
-    <p>Full REST API with personal access tokens. Read-only keys, expiry dates, Swagger UI at <code>/api-docs</code>.</p>
-  </div>
-  <div class="feature-card">
-    <div class="icon">🌍</div>
-    <h3>Multilingual</h3>
-    <p>German, English, and French UI. Add any language by dropping in a messages file.</p>
-  </div>
-  <div class="feature-card">
-    <div class="icon">🏠</div>
-    <h3>Self-Hostable</h3>
-    <p>Your data, your server, your rules. Docker Compose in minutes — migrations run automatically.</p>
+    <p>Personal access tokens, read-only keys, OpenAPI 3.1 spec, Swagger UI at <code>/api-docs</code>.</p>
   </div>
   <div class="feature-card">
     <div class="icon">🔊</div>
     <h3>Alexa Skill</h3>
-    <p>Add tasks and check your quest by voice. "Alexa, add dentist to Momo." Works with any Echo device.</p>
+    <p>Add tasks and check your quest by voice. Works with any Echo device.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🌍</div>
+    <h3>Multilingual</h3>
+    <p>German, English, and French UI. Drop in a JSON file to add any language.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🏠</div>
+    <h3>Self-Hostable</h3>
+    <p>Docker Compose or Kubernetes. Migrations run automatically. Your data, your server.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🛡</div>
+    <h3>GDPR-Friendly</h3>
+    <p>Full data export, account deletion, configurable legal pages — built in.</p>
   </div>
   <div class="feature-card">
     <div class="icon">📖</div>
     <h3>Full Feature Guide</h3>
-    <p>Every feature explained with practical examples — tasks, quests, gamification, wishlist, API keys, and more. <a href="/momo/features">Read the guide →</a></p>
+    <p>Every feature explained with practical examples. <a href="/momo/features">Read the guide →</a></p>
   </div>
 </div>
 
@@ -100,29 +130,35 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 | Layer | Technology |
 |---|---|
 | Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4 |
-| Auth | Auth.js v5 (GitHub, Discord, Google, OIDC) |
-| Database | PostgreSQL 18 + Drizzle ORM |
-| Push | Web Push API (VAPID) |
-| API | OpenAPI 3.1.0, Personal Access Tokens |
-| Container | Docker + Kubernetes |
+| Auth | Auth.js v5 (GitHub, Discord, Google, OIDC, account linking) |
+| Database | PostgreSQL 18 + Drizzle ORM (auto-migrations) |
+| Notifications | Web Push (VAPID), ntfy.sh, Pushover, Telegram Bot API, SMTP via nodemailer |
+| API | OpenAPI 3.1.0, Personal Access Tokens, Swagger UI at `/api-docs` |
+| Voice | Alexa Skill (AWS Lambda) with automatic Account Linking |
+| i18n | next-intl (German, English, French) |
+| Container | Docker + Kubernetes (manifests included) |
 
 ## What's New
 
-**Snooze / Pause tasks** — Don't want to see a task right now but don't want to delete it either? Click the clock icon and snooze it until tomorrow, next week, next month, or any date you choose. Snoozed tasks vanish from your list, Quick Wins, and Daily Quest — then reappear automatically when the time comes. [See Features →](/momo/features#snooze--pause-a-task)
+**Telegram & Email notification channels** — Push notifications via a personal Telegram bot (Bot Token + Chat ID, free) or by email (instance-wide SMTP). Both join ntfy.sh and Pushover under **Settings → Additional Notification Channels**. The email channel uses a stylised newsletter template with a tappable "Open Momo" button. [See Features →](/momo/features#additional-notification-channels)
 
-**Search & Filter** — The task list and wishlist now have a search bar and filter chips. Search titles (and notes for tasks) in real time, then narrow by priority or topic. Filters combine and show a live result count. [See Features →](/momo/features#search-and-filter)
+**Pushover integration** — Instant push notifications to iOS, Android, and desktop via Pushover. Configure with your User Key and Application Token in the settings.
 
-**Branded error pages** — A wrong URL or server hiccup now shows a custom Momo 404 or 500 page — same warm forest aesthetic, same fonts, with a direct link back to the app. No more bare Next.js error screens.
+**Energy-aware Daily Quest** — Tag tasks with a high / medium / low energy level. Each morning Momo asks how you're feeling and prefers tasks that match — no more being asked to write a tax return on a 🌙 day. [See Features →](/momo/features#energy-check-in)
 
-**Swipe gestures on mobile** — On any task list, swipe right to complete a task (green) or left to delete it (red). The same works for wishlist items: swipe right to mark as bought, swipe left to discard. No need to open a menu.
+**Focus Mode** — A new distraction-free view at `/focus` that shows only your Daily Quest and quick wins (≤ 15 min). All celebrations and animations still fire — just without the noise around them. [See Features →](/momo/features#focus-mode)
 
-**Confetti on wishlist purchases** — Marking a wishlist item as bought triggers a short celebration animation. Small wins deserve it.
+**5-Minute Mode** — A focused page at `/quick` showing only tasks with a 5-minute estimate. Perfect for those gaps between meetings. [See Features →](/momo/features#5-minute-mode)
 
-**Daily Quest resets every day** — An uncompleted quest is replaced the next morning so you never wake up to the same task two days in a row. The quest title is also included in your daily push notification: "Today's mission: Call the dentist."
+**Weekly Review** — Visit `/review` for a Sunday recap: completions vs last week, postponements, coins earned, streak, and top topics. An optional Sunday-evening push notification ships with the highlights. [See Features →](/momo/features#weekly-review)
 
-**Alexa Skill** — Add tasks and check your quest by voice. Supports task creation, wishlist additions, quest reading, and task listing. Account linking is automatic — no manual API key setup needed. [Learn more →](/momo/alexa-skill)
+**Drag-and-drop subtask reordering** — Inside any topic, grab the grip handle on a task and drag it to a new position. Mouse, touch, and keyboard all work. The order persists. [See Features →](/momo/features#reordering-tasks-drag--drop)
 
-**Consistent edit and delete controls** — Every card (tasks, topics, wishlist items) now has the edit (✎) and delete (✕) buttons in the same top-right position. Full titles are always visible, never cut off.
+**Profile editing** — OAuth provider gave you a no-reply email or weird display name? Edit your name, email, and avatar directly in **Settings → Account**. Avatars are resized server-side and stored as WebP. [See Features →](/momo/features#profile-editing)
+
+**Snooze tasks** — Click the clock icon to pause a task until tomorrow, next week, next month, or a custom date. Snoozed tasks vanish from your list and Daily Quest until the date passes. [See Features →](/momo/features#snooze--pause-a-task)
+
+**Emotional Closure** — After completing your Daily Quest, Momo shows a short Michael-Ende quote or affirmation. Toggleable in Settings, available in all three languages. [See Features →](/momo/features#emotional-closure)
 
 ---
 

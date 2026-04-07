@@ -363,9 +363,9 @@ Setup:
 3. Click **Save**
 4. Click **Send test** to verify it arrives — check spam folder on first attempt
 
-Self-hosters: see [environment-variables.md](https://github.com/jp1337/momo/blob/main/docs/environment-variables.md#email-notifications-smtp) for the `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` and `SMTP_SECURE` variables. Mailpit is the easiest local-dev option.
+Self-hosters: see the [Email Notifications (SMTP) section of the Environment Variables guide](/momo/environment-variables#email-notifications-smtp) for the `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` and `SMTP_SECURE` variables. Mailpit is the easiest local-dev option.
 
-A generic outbound webhook channel is still planned — see the [Roadmap](https://github.com/jp1337/momo).
+A generic outbound webhook channel is still planned — see the [Roadmap](https://github.com/jp1337/momo/blob/main/ROADMAP.md).
 
 ---
 
