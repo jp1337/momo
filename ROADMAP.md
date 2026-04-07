@@ -12,10 +12,10 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 | Apple Sign In                    | Auth             | M       | Auth.js `Apple`-Provider; erfordert Apple Developer Account (99 $/Jahr) |
 | Passkeys (WebAuthn)              | Auth             | M       | `@simplewebauthn`-Adapter für Auth.js; keine externen Provider nötig    |
 | 2FA — TOTP                       | Auth             | M       | Authenticator-App (Google Authenticator, Authy); TOTP als zweiter Faktor nach OAuth-Login |
-| E-Mail-Benachrichtigungen        | Notifications    | M       | Resend oder SMTP; täglicher Quest-Reminder + Streak-Warnung             |
+| E-Mail-Benachrichtigungen        | Notifications    | ✅      | nodemailer + SMTP_*-Env-Vars; stilisiertes Newsletter-Template; Adresse pro User |
 | ntfy.sh Integration              | Notifications    | ✅      | URL-basierte Push-Benachrichtigungen; gut für Selfhoster                |
 | Pushover Integration             | Notifications    | ✅      | API Token + User Key in Settings; sofortige Push-Alerts                 |
-| Telegram-Bot                     | Notifications    | M       | Bot Token + Chat ID in Settings; Benachrichtigungen + ggf. Task-Eingabe |
+| Telegram-Bot                     | Notifications    | ✅      | Bot Token + Chat ID in Settings; HTML-Parse-Mode mit Click-Through-Link |
 | Push-Benachrichtigungen debuggen | Technisch        | ✅      | 4 Bugs behoben: K8s CronJob, notificationTime-Filter, PATCH-Endpoint, Idempotenz-Guard |
 | Alexa Skill                      | User + Technisch | ✅      | Lambda-Code + Interaction Model in `alexa-skill/`; Account Linking via API Key |
 
@@ -74,10 +74,10 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ### Benachrichtigungen erweitern
 
-- **E-Mail-Benachrichtigungen** — Tagesquest-Reminder, Streak-Warnung per E-Mail; via Resend oder SMTP; konfigurierbar in Settings
-- **ntfy.sh** — Self-hosted Push via ntfy.sh-Topic-URL; kein App-Account nötig; ideal für Power-User & Selfhosters
-- **Pushover** — Push-Benachrichtigungen via Pushover API; einfache Integration über `PUSHOVER_USER_KEY` + `PUSHOVER_APP_TOKEN`
-- **Telegram-Bot** — Benachrichtigungen + ggf. Task-Eingabe per Telegram-Bot (`/addtask Zahnarzt`); via Bot Token + Chat ID
+- ✅ **E-Mail-Benachrichtigungen** — SMTP via `nodemailer`, Instance-Config über `SMTP_HOST/PORT/USER/PASS/FROM/SECURE`; User-Adresse per Settings; stilisiertes Newsletter-HTML-Template + Plain-Text-Alternative
+- ✅ **ntfy.sh** — Self-hosted Push via ntfy.sh-Topic-URL; kein App-Account nötig; ideal für Power-User & Selfhosters
+- ✅ **Pushover** — Push-Benachrichtigungen via Pushover API; User Key + App Token pro User in Settings
+- ✅ **Telegram-Bot** — Bot Token + Chat ID pro User in Settings; HTML-Parse-Mode mit "Open Momo"-Link. Task-Eingabe via `/addtask` ist ein Folge-Ticket.
 - **Webhook / Custom HTTP** — generischer Outbound-Webhook bei konfigurierbaren Events (Quest bereit, Streak-Warnung, etc.)
 
 > **Implementierungsansatz:** Alle Kanäle via nativem `fetch` — kein zusätzlicher Container, keine externe Abstraktion.

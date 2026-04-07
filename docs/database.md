@@ -143,8 +143,8 @@ One row is inserted each time the user postpones their daily quest. Used by the 
 **Config shapes by type:**
 - `ntfy`: `{ "topic": "my-momo", "server": "https://ntfy.sh" }` (server optional, defaults to ntfy.sh)
 - `pushover`: `{ "userKey": "...", "appToken": "..." }`
-- `telegram`: `{ "chatId": "...", "botToken": "..." }` (future)
-- `email`: `{ "address": "..." }` (future)
+- `telegram`: `{ "botToken": "<bot_id>:<secret>", "chatId": "987654321" }`
+- `email`: `{ "address": "you@example.com" }` (SMTP credentials live in `SMTP_*` env vars on the instance)
 - `webhook`: `{ "url": "...", "secret": "..." }` (future)
 
 Adding new channel types requires no schema migration — only new code in `lib/notifications.ts` and `lib/validators/index.ts`.

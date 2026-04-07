@@ -2,14 +2,18 @@
  * Multi-channel notification system for Momo.
  *
  * This module defines the NotificationChannel interface and provides a registry
- * of channel implementations. New channels (Pushover, Telegram, Email, Webhook)
- * only need to implement the interface and register in createChannel().
+ * of channel implementations. New channels (Webhook) only need to implement
+ * the interface and register in createChannel().
  *
  * Currently supported channels:
- *  - ntfy: Push via ntfy.sh or self-hosted ntfy server
+ *  - ntfy:     Push via ntfy.sh or self-hosted ntfy server
  *  - pushover: Push via Pushover API (user key + app token)
+ *  - telegram: Push via Telegram Bot API (bot token + chat ID)
+ *  - email:    SMTP email via nodemailer (instance-wide SMTP_* env vars
+ *              + per-user destination address)
  *
- * All channels use native `fetch` — no additional containers or npm packages.
+ * Most channels use native `fetch` — only the email channel adds nodemailer
+ * (the SMTP protocol is unavoidable).
  *
  * This module is SERVER-SIDE ONLY.
  */
@@ -17,6 +21,9 @@
 import { db } from "@/lib/db";
 import { notificationChannels } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import nodemailer, { type Transporter } from "nodemailer";
+import { serverEnv, clientEnv } from "@/lib/env";
+import { renderEmailTemplate } from "@/lib/email-templates";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -144,6 +151,154 @@ class PushoverChannel implements NotificationChannel {
   }
 }
 
+// ─── Channel: Telegram ───────────────────────────────────────────────────────
+
+/** JSONB config shape for the Telegram channel. */
+export interface TelegramConfig {
+  botToken: string;
+  chatId: string;
+}
+
+/**
+ * Telegram Bot notification channel.
+ *
+ * Sends notifications via the Telegram Bot API sendMessage endpoint.
+ * Uses HTML parse mode — robust escaping is handled here so payloads
+ * with task titles containing &, <, > render correctly.
+ *
+ * @see https://core.telegram.org/bots/api#sendmessage
+ */
+class TelegramChannel implements NotificationChannel {
+  private readonly botToken: string;
+  private readonly chatId: string;
+
+  constructor(config: TelegramConfig) {
+    this.botToken = config.botToken;
+    this.chatId = config.chatId;
+  }
+
+  /** HTML-escape a string for Telegram's strict HTML parse mode. */
+  private escapeHtml(input: string): string {
+    return input
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  async send(payload: NotificationPayload): Promise<void> {
+    const title = this.escapeHtml(payload.title);
+    const body = this.escapeHtml(payload.body);
+
+    let text = `<b>${title}</b>\n${body}`;
+    if (payload.url) {
+      // Telegram requires the href value itself to be HTML-escaped too
+      const href = this.escapeHtml(payload.url);
+      text += `\n\n<a href="${href}">Open Momo</a>`;
+    }
+
+    const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: this.chatId,
+        text,
+        parse_mode: "HTML",
+        disable_web_page_preview: false,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Telegram responded with ${response.status}: ${await response.text().catch(() => "no body")}`
+      );
+    }
+  }
+}
+
+// ─── Channel: Email (SMTP via nodemailer) ────────────────────────────────────
+
+/** JSONB config shape for the Email channel. */
+export interface EmailConfig {
+  address: string;
+}
+
+/** Lazily-initialised SMTP transporter — created once per process. */
+let cachedTransporter: Transporter | null = null;
+
+/**
+ * Returns the singleton nodemailer transporter, creating it on first use.
+ * Throws if SMTP_HOST is not configured on the instance.
+ */
+function getTransporter(): Transporter {
+  if (cachedTransporter) return cachedTransporter;
+
+  const host = serverEnv.SMTP_HOST;
+  if (!host) {
+    throw new Error("Email notifications are not configured on this server");
+  }
+
+  cachedTransporter = nodemailer.createTransport({
+    host,
+    port: serverEnv.SMTP_PORT ?? 587,
+    secure: serverEnv.SMTP_SECURE ?? false,
+    auth:
+      serverEnv.SMTP_USER && serverEnv.SMTP_PASS
+        ? { user: serverEnv.SMTP_USER, pass: serverEnv.SMTP_PASS }
+        : undefined,
+  });
+
+  return cachedTransporter;
+}
+
+/**
+ * Returns true if the instance has SMTP configured (SMTP_HOST set).
+ * Used by the settings UI to hide the email channel when unavailable.
+ */
+export function isEmailChannelAvailable(): boolean {
+  return Boolean(serverEnv.SMTP_HOST && serverEnv.SMTP_FROM);
+}
+
+/**
+ * Email notification channel.
+ *
+ * Sends notifications as HTML emails (with a plain-text alternative) via
+ * the instance-wide SMTP transporter. The user only configures the
+ * destination address — SMTP credentials live in env vars.
+ */
+class EmailChannel implements NotificationChannel {
+  private readonly address: string;
+
+  constructor(config: EmailConfig) {
+    this.address = config.address;
+  }
+
+  async send(payload: NotificationPayload): Promise<void> {
+    if (!isEmailChannelAvailable()) {
+      throw new Error("Email notifications are not configured on this server");
+    }
+
+    const transporter = getTransporter();
+    const appUrl = clientEnv.NEXT_PUBLIC_APP_URL;
+    const html = renderEmailTemplate(payload, appUrl);
+    const textParts = [payload.title, "", payload.body];
+    if (payload.url) textParts.push("", payload.url);
+    textParts.push(
+      "",
+      "—",
+      `You're receiving this because email notifications are enabled in Momo. Manage settings: ${appUrl}/settings`
+    );
+
+    await transporter.sendMail({
+      from: serverEnv.SMTP_FROM,
+      to: this.address,
+      subject: payload.title,
+      text: textParts.join("\n"),
+      html,
+    });
+  }
+}
+
 // ─── Channel Registry ────────────────────────────────────────────────────────
 
 /**
@@ -163,10 +318,12 @@ export function createChannel(
       return new NtfyChannel(config as unknown as NtfyConfig);
     case "pushover":
       return new PushoverChannel(config as unknown as PushoverConfig);
+    case "telegram":
+      return new TelegramChannel(config as unknown as TelegramConfig);
+    case "email":
+      return new EmailChannel(config as unknown as EmailConfig);
     // Future channels:
-    // case "telegram": return new TelegramChannel(config as unknown as TelegramConfig);
-    // case "email":    return new EmailChannel(config as unknown as EmailConfig);
-    // case "webhook":  return new WebhookChannel(config as unknown as WebhookConfig);
+    // case "webhook": return new WebhookChannel(config as unknown as WebhookConfig);
     default:
       console.warn(`[notifications] Unknown channel type: ${type}`);
       return null;

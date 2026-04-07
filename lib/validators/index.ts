@@ -402,9 +402,49 @@ export const PushoverConfigSchema = z.object({
 export type PushoverConfig = z.infer<typeof PushoverConfigSchema>;
 
 /**
+ * Config schema for the Telegram notification channel.
+ * botToken: Bot token from @BotFather, format `<bot_id>:<secret>` (required).
+ * chatId:   Chat ID (numeric, optionally negative for groups/channels) (required).
+ *
+ * @see https://core.telegram.org/bots/api#sendmessage
+ */
+export const TelegramConfigSchema = z.object({
+  botToken: z
+    .string()
+    .min(1, "Bot token is required")
+    .max(100, "Bot token must be 100 characters or less")
+    .regex(
+      /^\d+:[A-Za-z0-9_-]{30,}$/,
+      "Bot token must be in the format <bot_id>:<secret>"
+    ),
+  chatId: z
+    .string()
+    .min(1, "Chat ID is required")
+    .max(32, "Chat ID must be 32 characters or less")
+    .regex(/^-?\d+$/, "Chat ID must be a numeric ID (optionally negative)"),
+});
+
+export type TelegramConfig = z.infer<typeof TelegramConfigSchema>;
+
+/**
+ * Config schema for the Email notification channel.
+ * Per-user config holds only the destination address — SMTP credentials
+ * are an instance-wide concern configured via env vars (SMTP_HOST, …).
+ */
+export const EmailConfigSchema = z.object({
+  address: z
+    .string()
+    .min(1, "Email address is required")
+    .max(254, "Email address must be 254 characters or less")
+    .email("Must be a valid email address"),
+});
+
+export type EmailConfig = z.infer<typeof EmailConfigSchema>;
+
+/**
  * Discriminated union for upserting a notification channel.
  * Each channel type has its own config schema. New types are added here
- * as they are implemented (telegram, email, webhook).
+ * as they are implemented (webhook is the remaining future channel).
  */
 export const UpsertNotificationChannelSchema = z.discriminatedUnion("type", [
   z.object({
@@ -415,6 +455,16 @@ export const UpsertNotificationChannelSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("pushover"),
     config: PushoverConfigSchema,
+    enabled: z.boolean().optional().default(true),
+  }),
+  z.object({
+    type: z.literal("telegram"),
+    config: TelegramConfigSchema,
+    enabled: z.boolean().optional().default(true),
+  }),
+  z.object({
+    type: z.literal("email"),
+    config: EmailConfigSchema,
     enabled: z.boolean().optional().default(true),
   }),
 ]);

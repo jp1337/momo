@@ -60,6 +60,26 @@ const serverEnvSchema = z.object({
     "Bearer token required by cron API routes to prevent unauthorised triggering"
   ),
 
+  // Email Notifications (SMTP, optional — email channel is hidden when SMTP_HOST is unset)
+  SMTP_HOST: emptyToUndefined.describe("SMTP server hostname (e.g. smtp.gmail.com)"),
+  SMTP_PORT: z
+    .preprocess(
+      (val) => (val === "" || val === undefined ? undefined : Number(val)),
+      z.number().int().positive().max(65535).optional()
+    )
+    .describe("SMTP server port (587 for STARTTLS, 465 for implicit TLS)"),
+  SMTP_USER: emptyToUndefined.describe("SMTP authentication username"),
+  SMTP_PASS: emptyToUndefined.describe("SMTP authentication password / app password"),
+  SMTP_FROM: emptyToUndefined.describe(
+    'Sender address for outgoing emails, e.g. "Momo <noreply@momotask.app>"'
+  ),
+  SMTP_SECURE: z
+    .preprocess(
+      (val) => (val === "true" ? true : val === "false" ? false : undefined),
+      z.boolean().optional().default(false)
+    )
+    .describe("Use implicit TLS (true for port 465, false for 587/STARTTLS)"),
+
   // Runtime
   NODE_ENV: z
     .enum(["development", "production", "test"])

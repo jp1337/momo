@@ -3,9 +3,13 @@
 /**
  * NotificationChannels component.
  *
- * Manages additional notification channels (ntfy.sh, and future: Pushover, Telegram, Email, Webhook).
+ * Manages additional notification channels (ntfy.sh, Pushover, Telegram, Email).
  * Each channel type has its own configuration form. Channels are stored in the
  * notification_channels DB table via the /api/settings/notification-channels endpoints.
+ *
+ * The Email channel requires SMTP to be configured on the server instance —
+ * `emailAvailable` is read on the server and threaded through as a prop so
+ * the "+ Email" button is hidden on instances without SMTP credentials.
  */
 
 import { useState } from "react";
@@ -21,20 +25,29 @@ interface ChannelData {
 interface NotificationChannelsProps {
   /** Initially configured channels from the DB */
   initialChannels: ChannelData[];
+  /** Whether the email channel is available (instance has SMTP configured) */
+  emailAvailable?: boolean;
+  /** Default address to prefill in the email channel form (usually the user's account email) */
+  defaultEmailAddress?: string;
 }
 
 /** Supported channel types with their i18n label keys */
 const AVAILABLE_CHANNEL_TYPES = [
   { type: "ntfy", labelKey: "channel_ntfy_label" as const },
   { type: "pushover", labelKey: "channel_pushover_label" as const },
-  // Future: { type: "telegram", labelKey: "channel_telegram_label" },
+  { type: "telegram", labelKey: "channel_telegram_label" as const },
+  { type: "email", labelKey: "channel_email_label" as const },
 ] as const;
 
 /**
  * Notification channels settings section.
  * Shows configured channels with edit/test/remove actions and an "add channel" flow.
  */
-export function NotificationChannels({ initialChannels }: NotificationChannelsProps) {
+export function NotificationChannels({
+  initialChannels,
+  emailAvailable = false,
+  defaultEmailAddress = "",
+}: NotificationChannelsProps) {
   const t = useTranslations("settings");
   const [channels, setChannels] = useState<ChannelData[]>(initialChannels);
   const [addingType, setAddingType] = useState<string | null>(null);
@@ -42,7 +55,12 @@ export function NotificationChannels({ initialChannels }: NotificationChannelsPr
 
   // Determine which types are not yet configured
   const configuredTypes = new Set(channels.map((c) => c.type));
-  const availableToAdd = AVAILABLE_CHANNEL_TYPES.filter((ct) => !configuredTypes.has(ct.type));
+  const availableToAdd = AVAILABLE_CHANNEL_TYPES.filter((ct) => {
+    if (configuredTypes.has(ct.type)) return false;
+    // Hide email when the instance has no SMTP configured
+    if (ct.type === "email" && !emailAvailable) return false;
+    return true;
+  });
 
   function showMessage(text: string, type: "success" | "error") {
     setMessage({ text, type });
@@ -201,6 +219,12 @@ export function NotificationChannels({ initialChannels }: NotificationChannelsPr
           {channel.type === "pushover" && (
             <PushoverConfigSummary config={channel.config} />
           )}
+          {channel.type === "telegram" && (
+            <TelegramConfigSummary config={channel.config} />
+          )}
+          {channel.type === "email" && (
+            <EmailConfigSummary config={channel.config} />
+          )}
 
           {/* Actions */}
           <div className="flex gap-2">
@@ -242,6 +266,19 @@ export function NotificationChannels({ initialChannels }: NotificationChannelsPr
       {addingType === "pushover" && (
         <PushoverForm
           onSave={(config) => handleSaved("pushover", config)}
+          onCancel={() => setAddingType(null)}
+        />
+      )}
+      {addingType === "telegram" && (
+        <TelegramForm
+          onSave={(config) => handleSaved("telegram", config)}
+          onCancel={() => setAddingType(null)}
+        />
+      )}
+      {addingType === "email" && (
+        <EmailForm
+          defaultAddress={defaultEmailAddress}
+          onSave={(config) => handleSaved("email", config)}
           onCancel={() => setAddingType(null)}
         />
       )}
@@ -655,6 +692,376 @@ function NtfyForm({
         <button
           type="submit"
           disabled={saving || !topic.trim()}
+          className="text-sm px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+          style={{
+            fontFamily: "var(--font-ui)",
+            backgroundColor: "var(--color-accent, #f0a500)",
+            color: "var(--bg-primary)",
+          }}
+        >
+          {saving ? "..." : tCommon("save")}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-sm px-4 py-2 rounded-lg transition-colors"
+          style={{
+            fontFamily: "var(--font-ui)",
+            backgroundColor: "var(--bg-surface)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {tCommon("cancel")}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// ─── Telegram Config Summary ────────────────────────────────────────────────
+
+function TelegramConfigSummary({ config }: { config: Record<string, unknown> }) {
+  const chatId = (config.chatId as string) || "—";
+  const masked =
+    chatId.length > 6
+      ? `${chatId.slice(0, 3)}${"•".repeat(chatId.length - 6)}${chatId.slice(-3)}`
+      : "•••";
+  return (
+    <p
+      className="text-xs"
+      style={{
+        fontFamily: "var(--font-body)",
+        color: "var(--text-muted)",
+      }}
+    >
+      Chat ID: {masked}
+    </p>
+  );
+}
+
+// ─── Telegram Configuration Form ────────────────────────────────────────────
+
+function TelegramForm({
+  onSave,
+  onCancel,
+}: {
+  onSave: (config: Record<string, unknown>) => void;
+  onCancel: () => void;
+}) {
+  const t = useTranslations("settings");
+  const tCommon = useTranslations("common");
+  const [botToken, setBotToken] = useState("");
+  const [chatId, setChatId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!botToken.trim() || !chatId.trim()) return;
+    if (!/^\d+:[A-Za-z0-9_-]{30,}$/.test(botToken.trim())) {
+      setError("Bot token must be in the format <bot_id>:<secret>.");
+      return;
+    }
+    if (!/^-?\d+$/.test(chatId.trim())) {
+      setError("Chat ID must be a numeric ID (optionally negative).");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const config: Record<string, unknown> = {
+        botToken: botToken.trim(),
+        chatId: chatId.trim(),
+      };
+
+      const res = await fetch("/api/settings/notification-channels", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "telegram", config, enabled: true }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save");
+      }
+
+      onSave(config);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("channel_err_save"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const inputStyle = {
+    fontFamily: "var(--font-body)",
+    backgroundColor: "var(--bg-primary)",
+    color: "var(--text-primary)",
+    border: "1px solid var(--border)",
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-lg p-4 flex flex-col gap-3"
+      style={{
+        backgroundColor: "var(--bg-elevated)",
+        border: "1px solid var(--border)",
+      }}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span
+          className="text-sm font-medium"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
+        >
+          {t("channel_telegram_label")}
+        </span>
+      </div>
+      <p
+        className="text-xs -mt-2"
+        style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
+      >
+        {t("channel_telegram_hint")}
+      </p>
+
+      {/* Bot Token input */}
+      <div className="flex flex-col gap-1">
+        <label
+          className="text-xs font-medium"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-secondary)" }}
+        >
+          {t("telegram_bottoken_label")}
+        </label>
+        <input
+          type="text"
+          value={botToken}
+          onChange={(e) => setBotToken(e.target.value)}
+          placeholder={t("telegram_bottoken_placeholder")}
+          className="w-full px-3 py-2 rounded-md text-sm"
+          style={inputStyle}
+          maxLength={100}
+          required
+        />
+        <p
+          className="text-xs"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
+        >
+          {t("telegram_bottoken_hint")}
+        </p>
+      </div>
+
+      {/* Chat ID input */}
+      <div className="flex flex-col gap-1">
+        <label
+          className="text-xs font-medium"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-secondary)" }}
+        >
+          {t("telegram_chatid_label")}
+        </label>
+        <input
+          type="text"
+          value={chatId}
+          onChange={(e) => setChatId(e.target.value)}
+          placeholder={t("telegram_chatid_placeholder")}
+          className="w-full px-3 py-2 rounded-md text-sm"
+          style={inputStyle}
+          maxLength={32}
+          required
+        />
+        <p
+          className="text-xs"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
+        >
+          {t("telegram_chatid_hint")}
+        </p>
+      </div>
+
+      {/* Error message */}
+      {error && (
+        <p
+          className="text-xs"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--color-error, #ef4444)" }}
+        >
+          {error}
+        </p>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={saving || !botToken.trim() || !chatId.trim()}
+          className="text-sm px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+          style={{
+            fontFamily: "var(--font-ui)",
+            backgroundColor: "var(--color-accent, #f0a500)",
+            color: "var(--bg-primary)",
+          }}
+        >
+          {saving ? "..." : tCommon("save")}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-sm px-4 py-2 rounded-lg transition-colors"
+          style={{
+            fontFamily: "var(--font-ui)",
+            backgroundColor: "var(--bg-surface)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {tCommon("cancel")}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// ─── Email Config Summary ───────────────────────────────────────────────────
+
+function EmailConfigSummary({ config }: { config: Record<string, unknown> }) {
+  const address = (config.address as string) || "—";
+  return (
+    <p
+      className="text-xs"
+      style={{
+        fontFamily: "var(--font-body)",
+        color: "var(--text-muted)",
+      }}
+    >
+      {address}
+    </p>
+  );
+}
+
+// ─── Email Configuration Form ───────────────────────────────────────────────
+
+function EmailForm({
+  defaultAddress,
+  onSave,
+  onCancel,
+}: {
+  defaultAddress: string;
+  onSave: (config: Record<string, unknown>) => void;
+  onCancel: () => void;
+}) {
+  const t = useTranslations("settings");
+  const tCommon = useTranslations("common");
+  const [address, setAddress] = useState(defaultAddress);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    const trimmed = address.trim();
+    if (!trimmed) return;
+    // Basic email shape check — server-side Zod is the source of truth
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const config: Record<string, unknown> = { address: trimmed };
+
+      const res = await fetch("/api/settings/notification-channels", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "email", config, enabled: true }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save");
+      }
+
+      onSave(config);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("channel_err_save"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const inputStyle = {
+    fontFamily: "var(--font-body)",
+    backgroundColor: "var(--bg-primary)",
+    color: "var(--text-primary)",
+    border: "1px solid var(--border)",
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-lg p-4 flex flex-col gap-3"
+      style={{
+        backgroundColor: "var(--bg-elevated)",
+        border: "1px solid var(--border)",
+      }}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span
+          className="text-sm font-medium"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
+        >
+          {t("channel_email_label")}
+        </span>
+      </div>
+      <p
+        className="text-xs -mt-2"
+        style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
+      >
+        {t("channel_email_hint")}
+      </p>
+
+      {/* Address input */}
+      <div className="flex flex-col gap-1">
+        <label
+          className="text-xs font-medium"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-secondary)" }}
+        >
+          {t("email_address_label")}
+        </label>
+        <input
+          type="email"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder={t("email_address_placeholder")}
+          className="w-full px-3 py-2 rounded-md text-sm"
+          style={inputStyle}
+          maxLength={254}
+          required
+        />
+        <p
+          className="text-xs"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
+        >
+          {t("email_address_hint")}
+        </p>
+      </div>
+
+      {/* Error message */}
+      {error && (
+        <p
+          className="text-xs"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--color-error, #ef4444)" }}
+        >
+          {error}
+        </p>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={saving || !address.trim()}
           className="text-sm px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
           style={{
             fontFamily: "var(--font-ui)",

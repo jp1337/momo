@@ -18,6 +18,7 @@ import { users, accounts, pushSubscriptions, notificationChannels } from "@/lib/
 import { eq } from "drizzle-orm";
 import { NotificationSettings } from "@/components/settings/notification-settings";
 import { NotificationChannels } from "@/components/settings/notification-channels";
+import { isEmailChannelAvailable } from "@/lib/notifications";
 import { ProfileSettings } from "@/components/settings/profile-settings";
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
 import { DeleteAccount } from "@/components/settings/delete-account";
@@ -225,6 +226,8 @@ export default async function SettingsPage() {
             config: ch.config as Record<string, unknown>,
             enabled: ch.enabled,
           }))}
+          emailAvailable={isEmailChannelAvailable()}
+          defaultEmailAddress={user.email ?? ""}
         />
       </section>
 
