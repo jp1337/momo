@@ -612,7 +612,7 @@ Request body:
 }
 ```
 
-Supported types: `ntfy`, `pushover` (more coming: `telegram`, `email`, `webhook`).
+Supported types: `ntfy`, `pushover`, `telegram`, `email` (more coming: `webhook`).
 
 **ntfy config:**
 
@@ -627,6 +627,42 @@ Supported types: `ntfy`, `pushover` (more coming: `telegram`, `email`, `webhook`
 |---|---|---|---|
 | `userKey` | string | Yes | Pushover user key (alphanumeric, max 50 chars) |
 | `appToken` | string | Yes | Pushover application API token (alphanumeric, max 50 chars) |
+
+**telegram config:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `botToken` | string | Yes | Bot token from @BotFather, format `<bot_id>:<secret>` |
+| `chatId` | string | Yes | Telegram chat ID (numeric, optionally negative for groups/channels) |
+
+Example:
+```json
+{
+  "type": "telegram",
+  "config": { "botToken": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11", "chatId": "987654321" },
+  "enabled": true
+}
+```
+
+**email config:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `address` | string (email) | Yes | Destination email address (max 254 chars) |
+
+Email delivery requires SMTP credentials configured on the server instance via the
+`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, and `SMTP_SECURE`
+environment variables (see `docs/environment-variables.md`). When SMTP is not
+configured the email channel cannot be saved and is hidden in the settings UI.
+
+Example:
+```json
+{
+  "type": "email",
+  "config": { "address": "you@example.com" },
+  "enabled": true
+}
+```
 
 Response: `{ "success": true }`
 

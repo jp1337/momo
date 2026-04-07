@@ -345,7 +345,27 @@ Setup:
 5. Enter your User Key and App Token, then click **Save**
 6. Click **Send test** to verify it works
 
-More channels (Telegram, Email, Webhooks) are planned — see the [Roadmap](https://github.com/jp1337/momo).
+**Telegram** — Receive notifications via a personal [Telegram](https://telegram.org) bot. Free, works on every device with Telegram, and supports a tappable "Open Momo" link in each message.
+
+Setup:
+1. In Telegram, open a chat with [@BotFather](https://t.me/BotFather) and run `/newbot`. Follow the prompts to pick a name and username, then copy the **Bot Token** that BotFather sends you.
+2. Start a chat with your new bot and send it any message (this is required so the bot is allowed to message you).
+3. Open a chat with [@userinfobot](https://t.me/userinfobot) and copy the **Chat ID** it shows you. For group chats, use the negative ID shown there.
+4. In Momo: go to **Settings → Additional Notification Channels** and click **+ Telegram**
+5. Paste the Bot Token and Chat ID, then click **Save**
+6. Click **Send test** to verify it works
+
+**Email** — Receive notifications by email. The "+ Email" button only appears when the operator of your Momo instance has configured an SMTP server. The default address is the email on your Momo account, but you can override it.
+
+Setup:
+1. In Momo: go to **Settings → Additional Notification Channels** and click **+ Email** (only visible if the server has SMTP configured)
+2. Enter the address you want notifications delivered to (defaults to your account email)
+3. Click **Save**
+4. Click **Send test** to verify it arrives — check spam folder on first attempt
+
+Self-hosters: see [environment-variables.md](https://github.com/jp1337/momo/blob/main/docs/environment-variables.md#email-notifications-smtp) for the `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` and `SMTP_SECURE` variables. Mailpit is the easiest local-dev option.
+
+A generic outbound webhook channel is still planned — see the [Roadmap](https://github.com/jp1337/momo).
 
 ---
 

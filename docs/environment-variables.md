@@ -42,6 +42,45 @@ Generate a VAPID key pair:
 npx web-push generate-vapid-keys
 ```
 
+## Email Notifications (SMTP)
+
+SMTP credentials enable the **Email** notification channel that users can opt into from
+**Settings → Additional Notification Channels**. The channel is hidden in the UI when
+`SMTP_HOST` is unset, so leaving these blank is a safe no-op for instances that don't
+want to host email.
+
+| Variable | Type | Default | Description |
+|---|---|---|---|
+| `SMTP_HOST` | string | — | SMTP server hostname (e.g. `smtp.gmail.com`). Leave empty to disable email notifications. |
+| `SMTP_PORT` | number | `587` | SMTP port. Use `587` for STARTTLS, `465` for implicit TLS. |
+| `SMTP_USER` | string | — | SMTP authentication username. Optional if your SMTP server allows unauthenticated relay (e.g. local Mailpit). |
+| `SMTP_PASS` | string | — | SMTP authentication password / app password. |
+| `SMTP_FROM` | string | — | Sender address used as the `From:` header, e.g. `"Momo <noreply@momotask.app>"`. Required for email delivery. |
+| `SMTP_SECURE` | boolean (`true`/`false`) | `false` | `true` for implicit TLS (port 465), `false` for STARTTLS (port 587). |
+
+### Example: Gmail with an App Password
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=you@gmail.com
+SMTP_PASS=xxxxxxxxxxxxxxxx          # 16-char Google App Password
+SMTP_FROM="Momo <you@gmail.com>"
+SMTP_SECURE=false
+```
+
+### Example: Mailpit (local development)
+
+```env
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_FROM="Momo <noreply@localhost>"
+SMTP_SECURE=false
+```
+
+Run Mailpit locally with: `docker run -p 1025:1025 -p 8025:8025 axllent/mailpit` and
+inspect captured emails at `http://localhost:8025`.
+
 ## Cron Job Protection
 
 | Variable | Type | Default | Description |

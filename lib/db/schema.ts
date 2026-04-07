@@ -13,7 +13,7 @@
  *  - api_keys           Personal Access Tokens for programmatic API access
  *  - linking_requests   Short-lived tokens for OAuth account linking flow
  *  - quest_postponements  Log of daily quest postponement events (for weekly review)
- *  - notification_channels  User-configured notification channels (ntfy, pushover, telegram, email, webhook)
+ *  - notification_channels  User-configured notification channels (ntfy, pushover, telegram, email; webhook future)
  */
 
 import {
@@ -561,8 +561,8 @@ export const questPostponements = pgTable("quest_postponements", {
  * Config shapes:
  *  - ntfy:     { topic: string, server?: string }
  *  - pushover: { userKey: string, appToken: string }
- *  - telegram: { chatId: string, botToken?: string }   (future)
- *  - email:    { address: string }                     (future)
+ *  - telegram: { botToken: string, chatId: string }
+ *  - email:    { address: string }                     (SMTP creds via env vars)
  *  - webhook:  { url: string, secret?: string }        (future)
  */
 export const notificationChannels = pgTable(
