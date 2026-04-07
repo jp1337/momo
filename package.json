@@ -43,7 +43,16 @@
     "serialize-javascript": "^7.0.5",
     "lodash": "4.18.1",
     "esbuild": "^0.25.0",
-    "nodemailer": "^8.0.4"
+    "nodemailer": "^8.0.4",
+    "react-copy-to-clipboard": "^5.1.1",
+    "react-inspector": "^9.0.0",
+    "workbox-build": "^7.4.0",
+    "glob": "^13.0.0",
+    "magic-string": "^0.30.21",
+    "source-map": "^0.7.6",
+    "node-domexception": "npm:@nolyfill/domexception@^1.0.28",
+    "@esbuild-kit/esm-loader": "npm:noop-package@^1.0.0",
+    "@esbuild-kit/core-utils": "npm:noop-package@^1.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
