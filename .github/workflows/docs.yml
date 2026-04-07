@@ -20,6 +20,14 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    # Force JS actions onto Node.js 24. actions/upload-pages-artifact@v4 and
+    # actions/deploy-pages@v5 still bundle upload-artifact@v4 (Node 20) as a
+    # transitive dep, which triggers the Node 20 deprecation annotation on
+    # 2026-06-02. Both wrapper actions are already at their latest tags — once
+    # GitHub releases new majors that ship a Node 24 upload-artifact bundle,
+    # this opt-in becomes the runner default and this env var can be removed.
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
       - uses: actions/checkout@v6
 
