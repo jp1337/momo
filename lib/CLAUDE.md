@@ -16,7 +16,8 @@ All server-side business logic and infrastructure. API routes import from here �
 - `gamification.ts` — updateStreak (timezone-aware), getLevelForCoins, checkAndUnlockAchievements, seedAchievements, getUserStats
 - `date-utils.ts` — getLocalDateString, getLocalTomorrowString, getLocalYesterdayString — all timezone-aware via Intl.DateTimeFormat("en-CA")
 - `push.ts` — savePushSubscription, sendPushNotification, sendStreakReminder, sendWeeklyReviewNotifications — Web Push via VAPID + multi-channel fan-out via lib/notifications.ts
-- `notifications.ts` — Multi-channel notification system: NotificationChannel interface, NtfyChannel + PushoverChannel classes, createChannel registry, sendToAllChannels fan-out, sendTestNotification
+- `notifications.ts` — Multi-channel notification system: NotificationChannel interface, NtfyChannel + PushoverChannel + TelegramChannel + EmailChannel classes, createChannel registry, sendToAllChannels fan-out, sendTestNotification, isEmailChannelAvailable (server-side gate based on SMTP_HOST/SMTP_FROM)
+- `email-templates.ts` — renderEmailTemplate(payload, appUrl): newsletter-style HTML template (table-based, Outlook-compatible, Lora-heading, Waldgrün-accent, CTA button, footer with settings link); used by EmailChannel.send. Pure function, no side effects
 - `weekly-review.ts` — getWeeklyReview(userId, timezone) — weekly performance summary (completions, postponements, coins, streak, top topics)
 - `cron.ts` — Unified cron dispatcher. CRON_JOBS registry + runAllJobs(). Add new periodic jobs here — no Docker/endpoint changes needed
 - `rate-limit.ts` — In-memory rate limiter (sliding window) applied to mutation API routes
