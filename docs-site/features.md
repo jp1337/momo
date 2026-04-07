@@ -394,6 +394,23 @@ Once installed, Momo opens in full-screen with no browser chrome. The home scree
 
 ---
 
+## Two-Factor Authentication
+
+Momo can ask for an extra 6-digit code from an authenticator app every time you sign in — on top of your normal OAuth login. This protects your account even if someone gains access to your GitHub, Google, Discord or Microsoft account.
+
+See the dedicated guide: [**Two-Factor Authentication →**](two-factor-auth)
+
+In short:
+
+- Open **Settings → Two-factor authentication** and click **Enable 2FA**.
+- Scan the QR code with any authenticator app (Aegis, 2FAS, Google Authenticator, Authy, 1Password, …).
+- Save the 10 backup codes Momo gives you — they are your safety net if you lose your phone.
+- From then on, every new sign-in asks for a code.
+
+If you self-host Momo, you can require 2FA for everyone by setting the `REQUIRE_2FA=true` environment variable. New and existing users will be guided through the setup the next time they sign in.
+
+---
+
 ## API Keys
 
 Momo has a full REST API. Personal access tokens let you integrate Momo with other tools, scripts, or voice assistants like Alexa.

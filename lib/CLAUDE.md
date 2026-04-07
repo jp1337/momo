@@ -5,6 +5,7 @@ All server-side business logic and infrastructure. API routes import from here �
 
 ## Contents
 - `auth.ts` — Auth.js v5 config: providers (GitHub, Discord, Google, optional OIDC), Drizzle adapter, session strategy
+- `totp.ts` — Two-factor authentication (TOTP) business logic: generateTotpSetup (secret + QR data URL), verifyTotpCode, enableTotpForUser (verifies first code, encrypts secret, generates 10 backup codes — atomic), disableTotpForUser, regenerateBackupCodes, verifyUserTotpCode, consumeBackupCode (constant-time, single-use), getUserTotpStatus, **userHasSecondFactor** (single touchpoint for the future Passkey feature — methoden-agnostischer Gate), setup-cookie helpers (signSetupToken/verifySetupToken — HMAC-SHA256 with AUTH_SECRET, 10-min TTL, never persisted), session-token helpers (markSessionTotpVerified, isSessionTotpVerified, readSessionTokenFromCookieStore)
 - `env.ts` — Zod-validated env wrapper. **All** env var access must go through `serverEnv` or `clientEnv` exports here
 - `db/index.ts` — Drizzle client (postgres driver), singleton pattern
 - `db/schema.ts` — All table definitions: users, topics, tasks, task_completions, wishlist_items, achievements, user_achievements + Auth.js tables (accounts, sessions, verification_tokens)
@@ -23,12 +24,12 @@ All server-side business logic and infrastructure. API routes import from here �
 - `rate-limit.ts` — In-memory rate limiter (sliding window) applied to mutation API routes
 - `wishlist.ts` — getUserWishlistItems, createWishlistItem, updateWishlistItem, deleteWishlistItem, buyWishlistItem, discardWishlistItem
 - `api-keys.ts` — generateApiKey (256-bit), createApiKey, listApiKeys, revokeApiKey, resolveApiKeyUser
-- `api-auth.ts` — resolveApiUser() — Bearer Token + Session Cookie, readonlyKeyResponse()
+- `api-auth.ts` — resolveApiUser() — Bearer Token + Session Cookie, readonlyKeyResponse(); resolveVerifiedApiUser() (opt-in 2FA-aware variant — Bearer tokens are exempt; cookie sessions return TOTP_REQUIRED / TOTP_SETUP_REQUIRED if not verified) + verifiedAuthErrorResponse()
 - `openapi.ts` — Full OpenAPI 3.1.0 specification object (served at /api/openapi.json)
 - `statistics.ts` — getUserStatistics(userId), getAdminStatistics() — aggregated stats for /stats and /admin pages
 - `export.ts` — buildUserExport(userId) — GDPR data export (all user data as JSON)
 - `users.ts` — deleteUser(userId) — full account deletion cascade; updateUserProfile(userId, data) — update name/email/avatar; processProfileImage(dataUrl) — resize to 200×200 WebP via Sharp
-- `utils/crypto.ts` — Cryptographic helpers (e.g. CRON_SECRET constant-time comparison)
+- `utils/crypto.ts` — Cryptographic helpers: timingSafeEqual (constant-time string compare), encryptSecret/decryptSecret (AES-256-GCM with TOTP_ENCRYPTION_KEY, fresh IV per call, AuthTag separate), hashBackupCode (SHA-256 hex; mirrors api-keys pattern)
 - `client/coin-events.ts` — Client-safe module: `COINS_EARNED_EVENT` const + `dispatchCoinsEarned(delta)` with NaN/Infinity guard. Shared by TaskList, TopicDetailView, DailyQuestCard and CoinCounter.
 
 ## Patterns

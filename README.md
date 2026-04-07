@@ -72,7 +72,11 @@ Sign in with the account you already have. No new password to forget.
 | **Microsoft** (private accounts only — Outlook/Hotmail/Live/Xbox) | ✅ | ✅ (own Azure App) |
 | **OIDC** (Authentik, Keycloak, …) | — | ✅ |
 
-See [OAuth Setup Guide](docs/oauth-setup.md) for configuration instructions.
+Optional **two-factor authentication (TOTP)** on top of any provider —
+works with Aegis, 2FAS, Google Authenticator, Authy, 1Password, etc.
+Self-hosters can enforce 2FA for every account by setting `REQUIRE_2FA=true`.
+See [Two-Factor Auth Guide](docs/two-factor-auth.md) for the technical
+details and [OAuth Setup Guide](docs/oauth-setup.md) for provider setup.
 
 ---
 

@@ -80,6 +80,11 @@ description: Task management for people who struggle with procrastination. Open 
     <p>Install on your phone like a native app. Swipe to complete or delete on mobile.</p>
   </div>
   <div class="feature-card">
+    <div class="icon">🔐</div>
+    <h3>Two-Factor Auth</h3>
+    <p>Optional TOTP via any authenticator app, 10 single-use backup codes, instance-wide enforcement. <a href="/momo/two-factor-auth">Read the guide →</a></p>
+  </div>
+  <div class="feature-card">
     <div class="icon">🔑</div>
     <h3>REST API & API Keys</h3>
     <p>Personal access tokens, read-only keys, OpenAPI 3.1 spec, Swagger UI at <code>/api-docs</code>.</p>

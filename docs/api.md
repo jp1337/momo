@@ -67,6 +67,73 @@ Managed by Auth.js v5. These routes are handled internally by the framework.
 | `POST` | `/api/auth/signout` | Signs the user out |
 | `GET` | `/api/auth/csrf` | Returns a CSRF token |
 
+### Two-Factor Authentication (TOTP)
+
+All `/api/auth/2fa/*` routes require an interactive **session cookie** —
+they explicitly reject `Authorization: Bearer …` (API key) callers, since
+2FA is meant to protect interactive logins. API keys themselves are exempt
+from the 2FA gate by design (a Personal Access Token already represents a
+separate credential). See [two-factor-auth.md](two-factor-auth.md) for the
+full lifecycle.
+
+All routes are rate-limited at 5 attempts per 5 minutes per user. Error
+responses share the shape `{ error: string, code: string }`.
+
+#### POST /api/auth/2fa/setup
+
+Starts a TOTP setup wizard. Generates a fresh secret and stashes the
+plaintext in a signed httpOnly cookie (`momo_totp_setup`, 10-minute TTL).
+Writes nothing to the database.
+
+- **Auth:** session cookie required
+- **Body:** none
+- **Response:** `200 { "qrCodeDataUrl": "data:image/png;base64,…", "manualEntryKey": "JBSWY3DPEHPK3PXP" }`
+- **Errors:** `401 UNAUTHORIZED`, `409 TOTP_ALREADY_ENABLED`, `429 RATE_LIMITED`
+
+#### POST /api/auth/2fa/verify-setup
+
+Completes the setup wizard. Reads the pending plaintext secret from the
+setup cookie, verifies the user-supplied code, and atomically encrypts +
+persists the secret, generates 10 backup codes, and marks the current
+session as totp-verified.
+
+- **Auth:** session cookie required
+- **Body:** `{ "code": "123456" }`
+- **Response:** `200 { "backupCodes": ["ABCDEFGHJK", "LMNPQRSTUV", …] }` — plaintext, returned exactly once
+- **Errors:** `400` invalid body, `401 UNAUTHORIZED`, `410 SETUP_EXPIRED`, `422 INVALID_CODE`, `429 RATE_LIMITED`
+
+#### POST /api/auth/2fa/verify
+
+Login-time second-factor verification. Accepts either a 6-digit TOTP
+code or a 10-character backup code (XOR validated). On success, marks
+`sessions.totp_verified_at` for the current session row.
+
+- **Auth:** session cookie required
+- **Body:** `{ "code": "123456" }` or `{ "backupCode": "ABCDEFGHJK" }`
+- **Response:** `200 { "success": true, "usedBackupCode": false }`
+- **Errors:** `400` invalid body, `401 UNAUTHORIZED`, `409 TOTP_NOT_ENABLED`, `422 INVALID_CODE`, `429 RATE_LIMITED`
+
+#### POST /api/auth/2fa/disable
+
+Deactivates 2FA for the current user. Requires re-authentication with a
+current code (or backup code). **Blocked entirely** when `REQUIRE_2FA=true`.
+
+- **Auth:** session cookie required
+- **Body:** `{ "code": "123456" }` or `{ "backupCode": "ABCDEFGHJK" }`
+- **Response:** `200 { "success": true }`
+- **Errors:** `400`, `401 UNAUTHORIZED`, `403 TOTP_REQUIRED_BY_ADMIN`, `409 TOTP_NOT_ENABLED`, `422 INVALID_CODE`, `429 RATE_LIMITED`
+
+#### POST /api/auth/2fa/regenerate-backup-codes
+
+Replaces all of the user's backup codes with a fresh batch of 10. Requires
+a current TOTP code (backup codes are not accepted here for clarity —
+using one would consume one of the codes being replaced).
+
+- **Auth:** session cookie required
+- **Body:** `{ "code": "123456" }`
+- **Response:** `200 { "backupCodes": ["ABCDEFGHJK", …] }` — plaintext, returned exactly once
+- **Errors:** `400`, `401 UNAUTHORIZED`, `409 TOTP_NOT_ENABLED`, `422 INVALID_CODE`, `429 RATE_LIMITED`
+
 ---
 
 ## System Routes

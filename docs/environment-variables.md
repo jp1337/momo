@@ -97,6 +97,30 @@ inspect captured emails at `http://localhost:8025`.
 | `NEXTAUTH_URL` | string (URL) | `http://localhost:3000` | Base URL used by Auth.js to construct OAuth callback URLs. Must match the **Homepage URL** / **Authorized redirect URI** set in each OAuth provider app. In production: `https://yourdomain.com` |
 | `NODE_ENV` | `development` \| `production` \| `test` | `development` | Runtime environment. **Set to `production` in production deployments** — this enables stricter CSP headers and disables the PWA service worker in dev. |
 
+## Two-Factor Authentication (TOTP)
+
+Optional. The TOTP feature is fully self-contained — no external services required.
+
+| Variable | Type | Required | Description |
+|---|---|---|---|
+| `TOTP_ENCRYPTION_KEY` | string (64 hex chars) | When any user enables 2FA, or when `REQUIRE_2FA=true` | AES-256-GCM key for encrypting TOTP secrets at rest. Must be exactly 64 hex characters (32 bytes). Generate with `openssl rand -hex 32`. **Rotating this key invalidates every existing TOTP secret** — users would need to re-enroll their authenticator app. Treat it as critical secret material. |
+| `REQUIRE_2FA` | `true` \| `false` | Optional | Default `false`. When `true`, every user is forced to register a second factor (TOTP — and later Passkeys) before they can access any protected route. Existing users without 2FA are hard-locked to `/setup/2fa` on their next login. The "disable 2FA" button is hidden in the UI and the corresponding API endpoint returns `403 TOTP_REQUIRED_BY_ADMIN`. Setting this to `true` requires `TOTP_ENCRYPTION_KEY` to also be set — startup will fail loudly otherwise. |
+
+**Recovery for a locked-out user.** If a user has lost both their authenticator app and all backup codes, the only way back in is an administrative DB write that clears their 2FA columns:
+
+```sql
+-- Replace <user-email> with the actual email.
+UPDATE users
+SET totp_secret = NULL,
+    totp_enabled_at = NULL
+WHERE email = '<user-email>';
+
+DELETE FROM totp_backup_codes
+WHERE user_id = (SELECT id FROM users WHERE email = '<user-email>');
+```
+
+After this, the user can log in normally and re-enroll. Document this clearly to your users — once `REQUIRE_2FA=true` is set, account recovery requires an operator. See [two-factor-auth.md](two-factor-auth.md) for the full lifecycle.
+
 ## Admin Access
 
 | Variable | Type | Default | Description |
