@@ -28,6 +28,7 @@ This guide covers deploying Momo to a Kubernetes cluster. Example manifests are 
 | `deployment.yaml` | App deployment with 2 replicas, liveness/readiness probes, non-root security context |
 | `service.yaml` | ClusterIP service exposing the app on port 3000 |
 | `ingress.yaml` | Ingress with TLS via cert-manager |
+| `cronjob.yaml` | Kubernetes CronJob that periodically hits `POST /api/cron` for daily quest selection, streak reminders, and the weekly review push |
 
 ---
 
@@ -81,6 +82,17 @@ stringData:
 
   # Cron protection
   CRON_SECRET: "generate with: openssl rand -hex 32"
+
+  # Email notifications (optional — leave empty to disable the Email channel)
+  SMTP_HOST: ""
+  SMTP_PORT: "587"
+  SMTP_USER: ""
+  SMTP_PASS: ""
+  SMTP_FROM: ""
+  SMTP_SECURE: "false"
+
+  # Admin access (optional — comma-separated user UUIDs allowed at /admin)
+  ADMIN_USER_IDS: ""
 ```
 
 > **Important:** `AUTH_TRUST_HOST: "true"` is required for Kubernetes — Auth.js v5 rejects requests from unrecognised hosts unless this is set.
@@ -117,7 +129,10 @@ spec:
 kubectl apply -f deploy/examples/deployment.yaml
 kubectl apply -f deploy/examples/service.yaml
 kubectl apply -f deploy/examples/ingress.yaml
+kubectl apply -f deploy/examples/cronjob.yaml
 ```
+
+`cronjob.yaml` schedules a periodic `POST /api/cron` call (using the `CRON_SECRET` from the Secret) so daily quest selection, streak reminders, and the weekly review push all fire on time. Skip it if you don't need any of these notifications.
 
 ### Step 6 — Verify
 

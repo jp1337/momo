@@ -149,14 +149,14 @@ On first login, a user account is created automatically in the database.
 3. Save — your task appears in the list
 4. Click the task to mark it complete and earn your first coins
 
-## Enabling Push Notifications (Optional)
+## Enabling Notifications (Optional)
 
-1. Go to **Settings** in the navigation
-2. Click **Enable Notifications**
-3. Allow the browser notification permission prompt
-4. Choose your preferred notification time
+Momo supports five notification channels and you can use as many as you like in parallel:
 
-You'll need to configure VAPID keys first — see the [Environment Variables](/momo/environment-variables) page.
+1. **Browser Push** — go to **Settings → Notifications**, click **Enable Notifications**, allow the browser permission prompt, and pick your reminder time. Requires VAPID keys on the server (see [Environment Variables](/momo/environment-variables)).
+2. **ntfy.sh, Pushover, Telegram, Email** — open **Settings → Additional Notification Channels** and click the channel you want. Each has a one-page configuration form and a **Send test** button. The **Email** channel only appears if your instance has SMTP configured ([SMTP env vars](/momo/environment-variables#email-notifications-smtp)).
+
+See the [Features guide](/momo/features#additional-notification-channels) for setup details on each channel.
 
 ## Voice Control with Alexa (Optional)
 

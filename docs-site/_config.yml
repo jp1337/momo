@@ -34,5 +34,13 @@ nav:
     url: /momo/features
   - title: Self-Hosting
     url: /momo/self-hosting
+  - title: Deployment
+    url: /momo/deployment
+  - title: Environment
+    url: /momo/environment-variables
+  - title: OAuth Setup
+    url: /momo/oauth-setup
+  - title: Kubernetes
+    url: /momo/kubernetes
   - title: Alexa Skill
     url: /momo/alexa-skill

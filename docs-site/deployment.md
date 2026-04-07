@@ -50,7 +50,7 @@ Images are published to three registries on every release:
 | Registry | Image |
 |---|---|
 | GitHub Container Registry | `ghcr.io/jp1337/momo` |
-| Docker Hub | `docker.io/jp1337/momo` |
+| Docker Hub | `docker.io/kermit1337/momo` |
 | Quay.io | `quay.io/jp1337/momo` |
 
 To use a pre-built image instead of building locally, replace the `build` section in `docker-compose.yml` with:
@@ -96,10 +96,13 @@ Before going live, complete all items below:
   ```bash
   openssl rand -hex 32
   ```
+- **(Optional) Configure SMTP** — if you want the Email notification channel, set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, and `SMTP_SECURE`. Without these the channel is hidden in the UI. See [Environment Variables](/momo/environment-variables#email-notifications-smtp).
+- **(Optional) Set ADMIN_USER_IDS** — comma-separated user UUIDs that can access the `/admin` aggregate-statistics page. Leave empty to disable the admin page entirely.
 - **Configure TLS** — use a reverse proxy (nginx, Caddy) or cert-manager in Kubernetes
 - **Configure HSTS** — the app sets `Strict-Transport-Security` headers automatically
 - **Never commit real secrets** to git — use `.env.local` (gitignored) or a secrets manager
 - **Migrations run automatically** — the container applies all pending migrations on startup. No manual step needed; check `docker compose logs app` to verify.
+- **Schedule the cron dispatcher** — production deployments need a periodic call to `POST /api/cron` for daily-quest selection, streak reminders, and the weekly review push. Docker Compose users can add a tiny `curl` cron container; Kubernetes users get a ready-made `cronjob.yaml` (see the [Kubernetes guide](/momo/kubernetes)).
 
 ---
 
@@ -187,3 +190,4 @@ The example manifests are in `deploy/examples/` in the repository:
 | `ingress.yaml` | Ingress with TLS (cert-manager + ingress-nginx) |
 | `secret.example.yaml` | Template for required Kubernetes secrets |
 | `postgres-statefulset.yaml` | PostgreSQL 18 StatefulSet with persistent volume |
+| `cronjob.yaml` | Kubernetes CronJob calling `POST /api/cron` for daily quest, streak reminders, and the weekly review |
