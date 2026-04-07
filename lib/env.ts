@@ -89,11 +89,43 @@ const serverEnvSchema = z.object({
     )
     .describe("Use implicit TLS (true for port 465, false for 587/STARTTLS)"),
 
+  // Two-factor authentication (TOTP)
+  TOTP_ENCRYPTION_KEY: z
+    .preprocess(
+      (val) => (val === "" ? undefined : val),
+      z
+        .string()
+        .regex(
+          /^[0-9a-fA-F]{64}$/,
+          "TOTP_ENCRYPTION_KEY must be 64 hex characters (32 bytes). Generate with: openssl rand -hex 32"
+        )
+        .optional()
+    )
+    .describe(
+      "AES-256-GCM key (64 hex chars / 32 bytes) for encrypting TOTP secrets at rest. Required only when users enable 2FA. Generate with: openssl rand -hex 32"
+    ),
+  REQUIRE_2FA: z
+    .preprocess(
+      (val) => (val === "true" ? true : val === "false" ? false : undefined),
+      z.boolean().optional().default(false)
+    )
+    .describe(
+      "When true, every user must register a second factor (TOTP, later also Passkeys) before they can access any protected route. Existing users without 2FA are hard-locked to /setup/2fa on next login."
+    ),
+
   // Runtime
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-});
+})
+  .refine(
+    (data) => !data.REQUIRE_2FA || !!data.TOTP_ENCRYPTION_KEY,
+    {
+      message:
+        "REQUIRE_2FA=true requires TOTP_ENCRYPTION_KEY to be set. Generate one with: openssl rand -hex 32",
+      path: ["TOTP_ENCRYPTION_KEY"],
+    }
+  );
 
 const clientEnvSchema = z.object({
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: emptyToUndefined.describe(

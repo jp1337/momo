@@ -472,3 +472,37 @@ export const UpsertNotificationChannelSchema = z.discriminatedUnion("type", [
 export type UpsertNotificationChannelInput = z.infer<
   typeof UpsertNotificationChannelSchema
 >;
+
+// ─── Two-Factor Authentication (TOTP) ─────────────────────────────────────────
+
+/** Six-digit numeric TOTP code as displayed by an authenticator app. */
+export const TotpCodeSchema = z.object({
+  code: z.string().regex(/^\d{6}$/, "Code must be exactly 6 digits"),
+});
+
+export type TotpCodeInput = z.infer<typeof TotpCodeSchema>;
+
+/** Ten-character alphanumeric backup code (uppercase letters + digits). */
+export const TotpBackupCodeSchema = z.object({
+  backupCode: z
+    .string()
+    .regex(/^[A-Z0-9]{10}$/, "Backup code must be 10 uppercase letters or digits"),
+});
+
+export type TotpBackupCodeInput = z.infer<typeof TotpBackupCodeSchema>;
+
+/**
+ * Login-time second-factor verification — accepts either a TOTP code OR a
+ * backup code, but not both. Exactly one of `code` / `backupCode` must be
+ * provided.
+ */
+export const TotpVerifyInputSchema = z
+  .object({
+    code: z.string().regex(/^\d{6}$/).optional(),
+    backupCode: z.string().regex(/^[A-Z0-9]{10}$/).optional(),
+  })
+  .refine((d) => !!d.code !== !!d.backupCode, {
+    message: "Provide either a 6-digit code or a 10-character backup code",
+  });
+
+export type TotpVerifyInput = z.infer<typeof TotpVerifyInputSchema>;
