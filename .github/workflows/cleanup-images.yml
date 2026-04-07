@@ -8,6 +8,14 @@ on:
     - cron: '0 3 * * 0'  # Weekly, Sunday 03:00 UTC
   workflow_dispatch:
 
+# Default to the most restrictive permission set for the workflow.
+# Individual jobs grant exactly what they need (cleanup-ghcr needs
+# packages: write to call delete-package-versions; cleanup-registries
+# only talks to external Docker Hub and Quay.io APIs and needs nothing
+# from GitHub).
+permissions:
+  contents: read
+
 jobs:
   # ── GHCR ──────────────────────────────────────────────────────────────────
   # Step 1: delete untagged versions (intermediate per-platform digests
