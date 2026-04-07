@@ -114,6 +114,9 @@ When a user deletes their account (`DELETE /api/user`):
    - `user_achievements`
    - `sessions` (Auth.js sessions)
    - `accounts` (OAuth account links)
+   - `totp_backup_codes` (one-time recovery codes for 2FA)
+   - `authenticators` (WebAuthn/Passkey credentials — public key material only, never a shared secret)
+   - `notification_channels`, `push_subscriptions`, `api_keys`, `quest_postponements`, `linking_requests`
 3. Deletion is immediate and irreversible.
 4. The user is signed out after deletion.
 
