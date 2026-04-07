@@ -43,6 +43,15 @@ const serverEnvSchema = z.object({
   GOOGLE_CLIENT_ID: emptyToUndefined.describe("Google OAuth Client ID"),
   GOOGLE_CLIENT_SECRET: emptyToUndefined.describe("Google OAuth Client Secret"),
 
+  // Microsoft (private accounts only — tenant pinned to "consumers" in lib/auth.ts;
+  // work / school / Microsoft 365 accounts are intentionally NOT supported)
+  MICROSOFT_CLIENT_ID: emptyToUndefined.describe(
+    "Microsoft (Entra ID) Application (Client) ID — personal accounts only"
+  ),
+  MICROSOFT_CLIENT_SECRET: emptyToUndefined.describe(
+    "Microsoft (Entra ID) Client Secret value (NOT the Secret ID)"
+  ),
+
   // OIDC (optional — only enabled when OIDC_ISSUER is set)
   OIDC_CLIENT_ID: emptyToUndefined.describe("Generic OIDC Client ID"),
   OIDC_CLIENT_SECRET: emptyToUndefined.describe("Generic OIDC Client Secret"),

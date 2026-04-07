@@ -8,6 +8,7 @@
  *  - GitHub (if configured)
  *  - Discord (if configured)
  *  - Google (if configured)
+ *  - Microsoft — private accounts only (if configured)
  *  - Generic OIDC (if configured)
  */
 
@@ -18,7 +19,12 @@ import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faKey } from "@fortawesome/free-solid-svg-icons";
-import { faGithub, faDiscord, faGoogle } from "@fortawesome/free-brands-svg-icons";
+import {
+  faGithub,
+  faDiscord,
+  faGoogle,
+  faMicrosoft,
+} from "@fortawesome/free-brands-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import type { Metadata } from "next";
 
@@ -52,6 +58,12 @@ const PROVIDERS: ProviderConfig[] = [
     name: "Google",
     icon: faGoogle,
     envKey: "GOOGLE_CLIENT_ID",
+  },
+  {
+    id: "microsoft-entra-id",
+    name: "Microsoft",
+    icon: faMicrosoft,
+    envKey: "MICROSOFT_CLIENT_ID",
   },
 ];
 
