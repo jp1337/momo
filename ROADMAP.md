@@ -10,7 +10,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 | -------------------------------- | ---------------- | ------- | ----------------------------------------------------------------------- |
 | Microsoft Sign In                | Auth             | ✅      | Auth.js `microsoft-entra-id`-Provider; Tenant hart auf `consumers` gepinnt — nur private MS-Accounts (Outlook/Hotmail/Live/Xbox), keine Work/School Accounts |
 | Passkeys (WebAuthn)              | Auth             | M       | `@simplewebauthn`-Adapter für Auth.js; keine externen Provider nötig    |
-| 2FA — TOTP                       | Auth             | M       | Authenticator-App (Google Authenticator, Authy); TOTP als zweiter Faktor nach OAuth-Login |
+| 2FA — TOTP                       | Auth             | ✅      | RFC-6238 TOTP via `otplib`; AES-256-GCM-verschlüsseltes Secret + SHA-256-gehashte Backup-Codes; Setup-Wizard, `/login/2fa`-Challenge, optionales Admin-Enforcement via `REQUIRE_2FA`; methoden-agnostischer Gate (`userHasSecondFactor`) bereit für Passkeys |
 | E-Mail-Benachrichtigungen        | Notifications    | ✅      | nodemailer + SMTP_*-Env-Vars; stilisiertes Newsletter-Template; Adresse pro User |
 | ntfy.sh Integration              | Notifications    | ✅      | URL-basierte Push-Benachrichtigungen; gut für Selfhoster                |
 | Pushover Integration             | Notifications    | ✅      | API Token + User Key in Settings; sofortige Push-Alerts                 |
@@ -67,7 +67,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 ### Authentifizierung erweitern
 
 - **Passkeys (WebAuthn)** — passwordloser Login ohne externen Provider; Auth.js hat `@simplewebauthn`-Adapter; ideal für PWA-Nutzer
-- **2FA — TOTP** — Authenticator-App (Google Authenticator, Authy) als zweiter Faktor *nach* dem OAuth-Login; kein Passkey-Ersatz; via `otplib` + QR-Code-Setup; Backup-Codes empfohlen
+- ✅ **2FA — TOTP** — Authenticator-App (Aegis, 2FAS, Google Authenticator, Authy, 1Password) als zweiter Faktor *nach* dem OAuth-Login; kein Passkey-Ersatz; via `otplib` + QR-Code-Setup; 10 SHA-256-gehashte Backup-Codes; AES-256-GCM-Verschlüsselung der Secrets; optionales Admin-Enforcement via `REQUIRE_2FA=true` (Hard-Lock auf `/setup/2fa`)
 - **Microsoft / Azure AD** — Auth.js `AzureAD`-Provider; relevant für Windows/Office-Nutzer; geringer Aufwand
 
 ### Benachrichtigungen erweitern

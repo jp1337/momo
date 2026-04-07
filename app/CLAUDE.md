@@ -21,6 +21,8 @@ Next.js 15 App Router pages and API routes. Thin layer — validates input, call
 (auth)/         → Route group: unauthenticated
   layout.tsx    → Centered layout for auth pages
   login/        → OAuth provider buttons (GitHub, Discord, Google)
+  login/2fa/    → Second-factor challenge — reached via the (app) layout gate when sessions.totp_verified_at IS NULL on a user with active 2FA
+setup/2fa/      → Forced 2FA setup page (REQUIRE_2FA hard-lock). Lives at the top level on purpose: must NOT inherit AppLayout's enforcement gate or the redirect would loop. Has its own minimal layout with auth() check only
 (docs)/         → Public documentation routes (no auth)
   api-docs/     → Interactive OpenAPI / Swagger UI
 (legal)/        → Legal pages (no auth)
@@ -28,6 +30,11 @@ Next.js 15 App Router pages and API routes. Thin layer — validates input, call
   impressum/    → Legal notice (Impressum)
 api/
   auth/[...nextauth]/route.ts        → Auth.js v5 handler (GET + POST)
+  auth/2fa/setup/route.ts            → POST (start TOTP wizard, returns QR + manual key, sets short-lived signed setup cookie; writes nothing to DB)
+  auth/2fa/verify-setup/route.ts     → POST (verify first code, encrypts secret + persists, generates 10 backup codes, marks current session as totp-verified)
+  auth/2fa/verify/route.ts           → POST (login-time challenge — accepts 6-digit code XOR 10-char backup code, marks sessions.totp_verified_at)
+  auth/2fa/disable/route.ts          → POST (re-verify code, then wipe secret + all backup codes; 403 TOTP_REQUIRED_BY_ADMIN when REQUIRE_2FA=true)
+  auth/2fa/regenerate-backup-codes/route.ts → POST (re-verify code, replace all 10 backup codes; backup codes not accepted as auth here)
   tasks/route.ts                     → GET (list, ?topicId/type/completed filters), POST (create)
   tasks/[id]/route.ts                → GET (single), PATCH (update), DELETE
   tasks/[id]/complete/route.ts       → POST (complete + award coins, body: {timezone?}), DELETE (uncomplete + refund)

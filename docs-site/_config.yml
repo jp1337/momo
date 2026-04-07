@@ -32,6 +32,8 @@ nav:
     url: /momo/getting-started
   - title: Features
     url: /momo/features
+  - title: Two-Factor Auth
+    url: /momo/two-factor-auth
   - title: Self-Hosting
     url: /momo/self-hosting
   - title: Deployment

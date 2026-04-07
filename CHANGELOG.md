@@ -7,6 +7,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Zwei-Faktor-Authentifizierung (TOTP)** — neuer optionaler zweiter Faktor zusätzlich zum OAuth-Login. Funktioniert mit jeder RFC-6238-Authenticator-App (Aegis, 2FAS, Google Authenticator, Authy, 1Password, …). Setup-Wizard mit QR-Code in den Settings, 10 einmalig nutzbare Backup-Codes, Login-Challenge unter `/login/2fa`, Re-Verifikation für Disable und Backup-Code-Regenerate. TOTP-Secrets werden mit AES-256-GCM verschlüsselt (`TOTP_ENCRYPTION_KEY`-Env-Var), Backup-Codes mit SHA-256 gehasht. Personal Access Tokens (API-Keys) sind bewusst von der 2FA-Pflicht ausgenommen — sie gelten als eigener Faktor. Implementierung in `lib/totp.ts`, fünf neue Routen unter `/api/auth/2fa/*`, neue Settings-Sektion und i18n in de/en/fr.
+- **Admin-Enforcement: `REQUIRE_2FA=true`** — neue Env-Var, die alle Konten zwingt, vor dem Zugriff auf irgendeine geschützte Route einen zweiten Faktor einzurichten. Hard-Lock auf `/setup/2fa` (eigenes Layout außerhalb des `(app)`-Trees, kein Redirect-Loop). Bestehende User ohne 2FA werden beim nächsten Login direkt gegated. Disable-Endpoint blockt mit `403 TOTP_REQUIRED_BY_ADMIN`. Methoden-agnostischer Gate via `userHasSecondFactor()` — vorbereitet auf das zukünftige Passkey-Feature ohne weitere Codeänderungen.
+
 ### Security
 
 - **nodemailer auf 8.0.4 angehoben** — adressiert [GHSA-c7w3-x93f-qmm8](https://github.com/advisories/GHSA-c7w3-x93f-qmm8) (low severity, SMTP command injection via unsanitized `envelope.size`-Parameter in nodemailer < 8.0.4). In Momo nicht ausnutzbar (wir setzen das `envelope`-Option in `transporter.sendMail` nirgendwo, und next-auths Email-Provider ist nicht aktiviert), aber der Bump schließt den Dependabot-Alert. Da next-auth einen `peerOptional`-Pin auf nodemailer ^7 hat, wird der v8-Bump per `npm overrides` durchgesetzt.

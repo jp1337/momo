@@ -24,6 +24,7 @@ The full schema is defined in `lib/db/schema.ts`.
 | `cron_runs` | Log of push-notification cron job executions (30-day retention) |
 | `quest_postponements` | Log of daily quest postponement events (for weekly review analytics) |
 | `notification_channels` | User-configured notification channels (ntfy, pushover, telegram, etc.) |
+| `totp_backup_codes` | One-time recovery codes for TOTP-based 2FA (SHA-256 hashed, single-use) |
 
 ### Auth.js Adapter Tables
 
@@ -65,6 +66,28 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `emotional_closure_enabled` | boolean | Whether to show an affirmation/quote after completing the daily quest (default: true) |
 | `energy_level` | enum | Today's self-reported energy level: `HIGH`, `MEDIUM`, `LOW`. Null = not yet checked in today. Reset daily via `energy_level_date` comparison |
 | `energy_level_date` | date | Date (YYYY-MM-DD) on which the energy level was last set. Used for daily reset |
+| `totp_secret` | text | TOTP secret encrypted with AES-256-GCM (`iv:tag:cipher`, base64-segmented). NULL when 2FA is off. The plaintext secret is never stored. See [two-factor-auth.md](two-factor-auth.md) |
+| `totp_enabled_at` | timestamptz | **Source of truth** for "is 2FA active". NULL means off, even if `totp_secret` is non-NULL |
+
+### `sessions` (2FA-relevant columns)
+
+| Column | Type | Description |
+|---|---|---|
+| `totp_verified_at` | timestamptz | Per-session second-factor verification timestamp. NULL on every fresh session until the user passes the `/login/2fa` challenge. The `(app)` layout gate redirects to `/login/2fa` when `users.totp_enabled_at IS NOT NULL` and this is NULL |
+
+### `totp_backup_codes`
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | FK → users (cascade) |
+| `code_hash` | text | SHA-256 hex digest of the plaintext code. Mirrors the `api_keys.key_hash` pattern — codes are high-entropy, so plain SHA-256 is sufficient (no per-row salt) |
+| `used_at` | timestamptz | Set when the code is consumed. NULL means the code is still valid. Codes are single-use to prevent replay |
+| `created_at` | timestamptz | When the code was issued |
+
+10 codes are generated per setup or regeneration. Codes are 10 characters
+from the unambiguous alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (no
+`I`/`O`/`0`/`1`).
 
 ### `tasks`
 

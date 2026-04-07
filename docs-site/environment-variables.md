@@ -151,6 +151,22 @@ NEXTAUTH_URL=https://momo.example.com
 
 ---
 
+## Two-Factor Authentication
+
+Optional. The TOTP feature is fully self-contained — no external services required.
+
+| Variable | Default | Description |
+|---|---|---|
+| `TOTP_ENCRYPTION_KEY` | — | AES-256-GCM key used to encrypt TOTP secrets at rest in the database. **Required** as soon as any user enables 2FA, or when `REQUIRE_2FA=true`. Must be exactly 64 hex characters (32 bytes). Generate with `openssl rand -hex 32`. **Treat this as critical secret material** — rotating it invalidates every existing TOTP secret and forces every user to re-enroll. |
+| `REQUIRE_2FA` | `false` | When `true`, every user must register a second factor (TOTP — Passkeys later) before they can access any protected route. Existing users without 2FA are hard-locked to a forced setup page on their next login. The "disable 2FA" button is hidden in the UI and the corresponding API endpoint returns `403`. |
+
+> Setting `REQUIRE_2FA=true` without `TOTP_ENCRYPTION_KEY` will refuse to start. Make sure both are present.
+
+End-user guide → [Two-Factor Authentication](/momo/two-factor-auth)
+Operator guide → [Self-Hosting → Enforcing two-factor authentication](/momo/self-hosting#enforcing-two-factor-authentication)
+
+---
+
 ## Admin Access
 
 | Variable | Default | Description |
@@ -242,6 +258,10 @@ SMTP_SECURE=false
 
 # Cron protection
 CRON_SECRET=your-hex-cron-secret
+
+# Two-factor authentication (required if any user enables 2FA, or REQUIRE_2FA=true)
+TOTP_ENCRYPTION_KEY=64-hex-characters-from-openssl-rand-hex-32
+REQUIRE_2FA=false
 
 # URLs
 NEXT_PUBLIC_APP_URL=https://momo.example.com
