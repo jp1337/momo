@@ -177,12 +177,23 @@ class TelegramChannel implements NotificationChannel {
     this.chatId = config.chatId;
   }
 
-  /** HTML-escape a string for Telegram's strict HTML parse mode. */
+  /**
+   * HTML-escape a string for Telegram's strict HTML parse mode.
+   *
+   * Escapes all five HTML-significant characters (`& < > " '`) so the
+   * value is safe for both element-content context (`<b>{title}</b>`)
+   * and attribute-value context (`href="{url}"`). Telegram itself only
+   * cares about `& < >` for parse_mode=HTML, but escaping the quote
+   * characters is required to prevent attribute injection if a payload
+   * URL ever contains a `"`.
+   */
   private escapeHtml(input: string): string {
     return input
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   async send(payload: NotificationPayload): Promise<void> {
