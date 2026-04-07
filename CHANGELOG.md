@@ -7,6 +7,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Security
+
+- **nodemailer auf 8.0.4 angehoben** — adressiert [GHSA-c7w3-x93f-qmm8](https://github.com/advisories/GHSA-c7w3-x93f-qmm8) (low severity, SMTP command injection via unsanitized `envelope.size`-Parameter in nodemailer < 8.0.4). In Momo nicht ausnutzbar (wir setzen das `envelope`-Option in `transporter.sendMail` nirgendwo, und next-auths Email-Provider ist nicht aktiviert), aber der Bump schließt den Dependabot-Alert. Da next-auth einen `peerOptional`-Pin auf nodemailer ^7 hat, wird der v8-Bump per `npm overrides` durchgesetzt.
+
+- **HTML-Attribut-Escaping in TelegramChannel vervollständigt** — CodeQL [`js/incomplete-html-attribute-sanitization`](https://codeql.github.com/codeql-query-help/javascript/js-incomplete-html-attribute-sanitization/) (medium). Die `escapeHtml`-Helper-Funktion in `lib/notifications.ts` escaped jetzt zusätzlich `"` und `'`, sodass Payload-URLs in `<a href="...">` sicher sind, falls jemals ein `"` in einer Notification-URL auftaucht. Praktisch nicht ausnutzbar (URLs kommen nur aus Momos eigenen Settings/Dashboard-Links, nie aus User-Input), aber Defense-in-Depth.
+
+- **GitHub-Workflow `cleanup-images.yml` mit Top-Level `permissions: contents: read`** — CodeQL [`actions/missing-workflow-permissions`](https://codeql.github.com/codeql-query-help/actions/actions-missing-workflow-permissions/) (medium). Der `cleanup-registries`-Job hatte keinen `permissions`-Block; er redet nur mit Docker Hub und Quay.io und braucht von GitHub gar nichts. `cleanup-ghcr` behält sein `packages: write` Override.
+
+### Changed
+
+- **npm install und Build sind jetzt warnungsfrei** — alle 11 npm-Warnungen (3 ERESOLVE wegen React 19 vs swagger-ui-react-Transitives, 8 Deprecation-Warnings aus Workbox-/Drizzle-/Swagger-Subtrees) per `npm overrides` und `.npmrc legacy-peer-deps=true` adressiert. Konkret:
+  - `react-copy-to-clipboard` → ^5.1.1 (drops React 18 cap)
+  - `react-inspector` → ^9.0.0 (R18+19)
+  - `react-debounce-input` → bleibt 3.3.0 (abandoned, hard React 18 cap), kompensiert via `legacy-peer-deps=true` in `.npmrc`
+  - `workbox-build` → ^7.4.0 (drops glob@7 + inflight)
+  - `glob` → ^13.0.0 (latest)
+  - `magic-string` → ^0.30.21 (uses @jridgewell/sourcemap-codec)
+  - `source-map` → ^0.7.6 (replaces workbox' abandoned 0.8.0-beta.0)
+  - `node-domexception` → npm:@nolyfill/domexception@^1.0.28 (no-op stub; on Node 17+ globalThis.DOMException ist nativ verfügbar)
+  - `@esbuild-kit/esm-loader` + `@esbuild-kit/core-utils` → npm:noop-package@^1.0.0 (drizzle-kit deklariert sie als Deps, importiert sie aber nirgendwo — Phantom-Dependencies, sicher zu stubben). `drizzle-kit check` läuft trotzdem sauber durch.
+  - Verifiziert: `npm install` 0 warnings, `npm audit` 0 vulnerabilities, `npm run build` success, `tsc --noEmit` clean, `drizzle-kit check` "Everything's fine 🐶🔥".
+
+- **GitHub Actions auf Node 24 migriert** — Vorbereitung auf das Node 20 Sunset (forced default 2026-06-02, removal 2026-09-16). Konkret: `actions/cache@v4 → @v5`, `actions/checkout@v4 → @v6` und `actions/configure-pages@v5 → @v6` in `docs.yml`. Der Pages-Deploy-Job nutzt zusätzlich `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` als dokumentierten Workaround, weil `actions/upload-pages-artifact@v4` und `actions/deploy-pages@v5` intern noch ein Node-20 `upload-artifact` bündeln (beide bereits an ihren neuesten Tags — keine neuere Version verfügbar).
+
+### Fixed
+
+- **Docker-Build kopiert jetzt `.npmrc` in den `deps`-Stage** — vorher hat `npm ci` im Container im strikten Modus ohne `legacy-peer-deps` gelaufen und mit ~40 fehlenden Lockfile-Einträgen abgebrochen (z.B. `webpack@5.105.4` aus `workbox-webpack-plugin`'s Peers). Local lief `npm ci` sauber, weil `.npmrc` im Repo-Root war — im Container nicht vorhanden. Fix: `COPY package.json package-lock.json .npmrc ./` im Dockerfile. `lint`-Job in `build-and-publish.yml` war nicht betroffen, weil er außerhalb von Docker im Repo-Root läuft.
+
+- **Dockerfile Build-Time Env Stubs nicht mehr in Image-Layer** — der `dockerfile-rules SecretsUsedInArgOrEnv`-Lint hatte `ENV "AUTH_SECRET"`, `ENV "DATABASE_URL"`, `ENV "NEXT_PUBLIC_APP_URL"` flagged. Die drei Placeholder müssen nur existieren, damit `next build` `lib/env.ts` beim Modul-Load auswerten kann. Sie sind jetzt inline auf der `RUN npm run build`-Zeile gesetzt — existieren also nur für die Dauer dieses Build-Steps und werden nie in eine Image-Layer-Metadaten gebrannt.
+
 ### Added
 
 - **Telegram Benachrichtigungskanal** — Push-Benachrichtigungen über einen Telegram-Bot. User trägt Bot Token (von @BotFather) und Chat ID (z.B. via @userinfobot) in den Einstellungen ein. Nutzt die Telegram Bot API mit HTML-Parse-Mode und einem "Open Momo"-Click-Through-Link. Robustes HTML-Escaping für Sonderzeichen in Task-Titeln. Test-Button in den Einstellungen. Dreisprachig (DE/EN/FR). Keine DB-Migration — die Multi-Channel-Architektur trägt den neuen Kanal automatisch.
