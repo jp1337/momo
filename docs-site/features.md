@@ -649,6 +649,22 @@ Visit **/stats** from the navigation to see your personal numbers:
 
 Stats give you a view of long-term progress beyond the current streak.
 
+### Habit Tracker
+
+Open **Habits** from the sidebar (the sprout icon) to see a GitHub-style year grid for every recurring task you own. Each square is a single calendar day — the darker and greener the square, the more often you completed that habit on that day.
+
+The page lists one card per recurring task. On each card you get:
+
+- **Three counters** — total completions this year, in the last 30 days, and in the last 7 days
+- **A full-year heatmap** — 53 weeks across, 7 days down, starting on Monday (ISO weeks). Empty days are hollow; completed days fill in with the Momo green
+- **A year selector** at the top — click a past year to browse an earlier grid
+
+The grid uses your **actual completion events**, not a theoretical "expected" schedule. If you have a task set to repeat every three days but you miraculously completed it seven days in a row, all seven days light up. If you skipped two months, you see the gap honestly — no fake streaks, no guilt dressed up as motivation.
+
+Why a year view? Because habits are long-term. A single missed day feels catastrophic when you are looking at this week; it looks tiny when you are looking at an entire year of progress. The grid is there to remind you that consistency is a shape that only becomes visible over time.
+
+> **Tip:** Give a recurring task a short, imperative title like *"Ten pushups"* or *"Take meds"*. It reads better across the top of the card and fits neatly into the stat pills.
+
 ### Admin view
 
 If your account is listed in the `ADMIN_USER_IDS` environment variable, you can access **/admin** to see aggregate statistics for all users on the instance. This is useful for self-hosters who share Momo with family or a small team.

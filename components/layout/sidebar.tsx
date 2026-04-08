@@ -24,6 +24,7 @@ import {
   faListCheck,
   faFolderOpen,
   faStar,
+  faSeedling,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
@@ -48,6 +49,7 @@ export function Sidebar() {
     { href: "/focus", label: t("focus_mode"), icon: faBullseye },
     { href: "/tasks", label: t("tasks"), icon: faListCheck },
     { href: "/topics", label: t("topics"), icon: faFolderOpen },
+    { href: "/habits", label: t("habits"), icon: faSeedling },
     { href: "/wishlist", label: t("wishlist"), icon: faStar },
   ];
 
