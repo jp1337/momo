@@ -149,6 +149,13 @@ On first login, a user account is created automatically in the database.
 3. Save — your task appears in the list
 4. Click the task to mark it complete and earn your first coins
 
+**Tip — skip the blank page:** if you are facing a bigger project (a move,
+a tax return, a new workout habit), open the **Topics** page and press
+**📋 From template**. Momo ships with three curated starter topics that
+import a fully populated task list in one click — no typing required.
+See the [Features guide](/momo/features#starting-from-a-template) for
+details.
+
 ## Securing Your Account (Optional but Recommended)
 
 Once you've signed in, you can lock your Momo account down with a second factor — or skip the OAuth round-trip entirely with a passkey.
