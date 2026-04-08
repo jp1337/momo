@@ -138,7 +138,7 @@ curl -X POST https://your-domain.com/api/cron \
 
 | Variable | Default | Description |
 |---|---|---|
-| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | Public URL of the application (used for links in notifications and PWA) |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | Public URL of the application. Used for notification links, the PWA, and **SEO** (`robots.txt`, `sitemap.xml`, Open Graph tags, JSON-LD). Set this to your real HTTPS origin in production or search engines will index `localhost`. |
 | `NEXTAUTH_URL` | `http://localhost:3000` | Auth.js callback base URL. Must exactly match the Homepage URL and Authorized redirect URI configured in each OAuth provider app. In production: `https://your-domain.com` |
 | `NODE_ENV` | `development` | Runtime environment: `development`, `production`, or `test`. Set to `production` in all production deployments. |
 

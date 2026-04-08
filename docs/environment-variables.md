@@ -93,7 +93,7 @@ inspect captured emails at `http://localhost:8025`.
 
 | Variable | Type | Default | Description |
 |---|---|---|---|
-| `NEXT_PUBLIC_APP_URL` | string (URL) | `http://localhost:3000` | Public URL shown in the UI (e.g. in legal pages) |
+| `NEXT_PUBLIC_APP_URL` | string (URL) | `http://localhost:3000` | Public URL of the application. Surfaces in the UI (legal pages, notification links), the PWA, and **SEO output** (`metadataBase`, `robots.txt`, `sitemap.xml`, Open Graph & Twitter Card URLs, JSON-LD `url`). Set this to the real HTTPS origin in production — otherwise search engines will index `localhost` and link previews break. See `docs/seo.md`. |
 | `NEXTAUTH_URL` | string (URL) | `http://localhost:3000` | Base URL used by Auth.js to construct OAuth callback URLs. Must match the **Homepage URL** / **Authorized redirect URI** set in each OAuth provider app. In production: `https://yourdomain.com` |
 | `NODE_ENV` | `development` \| `production` \| `test` | `development` | Runtime environment. **Set to `production` in production deployments** — this enables stricter CSP headers and disables the PWA service worker in dev. |
 
