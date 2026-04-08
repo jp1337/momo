@@ -198,7 +198,7 @@ app/           → Next.js App Router — pages + API routes (see app/CLAUDE.md)
 lib/           → All server-side business logic (see lib/CLAUDE.md)
 components/    → UI components, dumb by design (see components/CLAUDE.md)
 docs/          → Technical docs for devs/selfhosters (see docs/CLAUDE.md)
-docs-site/     → User-facing GitHub Pages (Jekyll) — see .claudeignore
+docs-site/     → User-facing GitHub Pages (Jekyll) — see docs-site/CLAUDE.md
 deploy/        → Kubernetes manifests (see deploy/CLAUDE.md)
 drizzle/       → DB migrations (see drizzle/CLAUDE.md)
 messages/      → i18n translations de/en/fr (see messages/CLAUDE.md)
