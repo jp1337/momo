@@ -134,6 +134,13 @@
       "when": 1775675168184,
       "tag": "0018_smiling_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1775678690790,
+      "tag": "0019_low_mattie_franklin",
+      "breakpoints": true
     }
   ]
 }

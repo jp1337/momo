@@ -33,6 +33,15 @@ interface NotificationSettingsProps {
   initialEnabled: boolean;
   /** Current notification time from DB (HH:MM) */
   initialTime: string;
+  /** Whether the "Due today" reminder is currently enabled (from DB) */
+  initialDueTodayEnabled: boolean;
+  /**
+   * Whether the user has at least one enabled notification channel
+   * (ntfy/pushover/telegram/email). Used to decide whether to show the
+   * "Due today" toggle even when web push is not active — channel-only
+   * users still need to opt in to the reminder.
+   */
+  hasAnyChannel: boolean;
   /**
    * The VAPID public key for push subscriptions.
    * Passed as a prop from the server component so it reflects the runtime
@@ -51,6 +60,8 @@ interface NotificationSettingsProps {
 export function NotificationSettings({
   initialEnabled,
   initialTime,
+  initialDueTodayEnabled,
+  hasAnyChannel,
   vapidPublicKey,
 }: NotificationSettingsProps) {
   const t = useTranslations("settings");
@@ -59,6 +70,7 @@ export function NotificationSettings({
   const [notificationTime, setNotificationTime] = useState(
     (initialTime || "08:00").slice(0, 5)
   );
+  const [dueTodayEnabled, setDueTodayEnabled] = useState(initialDueTodayEnabled);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"success" | "error">("success");
@@ -281,6 +293,35 @@ export function NotificationSettings({
     }, 600);
   }
 
+  /**
+   * Persists the "Due today" reminder toggle to the server.
+   * Updates optimistically and rolls back on failure.
+   */
+  async function handleDueTodayToggle(next: boolean) {
+    const previous = dueTodayEnabled;
+    setDueTodayEnabled(next);
+    try {
+      const res = await fetch("/api/push/subscribe", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dueTodayReminderEnabled: next }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error ?? t("notif_test_failed"));
+      }
+      setMessageType("success");
+      setMessage(t("notif_due_today_saved"));
+    } catch (err) {
+      console.error("[NotificationSettings] Due-today toggle failed:", err);
+      setDueTodayEnabled(previous);
+      setMessageType("error");
+      setMessage(
+        err instanceof Error ? err.message : t("notif_test_failed")
+      );
+    }
+  }
+
   /** Sends a test push notification */
   async function handleTest() {
     setIsSaving(true);
@@ -405,6 +446,36 @@ export function NotificationSettings({
               fontFamily: "var(--font-body)",
             }}
           />
+        </div>
+      )}
+
+      {/*
+        "Due today" reminder toggle — visible whenever the user has any
+        delivery method (web push OR a configured channel). Silent on
+        empty: the cron job only pings when at least one task is actually
+        due today.
+      */}
+      {(status === "active" || hasAnyChannel) && (
+        <div className="flex flex-col gap-1.5 pt-2">
+          <label
+            className="flex items-center gap-2 text-sm font-medium cursor-pointer"
+            style={{ color: "var(--text-primary)", fontFamily: "var(--font-ui)" }}
+          >
+            <input
+              type="checkbox"
+              checked={dueTodayEnabled}
+              onChange={(e) => handleDueTodayToggle(e.target.checked)}
+              className="w-4 h-4 cursor-pointer"
+              style={{ accentColor: "var(--accent-green)" }}
+            />
+            {t("notif_due_today")}
+          </label>
+          <p
+            className="text-xs ml-6"
+            style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
+          >
+            {t("notif_due_today_hint")}
+          </p>
         </div>
       )}
 

@@ -24,6 +24,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ### Hoher Impact, kleiner Aufwand
 
+- **Per-Habit-Streak auf /habits** — individueller Streak-Zähler pro Recurring Task auf der `/habits`-Seite ("Wäsche: 8 Wochen in Folge pünktlich"); ergänzt den globalen Streak; Berechnung auf Basis von `task_completions` + `recurrence_interval` ohne Schema-Änderung.
 - ✅ **Custom Error Pages** — eigene 404- und 500-Seiten im Momo-Design (Lora-Schrift, Waldgrün-Ästhetik, Rücklink zur App); Next.js `not-found.tsx` + `error.tsx`
 - ✅ **Swipe-to-complete auf Mobile** — Wischgeste auf Task-Items: rechts = erledigen, links = löschen; Wishlist: rechts = kaufen, links = ablegen
 - ✅ **UI/UX-Konsistenz** — einheitliche Edit/Delete-Buttons (oben rechts) auf Tasks, Topics und Wishlist; vollständige Titelanzeige
@@ -34,6 +35,8 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ### Mittlerer Aufwand
 
+- **Recurring Tasks pausieren (Urlaubsmodus)** — Recurring Task für N Tage einfrieren ohne ihn zu löschen oder zu snoozen; `next_due_date` wird um die Pausendauer verschoben; verhindert dass die Habits-Statistik durch Urlaub/Krankheit verzerrt wird. DB: neues Feld `paused_until` auf `tasks`.
+- **Recurring Fälligkeits-Benachrichtigung** — separater Push wenn ein Recurring Task heute fällig ist — unabhängig von der Daily Quest (die nur einen Task pro Tag hervorhebt). Ergänzt den bestehenden Notification-Scheduler; ein Cron-Job prüft `next_due_date = today` und schickt über alle konfigurierten Kanäle.
 - ✅ **Wöchentlicher Rückblick** — Seite `/review` + wöchentliche Push-Benachrichtigung (Sonntag 18:00 Ortszeit) mit Zusammenfassung: Abschlüsse, Verschiebungen, Coins, Streak, Top-Themen
 - ✅ **Aufgaben-Vorlagen (Templates)** — drei kuratierte Topic-Vorlagen (`moving`, `taxes`, `fitness`) als One-Click-Import. Neuer Button „📋 Aus Vorlage" auf der Topics-Seite öffnet einen Picker mit Icon, Beschreibung, Task-Count und Sequential-Badge pro Vorlage. Implementierung: Template-Katalog als TypeScript-Konstanten in `lib/templates.ts` (keine DB-Tabelle), `importTopicFromTemplate()` legt Topic + Tasks atomar in einer Drizzle-Transaction an und inkrementiert `totalTasksCreated`, Titel werden server-seitig via `next-intl` `getTranslations()` in der aktuellen UI-Sprache aufgelöst und als Plain Text gespeichert. Neue Route `POST /api/topics/import-template` (Rate-Limit 10/min), neue Komponente `TemplatePicker`, i18n-Keys in de/en/fr. Erweiterbar — weitere Templates sind ein Eintrag in `TEMPLATES` + i18n-Block.
 - ✅ **Focus Mode** — reduzierte Ansicht: nur Tagesquest + Quick Wins, alles andere ausgeblendet
@@ -47,6 +50,8 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 - ✅ **Alexa Skill** — "Alexa, sage Momo: füge Zahnarzt hinzu" → Task per REST API; "Alexa, was ist meine Quest?" → Daily Quest; Lambda-Code in `alexa-skill/`
 - ✅ **Wiederkehrende Aufgaben Habit-Tracker** — neue Seite `/habits` mit GitHub-Style Jahres-Raster (53 Wochen × 7 Tage, montags beginnend) pro `RECURRING`-Task; 4 Farbstufen via `color-mix` auf `var(--accent-green)` (funktioniert in Light/Dark Mode ohne Theme-Switch), drei Zähl-Pills (Jahr/30d/7d), Jahres-Selector dynamisch abgeleitet aus der frühesten User-Completion. Keine Schema-Änderung — `task_completions` wird bereits für jede (auch recurring) Completion durch `completeTask()` befüllt. Implementierung: `lib/habits.ts`, `app/(app)/habits/page.tsx`, `components/habits/{contribution-grid,habit-card,year-selector}.tsx`, Sidebar-Eintrag mit `faSeedling`, i18n `habits.*` in de/en/fr. Reines Read-Path-Feature — keine neuen API-Routen, keine neuen Env-Vars.
 - ✅ **iCal-Export** — privater Kalender-Feed pro User (`/api/calendar/<token>.ics`). Settings-Sektion generiert einen 256-Bit-Token, URL wird einmalig angezeigt (Hash via SHA-256 in `users.calendar_feed_token_hash`, mirrored aus dem `api-keys`-Pattern). Feed enthält alle offenen Tasks mit `due_date` oder (bei RECURRING) `next_due_date` als Ganztages-VEVENTs; recurring Tasks bekommen ein offenes `RRULE:FREQ=DAILY;INTERVAL=N`. Token im Pfad *ist* die Auth — keine Session, keine Bearer-Header (Calendar-Clients können keine schicken); ungültige Tokens liefern 404 (kein Info-Leak). Rotate/Revoke sind 2FA-pflichtig. Implementierung via `ical-generator@10.1.0`, Rate-Limit 60/min pro Token. Migration `drizzle/0018_smiling_lester.sql`.
+- **Erweiterte Wiederholungsregeln (Wochentag / Monat / Jahr)** — aktuell unterstützt Momo nur rollierende Intervalle ("alle N Tage ab letzter Erledigung"); für Haushaltsroutinen braucht man kalenderbasierte Regeln: **wochentag-basiert** ("jeden Montag", "jeden Di + Fr"), **monatlich** ("am 1. jedes Monats"), **jährlich** ("am 15. März"). Zusätzlich: Wahl zwischen *rollend* (nächste Fälligkeit ab Abschluss-Datum) und *fest* (nächste Fälligkeit immer am nächsten definierten Termin unabhängig vom Abschluss). Schema: neues Enum `recurrence_type` (INTERVAL | WEEKDAY | MONTHLY | YEARLY) + `recurrence_weekdays` (integer array, 0=Mo…6=So) + `recurrence_fixed` (boolean). iCal-Export und Habit-Tracker müssen entsprechend angepasst werden (`RRULE:FREQ=WEEKLY;BYDAY=MO,WE`).
+- **Haushalt-Vorlage** — neue Template-Option im bestehenden `TemplatePicker`; enthält vordefinierte RECURRING Tasks mit sinnvollen Standardintervallen: Wäsche waschen (7 Tage), Staubsaugen (7 Tage), Küche reinigen (3 Tage), Bad putzen (14 Tage), Fenster putzen (30 Tage), Betten wechseln (14 Tage); Intervalle beim Import anpassbar. Erfordert keine zusätzliche Infrastruktur — nur ein neuer Eintrag in `lib/templates.ts` + i18n-Keys.
 - **Offline-Queue** — Tasks offline erstellen/abhaken; beim Reconnect syncen (PWA Service Worker)
 - **Integrationen** — Zapier/Make-Webhooks; ausgehende Events bei Task-Abschluss
 
@@ -87,7 +92,8 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 ### Erweiterbarkeit
 
 - **Webhook-System** — ausgehende Webhooks bei Task-erstellt / Task-abgeschlossen
-- **Notification-Scheduler erweitern** — "Fällig heute"-Reminder, Weekly Review Push, konfigurierbare Uhrzeit
+- ✅ **Notification-Scheduler: „Fällig heute"-Reminder** — opt-in Push/Channel-Reminder zur täglichen Notification-Time, listet Tasks mit `due_date = heute` bzw. RECURRING-Tasks mit `next_due_date = heute` (snoozed ausgeschlossen). **Silent on empty** — kein Ping, wenn nichts fällig ist. Eigener `due-today`-Cron-Job (5-Min-Bucket vor `daily-quest`), neue `users.due_today_reminder_enabled`-Spalte (Migration `drizzle/0019_low_mattie_franklin.sql`), Settings-Toggle sichtbar sobald Web Push *oder* ein Notification-Channel konfiguriert ist. Weekly Review Push + konfigurierbare Uhrzeit sind Teil früherer Iterationen
+- **Notification-Scheduler erweitern** — weitere Ausbaustufen: Overdue-Reminder, konfigurierbare Uhrzeit *pro* Reminder-Typ, benutzerdefinierte Jobs
 
 ---
 

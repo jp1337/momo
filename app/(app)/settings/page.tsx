@@ -63,6 +63,7 @@ export default async function SettingsPage() {
         providerId: users.providerId,
         notificationEnabled: users.notificationEnabled,
         notificationTime: users.notificationTime,
+        dueTodayReminderEnabled: users.dueTodayReminderEnabled,
         questPostponeLimit: users.questPostponeLimit,
         emotionalClosureEnabled: users.emotionalClosureEnabled,
       })
@@ -197,6 +198,8 @@ export default async function SettingsPage() {
         <NotificationSettings
           initialEnabled={user.notificationEnabled && activeSubs.length > 0}
           initialTime={user.notificationTime ?? "08:00"}
+          initialDueTodayEnabled={user.dueTodayReminderEnabled}
+          hasAnyChannel={channelRows.some((c) => c.enabled)}
           vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
         />
       </section>
