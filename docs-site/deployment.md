@@ -88,7 +88,17 @@ Before going live, complete all items below:
   ```bash
   npx web-push generate-vapid-keys
   ```
-- **Set `NEXT_PUBLIC_APP_URL` and `NEXTAUTH_URL` to your real public HTTPS origin** — both feed OAuth callbacks, notification links, and SEO output (`metadataBase`, `robots.txt`, `sitemap.xml`, Open Graph tags, JSON-LD). Leaving these at `http://localhost:3000` in production means search engines and link previews will index `localhost`. See the [SEO guide](https://github.com/jp1337/momo/blob/main/docs/seo.md).
+- **Set `NEXT_PUBLIC_APP_URL` and `NEXTAUTH_URL` to your real public HTTPS origin** — both feed OAuth callbacks, notification links, and SEO output (`metadataBase`, `robots.txt`, `sitemap.xml`, Open Graph tags, JSON-LD). Leaving these at `http://localhost:3000` in production means search engines and link previews will index `localhost`.
+  - **Important for `NEXT_PUBLIC_APP_URL`:** this variable is a Next.js `NEXT_PUBLIC_*` — its value is inlined into the client bundle and the pre-rendered HTML at **build time**. Setting it only at runtime (via `docker run -e ...`) affects the dynamic surfaces (sitemap, robots.txt, iCal feed, WebAuthn) but **not** the baked-in Open Graph / JSON-LD tags. You need to bake it into the image:
+    ```bash
+    # Plain Docker
+    docker build --build-arg NEXT_PUBLIC_APP_URL=https://your-domain.com -t momo .
+
+    # Docker Compose — set NEXT_PUBLIC_APP_URL in your .env file and then:
+    docker compose build
+    docker compose up -d
+    ```
+  - The published `ghcr.io/jp1337/momo` image bakes in `https://momotask.app`. Self-hosters using a different public URL must build their own image. See the [SEO guide](https://github.com/jp1337/momo/blob/main/docs/seo.md) for the full rationale.
 - **Register OAuth apps** for your production domain (callback URLs must match):
   - GitHub: `https://your-domain.com/api/auth/callback/github`
   - Discord: `https://your-domain.com/api/auth/callback/discord`

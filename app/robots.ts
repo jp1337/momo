@@ -15,8 +15,15 @@
 import type { MetadataRoute } from "next";
 import { clientEnv } from "@/lib/env";
 
+/**
+ * Force dynamic rendering so the sitemap URL and host always reflect the
+ * *runtime* value of `NEXT_PUBLIC_APP_URL` — see the matching comment in
+ * `app/sitemap.ts` for the full rationale.
+ */
+export const dynamic = "force-dynamic";
+
 export default function robots(): MetadataRoute.Robots {
-  const base = clientEnv.NEXT_PUBLIC_APP_URL;
+  const base = clientEnv.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
 
   return {
     rules: [

@@ -47,21 +47,38 @@ COPY . .
 # Disable telemetry in CI/build contexts
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# NEXT_PUBLIC_APP_URL must be the *real* production URL at build time.
+# Rationale: Next.js inlines every `NEXT_PUBLIC_*` variable into the client
+# bundle and into any statically-generated HTML during `next build`.
+# Setting it later via `docker run -e NEXT_PUBLIC_APP_URL=...` has no effect
+# on already-baked artefacts such as the Open Graph meta tags, JSON-LD,
+# and pre-rendered metadata. It *does* work for server-only dynamic routes
+# (sitemap.ts / robots.ts / calendar feed) — those have been additionally
+# marked `dynamic = "force-dynamic"` so they always read the runtime value
+# as a safety net, but the build-arg is still the source of truth for the
+# bundled HTML.
+#
+# Usage:
+#   docker build --build-arg NEXT_PUBLIC_APP_URL=https://momotask.app -t momo .
+#
+# Self-hosters: rebuild the image whenever you change your public URL.
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+
 # --mount=type=cache on .next/cache persists the Next.js incremental build cache.
 # On warm cache (no source changes), next build skips unchanged pages — typically
 # cuts build time from ~3 min to ~30-60 s.
 #
-# AUTH_SECRET / DATABASE_URL / NEXT_PUBLIC_APP_URL are placeholder values that only
-# need to exist long enough for `next build` to evaluate `lib/env.ts` at module load.
-# They are inlined on the RUN line (not declared via ENV) so they exist only for
-# the duration of this command and are never baked into a layer of the final image.
+# AUTH_SECRET / DATABASE_URL are placeholder values that only need to exist
+# long enough for `next build` to evaluate `lib/env.ts` at module load. They are
+# inlined on the RUN line (not declared via ENV) so they exist only for the
+# duration of this command and are never baked into a layer of the final image.
 # This silences the dockerfile-rules SecretsUsedInArgOrEnv warning and is cleaner
 # than persisting bogus secret-shaped values into image metadata. Real values are
 # injected at runtime via the container's environment / .env.local.
 RUN --mount=type=cache,target=/app/.next/cache \
     AUTH_SECRET="build-time-placeholder-not-used-in-production" \
     DATABASE_URL="postgresql://momo:password@localhost:5432/momo" \
-    NEXT_PUBLIC_APP_URL="http://localhost:3000" \
     npm run build
 
 # ─── Stage 3: Production runner ──────────────────────────────────────────────

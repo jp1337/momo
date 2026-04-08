@@ -13,8 +13,20 @@
 import type { MetadataRoute } from "next";
 import { clientEnv } from "@/lib/env";
 
+/**
+ * Force dynamic rendering on every request so the sitemap always reflects
+ * the *runtime* value of `NEXT_PUBLIC_APP_URL`. Without this, Next.js would
+ * statically pre-render the sitemap at build time and freeze whatever
+ * `NEXT_PUBLIC_APP_URL` was set to during `next build` — which in the
+ * default Dockerfile is `http://localhost:3000`. Self-hosters would then
+ * have to rebuild the image every time they change their public URL, and
+ * any mismatch between build-arg and runtime env would silently point
+ * Googlebot at the wrong domain.
+ */
+export const dynamic = "force-dynamic";
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = clientEnv.NEXT_PUBLIC_APP_URL;
+  const base = clientEnv.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
   const lastModified = new Date();
 
   return [

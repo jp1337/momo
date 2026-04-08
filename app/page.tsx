@@ -33,7 +33,7 @@ export const metadata: Metadata = {
  * runtime aggregation (e.g. `aggregateRating`).
  */
 function buildSoftwareAppJsonLd(): Record<string, unknown> {
-  const url = clientEnv.NEXT_PUBLIC_APP_URL;
+  const url = clientEnv.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -41,6 +41,11 @@ function buildSoftwareAppJsonLd(): Record<string, unknown> {
     description:
       "A task manager for people with procrastination tendencies. One quest a day — no pressure, no overwhelm.",
     url,
+    // Absolute URLs are required by schema.org — relative paths work in the
+    // Open Graph / Twitter meta tags (via metadataBase) but crawlers that
+    // consume JSON-LD expect fully-qualified URIs.
+    logo: `${url}/icon.svg`,
+    image: `${url}/og-image.png`,
     applicationCategory: "ProductivityApplication",
     operatingSystem: "Web",
     inLanguage: ["de", "en", "fr"],
