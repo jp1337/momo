@@ -20,6 +20,15 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung",
+  description:
+    "DSGVO-konforme Datenschutzerklärung für die öffentliche Momo-Instanz: welche Daten verarbeitet werden und warum.",
+  alternates: {
+    canonical: "/datenschutz",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 // Force dynamic so env vars are read at request time, not baked in at build.
