@@ -50,8 +50,9 @@ public/next.svg
 public/vercel.svg
 public/window.svg
 
-# next-intl type declaration — auto-generated, do not edit
+# Ambient type declarations for dependencies — never edited, just shims
 types/next-intl.d.ts
+types/next-pwa.d.ts
 
 # Worker — single-file service worker, only relevant for PWA/push changes
 worker/

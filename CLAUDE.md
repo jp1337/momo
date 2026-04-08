@@ -202,6 +202,7 @@ docs-site/     → User-facing GitHub Pages (Jekyll) — see docs-site/CLAUDE.md
 deploy/        → Kubernetes manifests (see deploy/CLAUDE.md)
 drizzle/       → DB migrations (see drizzle/CLAUDE.md)
 messages/      → i18n translations de/en/fr (see messages/CLAUDE.md)
+i18n/          → next-intl config: locales.ts (LOCALES/DEFAULT_LOCALE), request.ts (cookie-based locale resolution)
 scripts/       → Dev/ops scripts (see scripts/CLAUDE.md)
 alexa-skill/   → Separate Lambda project for Alexa integration
 ```
