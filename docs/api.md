@@ -1025,6 +1025,75 @@ Updates the authenticated user's profile. All fields are optional — only provi
 
 ---
 
+## Calendar Feed Routes
+
+Private iCalendar subscription feed per user. Third-party calendar clients (Google Calendar, Apple Calendar, Outlook, Thunderbird) subscribe to the feed URL and poll it periodically. Tasks with a due date become all-day events; `RECURRING` tasks emit an `RRULE` and appear as a series.
+
+### GET /api/calendar/:token
+
+Returns the user's iCalendar feed. **Unauthenticated** — the token in the URL path *is* the authentication. An optional `.ics` suffix is accepted for clients that expect a file extension (`/api/calendar/momo_cal_abc.ics` works too).
+
+Unknown, revoked, or malformed tokens return **404** (not 401) so the endpoint does not leak which tokens exist.
+
+**Response:**
+- `Content-Type: text/calendar; charset=utf-8`
+- `Content-Disposition: inline; filename="momo.ics"`
+- `Cache-Control: private, max-age=900` (15 min)
+
+**Selection rules:**
+- Only tasks owned by the token's user
+- Excludes completed `ONE_TIME` tasks (`completed_at IS NOT NULL`)
+- Requires either `due_date` or (for `RECURRING`) `next_due_date` to be set
+- Snoozed tasks and tasks in sequential topics are included — the calendar shows the plan, not the actionable list
+
+**Event rules:**
+- All events are all-day `VEVENT`s (`DTSTART;VALUE=DATE:YYYYMMDD`)
+- UID is `task-<taskId>@momo` — stable across polls, so updates merge in place
+- `RECURRING` tasks get `RRULE:FREQ=DAILY;INTERVAL=<recurrenceInterval>` with DTSTART = `next_due_date` and no UNTIL
+- `SUMMARY` = task title; `DESCRIPTION` = notes + topic name + deep link; `URL` = deep link into Momo; `CATEGORIES` = topic name
+
+**Rate limit:** 60 requests / minute / token.
+
+### GET /api/settings/calendar-feed
+
+Returns the current feed status for the authenticated user. Never returns the token itself.
+
+**Auth:** Browser session (and 2FA-verified, if the user has any second factor set up).
+
+**Response:**
+```json
+{ "active": true, "createdAt": "2026-04-08T12:00:00.000Z" }
+```
+
+### POST /api/settings/calendar-feed
+
+Generates a new feed token, replacing any existing one. The previous URL stops working immediately. The plaintext URL is returned **once** and never retrievable again — the server only stores a SHA-256 hash.
+
+**Auth:** Browser session (and 2FA-verified).
+
+**Rate limit:** 10 mutations / minute / user.
+
+**Response:**
+```json
+{
+  "url": "https://momo.example.com/api/calendar/momo_cal_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.ics",
+  "createdAt": "2026-04-08T12:00:00.000Z"
+}
+```
+
+### DELETE /api/settings/calendar-feed
+
+Revokes the current feed token. The subscription URL stops working immediately. Idempotent — safe to call when no feed is active.
+
+**Auth:** Browser session (and 2FA-verified).
+
+**Response:**
+```json
+{ "success": true }
+```
+
+---
+
 ## Response Format
 
 All routes return consistent JSON. On error, `error` is always a human-readable string.

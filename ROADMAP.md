@@ -46,7 +46,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 - ✅ **Alexa Skill** — "Alexa, sage Momo: füge Zahnarzt hinzu" → Task per REST API; "Alexa, was ist meine Quest?" → Daily Quest; Lambda-Code in `alexa-skill/`
 - **Wiederkehrende Aufgaben Habit-Tracker** — Jahres-/Monatsraster (GitHub Contribution Graph Stil) pro Habit-Task
-- **iCal-Export** — fällige Aufgaben als Kalender-Feed (`.ics`) für Google/Apple Calendar
+- ✅ **iCal-Export** — privater Kalender-Feed pro User (`/api/calendar/<token>.ics`). Settings-Sektion generiert einen 256-Bit-Token, URL wird einmalig angezeigt (Hash via SHA-256 in `users.calendar_feed_token_hash`, mirrored aus dem `api-keys`-Pattern). Feed enthält alle offenen Tasks mit `due_date` oder (bei RECURRING) `next_due_date` als Ganztages-VEVENTs; recurring Tasks bekommen ein offenes `RRULE:FREQ=DAILY;INTERVAL=N`. Token im Pfad *ist* die Auth — keine Session, keine Bearer-Header (Calendar-Clients können keine schicken); ungültige Tokens liefern 404 (kein Info-Leak). Rotate/Revoke sind 2FA-pflichtig. Implementierung via `ical-generator@10.1.0`, Rate-Limit 60/min pro Token. Migration `drizzle/0018_smiling_lester.sql`.
 - **Offline-Queue** — Tasks offline erstellen/abhaken; beim Reconnect syncen (PWA Service Worker)
 - **Integrationen** — Zapier/Make-Webhooks; ausgehende Events bei Task-Abschluss
 

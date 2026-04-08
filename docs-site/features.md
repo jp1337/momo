@@ -504,6 +504,45 @@ The full API reference is available at `/api-docs` (Swagger UI) on your Momo ins
 
 ---
 
+## Calendar Subscription (iCal Feed)
+
+If you want your Momo tasks to show up next to your meetings in Google Calendar, Apple Calendar, Outlook or Thunderbird, you can subscribe to a private iCal feed instead of switching apps.
+
+### Setting it up
+
+1. Open **Settings → Calendar subscription**.
+2. Click **Create feed URL**. Momo generates a brand-new private URL and shows it to you **once**. Copy it immediately — for security reasons it is not stored anywhere you can retrieve it later. If you lose it, click **Rotate token** to generate a fresh one (the old URL stops working instantly).
+3. Paste the URL into your calendar app:
+   - **Google Calendar** — in the sidebar click the **+** next to *Other calendars* → *From URL* → paste the URL.
+   - **Apple Calendar** (macOS) — *File* → *New Calendar Subscription* → paste the URL.
+   - **Outlook** — *Add calendar* → *Subscribe from web* → paste the URL.
+   - **Thunderbird** — *New Calendar* → *On the Network* → *iCalendar (ICS)* → paste the URL.
+
+Your calendar app will poll the feed every few hours and refresh automatically.
+
+### What appears in the feed
+
+- Every task that is **not yet completed** and has either a **due date** or (for recurring tasks) a **next-due date**.
+- Tasks appear as **all-day events** — Momo tasks don't have a time of day.
+- **Recurring tasks** show up as a series — if you have a task that repeats every 7 days, your calendar will show it as a weekly event, open-ended.
+- **Snoozed tasks** stay visible in the calendar even while hidden on your dashboard — the feed shows what's on the plan, not what you need to act on *today*.
+- Each event title is the task title, the description contains your notes plus a direct link back into Momo, and the topic (if any) is set as the event category so you can colour-code them.
+
+### Security and privacy
+
+- The URL contains a **256-bit random token** — not your email, user ID, or anything guessable. Anyone with the URL can read your tasks, so treat it like a password.
+- Momo stores only a **hash** of the token. If you lose the URL, you have to rotate it — it cannot be shown again.
+- **Rotate** the token any time you suspect leakage; the old URL stops working immediately.
+- **Revoke** it if you no longer want the feed — one click and the URL is dead.
+- Two-factor authentication (if you have it enabled) protects the rotate and revoke actions in the settings UI.
+
+### Limits
+
+- This is a **one-way** feed: changing events in your calendar does **not** update Momo. Add, complete, or reschedule tasks in Momo itself.
+- Calendar clients typically refresh **every 1–24 hours**. If you just completed a task and want your calendar to catch up faster, most clients offer a manual *Refresh* option.
+
+---
+
 ## Data Export and Account Deletion
 
 Momo gives you full control over your data in compliance with GDPR Articles 15 and 20.
