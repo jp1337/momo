@@ -65,17 +65,38 @@ The required fields in `secret.yaml`:
 
 ```yaml
 stringData:
+  # Database
   DATABASE_URL: "postgresql://momo:yourpassword@momo-postgres:5432/momo"
+
+  # Auth.js
   AUTH_SECRET: "generate with: openssl rand -base64 32"
   AUTH_TRUST_HOST: "true"
+
+  # Public URL — drives OAuth callbacks, notification links, and SEO
+  # (metadataBase, robots.txt, sitemap.xml, Open Graph, JSON-LD).
   NEXT_PUBLIC_APP_URL: "https://momo.example.com"
   NEXTAUTH_URL: "https://momo.example.com"
 
   # At least one OAuth provider
   GITHUB_CLIENT_ID: ""
   GITHUB_CLIENT_SECRET: ""
+  DISCORD_CLIENT_ID: ""
+  DISCORD_CLIENT_SECRET: ""
+  GOOGLE_CLIENT_ID: ""
+  GOOGLE_CLIENT_SECRET: ""
 
-  # VAPID keys for push notifications
+  # Microsoft (private accounts only — Outlook.com, Hotmail, Live, Xbox).
+  # Tenant pinned to "consumers" — work / school / Microsoft 365 accounts
+  # are intentionally not supported.
+  MICROSOFT_CLIENT_ID: ""
+  MICROSOFT_CLIENT_SECRET: ""
+
+  # Generic OIDC (Authentik, Keycloak, Zitadel, …)
+  OIDC_CLIENT_ID: ""
+  OIDC_CLIENT_SECRET: ""
+  OIDC_ISSUER: ""
+
+  # VAPID keys for browser push notifications
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: ""
   VAPID_PRIVATE_KEY: ""
   VAPID_CONTACT: "mailto:admin@example.com"
@@ -91,8 +112,29 @@ stringData:
   SMTP_FROM: ""
   SMTP_SECURE: "false"
 
+  # Two-factor authentication (TOTP) — required as soon as any user enables 2FA.
+  # AES-256-GCM key, exactly 64 hex chars. Generate with: openssl rand -hex 32
+  # WARNING: rotating this key invalidates every existing TOTP secret.
+  TOTP_ENCRYPTION_KEY: ""
+
+  # When "true", forces every user to register a second factor (TOTP or Passkey)
+  # before they can access any protected route. Existing users without one are
+  # hard-locked to /setup/2fa on next login. See docs/two-factor-auth.md.
+  REQUIRE_2FA: "false"
+
+  # Passkeys (WebAuthn). RP_ID defaults to the hostname of NEXT_PUBLIC_APP_URL —
+  # only set explicitly if your site uses a subdomain that needs a different eTLD+1.
+  WEBAUTHN_RP_ID: ""
+  WEBAUTHN_RP_NAME: "Momo"
+
   # Admin access (optional — comma-separated user UUIDs allowed at /admin)
   ADMIN_USER_IDS: ""
+
+  # Legal pages (required for public DE deployments — § 5 DDG)
+  NEXT_PUBLIC_IMPRINT_NAME: ""
+  NEXT_PUBLIC_IMPRINT_ADDRESS: ""
+  NEXT_PUBLIC_IMPRINT_EMAIL: ""
+  NEXT_PUBLIC_IMPRINT_PHONE: ""
 ```
 
 > **Important:** `AUTH_TRUST_HOST: "true"` is required for Kubernetes — Auth.js v5 rejects requests from unrecognised hosts unless this is set.

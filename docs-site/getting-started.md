@@ -49,7 +49,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXTAUTH_URL=http://localhost:3000
 ```
 
-> **Production / reverse proxy:** If you deploy behind nginx, Caddy, or any Kubernetes ingress, also set `AUTH_TRUST_HOST=true`. Auth.js v5 requires this to accept proxied requests.
+> **Production / reverse proxy:** If you deploy behind nginx, Caddy, or any Kubernetes ingress, also set `AUTH_TRUST_HOST=true`. Auth.js v5 requires this to accept proxied requests. Make sure `NEXT_PUBLIC_APP_URL` and `NEXTAUTH_URL` point at your real public HTTPS origin — both drive OAuth callbacks, notification links, and SEO output (`robots.txt`, `sitemap.xml`, Open Graph tags).
 
 See the [Environment Variables reference](/momo/environment-variables) for all available options.
 
@@ -149,6 +149,15 @@ On first login, a user account is created automatically in the database.
 3. Save — your task appears in the list
 4. Click the task to mark it complete and earn your first coins
 
+## Securing Your Account (Optional but Recommended)
+
+Once you've signed in, you can lock your Momo account down with a second factor — or skip the OAuth round-trip entirely with a passkey.
+
+- **Passkeys (WebAuthn)** — register your Face ID, Touch ID, Windows Hello, Android biometrics or a hardware key (YubiKey, SoloKey) under **Settings → Two-factor authentication → Passkeys**. After that, the **Sign in with a passkey** button on `/login` lets you skip the OAuth provider entirely. The same passkey works as your second factor too. [Read the guide →](/momo/passkeys)
+- **TOTP** — enable an authenticator-app code (Aegis, 2FAS, Google Authenticator, Authy, 1Password, …) under the same settings section. Save the 10 backup codes you're given — they're your safety net if you lose your phone. [Read the guide →](/momo/two-factor-auth)
+
+You can use either, both, or neither. Self-hosters can require a second factor for everyone with `REQUIRE_2FA=true` (see [Self-Hosting](/momo/self-hosting#enforcing-two-factor-authentication)).
+
 ## Enabling Notifications (Optional)
 
 Momo supports five notification channels and you can use as many as you like in parallel:
@@ -194,7 +203,8 @@ docker compose down -v
 ## Next Steps
 
 - [Explore Features →](/momo/features) — a complete guide to everything Momo can do
+- [Two-Factor Auth](/momo/two-factor-auth) · [Passkeys](/momo/passkeys) — secure your account
 - [Full Deployment Guide](/momo/deployment) — production setup with TLS and reverse proxy
 - [Environment Variables](/momo/environment-variables) — all configuration options
-- [OAuth Setup](/momo/oauth-setup) — register OAuth apps for your domain
+- [OAuth Setup](/momo/oauth-setup) — register OAuth apps for your domain (GitHub, Discord, Google, Microsoft, OIDC)
 - [Kubernetes](/momo/kubernetes) — deploy to a Kubernetes cluster

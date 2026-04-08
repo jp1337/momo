@@ -150,21 +150,23 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 ## What's New
 
-**Telegram & Email notification channels** — Push notifications via a personal Telegram bot (Bot Token + Chat ID, free) or by email (instance-wide SMTP). Both join ntfy.sh and Pushover under **Settings → Additional Notification Channels**. The email channel uses a stylised newsletter template with a tappable "Open Momo" button. [See Features →](/momo/features#additional-notification-channels)
+**Passkeys (WebAuthn)** — sign in to Momo *without* a password. Register your Face ID, Touch ID, Windows Hello, Android biometrics or a YubiKey from **Settings → Two-factor authentication → Passkeys**, and the next time you visit `/login` just tap **Sign in with a passkey**. The same passkey doubles as your second factor — pick whichever is more convenient at sign-in time. Methods can be mixed: TOTP, passkey, both, neither. [Read the guide →](/momo/passkeys)
 
-**Pushover integration** — Instant push notifications to iOS, Android, and desktop via Pushover. Configure with your User Key and Application Token in the settings.
+**Two-Factor Authentication (TOTP)** — optional second factor via any authenticator app (Aegis, 2FAS, Google Authenticator, Authy, 1Password, Bitwarden, …). Setup wizard with QR code, 10 single-use backup codes, encrypted at rest with AES-256-GCM. Self-hosters can require a second factor for everyone with `REQUIRE_2FA=true`. [Read the guide →](/momo/two-factor-auth)
+
+**Microsoft Sign In** — log in with your personal Microsoft account (Outlook.com, Hotmail, Live, Xbox). Work / school / Microsoft 365 accounts are intentionally not supported — Momo pins the tenant to `consumers`. [Setup guide →](/momo/oauth-setup#microsoft-private-accounts-only)
+
+**Alexa Skill** — "Alexa, open Momo. Add dentist appointment." Add tasks, hear your Daily Quest, manage your wishlist by voice. Account linking is automatic — tap "Link Account" in the Alexa app and an API key is created for you. Lambda code lives in `alexa-skill/`. [Read the guide →](/momo/alexa-skill)
+
+**Telegram & Email notification channels** — Push notifications via a personal Telegram bot (Bot Token + Chat ID, free) or by email (instance-wide SMTP). Both join ntfy.sh and Pushover under **Settings → Additional Notification Channels**. The email channel uses a stylised newsletter template with a tappable "Open Momo" button. [See Features →](/momo/features#additional-notification-channels)
 
 **Energy-aware Daily Quest** — Tag tasks with a high / medium / low energy level. Each morning Momo asks how you're feeling and prefers tasks that match — no more being asked to write a tax return on a 🌙 day. [See Features →](/momo/features#energy-check-in)
 
-**Focus Mode** — A new distraction-free view at `/focus` that shows only your Daily Quest and quick wins (≤ 15 min). All celebrations and animations still fire — just without the noise around them. [See Features →](/momo/features#focus-mode)
+**Focus Mode** — A distraction-free view at `/focus` that shows only your Daily Quest and quick wins (≤ 15 min). All celebrations and animations still fire — just without the noise around them. [See Features →](/momo/features#focus-mode)
 
 **5-Minute Mode** — A focused page at `/quick` showing only tasks with a 5-minute estimate. Perfect for those gaps between meetings. [See Features →](/momo/features#5-minute-mode)
 
 **Weekly Review** — Visit `/review` for a Sunday recap: completions vs last week, postponements, coins earned, streak, and top topics. An optional Sunday-evening push notification ships with the highlights. [See Features →](/momo/features#weekly-review)
-
-**Drag-and-drop subtask reordering** — Inside any topic, grab the grip handle on a task and drag it to a new position. Mouse, touch, and keyboard all work. The order persists. [See Features →](/momo/features#reordering-tasks-drag--drop)
-
-**Profile editing** — OAuth provider gave you a no-reply email or weird display name? Edit your name, email, and avatar directly in **Settings → Account**. Avatars are resized server-side and stored as WebP. [See Features →](/momo/features#profile-editing)
 
 **Snooze tasks** — Click the clock icon to pause a task until tomorrow, next week, next month, or a custom date. Snoozed tasks vanish from your list and Daily Quest until the date passes. [See Features →](/momo/features#snooze--pause-a-task)
 

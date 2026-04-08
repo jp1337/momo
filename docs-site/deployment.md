@@ -88,15 +88,21 @@ Before going live, complete all items below:
   ```bash
   npx web-push generate-vapid-keys
   ```
+- **Set `NEXT_PUBLIC_APP_URL` and `NEXTAUTH_URL` to your real public HTTPS origin** — both feed OAuth callbacks, notification links, and SEO output (`metadataBase`, `robots.txt`, `sitemap.xml`, Open Graph tags, JSON-LD). Leaving these at `http://localhost:3000` in production means search engines and link previews will index `localhost`. See the [SEO guide](https://github.com/jp1337/momo/blob/main/docs/seo.md).
 - **Register OAuth apps** for your production domain (callback URLs must match):
   - GitHub: `https://your-domain.com/api/auth/callback/github`
   - Discord: `https://your-domain.com/api/auth/callback/discord`
   - Google: `https://your-domain.com/api/auth/callback/google`
+  - Microsoft (private accounts): `https://your-domain.com/api/auth/callback/microsoft-entra-id`
+  - Generic OIDC (Authentik, Keycloak, …): `https://your-domain.com/api/auth/callback/keycloak`
 - **Set CRON_SECRET** to protect cron endpoints from unauthorized access:
   ```bash
   openssl rand -hex 32
   ```
 - **(Optional) Configure SMTP** — if you want the Email notification channel, set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, and `SMTP_SECURE`. Without these the channel is hidden in the UI. See [Environment Variables](/momo/environment-variables#email-notifications-smtp).
+- **(Optional) Set `TOTP_ENCRYPTION_KEY`** — required as soon as any user enables 2FA. AES-256-GCM key for encrypting TOTP secrets at rest. Generate with `openssl rand -hex 32`. **Treat as critical secret material** — rotating it forces every user to re-enroll their authenticator app. See [Two-Factor Authentication](/momo/two-factor-auth).
+- **(Optional) Set `REQUIRE_2FA=true`** — forces every user (including existing ones) to register a second factor (TOTP **or** Passkey) before they can access any protected route. Existing users are hard-locked to a forced setup page on next login. See [Self-Hosting → Enforcing two-factor authentication](/momo/self-hosting#enforcing-two-factor-authentication).
+- **(Optional) Set `WEBAUTHN_RP_ID` + `WEBAUTHN_RP_NAME`** — for the Passkey feature. `WEBAUTHN_RP_ID` defaults to the hostname of `NEXT_PUBLIC_APP_URL`; only set it explicitly if your site lives on a subdomain that needs a different eTLD+1. `WEBAUTHN_RP_NAME` is the cosmetic name shown in the OS / browser passkey prompt (default `Momo`). See [Passkeys](/momo/passkeys).
 - **(Optional) Set ADMIN_USER_IDS** — comma-separated user UUIDs that can access the `/admin` aggregate-statistics page. Leave empty to disable the admin page entirely.
 - **Configure TLS** — use a reverse proxy (nginx, Caddy) or cert-manager in Kubernetes
 - **Configure HSTS** — the app sets `Strict-Transport-Security` headers automatically
