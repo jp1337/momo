@@ -89,8 +89,8 @@ needs to be touched.
 | Route          | Indexed | Notes                                                                     |
 | -------------- | :-----: | ------------------------------------------------------------------------- |
 | `/`            | ✅      | Landing page. Carries the JSON-LD `SoftwareApplication` schema.           |
-| `/impressum`   | ✅      | Required by § 5 DDG. Has its own canonical URL.                           |
-| `/datenschutz` | ✅      | DSGVO privacy policy. Has its own canonical URL.                          |
+| `/impressum`   | ❌      | **Intentionally excluded** — carries the operator's real name and postal address. Marked `noindex, nofollow, noarchive, nosnippet, noimageindex` on the page level, disallowed in `robots.txt`, and not listed in `sitemap.xml`. The page itself remains reachable (required by § 5 DDG) but no search engine or the Internet Archive should mirror it. |
+| `/datenschutz` | ❌      | Same no-index / no-archive stance as `/impressum` — the DSGVO page repeats the same private contact data. |
 | `/login`       | ❌      | `noindex` — login pages have no SEO value and pollute SERPs.              |
 | `/login/2fa`   | ❌      | Disallowed via `robots.txt`.                                              |
 | `/api-docs`    | ❌      | `noindex` (set on `(docs)/layout.tsx`) + disallowed via `robots.txt`.     |

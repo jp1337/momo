@@ -25,9 +25,26 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/impressum",
   },
+  // Intentionally opted out of every form of crawling and archiving.
+  // The page must be reachable for compliance (§ 5 DDG), but it carries
+  // the operator's real name and postal address — neither Google nor
+  // the Internet Archive (archive.org) should mirror it. `noarchive`
+  // is the signal the Wayback Machine honours; `nosnippet` prevents
+  // search engines from displaying excerpts; `noimageindex` blocks
+  // image indexing; `noindex, nofollow` keeps it out of SERPs entirely.
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
+    noarchive: true,
+    nosnippet: true,
+    noimageindex: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noarchive: true,
+      nosnippet: true,
+      noimageindex: true,
+    },
   },
 };
 
