@@ -11,6 +11,7 @@ Technical documentation for developers and self-hosters. NOT the user-facing doc
 - `oauth-setup.md` — Step-by-step OAuth provider setup (GitHub, Discord, Google, OIDC)
 - `gdpr.md` — DSGVO/GDPR compliance guide for operators (data export, deletion, legal pages)
 - `alexa.md` — Alexa Skill setup and Account Linking documentation
+- `seo.md` — SEO setup for the public instance (metadata, OG/Twitter cards, robots.ts, sitemap.ts, JSON-LD)
 
 ## When to update
 - New API endpoint added → `api.md`

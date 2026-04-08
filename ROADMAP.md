@@ -56,7 +56,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 ### Akut / Geplant
 
 - ✅ **Push-Benachrichtigungen** — Daily Quest Reminder mit Task-Titel in Notification; täglicher Quest-Wechsel (daily_quest_date)
-- **SEO für öffentliche Momo-Instanz** — `<meta>` Tags (OG, Twitter Cards), `sitemap.xml`, `robots.txt`, strukturierte Daten (JSON-LD); wichtig für Sichtbarkeit der gehosteten Demo auf `momotask.app`
+- ✅ **SEO für öffentliche Momo-Instanz** — `metadataBase` + `alternates.canonical` + Robots-Direktive im Root-Layout, Open Graph (siteName/locale/image) + Twitter Cards (`summary_large_image`), typed `app/robots.ts` und `app/sitemap.ts` (cookie-basiertes i18n → eine kanonische URL pro Route, kein hreflang nötig), `SoftwareApplication`-JSON-LD auf der Landing, Pro-Route-Metadaten (`/login` und `/api-docs` `noindex`, Legal-Seiten mit eigener `description`+`canonical`); Asset `public/og-image.png` noch ergänzen
 
 ### Stabilität
 
