@@ -120,6 +120,13 @@
       "when": 1775661276826,
       "tag": "0016_melted_black_cat",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1775669946294,
+      "tag": "0017_hard_boomer",
+      "breakpoints": true
     }
   ]
 }

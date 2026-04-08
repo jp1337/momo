@@ -16,7 +16,7 @@
 import { db } from "@/lib/db";
 import type { Database } from "@/lib/db";
 import { tasks, users, topics, questPostponements } from "@/lib/db/schema";
-import { eq, and, isNull, isNotNull, lte, lt, gte, or, ne, sql } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, lte, lt, gte, or, ne, sql, notInArray, asc } from "drizzle-orm";
 import { getLocalDateString, getLocalTomorrowString } from "@/lib/date-utils";
 
 /** A Drizzle transaction or the base db instance */
@@ -153,6 +153,39 @@ async function pickBestTask(
     ? or(eq(tasks.energyLevel, userEnergy), isNull(tasks.energyLevel))
     : undefined;
 
+  // Sequential topics: collect IDs of tasks that are blocked because an
+  // earlier task in the same topic is still open. "Open" = not completed
+  // AND not currently snoozed — snoozing a task advances the chain so the
+  // next one becomes eligible, otherwise a snooze would freeze the whole
+  // topic indefinitely.
+  const sequentialTopicRows = await client
+    .select({ id: topics.id })
+    .from(topics)
+    .where(and(eq(topics.userId, userId), eq(topics.sequential, true)));
+
+  const blockedTaskIds: string[] = [];
+  for (const topic of sequentialTopicRows) {
+    const openInTopic = await client
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.topicId, topic.id),
+          eq(tasks.userId, userId),
+          isNull(tasks.completedAt),
+          notSnoozed
+        )
+      )
+      .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt));
+    // Everything after the first open task is blocked until it's done.
+    for (let i = 1; i < openInTopic.length; i++) {
+      blockedTaskIds.push(openInTopic[i].id);
+    }
+  }
+
+  const notBlocked =
+    blockedTaskIds.length > 0 ? notInArray(tasks.id, blockedTaskIds) : undefined;
+
   /**
    * Two-pass helper: tries energy-preferred candidates first, falls back to any.
    * For tiers returning a single ordered row (1–3), picks the first match.
@@ -203,7 +236,8 @@ async function pickBestTask(
       isNotNull(tasks.dueDate),
       lt(tasks.dueDate, today),
       ne(tasks.type, "RECURRING"),
-      notSnoozed
+      notSnoozed,
+      notBlocked
     ),
     { orderBy: tasks.dueDate }
   );
@@ -217,7 +251,8 @@ async function pickBestTask(
       isNotNull(tasks.topicId),
       eq(tasks.priority, "HIGH"),
       ne(tasks.type, "RECURRING"),
-      notSnoozed
+      notSnoozed,
+      notBlocked
     )
   );
   if (highPriority) return highPriority;
@@ -229,7 +264,8 @@ async function pickBestTask(
       eq(tasks.type, "RECURRING"),
       isNotNull(tasks.nextDueDate),
       lte(tasks.nextDueDate, today),
-      notSnoozed
+      notSnoozed,
+      notBlocked
     )
   );
   if (recurring) return recurring;
@@ -240,7 +276,8 @@ async function pickBestTask(
       eq(tasks.userId, userId),
       isNull(tasks.completedAt),
       or(eq(tasks.type, "ONE_TIME"), eq(tasks.type, "DAILY_ELIGIBLE")),
-      notSnoozed
+      notSnoozed,
+      notBlocked
     ),
     { randomPool: true }
   );

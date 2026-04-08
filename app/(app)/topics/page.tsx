@@ -38,6 +38,7 @@ export default async function TopicsPage() {
     icon: t.icon ?? null,
     priority: t.priority,
     defaultEnergyLevel: t.defaultEnergyLevel ?? null,
+    sequential: t.sequential,
     taskCount: t.taskCount,
     completedCount: t.completedCount,
   }));

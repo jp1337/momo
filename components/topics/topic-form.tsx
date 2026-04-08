@@ -18,6 +18,7 @@ interface TopicFormData {
   icon: string;
   priority: "HIGH" | "NORMAL" | "SOMEDAY";
   defaultEnergyLevel: "HIGH" | "MEDIUM" | "LOW" | null;
+  sequential: boolean;
 }
 
 interface TopicFormProps {
@@ -36,6 +37,7 @@ const DEFAULT_FORM: TopicFormData = {
   icon: "folder",
   priority: "NORMAL",
   defaultEnergyLevel: null,
+  sequential: false,
 };
 
 /** Preset color options */
@@ -98,6 +100,7 @@ export function TopicForm({
       icon: formData.icon.trim() || null,
       priority: formData.priority,
       defaultEnergyLevel: formData.defaultEnergyLevel,
+      sequential: formData.sequential,
     };
 
     setIsSubmitting(true);
@@ -330,6 +333,45 @@ export function TopicForm({
               }}
             >
               {t("form_default_energy_hint")}
+            </p>
+          </div>
+
+          {/* Sequential toggle */}
+          <div>
+            <label
+              htmlFor="topic-sequential"
+              className="flex items-center gap-2.5 cursor-pointer"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "var(--text-primary)",
+              }}
+            >
+              <input
+                id="topic-sequential"
+                type="checkbox"
+                checked={formData.sequential}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, sequential: e.target.checked }))
+                }
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  accentColor: "var(--accent-amber)",
+                  cursor: "pointer",
+                }}
+              />
+              {t("form_label_sequential")}
+            </label>
+            <p
+              className="text-xs mt-1.5 ml-6"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+              }}
+            >
+              {t("form_sequential_hint")}
             </p>
           </div>
 

@@ -20,6 +20,7 @@ interface Topic {
   icon: string | null;
   priority: "HIGH" | "NORMAL" | "SOMEDAY";
   defaultEnergyLevel: "HIGH" | "MEDIUM" | "LOW" | null;
+  sequential: boolean;
   taskCount: number;
   completedCount: number;
 }
@@ -155,6 +156,7 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
               color={topic.color}
               icon={topic.icon}
               priority={topic.priority}
+              sequential={topic.sequential}
               taskCount={topic.taskCount}
               completedCount={topic.completedCount}
               onEdit={setEditingTopicId}
@@ -177,6 +179,7 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
                   icon: editingTopic.icon ?? "📁",
                   priority: editingTopic.priority,
                   defaultEnergyLevel: editingTopic.defaultEnergyLevel ?? null,
+                  sequential: editingTopic.sequential,
                 }
               : undefined
           }

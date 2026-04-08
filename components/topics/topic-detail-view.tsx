@@ -45,6 +45,8 @@ interface TopicDetailViewProps {
   /** Topic's default energy level — passed through to TaskForm so the
    *  energy picker can show the inheritance hint. */
   topicDefaultEnergyLevel?: "HIGH" | "MEDIUM" | "LOW" | null;
+  /** Whether the topic enforces sequential ordering for daily quest selection. */
+  topicSequential?: boolean;
 }
 
 /**
@@ -57,6 +59,7 @@ export function TopicDetailView({
   initialTasks,
   topicColor,
   topicDefaultEnergyLevel = null,
+  topicSequential = false,
 }: TopicDetailViewProps) {
   const t = useTranslations("topics");
   const router = useRouter();
@@ -289,6 +292,22 @@ export function TopicDetailView({
           >
             {t("detail_empty")}
           </p>
+        </div>
+      )}
+
+      {/* Sequential hint — shown when this topic enforces ordered quest selection */}
+      {topicSequential && activeTasks.length > 0 && (
+        <div
+          className="mb-3 px-3 py-2 rounded-lg text-xs flex items-start gap-2"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            color: "var(--text-muted)",
+            backgroundColor: `color-mix(in srgb, ${topicColor ?? "var(--accent-amber)"} 8%, var(--bg-surface))`,
+            border: `1px solid color-mix(in srgb, ${topicColor ?? "var(--accent-amber)"} 25%, transparent)`,
+          }}
+        >
+          <span aria-hidden="true">⛓</span>
+          <span>{t("detail_sequential_hint")}</span>
         </div>
       )}
 

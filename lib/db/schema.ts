@@ -272,6 +272,13 @@ export const topics = pgTable("topics", {
   archived: boolean("archived").notNull().default(false),
 
   /**
+   * Sequential topics enforce implicit ordering: only the first still-open task
+   * (lowest sort_order, not snoozed) is eligible for daily quest selection.
+   * Later tasks are blocked until earlier ones are completed. Opt-in per topic.
+   */
+  sequential: boolean("sequential").notNull().default(false),
+
+  /**
    * Default energy level inherited by new tasks created in this topic.
    * Useful for "Sport" (HIGH) or "E-Mails beantworten" (LOW) topics — saves
    * the user from picking the level on every task. NULL = no default.

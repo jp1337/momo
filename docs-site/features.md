@@ -133,6 +133,7 @@ Click **New Topic** and set:
 - **Color** — a visual accent shown on the card
 - **Icon** — an emoji or icon to identify the topic at a glance
 - **Priority** — `High`, `Normal`, or `Someday`
+- **Sequential tasks** — an opt-in toggle that turns the topic into an ordered sequence (see below)
 
 ### The topic card
 
@@ -155,6 +156,21 @@ Inside any topic, active tasks can be reordered by dragging them. A small **grip
 The order persists across page reloads. If the save fails (e.g. a network hiccup), the tasks snap back to their previous positions.
 
 Only **active** tasks are reorderable. Snoozed and completed tasks stay in their own sections below. New tasks always appear at the bottom of the list.
+
+### Sequential topics
+
+Some projects only make sense in order. You cannot pack the moving boxes before buying them; you cannot file the tax return before gathering the receipts. For these cases, toggle **Sequential tasks** on the topic.
+
+When a topic is sequential, Momo treats the drag-and-drop order as an **implicit dependency chain**: only the **first still-open task** in the topic is eligible to become today's Daily Quest. Everything after it is quietly held back until earlier tasks are done. No explicit dependencies to maintain — the order you set is the order Momo follows.
+
+**Everyday behavior:**
+
+- Reorder tasks via the grip handle to set the chain (first = earliest).
+- Complete the top task, and the next one immediately becomes quest-eligible the next time a quest is drawn.
+- **Snoozing** a task advances the chain — a snoozed task is treated as "not here right now", so the task after it moves up. Un-snoozing puts it back in its place.
+- Turning the toggle off again instantly releases all tasks back to normal selection.
+
+A small badge on the topic card and a hint inside the topic view make it clear when sequential mode is on.
 
 ### Deleting a topic
 

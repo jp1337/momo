@@ -1,0 +1,1 @@
+ALTER TABLE "topics" ADD COLUMN "sequential" boolean DEFAULT false NOT NULL;

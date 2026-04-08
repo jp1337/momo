@@ -153,6 +153,7 @@ factor for `lib/totp.ts::userHasSecondFactor` and therefore for the
 | `icon` | text | Font Awesome icon key (e.g. `"folder"`, `"camera"`) — resolved via `resolveTopicIcon()` |
 | `priority` | enum | `HIGH`, `NORMAL`, `SOMEDAY` — influences quest selection |
 | `archived` | boolean | Hidden from main view |
+| `sequential` | boolean | Opt-in flag. When `true`, only the first still-open task in this topic (lowest `sort_order`, not snoozed) is eligible for daily quest selection — later tasks are implicitly blocked until earlier ones are completed. Default `false` |
 | `default_energy_level` | enum | Optional `HIGH`/`MEDIUM`/`LOW` default — new tasks created in this topic inherit this value when the user does not pick one explicitly. Existing tasks are not retro-tagged when this changes |
 
 ### `energy_checkins`
