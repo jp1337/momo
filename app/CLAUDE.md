@@ -75,8 +75,11 @@ api/
   settings/notification-channels/[type]/test/route.ts → POST (send test notification)
   openapi.json/route.ts              → GET (OpenAPI 3.1.0 spec, public)
 globals.css     → Design system CSS variables, Tailwind v4, Google Fonts
-layout.tsx      → Root layout: ThemeProvider (next-themes), font variables
-page.tsx        → Landing page (unauthenticated) or redirect to /dashboard (authenticated)
+layout.tsx      → Root layout: ThemeProvider (next-themes), font variables, root SEO metadata (metadataBase, OG, Twitter Cards, robots)
+page.tsx        → Landing page (unauthenticated) or redirect to /dashboard (authenticated). Embeds SoftwareApplication JSON-LD inline for rich snippets
+robots.ts       → Typed Next.js MetadataRoute.Robots — generates /robots.txt at request time. Allows public marketing surface, disallows /api/*, /api-docs, /login/2fa, /setup/, all authenticated app routes. Sitemap URL built from clientEnv.NEXT_PUBLIC_APP_URL
+sitemap.ts      → Typed Next.js MetadataRoute.Sitemap — generates /sitemap.xml. One entry per public route (/, /login, /impressum, /datenschutz). Cookie-based i18n means no per-locale fan-out and no hreflang
+icon.svg, apple-icon.svg, favicon.ico → Auto-mapped by Next.js into <head> link tags — do not duplicate in metadata
 ```
 
 ## Patterns
