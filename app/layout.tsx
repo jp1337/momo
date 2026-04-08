@@ -16,6 +16,7 @@ import { getLocale, getMessages } from "next-intl/server";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import "./globals.css";
+import { clientEnv } from "@/lib/env";
 
 // Prevent Font Awesome from adding its own <style> tag at runtime —
 // we already import the CSS above, so this avoids a duplicated stylesheet.
@@ -49,6 +50,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(clientEnv.NEXT_PUBLIC_APP_URL),
   title: {
     default: "Momo",
     template: "%s | Momo",
@@ -57,11 +59,42 @@ export const metadata: Metadata = {
     "Steal your time back. A task management app for people with avoidance tendencies and procrastination.",
   keywords: ["task management", "productivity", "procrastination", "daily quest"],
   authors: [{ name: "jp1337" }],
+  applicationName: "Momo",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
   openGraph: {
-    title: "Momo",
+    title: "Momo — Steal your time back",
     description: "Steal your time back. One small task, today.",
     type: "website",
-    url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+    siteName: "Momo",
+    locale: "de_DE",
+    url: "/",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Momo — Steal your time back",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Momo — Steal your time back",
+    description: "Steal your time back. One small task, today.",
+    images: ["/og-image.png"],
   },
 };
 

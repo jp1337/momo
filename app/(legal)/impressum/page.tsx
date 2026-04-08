@@ -20,6 +20,15 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Impressum",
+  description:
+    "Impressum und Anbieterkennzeichnung gemäß § 5 DDG für die öffentliche Momo-Instanz.",
+  alternates: {
+    canonical: "/impressum",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 // Force dynamic so env vars are read at request time, not baked in at build.

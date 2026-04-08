@@ -12,12 +12,50 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+import { clientEnv } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Momo — Steal your time back",
   description:
     "A task manager for people with procrastination tendencies. One quest a day — no pressure, no overwhelm.",
+  alternates: {
+    canonical: "/",
+  },
 };
+
+/**
+ * Schema.org `SoftwareApplication` JSON-LD payload for the landing page.
+ *
+ * Embedded inline in the page so that crawlers (Google Rich Results, Bing,
+ * DuckDuckGo) can pick up structured metadata about Momo. The schema is
+ * intentionally minimal — `name`, `description`, `url`, application
+ * category, OS, and a free `Offer` — and avoids fields that would require
+ * runtime aggregation (e.g. `aggregateRating`).
+ */
+function buildSoftwareAppJsonLd(): Record<string, unknown> {
+  const url = clientEnv.NEXT_PUBLIC_APP_URL;
+  return {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Momo",
+    description:
+      "A task manager for people with procrastination tendencies. One quest a day — no pressure, no overwhelm.",
+    url,
+    applicationCategory: "ProductivityApplication",
+    operatingSystem: "Web",
+    inLanguage: ["de", "en", "fr"],
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "EUR",
+    },
+    author: {
+      "@type": "Person",
+      name: "jp1337",
+      url: "https://github.com/jp1337",
+    },
+  };
+}
 
 /**
  * Feather SVG — subtle decorative element in the hero section.
@@ -74,6 +112,8 @@ export default async function LandingPage() {
 
   const t = await getTranslations("landing");
 
+  const jsonLd = buildSoftwareAppJsonLd();
+
   return (
     <div
       style={{
@@ -83,6 +123,14 @@ export default async function LandingPage() {
         fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
       }}
     >
+      {/* SEO: SoftwareApplication structured data for rich snippets.
+          dangerouslySetInnerHTML is safe here — the payload comes from
+          JSON.stringify on a static object built in this file, no user input. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Floating feather animation CSS */}
       <style>{`
         @keyframes featherFloat {
