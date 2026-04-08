@@ -455,6 +455,7 @@ Response (201 Created):
 | `PATCH` | `/api/topics/:id` | Yes | — | Partially update a topic |
 | `DELETE` | `/api/topics/:id` | Yes | — | Delete topic (tasks become standalone) |
 | `PUT` | `/api/topics/:id/reorder` | Yes | 30/min | Reorder tasks within a topic |
+| `POST` | `/api/topics/import-template` | Yes | 10/min | Import a topic from a predefined template |
 
 ### GET /api/topics
 
@@ -523,6 +524,27 @@ Reorders active tasks within a topic. The array index of each task ID becomes th
 All task IDs must belong to the given topic and the authenticated user.
 
 Response: `{ "success": true }`
+
+### POST /api/topics/import-template
+
+Creates a new topic with all predefined subtasks from a curated template. Title, description and task titles are resolved in the caller's current UI locale (cookie `locale`, falls back to `Accept-Language`, default `de`) and stored as plain editable text — the imported content is no longer coupled to the i18n layer.
+
+The full template catalogue (icon, color, priority, sequential flag, default energy level and task list) lives in [`lib/templates.ts`](../lib/templates.ts).
+
+**Request body:**
+```json
+{ "templateKey": "moving" }
+```
+
+| Template key | Title (EN) | Tasks | Sequential |
+|---|---|---|---|
+| `moving` | Moving | 10 | yes |
+| `taxes` | Tax return | 6 | yes |
+| `fitness` | Workout routine | 7 | no |
+
+**Response:** `201 { "topic": Topic, "tasks": Task[] }` — the created topic and its tasks, ordered by `sortOrder`.
+
+Errors: `400` invalid JSON, `401 Unauthorized`, `403` readonly API key, `422` unknown `templateKey`, `429` rate-limited (10/min), `500` internal error.
 
 ---
 

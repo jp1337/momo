@@ -243,6 +243,17 @@ export const UpdateTopicInputSchema = z.object({
 
 export type UpdateTopicInput = z.infer<typeof UpdateTopicInputSchema>;
 
+/**
+ * Schema for importing a topic from a predefined template.
+ * The actual template content (title, tasks, icon, color, …) lives in
+ * `lib/templates.ts`; this schema only validates the caller-supplied key.
+ */
+export const ImportTemplateInputSchema = z.object({
+  templateKey: z.enum(["moving", "taxes", "fitness"]),
+});
+
+export type ImportTemplateInput = z.infer<typeof ImportTemplateInputSchema>;
+
 // ─── Wishlist Validators ───────────────────────────────────────────────────────
 
 /**

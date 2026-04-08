@@ -1408,6 +1408,64 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       },
     },
 
+    "/api/topics/import-template": {
+      post: {
+        operationId: "importTopicTemplate",
+        tags: ["Topics"],
+        summary: "Import a topic from a template",
+        description:
+          "Creates a new topic with all predefined subtasks from a curated " +
+          "template (e.g. 'moving', 'taxes', 'fitness'). Titles and descriptions " +
+          "are resolved in the caller's current UI locale and inserted as plain " +
+          "editable text. Runs atomically in a single transaction.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["templateKey"],
+                properties: {
+                  templateKey: {
+                    type: "string",
+                    enum: ["moving", "taxes", "fitness"],
+                    description: "Identifier of the template to import.",
+                  },
+                },
+              },
+              example: { templateKey: "moving" },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Template imported — topic and tasks created.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["topic", "tasks"],
+                  properties: {
+                    topic: { $ref: "#/components/schemas/Topic" },
+                    tasks: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Task" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
     "/api/topics/{id}/reorder": {
       put: {
         operationId: "reorderTopicTasks",

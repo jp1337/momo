@@ -11,6 +11,7 @@ import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { TopicCard } from "./topic-card";
 import { TopicForm } from "./topic-form";
+import { TemplatePicker } from "./template-picker";
 
 interface Topic {
   id: string;
@@ -86,6 +87,7 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
   const [topics, setTopics] = useState<Topic[]>(initialTopics);
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const editingTopic = topics.find((topic) => topic.id === editingTopicId);
 
@@ -124,8 +126,20 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
 
   return (
     <div>
-      {/* New Topic button */}
-      <div className="flex justify-end mb-6">
+      {/* New Topic / Template buttons */}
+      <div className="flex justify-end gap-2 mb-6 flex-wrap">
+        <button
+          onClick={() => setShowTemplatePicker(true)}
+          className="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            backgroundColor: "var(--bg-elevated)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {t("from_template")}
+        </button>
         <button
           onClick={() => setShowCreateForm(true)}
           className="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
@@ -164,6 +178,17 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
             />
           ))}
         </div>
+      )}
+
+      {/* Template picker modal */}
+      {showTemplatePicker && (
+        <TemplatePicker
+          onImported={async () => {
+            setShowTemplatePicker(false);
+            await refreshTopics();
+          }}
+          onCancel={() => setShowTemplatePicker(false)}
+        />
       )}
 
       {/* Topic form modal */}
