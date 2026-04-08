@@ -395,6 +395,132 @@ export async function forceSelectDailyQuest(
 }
 
 /**
+ * Result of a re-roll attempt after an energy check-in.
+ */
+export interface ReselectQuestResult {
+  /** The current quest after the (possibly no-op) re-roll. */
+  quest: TaskWithTopic | null;
+  /** True iff the quest was actually swapped for a better-matching one. */
+  swapped: boolean;
+  /** The id of the previous quest — only set when `swapped` is true.
+   *  Used by the UI Undo link to re-pin the original. */
+  previousQuestId?: string;
+  /** The title of the previous quest — only set when `swapped` is true. */
+  previousQuestTitle?: string;
+}
+
+/**
+ * Re-rolls the daily quest if (and only if) the current quest's energy tag
+ * does not match the user's current energy and a strictly-better candidate
+ * exists. Idempotent in all other cases.
+ *
+ * Decision tree:
+ *  1. No active quest → fall through to `selectDailyQuest` with the energy
+ *     preference. Returns `swapped: false` because nothing was replaced.
+ *  2. Quest already complete → leave it alone (the user has earned the day).
+ *  3. Quest has no energy tag → keep it (untagged tasks are universal).
+ *  4. Quest matches the requested energy → keep it.
+ *  5. Real mismatch → search for a better candidate via `pickBestTask` with
+ *     the new energy preference. If none exists or it's the same task we
+ *     already had, keep the current quest. Otherwise clear the old flag and
+ *     assign the new quest atomically.
+ *
+ * Used by the energy check-in endpoint to make the inline check-in card
+ * actually do something visible.
+ *
+ * @param userId - Authenticated user UUID
+ * @param energyLevel - The user's freshly-reported energy level
+ * @param timezone - User's IANA timezone (used for the local "today" string)
+ */
+export async function reselectQuestForEnergy(
+  userId: string,
+  energyLevel: "HIGH" | "MEDIUM" | "LOW",
+  timezone?: string | null
+): Promise<ReselectQuestResult> {
+  const current = await getCurrentDailyQuest(userId);
+
+  // (1) No active quest → just select one with the energy preference.
+  if (!current) {
+    const fresh = await selectDailyQuest(userId, timezone, energyLevel);
+    return { quest: fresh, swapped: false };
+  }
+
+  // (2) Quest already done — never undo a celebration.
+  if (current.completedAt !== null) {
+    return { quest: current, swapped: false };
+  }
+
+  // (3) Untagged or already-matching quest → keep it.
+  if (current.energyLevel === null || current.energyLevel === energyLevel) {
+    return { quest: current, swapped: false };
+  }
+
+  // (4) Real mismatch — look for a better candidate.
+  const better = await pickBestTask(userId, db, timezone, energyLevel);
+  if (!better || better.id === current.id) {
+    return { quest: current, swapped: false };
+  }
+
+  // (5) Swap atomically: clear old flag first, then assign the new quest.
+  // Race-safety note: if the user completes the old quest in the middle of
+  // this swap, the UPDATE on the old row still succeeds (just clears a flag
+  // on a completed task), and the new quest assignment is unaffected.
+  const today = getLocalDateString(timezone);
+  await db
+    .update(tasks)
+    .set({ isDailyQuest: false, dailyQuestDate: null })
+    .where(and(eq(tasks.userId, userId), eq(tasks.isDailyQuest, true)));
+
+  const newQuest = await assignDailyQuest(better, userId, today);
+
+  return {
+    quest: newQuest,
+    swapped: true,
+    previousQuestId: current.id,
+    previousQuestTitle: current.title,
+  };
+}
+
+/**
+ * Pins a specific task as today's daily quest, replacing whatever is currently
+ * active. Used by the Undo link in the energy check-in card to restore the
+ * pre-reroll quest.
+ *
+ * Validates ownership and that the task is not snoozed/completed before
+ * pinning. Returns null if the target task is invalid.
+ *
+ * @param userId - Authenticated user UUID
+ * @param taskId - Task to pin as daily quest
+ * @param timezone - User's IANA timezone
+ */
+export async function pinTaskAsDailyQuest(
+  userId: string,
+  taskId: string,
+  timezone?: string | null
+): Promise<TaskWithTopic | null> {
+  const today = getLocalDateString(timezone);
+
+  // Verify the target task is eligible (owned, not completed, not snoozed past today)
+  const targetRows = await db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+    .limit(1);
+  const target = targetRows[0];
+  if (!target) return null;
+  if (target.completedAt !== null) return null;
+  if (target.snoozedUntil !== null && target.snoozedUntil > today) return null;
+
+  // Clear any existing quest flag
+  await db
+    .update(tasks)
+    .set({ isDailyQuest: false, dailyQuestDate: null })
+    .where(and(eq(tasks.userId, userId), eq(tasks.isDailyQuest, true)));
+
+  return assignDailyQuest(target, userId, today);
+}
+
+/**
  * Result of a postpone operation, including the updated postpone counters.
  */
 export interface PostponeResult {

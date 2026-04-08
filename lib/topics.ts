@@ -123,6 +123,7 @@ export async function createTopic(
       color: input.color ?? null,
       icon: input.icon ?? null,
       priority: input.priority ?? "NORMAL",
+      defaultEnergyLevel: input.defaultEnergyLevel ?? null,
     })
     .returning();
 
@@ -152,6 +153,8 @@ export async function updateTopic(
   if (input.color !== undefined) updateValues.color = input.color;
   if (input.icon !== undefined) updateValues.icon = input.icon;
   if (input.priority !== undefined) updateValues.priority = input.priority;
+  if (input.defaultEnergyLevel !== undefined)
+    updateValues.defaultEnergyLevel = input.defaultEnergyLevel;
 
   const rows = await db
     .update(topics)

@@ -133,14 +133,32 @@ export async function createTask(
 ): Promise<Task> {
   return db.transaction(async (tx) => {
     // When adding a task to a topic, place it at the end of the sort order
+    // and inherit the topic's default energy level if the user did not
+    // override it explicitly. The user's value (including an explicit `null`
+    // for "any energy") always wins.
     let sortOrder = 0;
+    let inheritedEnergyLevel: "HIGH" | "MEDIUM" | "LOW" | null = null;
     if (input.topicId) {
       const [result] = await tx
-        .select({ maxOrder: max(tasks.sortOrder) })
-        .from(tasks)
-        .where(eq(tasks.topicId, input.topicId));
+        .select({
+          maxOrder: max(tasks.sortOrder),
+          defaultEnergyLevel: topics.defaultEnergyLevel,
+        })
+        .from(topics)
+        .leftJoin(tasks, eq(tasks.topicId, topics.id))
+        .where(eq(topics.id, input.topicId))
+        .groupBy(topics.defaultEnergyLevel);
       sortOrder = (result?.maxOrder ?? -1) + 1;
+      inheritedEnergyLevel = result?.defaultEnergyLevel ?? null;
     }
+
+    // `input.energyLevel === undefined` means "user didn't touch the field" →
+    // fall back to the topic default. An explicit `null` from the user is
+    // respected as "any energy" and overrides the inheritance.
+    const effectiveEnergyLevel =
+      input.energyLevel === undefined
+        ? inheritedEnergyLevel
+        : (input.energyLevel ?? null);
 
     const rows = await tx
       .insert(tasks)
@@ -161,7 +179,7 @@ export async function createTask(
           : null,
         coinValue: input.coinValue ?? 1,
         estimatedMinutes: input.estimatedMinutes ?? null,
-        energyLevel: input.energyLevel ?? null,
+        energyLevel: effectiveEnergyLevel,
         sortOrder,
       })
       .returning();

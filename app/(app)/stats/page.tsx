@@ -19,6 +19,12 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getUserStatistics } from "@/lib/statistics";
 import { LEVELS, getNextLevel } from "@/lib/gamification";
+import {
+  getEnergyHistory,
+  getEnergyLevelCounts,
+  getEnergyCheckinDayCount,
+} from "@/lib/energy";
+import { EnergyWeekBlock } from "@/components/stats/energy-week-block";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLock,
@@ -54,7 +60,12 @@ export default async function StatsPage() {
   }
 
   const userId = session.user.id;
-  const stats = await getUserStatistics(userId);
+  const [stats, energyWeekCounts, energyHistory, energyDayCount] = await Promise.all([
+    getUserStatistics(userId),
+    getEnergyLevelCounts(userId, 7),
+    getEnergyHistory(userId, 14),
+    getEnergyCheckinDayCount(userId),
+  ]);
 
   // Level progression
   const currentLevelDef =
@@ -405,6 +416,24 @@ export default async function StatsPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ── Energie-Verlauf ──────────────────────────────────────────────────── */}
+      <section>
+        <h2
+          className="text-xs font-semibold uppercase tracking-widest mb-3"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            color: "var(--text-muted)",
+          }}
+        >
+          Energie diese Woche
+        </h2>
+        <EnergyWeekBlock
+          weekCounts={energyWeekCounts}
+          history={energyHistory}
+          isEmpty={energyDayCount === 0}
+        />
       </section>
 
       {/* ── Section 4: Aufgaben nach Typ ─────────────────────────────────────── */}

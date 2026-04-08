@@ -37,6 +37,7 @@ export default async function TopicsPage() {
     color: t.color ?? null,
     icon: t.icon ?? null,
     priority: t.priority,
+    defaultEnergyLevel: t.defaultEnergyLevel ?? null,
     taskCount: t.taskCount,
     completedCount: t.completedCount,
   }));

@@ -26,6 +26,7 @@ The full schema is defined in `lib/db/schema.ts`.
 | `notification_channels` | User-configured notification channels (ntfy, pushover, telegram, etc.) |
 | `totp_backup_codes` | One-time recovery codes for TOTP-based 2FA (SHA-256 hashed, single-use) |
 | `authenticators` | WebAuthn / Passkey credentials — one row per registered device (Auth.js-compatible schema + Momo display label) |
+| `energy_checkins` | Historical log of daily energy check-ins (multiple per day allowed) — drives the Stats page energy block. The cached "today" value also lives on `users.energyLevel` / `users.energyLevelDate` for fast dashboard reads. |
 
 ### Auth.js Adapter Tables
 
@@ -152,6 +153,21 @@ factor for `lib/totp.ts::userHasSecondFactor` and therefore for the
 | `icon` | text | Font Awesome icon key (e.g. `"folder"`, `"camera"`) — resolved via `resolveTopicIcon()` |
 | `priority` | enum | `HIGH`, `NORMAL`, `SOMEDAY` — influences quest selection |
 | `archived` | boolean | Hidden from main view |
+| `default_energy_level` | enum | Optional `HIGH`/`MEDIUM`/`LOW` default — new tasks created in this topic inherit this value when the user does not pick one explicitly. Existing tasks are not retro-tagged when this changes |
+
+### `energy_checkins`
+
+Historical log of every energy self-assessment. Multiple rows per user per day are explicitly allowed (re-check-ins). The "current" value is the row with the largest `created_at` for `date = today`. The cached current value also lives on `users.energyLevel` / `users.energyLevelDate` for fast dashboard reads — this table exists for the Stats page weekly block and future pattern analyses.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | FK → users (cascade) |
+| `date` | date | Local date (YYYY-MM-DD) in the user's timezone at check-in time. Stored as the user's local day, not UTC, so calendar-day grouping in the Stats view is correct for users east/west of UTC |
+| `energy_level` | enum | The reported level: `HIGH`, `MEDIUM`, or `LOW` |
+| `created_at` | timestamptz | Wall-clock UTC timestamp — used for time-of-day analyses |
+
+Index `energy_checkins_user_date_idx` on `(user_id, date)` supports the "what is today's level?" lookup and the per-day collapse logic in `getEnergyHistory()`.
 
 ### `wishlist_items`
 

@@ -195,6 +195,7 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
         topicTitle={topic.title}
         initialTasks={serializedTasks}
         topicColor={topic.color ?? null}
+        topicDefaultEnergyLevel={topic.defaultEnergyLevel ?? null}
       />
     </div>
   );

@@ -1,19 +1,34 @@
 /**
  * POST /api/energy-checkin
- * Records the user's daily energy level and selects a matching daily quest.
- * Combines the energy check-in and quest selection into a single round-trip.
+ *
+ * Records the user's daily energy level and re-rolls the daily quest if (and
+ * only if) the existing quest no longer matches the reported energy.
+ *
+ * Why re-roll instead of just storing the value: the cron job picks the daily
+ * quest in the morning **before** the user has checked in, so the user wakes
+ * up to a push notification with a quest that may not match their actual
+ * energy. The check-in is the user's chance to ask Momo "given how I feel
+ * right now, is there something better?" — and Momo answers by either
+ * keeping the current quest (if it already fits or there's nothing better)
+ * or quietly swapping it.
+ *
+ * Re-check-ins later in the day are explicitly supported and trigger the
+ * same logic — energy can be edited as long as the quest is not yet done.
+ *
  * Requires: authentication
  * Body: { energyLevel: "HIGH" | "MEDIUM" | "LOW", timezone?: string }
- * Returns: { quest: TaskWithTopic | null }
+ * Returns: {
+ *   quest: TaskWithTopic | null,
+ *   swapped: boolean,
+ *   previousQuestId?: string,
+ *   previousQuestTitle?: string
+ * }
  */
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
-import { selectDailyQuest } from "@/lib/daily-quest";
+import { reselectQuestForEnergy } from "@/lib/daily-quest";
+import { recordEnergyCheckin } from "@/lib/energy";
 import { EnergyCheckinSchema } from "@/lib/validators";
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { getLocalDateString } from "@/lib/date-utils";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
@@ -40,19 +55,20 @@ export async function POST(request: Request) {
   }
 
   const { energyLevel, timezone } = result.data;
-  const todayStr = getLocalDateString(timezone);
 
   try {
-    // Persist energy level for today
-    await db
-      .update(users)
-      .set({ energyLevel, energyLevelDate: todayStr })
-      .where(eq(users.id, user.userId));
+    // Persist to both the user-level cache and the historical log.
+    await recordEnergyCheckin(user.userId, energyLevel, timezone);
 
-    // Select quest with energy preference
-    const quest = await selectDailyQuest(user.userId, timezone, energyLevel);
+    // Re-roll the quest if it no longer matches the new energy.
+    const reroll = await reselectQuestForEnergy(user.userId, energyLevel, timezone);
 
-    return Response.json({ quest });
+    return Response.json({
+      quest: reroll.quest,
+      swapped: reroll.swapped,
+      previousQuestId: reroll.previousQuestId,
+      previousQuestTitle: reroll.previousQuestTitle,
+    });
   } catch (error) {
     console.error("[POST /api/energy-checkin]", error);
     return Response.json({ error: "Failed to process energy check-in" }, { status: 500 });

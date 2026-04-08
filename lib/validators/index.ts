@@ -203,6 +203,11 @@ export const CreateTopicInputSchema = z.object({
   priority: z
     .enum(["HIGH", "NORMAL", "SOMEDAY"])
     .default("NORMAL"),
+  /**
+   * Optional default energy level for tasks created in this topic.
+   * New tasks inherit this when the user does not pick an explicit level.
+   */
+  defaultEnergyLevel: EnergyLevelSchema,
 });
 
 export type CreateTopicInput = z.infer<typeof CreateTopicInputSchema>;
@@ -225,6 +230,8 @@ export const UpdateTopicInputSchema = z.object({
     .optional(),
   icon: z.string().nullable().optional(),
   priority: z.enum(["HIGH", "NORMAL", "SOMEDAY"]).optional(),
+  /** Optional default energy level — can be set to null to clear it. */
+  defaultEnergyLevel: EnergyLevelSchema,
 });
 
 export type UpdateTopicInput = z.infer<typeof UpdateTopicInputSchema>;

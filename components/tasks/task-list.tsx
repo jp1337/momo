@@ -53,6 +53,7 @@ interface TopicOption {
   id: string;
   title: string;
   color?: string | null;
+  defaultEnergyLevel?: "HIGH" | "MEDIUM" | "LOW" | null;
 }
 
 interface TaskListProps {

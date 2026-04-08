@@ -13,7 +13,7 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { tasks } from "@/lib/db/schema";
+import { tasks, users } from "@/lib/db/schema";
 import { eq, isNull, and, or, lte } from "drizzle-orm";
 import { getUserTopics } from "@/lib/topics";
 import { FiveMinuteView } from "@/components/quick/five-minute-view";
@@ -36,7 +36,7 @@ export default async function QuickPage() {
   const t = await getTranslations("quick");
   const todayStr = new Date().toISOString().split("T")[0];
 
-  const [quickTasks, topics] = await Promise.all([
+  const [quickTasks, topics, userRows] = await Promise.all([
     db
       .select()
       .from(tasks)
@@ -50,10 +50,32 @@ export default async function QuickPage() {
       )
       .orderBy(tasks.createdAt),
     getUserTopics(userId),
+    db
+      .select({ energyLevel: users.energyLevel, energyLevelDate: users.energyLevelDate })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1),
   ]);
 
+  // Energy-aware sort: matching > untagged > mismatched. Same logic as
+  // dashboard Quick Wins. The user energy is only considered when its
+  // cached date matches the SSR-computed UTC today (best-effort; the canonical
+  // check happens client-side in EnergyCheckinCard, but Quick view is fully
+  // server-rendered so we accept the small UTC drift here).
+  const userEnergy =
+    userRows[0]?.energyLevelDate === todayStr ? userRows[0]?.energyLevel ?? null : null;
+  function energyMatchScore(taskEnergy: "HIGH" | "MEDIUM" | "LOW" | null): number {
+    if (!userEnergy) return 1;
+    if (taskEnergy === userEnergy) return 0;
+    if (taskEnergy === null) return 1;
+    return 2;
+  }
+  const sortedQuickTasks = [...quickTasks].sort(
+    (a, b) => energyMatchScore(a.energyLevel) - energyMatchScore(b.energyLevel)
+  );
+
   // Serialize Date fields for client component transfer
-  const serializedTasks = quickTasks.map((task) => ({
+  const serializedTasks = sortedQuickTasks.map((task) => ({
     id: task.id,
     title: task.title,
     type: task.type as "ONE_TIME" | "RECURRING" | "DAILY_ELIGIBLE",
@@ -67,6 +89,7 @@ export default async function QuickPage() {
     createdAt: task.createdAt.toISOString(),
     postponeCount: task.postponeCount ?? 0,
     estimatedMinutes: task.estimatedMinutes ?? null,
+    energyLevel: task.energyLevel ?? null,
     snoozedUntil: null,
   }));
 

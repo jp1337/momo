@@ -179,15 +179,30 @@ The quest is shown prominently on your **Dashboard** so it is the first thing yo
 
 ### Energy check-in
 
-Before showing your quest each day, Momo asks: **"How are you feeling today?"** You choose between three energy levels:
+Right at the top of your dashboard, Momo asks: **"How are you feeling today?"** You pick one of three levels:
 
-- **⚡ High energy** — you are ready to tackle something demanding
+- **⚡ High energy** — ready to tackle something demanding
 - **☀ Medium** — a normal day
 - **🌙 Low energy** — you want something light
 
-Momo then prefers tasks that match your energy level when picking the quest. If no matching tasks exist, it picks any eligible task — you will never get an empty quest screen because of energy mismatch.
+After the check-in, the card collapses to a thin status bar with a *Change* button so you can revise the answer later in the day. Re-check-ins are tracked over time and feed the Stats page chart (see *Energy patterns* below).
+
+**Auto re-roll of the Daily Quest.** Because Momo picks the daily quest in the early morning — *before* you have checked in — the push notification you wake up to may not match your actual energy. As soon as you tap one of the three buttons, Momo silently checks whether the current quest fits your reported level. If not (and a strictly-better candidate exists), it swaps the quest for one that matches and shows a small banner: *"Quest swapped to match your energy — was: ‹old title›. Undo."* Tap **Undo** within the same session to pin the original back. If the current quest already fits — or the only alternative is no better than what you have — Momo keeps it.
+
+The re-roll respects two rules:
+
+- **Until the quest is done** — you can change your energy any time and trigger another re-roll, as long as today's quest hasn't been completed yet.
+- **Untagged tasks count as a match** — a quest with no energy level is considered universal and never gets re-rolled. Same goes for an empty pool: if Momo can't find anything better, it leaves the current quest alone.
 
 To make the most of this feature, **tag your tasks with an energy level** when creating or editing them. Tasks without an energy tag are treated as suitable for any energy state.
+
+**Topic-default energy.** When you give a topic a *Default energy level* (Topics → Edit → Default energy level), every new task you create in that topic automatically inherits the level. Useful for "Sport" (always HIGH), "Reply to emails" (always LOW), or "Study session" (MEDIUM) — you don't have to think about the energy picker on every task. You can always override it per task.
+
+**Energy-aware Quick Wins and 5-Min Mode.** Once you've checked in, the Quick Wins on your dashboard *and* the 5-Minute Mode list both sort matching tasks first, untagged tasks next, and mismatches last. It's a sort, not a hard filter — everything is still visible, just in an order that respects how you feel.
+
+**Energy patterns.** Visit `/stats` to see the new *Energy this week* block: three counters (HIGH / MEDIUM / LOW days in the last 7 days) plus a 14-day mini-chart so you can spot patterns ("most LOW days are Mondays"). All check-ins are stored permanently — even if you check in twice on the same day, both entries are kept for time-of-day analyses.
+
+> **Note on push notifications:** The 08:00 daily quest reminder is sent before you check in, so it always names a specific task. After you open the app and tell Momo your energy, that task may be replaced — the push was a starting point, not a contract.
 
 ### Postponing the quest
 

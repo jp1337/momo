@@ -74,6 +74,7 @@ export default async function TasksPage() {
     id: t.id,
     title: t.title,
     color: t.color ?? null,
+    defaultEnergyLevel: t.defaultEnergyLevel ?? null,
   }));
 
   return (
