@@ -160,7 +160,7 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 **Telegram & Email notification channels** — Push notifications via a personal Telegram bot (Bot Token + Chat ID, free) or by email (instance-wide SMTP). Both join ntfy.sh and Pushover under **Settings → Additional Notification Channels**. The email channel uses a stylised newsletter template with a tappable "Open Momo" button. [See Features →](/momo/features#additional-notification-channels)
 
-**Energy-aware Daily Quest** — Tag tasks with a high / medium / low energy level. Each morning Momo asks how you're feeling and prefers tasks that match — no more being asked to write a tax return on a 🌙 day. [See Features →](/momo/features#energy-check-in)
+**Energy-aware Daily Quest — now with auto re-roll** — the "How are you feeling today?" check-in is back where it belongs: a permanent card at the top of your dashboard. When you tell Momo your energy, it can automatically swap the daily quest for a better-matching task (with an Undo link in case you liked the original). Topics can define a default energy level that new tasks inherit, Quick Wins and 5-Minute Mode both sort by energy fit, and a new block on `/stats` shows your weekly energy pattern. [See Features →](/momo/features#energy-check-in)
 
 **Focus Mode** — A distraction-free view at `/focus` that shows only your Daily Quest and quick wins (≤ 15 min). All celebrations and animations still fire — just without the noise around them. [See Features →](/momo/features#focus-mode)
 
