@@ -69,6 +69,7 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
     { name: "User", description: "Account management and data export" },
     { name: "API Keys", description: "Personal Access Token management" },
     { name: "Notification Channels", description: "Multi-channel notification management (ntfy.sh, etc.)" },
+    { name: "Calendar", description: "iCal calendar feed subscription" },
   ],
   components: {
     securitySchemes: {
@@ -2016,6 +2017,148 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           "401": { $ref: "#/components/responses/Unauthorized" },
           "403": { $ref: "#/components/responses/Forbidden" },
           "422": { $ref: "#/components/responses/ValidationError" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    // ─── Calendar Feed ────────────────────────────────────────────────────────
+
+    "/api/calendar/{token}": {
+      get: {
+        operationId: "getCalendarFeed",
+        tags: ["Calendar"],
+        summary: "Personal iCal calendar feed",
+        description:
+          "Returns a private iCalendar (RFC 5545) feed with every non-completed task " +
+          "that has a due date. Each task becomes an all-day VEVENT; RECURRING tasks " +
+          "emit an open-ended daily RRULE. Intended as a subscription URL for calendar " +
+          "clients (Google/Apple/Outlook/Thunderbird) — the token in the path is the " +
+          "only authentication. An optional `.ics` suffix is accepted for clients that " +
+          "require a file-extension in the URL. Revoked or unknown tokens return 404 " +
+          "(not 401) to avoid leaking existence information.",
+        parameters: [
+          {
+            name: "token",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description:
+              "Plaintext feed token as issued by `POST /api/settings/calendar-feed`. " +
+              "A trailing `.ics` is stripped before lookup.",
+          },
+        ],
+        security: [],
+        "x-readonly-safe": true,
+        responses: {
+          "200": {
+            description: "iCalendar document (RFC 5545).",
+            content: {
+              "text/calendar": {
+                schema: { type: "string" },
+              },
+            },
+          },
+          "404": {
+            description: "Unknown or revoked token.",
+          },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/settings/calendar-feed": {
+      get: {
+        operationId: "getCalendarFeedStatus",
+        tags: ["Settings"],
+        summary: "Get calendar feed status",
+        description:
+          "Returns whether the authenticated user has an active calendar feed and " +
+          "when its token was last generated. Never returns the token itself.",
+        security: [{ cookieAuth: [] }],
+        "x-readonly-safe": true,
+        responses: {
+          "200": {
+            description: "Current feed status.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["active", "createdAt"],
+                  properties: {
+                    active: { type: "boolean" },
+                    createdAt: {
+                      type: "string",
+                      format: "date-time",
+                      nullable: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+        },
+      },
+      post: {
+        operationId: "rotateCalendarFeedToken",
+        tags: ["Settings"],
+        summary: "Create or rotate the calendar feed token",
+        description:
+          "Generates a fresh 256-bit token, replacing any existing one. The previous " +
+          "URL stops working immediately. The plaintext URL is returned in the response " +
+          "and is shown only once — the server only stores a SHA-256 hash.",
+        security: [{ cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "New feed URL (one-time display).",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["url", "createdAt"],
+                  properties: {
+                    url: {
+                      type: "string",
+                      format: "uri",
+                      description:
+                        "Full subscription URL including the plaintext token — " +
+                        "shown only once, never retrievable again.",
+                    },
+                    createdAt: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+      delete: {
+        operationId: "revokeCalendarFeed",
+        tags: ["Settings"],
+        summary: "Revoke the calendar feed",
+        description:
+          "Deletes the current feed token. The subscription URL stops working " +
+          "immediately. Idempotent — safe to call when no feed is active.",
+        security: [{ cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "Feed revoked (or already inactive).",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { success: { type: "boolean" } },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
           "500": { $ref: "#/components/responses/InternalServerError" },
         },
       },
