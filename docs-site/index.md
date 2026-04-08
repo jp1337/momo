@@ -60,6 +60,11 @@ description: Task management for people who struggle with procrastination. Open 
     <p>Weekly laundry, monthly cleaning. Set it and forget it.</p>
   </div>
   <div class="feature-card">
+    <div class="icon">🌱</div>
+    <h3>Habit Tracker</h3>
+    <p>A GitHub-style year grid for every recurring task. Every green square is a completion — consistency becomes visible. <a href="/momo/features#habit-tracker">Read the guide →</a></p>
+  </div>
+  <div class="feature-card">
     <div class="icon">🪙</div>
     <h3>Gamification</h3>
     <p>Coins, streaks, levels, achievements. Small wins deserve real celebration.</p>
