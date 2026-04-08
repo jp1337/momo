@@ -173,6 +173,21 @@ export const users = pgTable("users", {
    */
   totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
 
+  /**
+   * SHA-256 hash of the user's personal iCal calendar feed token.
+   * NULL = no feed active. When set, the plaintext token forms the URL
+   * `/api/calendar/<token>.ics` that third-party calendar clients
+   * (Google/Apple/Outlook) subscribe to. Exactly one active token per user;
+   * regenerating replaces the hash and immediately invalidates the old URL.
+   * Unique to enforce O(1) lookup during feed requests.
+   */
+  calendarFeedTokenHash: text("calendar_feed_token_hash").unique(),
+
+  /** Timestamp when the current calendar feed token was generated — shown in the settings UI */
+  calendarFeedTokenCreatedAt: timestamp("calendar_feed_token_created_at", {
+    withTimezone: true,
+  }),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -70,6 +70,8 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `energy_level_date` | date | Date (YYYY-MM-DD) on which the energy level was last set. Used for daily reset |
 | `totp_secret` | text | TOTP secret encrypted with AES-256-GCM (`iv:tag:cipher`, base64-segmented). NULL when 2FA is off. The plaintext secret is never stored. See [two-factor-auth.md](two-factor-auth.md) |
 | `totp_enabled_at` | timestamptz | **Source of truth** for "is 2FA active". NULL means off, even if `totp_secret` is non-NULL |
+| `calendar_feed_token_hash` | text (unique) | SHA-256 hash of the user's personal iCal feed token. NULL = no feed active. Plaintext token is shown once at creation and never persisted — mirrors the `api_keys` pattern. See [api.md](api.md#calendar-feed-routes) |
+| `calendar_feed_token_created_at` | timestamptz | Timestamp when the current feed token was generated. Displayed in the settings UI ("active since …") |
 
 ### `sessions` (second-factor column)
 

@@ -127,6 +127,13 @@
       "when": 1775669946294,
       "tag": "0017_hard_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1775675168184,
+      "tag": "0018_smiling_lester",
+      "breakpoints": true
     }
   ]
 }
