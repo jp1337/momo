@@ -202,6 +202,7 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 | [API Reference](docs/api.md) | All REST endpoints — interactive Swagger UI at `/api-docs` |
 | [Database](docs/database.md) | Schema overview, migrations, Drizzle Studio |
 | [DSGVO / GDPR](docs/gdpr.md) | Compliance guide for operators |
+| [SEO](docs/seo.md) | Search-engine setup: metadata, robots, sitemap, JSON-LD |
 
 ---
 
@@ -245,6 +246,7 @@ Before deploying Momo to production, verify all items below:
   ```
 - [ ] **Configure TLS** — use a reverse proxy (nginx, Caddy) or cert-manager in Kubernetes
 - [ ] **Configure legal pages** (for public deployments) — set `NEXT_PUBLIC_IMPRINT_NAME`, `NEXT_PUBLIC_IMPRINT_ADDRESS`, `NEXT_PUBLIC_IMPRINT_EMAIL` (see [DSGVO Guide](docs/gdpr.md))
+- [ ] **Set `NEXT_PUBLIC_APP_URL` to your public HTTPS origin** — drives `metadataBase`, `robots.txt`, `sitemap.xml`, Open Graph tags and JSON-LD. If left at the default `http://localhost:3000`, search engines and social previews will index `localhost`. See [SEO Guide](docs/seo.md).
 - [ ] **Set ADMIN_USER_IDS** (optional) — comma-separated UUIDs of users who can access `/admin`. If unset, the admin page is inaccessible to everyone:
   ```bash
   # Find your UUID in the database, or check the "access denied" screen at /admin
