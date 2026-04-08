@@ -40,6 +40,11 @@ description: Task management for people who struggle with procrastination. Open 
     <p>Group related tasks. Drag-and-drop reordering, break-down into smaller steps.</p>
   </div>
   <div class="feature-card">
+    <div class="icon">⛓</div>
+    <h3>Sequential Topics</h3>
+    <p>Turn a topic into an ordered chain: only the first still-open task is quest-eligible. Drag & drop sets the order.</p>
+  </div>
+  <div class="feature-card">
     <div class="icon">⏰</div>
     <h3>Snooze Tasks</h3>
     <p>Pause anything you're not ready for. It comes back when you're ready.</p>
