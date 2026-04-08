@@ -43,8 +43,27 @@ export const BACKUP_CODE_COUNT = 10;
 /** Length of each backup code (uppercase alphanumeric). */
 const BACKUP_CODE_LENGTH = 10;
 
-/** Alphabet used for backup codes — unambiguous uppercase + digits. */
+/**
+ * Alphabet used for backup codes — unambiguous uppercase + digits (no I, O,
+ * 0, 1). The length is **deliberately exactly 32 (= 2^5)** so that picking a
+ * uniformly random index from a CSPRNG byte can be done with a 5-bit mask
+ * instead of `% 32`. The mask approach is mathematically equivalent here
+ * (256 is divisible by 32, so even modulo would be unbiased), but the bit
+ * mask makes the lack of bias obvious to humans and to static analyzers
+ * (CodeQL `js/biased-cryptographic-random` flags `% N` on a CSPRNG byte
+ * unconditionally because it cannot prove divisibility statically).
+ */
 const BACKUP_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I, O, 0, 1
+const BACKUP_CODE_ALPHABET_MASK = BACKUP_CODE_ALPHABET.length - 1; // 0b11111
+
+// Static check: refuse to start if someone edits the alphabet to a
+// non-power-of-two length and forgets to switch back to rejection sampling.
+if ((BACKUP_CODE_ALPHABET.length & BACKUP_CODE_ALPHABET_MASK) !== 0) {
+  throw new Error(
+    `BACKUP_CODE_ALPHABET length must be a power of 2 (got ${BACKUP_CODE_ALPHABET.length}). ` +
+      `Otherwise the bit-mask index in randomCode() would be biased.`
+  );
+}
 
 /**
  * Drift tolerance in seconds for TOTP verification. ±30 s = one step on
@@ -419,12 +438,18 @@ function generateBackupCodes(): string[] {
   return Array.from(out);
 }
 
-/** Generates a single random backup code. */
+/**
+ * Generates a single random backup code.
+ *
+ * Uses a 5-bit mask on each CSPRNG byte (`& 0b11111`) instead of modulo to
+ * pick an index into the 32-character alphabet. See the comment on
+ * `BACKUP_CODE_ALPHABET` for why this is unbiased.
+ */
 function randomCode(): string {
   const bytes = randomBytes(BACKUP_CODE_LENGTH);
   let s = "";
   for (let i = 0; i < BACKUP_CODE_LENGTH; i++) {
-    s += BACKUP_CODE_ALPHABET[bytes[i] % BACKUP_CODE_ALPHABET.length];
+    s += BACKUP_CODE_ALPHABET[bytes[i] & BACKUP_CODE_ALPHABET_MASK];
   }
   return s;
 }
