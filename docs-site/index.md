@@ -80,6 +80,11 @@ description: Task management for people who struggle with procrastination. Open 
     <p>Browser push, ntfy.sh, Pushover, Telegram, and Email — pick whatever fits your workflow.</p>
   </div>
   <div class="feature-card">
+    <div class="icon">📅</div>
+    <h3>Calendar Subscription</h3>
+    <p>Subscribe to your Momo tasks from Google, Apple or Outlook Calendar via a private iCal feed. All-day events, recurring series, one-click rotate or revoke. <a href="/momo/features#calendar-subscription-ical-feed">Read the guide →</a></p>
+  </div>
+  <div class="feature-card">
     <div class="icon">🔍</div>
     <h3>Search & Filter</h3>
     <p>Live search across tasks and wishlist with priority and topic chips.</p>
