@@ -24,12 +24,65 @@ NEXT_PUBLIC_APP_URL=https://momotask.app
 The value is consumed by:
 
 - `app/layout.tsx` → `metadata.metadataBase` (resolves all relative
-  metadata URLs to absolute ones)
+  metadata URLs to absolute ones, including `og:image` and the
+  canonical link)
 - `app/robots.ts` → `Sitemap:` and `Host:` lines in `/robots.txt`
+  (forced dynamic — always reads runtime env)
 - `app/sitemap.ts` → every `<loc>` entry
-- `app/page.tsx` → JSON-LD `url` field
+  (forced dynamic — always reads runtime env)
+- `app/page.tsx` → JSON-LD `url`, `logo` and `image` fields
+- `lib/webauthn.ts` → derives the Passkey Relying Party ID
+- `app/api/calendar/[token]/route.ts` → absolute URL in the iCal feed
 
-If you change the canonical domain, no other code needs to be touched.
+### ⚠️ Build-time vs runtime — the `NEXT_PUBLIC_*` gotcha
+
+Next.js **inlines every `NEXT_PUBLIC_*` variable into the client bundle and
+into any statically pre-rendered HTML at `next build` time**. Setting the
+variable later via `docker run -e NEXT_PUBLIC_APP_URL=...` has no effect on
+already-baked artefacts such as Open Graph meta tags, JSON-LD, canonical
+link tags, or the metadata of static pages. Those freeze whatever value
+was present during the build.
+
+What this means in practice:
+
+| Surface | Respects runtime env? | Why |
+|---|---|---|
+| `/sitemap.xml` (`app/sitemap.ts`) | ✅ Yes | Marked `export const dynamic = "force-dynamic"` as a safety net |
+| `/robots.txt` (`app/robots.ts`) | ✅ Yes | Same safety net |
+| `/api/calendar/<token>.ics` | ✅ Yes | API route, always runtime-dynamic |
+| WebAuthn RP ID | ✅ Yes | Derived at request time in `lib/webauthn.ts` |
+| `<link rel="canonical">` on pre-rendered pages | ❌ No | Frozen at build time |
+| `<meta property="og:*">` tags | ❌ No | Frozen at build time |
+| JSON-LD payload on the landing page | ⚠️ Sometimes | Dynamic only because `auth()` + `getTranslations()` make the landing page dynamic; other statically generated pages freeze it |
+
+**Conclusion:** to get SEO right, `NEXT_PUBLIC_APP_URL` must be set at
+**build time**, not just at runtime. The container image needs to be
+rebuilt whenever the public URL changes.
+
+### Baking the URL into the Docker image
+
+The Dockerfile accepts `NEXT_PUBLIC_APP_URL` as an `ARG` in the build
+stage. Pass it explicitly when building:
+
+```bash
+docker build \
+  --build-arg NEXT_PUBLIC_APP_URL=https://momotask.app \
+  -t momo .
+```
+
+With Docker Compose, set `NEXT_PUBLIC_APP_URL` in your `.env` file (or
+shell) before running `docker compose build` or `docker compose up
+--build`. The value is forwarded automatically via `build.args` in
+`docker-compose.yml`.
+
+For Kubernetes users: the stock `ghcr.io/jp1337/momo` image published by
+the GitHub Actions workflow bakes in `https://momotask.app` by default.
+If you run a different public domain, rebuild the image with your own
+build-arg and push it to your own registry — the runtime env in the K8s
+Secret cannot patch the baked-in HTML.
+
+If you change the canonical domain, rebuild the image — no other code
+needs to be touched.
 
 ## Indexable routes
 
@@ -58,10 +111,10 @@ The root metadata in `app/layout.tsx` declares:
   `public/og-image.png`)
 - `twitter.card: "summary_large_image"` with the same image
 
-> ⚠️ **`public/og-image.png` is not committed yet.** Until the asset is
-> created, link previews will fall back to the generic Momo icon. Drop a
-> 1200×630 PNG with the Momo wordmark + Lora italic tagline at
-> `public/og-image.png` and OG/Twitter cards light up automatically.
+`public/og-image.png` is a 1200×630 PNG with the Momo feather mark and
+the "Steal your time back" tagline. It ships as part of the repo and is
+generated from `app/icon.svg` via a one-off script so rebuilding it is
+reproducible.
 
 ## Structured data (JSON-LD)
 

@@ -39,6 +39,14 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runner
+      args:
+        # NEXT_PUBLIC_* variables are baked into the client bundle at build time.
+        # This arg is forwarded from the shell env / .env file so that the HTML
+        # output (OG tags, JSON-LD, canonical URLs) matches your real public URL.
+        # `docker compose build` and `docker compose up --build` pick this up;
+        # changing the runtime env alone is NOT enough. See Dockerfile stage 2
+        # for the full rationale.
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     container_name: momo-app
     restart: unless-stopped
     depends_on:

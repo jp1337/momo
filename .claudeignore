@@ -43,13 +43,6 @@ docs-site/.jekyll-cache/
 # Large project plan (reference only, not needed for most tasks)
 MOMO_PROJEKT_PLAN.md
 
-# Default Next.js public assets — not project assets
-public/file.svg
-public/globe.svg
-public/next.svg
-public/vercel.svg
-public/window.svg
-
 # Ambient type declarations for dependencies — never edited, just shims
 types/next-intl.d.ts
 types/next-pwa.d.ts

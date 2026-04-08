@@ -96,6 +96,11 @@ jobs:
 
       # Build a single-platform image and push it by digest (no tag yet).
       # GHA cache is scoped per platform so the layers don't mix.
+      #
+      # NEXT_PUBLIC_APP_URL is forwarded as a build-arg so that the pre-rendered
+      # HTML (Open Graph tags, JSON-LD, canonical URLs) carries the canonical
+      # public URL of the published instance rather than localhost. Override
+      # via the repository variable `NEXT_PUBLIC_APP_URL` if you fork Momo.
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@v7
@@ -103,6 +108,8 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL || 'https://momotask.app' }}
           outputs: type=image,name=ghcr.io/jp1337/momo,push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ steps.platform.outputs.suffix }}
           cache-to: type=gha,mode=max,scope=${{ steps.platform.outputs.suffix }}
