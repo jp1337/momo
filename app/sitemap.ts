@@ -29,6 +29,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const base = clientEnv.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
   const lastModified = new Date();
 
+  // Note: /impressum and /datenschutz are intentionally NOT listed.
+  // They carry the operator's real name and postal address — they must
+  // be reachable for § 5 DDG / DSGVO compliance, but neither search
+  // engines nor the Internet Archive should mirror them. They are also
+  // marked `noindex, nofollow, noarchive` on the page level and
+  // disallowed in robots.ts.
   return [
     {
       url: `${base}/`,
@@ -41,18 +47,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: "yearly",
       priority: 0.5,
-    },
-    {
-      url: `${base}/impressum`,
-      lastModified,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-    {
-      url: `${base}/datenschutz`,
-      lastModified,
-      changeFrequency: "yearly",
-      priority: 0.3,
     },
   ];
 }

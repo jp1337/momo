@@ -25,9 +25,24 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/datenschutz",
   },
+  // Same no-crawl / no-archive stance as /impressum — the page repeats
+  // the operator's real name, postal address and contact email for
+  // DSGVO compliance and should not be mirrored by search engines or
+  // archive.org. See the matching block in impressum/page.tsx for the
+  // full rationale behind each directive.
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
+    noarchive: true,
+    nosnippet: true,
+    noimageindex: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noarchive: true,
+      nosnippet: true,
+      noimageindex: true,
+    },
   },
 };
 
