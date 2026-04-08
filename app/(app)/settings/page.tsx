@@ -27,6 +27,8 @@ import { QuestSettings } from "@/components/settings/quest-settings";
 import { EmotionalClosureSettings } from "@/components/settings/emotional-closure-settings";
 import { SecuritySection } from "@/components/settings/security-section";
 import { PasskeysSection } from "@/components/settings/passkeys-section";
+import { CalendarFeedSection } from "@/components/settings/calendar-feed-section";
+import { getCalendarFeedStatus } from "@/lib/calendar";
 import { getUserTotpStatus } from "@/lib/totp";
 import { listUserPasskeys } from "@/lib/webauthn";
 import { serverEnv } from "@/lib/env";
@@ -52,7 +54,7 @@ export default async function SettingsPage() {
   const locale = await getLocale();
 
   // Fetch user preferences, linked accounts, push subscriptions, notification channels, 2FA status, and passkeys from DB
-  const [userRows, linkedAccountRows, activeSubs, channelRows, totpStatus, passkeys] = await Promise.all([
+  const [userRows, linkedAccountRows, activeSubs, channelRows, totpStatus, passkeys, calendarFeed] = await Promise.all([
     db
       .select({
         name: users.name,
@@ -86,6 +88,7 @@ export default async function SettingsPage() {
       .where(eq(notificationChannels.userId, session.user.id)),
     getUserTotpStatus(session.user.id),
     listUserPasskeys(session.user.id),
+    getCalendarFeedStatus(session.user.id),
   ]);
 
   const user = userRows[0];
@@ -392,6 +395,43 @@ export default async function SettingsPage() {
         </div>
 
         <LanguageSwitcher currentLocale={locale} />
+      </section>
+
+      {/* Calendar feed section */}
+      <section
+        className="rounded-xl p-6 flex flex-col gap-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            className="text-base font-semibold"
+            style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("section_calendar_feed")}
+          </h2>
+          <p
+            className="text-sm"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui)",
+            }}
+          >
+            {t("calendar_feed_hint")}
+          </p>
+        </div>
+
+        <CalendarFeedSection
+          initialActive={calendarFeed.active}
+          initialCreatedAt={
+            calendarFeed.createdAt ? calendarFeed.createdAt.toISOString() : null
+          }
+        />
       </section>
 
       {/* Data export section */}
