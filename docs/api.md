@@ -470,6 +470,7 @@ Response:
       "icon": "📂",
       "priority": "HIGH",
       "archived": false,
+      "sequential": false,
       "createdAt": "2026-03-01T10:00:00Z",
       "taskCount": 5,
       "completedCount": 2
@@ -483,15 +484,16 @@ Response:
 Request body:
 ```json
 {
-  "title": "Tax Return",
-  "description": "All documents and tasks for this year's return",
+  "title": "Moving",
+  "description": "Everything related to the move",
   "color": "#52a06e",
-  "icon": "📂",
-  "priority": "HIGH"
+  "icon": "boxes-stacked",
+  "priority": "HIGH",
+  "sequential": true
 }
 ```
 
-`title` is required. Response: `{ "topic": Topic }` — Status `201`
+`title` is required. `sequential` (default `false`) restricts daily quest selection in this topic to the first still-open task (lowest `sortOrder`, not snoozed); later tasks are blocked until earlier ones are completed. Response: `{ "topic": Topic }` — Status `201`
 
 ### GET /api/topics/:id
 

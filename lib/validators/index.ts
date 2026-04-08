@@ -208,6 +208,11 @@ export const CreateTopicInputSchema = z.object({
    * New tasks inherit this when the user does not pick an explicit level.
    */
   defaultEnergyLevel: EnergyLevelSchema,
+  /**
+   * Sequential topics restrict daily quest selection to the first still-open
+   * task (lowest sortOrder, not snoozed). Defaults to false.
+   */
+  sequential: z.boolean().optional().default(false),
 });
 
 export type CreateTopicInput = z.infer<typeof CreateTopicInputSchema>;
@@ -232,6 +237,8 @@ export const UpdateTopicInputSchema = z.object({
   priority: z.enum(["HIGH", "NORMAL", "SOMEDAY"]).optional(),
   /** Optional default energy level — can be set to null to clear it. */
   defaultEnergyLevel: EnergyLevelSchema,
+  /** Toggle sequential ordering enforcement for this topic. */
+  sequential: z.boolean().optional(),
 });
 
 export type UpdateTopicInput = z.infer<typeof UpdateTopicInputSchema>;

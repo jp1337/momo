@@ -257,6 +257,11 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
             description:
               "Archived topics are hidden from the main view but not deleted.",
           },
+          sequential: {
+            type: "boolean",
+            description:
+              "When true, only the first still-open task (lowest sortOrder, not snoozed) in this topic is eligible for daily quest selection. Later tasks are blocked until earlier ones are completed.",
+          },
           createdAt: {
             type: "string",
             format: "date-time",
@@ -535,6 +540,12 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
             example: "💻",
           },
           priority: { $ref: "#/components/schemas/Priority" },
+          sequential: {
+            type: "boolean",
+            default: false,
+            description:
+              "Opt-in sequential ordering: only the first still-open task is eligible as daily quest.",
+          },
         },
       },
 
@@ -558,6 +569,11 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
             type: ["string", "null"],
           },
           priority: { $ref: "#/components/schemas/Priority" },
+          sequential: {
+            type: "boolean",
+            description:
+              "Toggle sequential ordering enforcement for this topic.",
+          },
         },
       },
 

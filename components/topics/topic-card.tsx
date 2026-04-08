@@ -14,6 +14,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faListOl } from "@fortawesome/free-solid-svg-icons";
 import { resolveTopicIcon } from "@/lib/topic-icons";
 
 interface TopicCardProps {
@@ -23,6 +24,7 @@ interface TopicCardProps {
   color?: string | null;
   icon?: string | null;
   priority: "HIGH" | "NORMAL" | "SOMEDAY";
+  sequential?: boolean;
   taskCount: number;
   completedCount: number;
   onEdit: (id: string) => void;
@@ -57,6 +59,7 @@ export function TopicCard({
   color,
   icon,
   priority,
+  sequential,
   taskCount,
   completedCount,
   onEdit,
@@ -197,17 +200,37 @@ export function TopicCard({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between">
-        {/* Priority badge */}
-        <span
-          className="text-xs px-2 py-0.5 rounded-full font-medium"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            ...priorityStyle,
-          }}
-        >
-          {priorityLabel}
-        </span>
+      <div className="flex items-center justify-between gap-2">
+        {/* Priority + sequential badges */}
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+          <span
+            className="text-xs px-2 py-0.5 rounded-full font-medium"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              ...priorityStyle,
+            }}
+          >
+            {priorityLabel}
+          </span>
+          {sequential && (
+            <span
+              className="text-xs px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: accentColor,
+                backgroundColor: `color-mix(in srgb, ${accentColor} 12%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${accentColor} 25%, transparent)`,
+              }}
+              title={t("form_sequential_hint")}
+            >
+              <FontAwesomeIcon
+                icon={faListOl}
+                style={{ width: "0.7rem", height: "0.7rem" }}
+              />
+              {t("sequential_badge")}
+            </span>
+          )}
+        </div>
 
         {/* View link */}
         <Link

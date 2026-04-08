@@ -124,6 +124,7 @@ export async function createTopic(
       icon: input.icon ?? null,
       priority: input.priority ?? "NORMAL",
       defaultEnergyLevel: input.defaultEnergyLevel ?? null,
+      sequential: input.sequential ?? false,
     })
     .returning();
 
@@ -155,6 +156,8 @@ export async function updateTopic(
   if (input.priority !== undefined) updateValues.priority = input.priority;
   if (input.defaultEnergyLevel !== undefined)
     updateValues.defaultEnergyLevel = input.defaultEnergyLevel;
+  if (input.sequential !== undefined)
+    updateValues.sequential = input.sequential;
 
   const rows = await db
     .update(topics)
