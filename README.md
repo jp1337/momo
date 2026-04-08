@@ -30,6 +30,7 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 ## 🌟 Features
 
 - **Daily Quest** — One small task, chosen for you each day. No overwhelm, just one step forward.
+- **Energy-aware Daily Quest** — Permanent check-in card on the dashboard: tell Momo whether you're at high / medium / low energy, and it auto-swaps the daily quest for a better-matching task (with Undo). Topics can set a default energy level that new tasks inherit. Quick Wins and 5-Minute Mode sort by energy fit. 14-day energy trend on `/stats`. Every check-in is logged so re-check-ins (morning HIGH, afternoon LOW) are preserved for pattern analysis.
 - **Topics & Subtasks** — Break big projects (like "Moving" or "Tax Return") into tiny, manageable pieces. Drag & drop to reorder tasks within a topic.
 - **Recurring Tasks** — Weekly laundry, monthly cleaning, fortnightly grocery runs. Set it and forget it.
 - **Gamification** — Earn coins, build streaks, level up. Small wins deserve real celebration.
