@@ -172,6 +172,38 @@ When a topic is sequential, Momo treats the drag-and-drop order as an **implicit
 
 A small badge on the topic card and a hint inside the topic view make it clear when sequential mode is on.
 
+### Starting from a template
+
+The hardest part of a big project is the blank page. To skip that, Momo ships
+with a small set of curated **topic templates** — one click turns into a fully
+populated topic with all the usual subtasks already in the right order.
+
+Open the Topics page and press **📋 From template** next to the "New topic"
+button. A picker appears with three starter templates:
+
+- **Moving** — ten tasks in sequential order, from "Terminate the old lease"
+  all the way to "Renovate the old flat"
+- **Tax return** — six tasks in sequential order, from gathering receipts to
+  submitting the return
+- **Workout routine** — seven parallel tasks for a single training session
+  (warm-up, strength, cardio, cool-down, notes)
+
+Pick one, hit **Import**, and a new topic appears on your grid with the
+matching icon, colour and a default energy level that the subtasks inherit.
+The sequential templates (Moving, Tax return) are pre-flagged as
+[sequential topics](#sequential-topics), so Momo will only offer the next
+open step as your Daily Quest — no need to stare at ten tasks at once.
+
+**Good to know:**
+
+- Task titles are created in the language you are currently using. Switch
+  languages afterwards and the imported tasks stay in their original wording
+  — they are just normal tasks now and you can rename them at any time.
+- Importing always creates a **new** topic. You can run the same template
+  twice (e.g. for a second move) without losing the first one.
+- If you need a different starter set, just import the closest template and
+  edit, delete or add tasks — everything is fully editable after import.
+
 ### Deleting a topic
 
 Deleting a topic removes the topic itself but does not delete the subtasks. They are unlinked from the topic and returned to the main task list so no work is lost.

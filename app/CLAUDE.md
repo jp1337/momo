@@ -50,6 +50,7 @@ api/
   topics/route.ts                    → GET (list with task counts), POST (create)
   topics/[id]/route.ts               → GET (with tasks sorted by sortOrder), PATCH, DELETE
   topics/[id]/reorder/route.ts       → PUT (reorder tasks within topic, body: {taskIds: string[]})
+  topics/import-template/route.ts    → POST (import a curated topic template; body: {templateKey: "moving"|"taxes"|"fitness"}, resolves titles via current UI locale, creates topic + tasks atomically, 10/min)
   daily-quest/route.ts               → GET (fetch today's quest, returns completed quest all day), POST (force new quest)
   daily-quest/postpone/route.ts      → POST (postpone quest, body: {taskId, timezone?}, enforces daily limit)
   daily-quest/restore/route.ts       → POST (pin a specific task as today's quest — used as Undo for the energy auto-reroll, body: {taskId, timezone?})

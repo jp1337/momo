@@ -256,7 +256,8 @@
     "form_saving": "Saving...",
     "form_error_title": "Title is required",
     "back_to_topics": "← Back to Topics",
-    "tasks_completed": "{completed}/{total} tasks completed"
+    "tasks_completed": "{completed}/{total} tasks completed",
+    "from_template": "📋 From Template"
   },
   "wishlist": {
     "page_title": "Wishlist",
@@ -553,12 +554,12 @@
     "setting_on": "On",
     "setting_off": "Off",
     "quote_count": "12",
-    "quote_0": "\u201cTime is life. And life resides in the human heart.\u201d — Michael Ende",
-    "quote_1": "\u201cSometimes you have a very long road ahead of you. You start to hurry. You try harder and harder — and yet the road never gets any shorter.\u201d — Michael Ende",
-    "quote_2": "\u201cMomo could listen in a way that made uncertain or indecisive people suddenly know exactly what they wanted.\u201d — Michael Ende",
-    "quote_3": "\u201cThere is a great yet everyday secret. All people share in it, everyone knows it, but very few ever think about it.\u201d — Michael Ende",
-    "quote_4": "\u201cHour-lilies, they are called, because they bloom with every passing hour. But you can only see them when you pay attention.\u201d — Michael Ende",
-    "quote_5": "\u201cIn reality, time always begins right now.\u201d — Michael Ende",
+    "quote_0": "“Time is life. And life resides in the human heart.” — Michael Ende",
+    "quote_1": "“Sometimes you have a very long road ahead of you. You start to hurry. You try harder and harder — and yet the road never gets any shorter.” — Michael Ende",
+    "quote_2": "“Momo could listen in a way that made uncertain or indecisive people suddenly know exactly what they wanted.” — Michael Ende",
+    "quote_3": "“There is a great yet everyday secret. All people share in it, everyone knows it, but very few ever think about it.” — Michael Ende",
+    "quote_4": "“Hour-lilies, they are called, because they bloom with every passing hour. But you can only see them when you pay attention.” — Michael Ende",
+    "quote_5": "“In reality, time always begins right now.” — Michael Ende",
     "quote_6": "You took time for yourself today — that counts.",
     "quote_7": "One step at a time. That's exactly how it works.",
     "quote_8": "It's not the size of the task that matters, but that you started.",
@@ -588,5 +589,50 @@
     "motivation_zero": "New week, new chance. One small step is enough.",
     "push_title": "Your Weekly Review",
     "push_body": "This week: {completed} completed, {postponed} postponed, streak {streak}"
+  },
+  "templates": {
+    "picker_title": "Pick a template",
+    "picker_subtitle": "Start with a curated task list — you can edit everything after importing.",
+    "picker_close": "Cancel",
+    "import": "Import",
+    "importing": "Importing…",
+    "tasks_count": "{count, plural, one {# task} other {# tasks}}",
+    "sequential_badge": "In order",
+    "import_failed": "Import failed. Please try again.",
+    "moving": {
+      "title": "Moving",
+      "description": "Step by step through your move — from notice of termination to key handover.",
+      "task_1": "Terminate the old lease",
+      "task_2": "Sign the new lease",
+      "task_3": "Set up mail forwarding",
+      "task_4": "Update electricity, gas and internet providers",
+      "task_5": "Line up moving helpers",
+      "task_6": "Get boxes and label them",
+      "task_7": "Pack up and disassemble furniture",
+      "task_8": "Hand over the keys of the old flat",
+      "task_9": "Register at the new residence",
+      "task_10": "Renovate the old flat"
+    },
+    "taxes": {
+      "title": "Tax return",
+      "description": "Guided checklist for your annual tax return — from receipts to submission.",
+      "task_1": "Collect receipts and invoices",
+      "task_2": "Get the income statement from your employer",
+      "task_3": "Compile work-related expenses",
+      "task_4": "Document special expenses",
+      "task_5": "Fill in the tax return form",
+      "task_6": "Submit the tax return"
+    },
+    "fitness": {
+      "title": "Workout routine",
+      "description": "A ready-to-go training session with warm-up, workout and cool-down.",
+      "task_1": "Lay out workout clothes",
+      "task_2": "Fill the water bottle",
+      "task_3": "10 minute warm-up",
+      "task_4": "Strength training (30 min)",
+      "task_5": "Cardio session (30 min)",
+      "task_6": "Cool down and stretch",
+      "task_7": "Jot down the progress"
+    }
   }
 }

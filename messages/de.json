@@ -256,7 +256,8 @@
     "form_saving": "Speichere...",
     "form_error_title": "Titel ist erforderlich",
     "back_to_topics": "← Zurück zu Themen",
-    "tasks_completed": "{completed}/{total} Aufgaben erledigt"
+    "tasks_completed": "{completed}/{total} Aufgaben erledigt",
+    "from_template": "📋 Aus Vorlage"
   },
   "wishlist": {
     "page_title": "Wunschliste",
@@ -553,12 +554,12 @@
     "setting_on": "An",
     "setting_off": "Aus",
     "quote_count": "12",
-    "quote_0": "\u201eZeit ist Leben. Und das Leben wohnt im Herzen.\u201c — Michael Ende",
-    "quote_1": "\u201eManchmal hat man eine sehr lange Straße vor sich. Und dann fängt man an, sich zu beeilen. Man strengt sich mehr und mehr an — und trotzdem wird die Straße nicht kürzer.\u201c — Michael Ende",
-    "quote_2": "\u201eMomo konnte so zuhören, dass ratlose oder unentschlossene Leute auf einmal ganz genau wussten, was sie wollten.\u201c — Michael Ende",
-    "quote_3": "\u201eEs gibt ein großes und doch ganz alltägliches Geheimnis. Alle Menschen haben daran teil, jeder kennt es, aber die wenigsten denken je darüber nach.\u201c — Michael Ende",
-    "quote_4": "\u201eStunden-Blumen nennt man sie, weil sie mit jeder Stunde aufblühen. Aber man kann sie nur sehen, wenn man darauf achtet.\u201c — Michael Ende",
-    "quote_5": "\u201eDenn in Wirklichkeit beginnt die Zeit immer genau jetzt.\u201c — Michael Ende",
+    "quote_0": "„Zeit ist Leben. Und das Leben wohnt im Herzen.“ — Michael Ende",
+    "quote_1": "„Manchmal hat man eine sehr lange Straße vor sich. Und dann fängt man an, sich zu beeilen. Man strengt sich mehr und mehr an — und trotzdem wird die Straße nicht kürzer.“ — Michael Ende",
+    "quote_2": "„Momo konnte so zuhören, dass ratlose oder unentschlossene Leute auf einmal ganz genau wussten, was sie wollten.“ — Michael Ende",
+    "quote_3": "„Es gibt ein großes und doch ganz alltägliches Geheimnis. Alle Menschen haben daran teil, jeder kennt es, aber die wenigsten denken je darüber nach.“ — Michael Ende",
+    "quote_4": "„Stunden-Blumen nennt man sie, weil sie mit jeder Stunde aufblühen. Aber man kann sie nur sehen, wenn man darauf achtet.“ — Michael Ende",
+    "quote_5": "„Denn in Wirklichkeit beginnt die Zeit immer genau jetzt.“ — Michael Ende",
     "quote_6": "Du hast dir heute Zeit genommen — das zählt.",
     "quote_7": "Ein Schritt nach dem anderen. Genau so geht es.",
     "quote_8": "Nicht die Größe der Aufgabe zählt, sondern dass du angefangen hast.",
@@ -588,5 +589,50 @@
     "motivation_zero": "Neue Woche, neue Chance. Ein kleiner Schritt reicht.",
     "push_title": "Dein Wochenrückblick",
     "push_body": "Diese Woche: {completed} erledigt, {postponed} verschoben, Streak {streak}"
+  },
+  "templates": {
+    "picker_title": "Vorlage auswählen",
+    "picker_subtitle": "Starte mit einer fertig kuratierten Aufgabenliste — du kannst danach alles anpassen.",
+    "picker_close": "Abbrechen",
+    "import": "Importieren",
+    "importing": "Wird importiert…",
+    "tasks_count": "{count, plural, one {# Aufgabe} other {# Aufgaben}}",
+    "sequential_badge": "In Reihenfolge",
+    "import_failed": "Import fehlgeschlagen. Versuche es nochmal.",
+    "moving": {
+      "title": "Umzug",
+      "description": "Schritt für Schritt durch deinen Umzug — von der Kündigung bis zur Schlüsselübergabe.",
+      "task_1": "Alte Wohnung kündigen",
+      "task_2": "Neuen Mietvertrag unterschreiben",
+      "task_3": "Nachsendeauftrag bei der Post einrichten",
+      "task_4": "Strom, Gas und Internet ummelden",
+      "task_5": "Umzugshelfer organisieren",
+      "task_6": "Kartons besorgen und beschriften",
+      "task_7": "Packen und Möbel abbauen",
+      "task_8": "Schlüsselübergabe alte Wohnung",
+      "task_9": "Beim Einwohnermeldeamt ummelden",
+      "task_10": "Renovierung der alten Wohnung"
+    },
+    "taxes": {
+      "title": "Steuererklärung",
+      "description": "Geführte Checkliste für die Jahressteuererklärung — von Belegen bis zum Absenden.",
+      "task_1": "Belege und Quittungen sammeln",
+      "task_2": "Lohnsteuerbescheinigung besorgen",
+      "task_3": "Werbungskosten zusammenstellen",
+      "task_4": "Sonderausgaben dokumentieren",
+      "task_5": "Steuererklärung in Elster eintragen",
+      "task_6": "Steuererklärung absenden"
+    },
+    "fitness": {
+      "title": "Sport-Routine",
+      "description": "Eine Trainings-Session, die du direkt starten kannst — mit Aufwärmen, Training und Cool-Down.",
+      "task_1": "Sportkleidung bereitlegen",
+      "task_2": "Trinkflasche füllen",
+      "task_3": "10 Minuten Aufwärmen",
+      "task_4": "Krafttraining (30 min)",
+      "task_5": "Cardio-Einheit (30 min)",
+      "task_6": "Cool-Down und Stretching",
+      "task_7": "Fortschritt kurz notieren"
+    }
   }
 }

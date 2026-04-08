@@ -45,6 +45,11 @@ description: Task management for people who struggle with procrastination. Open 
     <p>Turn a topic into an ordered chain: only the first still-open task is quest-eligible. Drag & drop sets the order.</p>
   </div>
   <div class="feature-card">
+    <div class="icon">📋</div>
+    <h3>Topic Templates</h3>
+    <p>Skip the blank page: import Moving, Tax Return or Workout Routine as a fully populated topic in one click.</p>
+  </div>
+  <div class="feature-card">
     <div class="icon">⏰</div>
     <h3>Snooze Tasks</h3>
     <p>Pause anything you're not ready for. It comes back when you're ready.</p>

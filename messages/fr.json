@@ -256,7 +256,8 @@
     "form_saving": "Enregistrement...",
     "form_error_title": "Le titre est requis",
     "back_to_topics": "← Retour aux sujets",
-    "tasks_completed": "{completed}/{total} tâches terminées"
+    "tasks_completed": "{completed}/{total} tâches terminées",
+    "from_template": "📋 Depuis un modèle"
   },
   "wishlist": {
     "page_title": "Liste de souhaits",
@@ -588,5 +589,50 @@
     "motivation_zero": "Nouvelle semaine, nouvelle chance. Un petit pas suffit.",
     "push_title": "Ton bilan de la semaine",
     "push_body": "Cette semaine : {completed} terminées, {postponed} reportées, streak {streak}"
+  },
+  "templates": {
+    "picker_title": "Choisir un modèle",
+    "picker_subtitle": "Commence avec une liste de tâches prête à l'emploi — tout est modifiable après import.",
+    "picker_close": "Annuler",
+    "import": "Importer",
+    "importing": "Import en cours…",
+    "tasks_count": "{count, plural, one {# tâche} other {# tâches}}",
+    "sequential_badge": "Dans l'ordre",
+    "import_failed": "L'import a échoué. Réessaie.",
+    "moving": {
+      "title": "Déménagement",
+      "description": "Pas à pas pour ton déménagement — du préavis à la remise des clés.",
+      "task_1": "Résilier l'ancien bail",
+      "task_2": "Signer le nouveau bail",
+      "task_3": "Mettre en place le suivi du courrier",
+      "task_4": "Transférer électricité, gaz et internet",
+      "task_5": "Mobiliser des amis pour aider",
+      "task_6": "Se procurer des cartons et les étiqueter",
+      "task_7": "Emballer et démonter les meubles",
+      "task_8": "Remise des clés de l'ancien logement",
+      "task_9": "Déclaration de changement d'adresse",
+      "task_10": "Remise en état de l'ancien logement"
+    },
+    "taxes": {
+      "title": "Déclaration d'impôts",
+      "description": "Check-list guidée pour la déclaration annuelle — des justificatifs à l'envoi.",
+      "task_1": "Rassembler les justificatifs",
+      "task_2": "Récupérer la fiche de salaire annuelle",
+      "task_3": "Lister les frais professionnels",
+      "task_4": "Documenter les dépenses déductibles",
+      "task_5": "Remplir la déclaration en ligne",
+      "task_6": "Envoyer la déclaration"
+    },
+    "fitness": {
+      "title": "Routine sport",
+      "description": "Une séance prête à l'emploi avec échauffement, entraînement et récupération.",
+      "task_1": "Préparer les affaires de sport",
+      "task_2": "Remplir la gourde",
+      "task_3": "10 minutes d'échauffement",
+      "task_4": "Renforcement musculaire (30 min)",
+      "task_5": "Séance cardio (30 min)",
+      "task_6": "Retour au calme et étirements",
+      "task_7": "Noter les progrès"
+    }
   }
 }
