@@ -41,6 +41,7 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **Snooze / Pause** — Hide tasks until a future date. Quick options (tomorrow, next week, month) or custom date picker. Snoozed tasks vanish from the list, Quick Wins, and Daily Quest — then reappear automatically.
 - **Emotional Closure** — After completing the daily quest, a gentle Michael Ende quote or affirmation appears. Day-based selection (same quote all day, new one tomorrow). Toggleable in Settings.
 - **Push Notifications** — Daily reminders via browser push. No third-party service, no subscription.
+- **Calendar Subscription (iCal)** — Subscribe to your Momo tasks from Google Calendar, Apple Calendar, Outlook or Thunderbird via a private `.ics` feed URL. All-day events for every task with a due date, open-ended `RRULE` series for recurring tasks, stable UIDs so updates merge in place on every poll. One-click rotate or revoke in Settings; the token is stored only as a SHA-256 hash.
 - **PWA** — Install on your phone like a native app. Works offline. The task creation form is fully usable on mobile — a corrected z-index ensures it renders above the bottom navigation bar as a proper full-height modal.
 - **REST API & API Keys** — Full public REST API with personal access tokens (read-only flag, expiry dates). Interactive Swagger UI at `/api-docs`.
 - **Account Linking** — Connect multiple OAuth providers to one account.
