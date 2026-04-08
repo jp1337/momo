@@ -105,7 +105,11 @@
     "energy_medium": "Normal",
     "energy_low": "Peu d'énergie",
     "energy_match_badge": "Correspond à ton niveau",
-    "energy_checking_in": "Chargement..."
+    "energy_checking_in": "Chargement...",
+    "energy_card_subtitle_collapsed": "Aujourd'hui : {level}",
+    "energy_card_change": "Modifier",
+    "energy_card_swapped": "Quête adaptée à ton énergie — précédente : {title}",
+    "energy_card_swapped_undo": "Annuler"
   },
   "tasks": {
     "page_title": "Tâches",
@@ -173,6 +177,7 @@
     "time_30min": "30 min",
     "time_60min": "60 min",
     "form_label_energy": "Niveau d'énergie",
+    "form_energy_topic_default_hint": "Par défaut depuis « {topic} » : {level} (s'applique à l'enregistrement).",
     "energy_any": "Peu importe",
     "energy_high": "Haut",
     "energy_medium": "Moyen",
@@ -233,6 +238,9 @@
     "form_label_icon": "Icône (emoji)",
     "form_label_priority": "Priorité",
     "form_label_color": "Couleur",
+    "form_label_default_energy": "Niveau d'énergie par défaut",
+    "form_default_energy_none": "Aucun par défaut",
+    "form_default_energy_hint": "Les nouvelles tâches dans ce sujet héritent automatiquement de ce niveau d'énergie.",
     "form_label_description": "Description",
     "form_placeholder_title": "ex. Déclaration d'impôts, Déménagement, Santé",
     "form_placeholder_desc": "Description optionnelle...",

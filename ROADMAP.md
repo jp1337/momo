@@ -38,8 +38,9 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 - **Aufgaben-Vorlagen (Templates)** — vordefinierte Topic-Vorlagen ("Umzug", "Steuern", "Sport-Routine") als One-Click-Import
 - ✅ **Focus Mode** — reduzierte Ansicht: nur Tagesquest + Quick Wins, alles andere ausgeblendet
 - ✅ **Subtask-Reihenfolge** — Drag & Drop Sortierung innerhalb eines Topics
+- **Sequenzielle Topics (Reihenfolge als implizite Abhängigkeit)** — Topics können als "sequenziell" markiert werden (opt-in per Toggle); in sequenziellen Topics ist bei der Daily-Quest-Auswahl immer nur der erste noch offene Task des Topics wählbar — "Kartons besorgen" blockiert "Kartons einpacken", ohne dass explizite Abhängigkeiten gepflegt werden müssen. Die bestehende Drag & Drop Sortierung reicht als Eingabe. Implementierung: DB-Spalte `sequential` (boolean) auf der `topics`-Tabelle; `selectDailyQuest` filtert in sequenziellen Topics alle Tasks außer dem mit dem niedrigsten `sort_order` unter den offenen heraus.
 - ✅ **Profil bearbeiten** — Name, E-Mail-Adresse und Profilbild in den Einstellungen änderbar; OAuth-Provider liefern oft Wegwerf-Mail oder Pseudonym, User soll das nachträglich korrigieren können
-- ✅ **Energie-Filter** — Tasks mit Energie-Level taggen (hoch/mittel/niedrig); Daily Quest berücksichtigt Tagesverfassung
+- ✅ **Energie-Filter** — Tasks mit Energie-Level taggen (hoch/mittel/niedrig); Daily Quest berücksichtigt Tagesverfassung. Im April 2026 vollständig redesignt: Inline-Check-in oben am Dashboard (entkoppelt von `!quest`), Auto-Re-Roll der Quest beim Check-in (mit Undo), historischer Verlauf via neuer `energy_checkins`-Tabelle, Topic-Default-Energielevel das neue Tasks erben, energie-aware Quick Wins / 5-Min-Mode, Energie-Block auf `/stats`. Strukturbug (Prompt unsichtbar) und Timezone-Bug (UTC vs lokales Datum) mitgefixt.
 
 ### Größere Features
 

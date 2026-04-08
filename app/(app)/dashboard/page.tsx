@@ -21,6 +21,7 @@ import { db } from "@/lib/db";
 import { taskCompletions, users, tasks } from "@/lib/db/schema";
 import { eq, count, lte, isNull, and, or } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
+import { EnergyCheckinCard } from "@/components/dashboard/energy-checkin-card";
 import { getTranslations } from "next-intl/server";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoins, faFire, faTrophy, faCircleCheck, faBolt, faBullseye } from "@fortawesome/free-solid-svg-icons";
@@ -94,9 +95,17 @@ export default async function DashboardPage() {
       .from(users)
       .where(eq(users.id, userId))
       .limit(1),
-    // Quick wins: uncompleted, non-snoozed tasks with estimatedMinutes <= 15
+    // Quick wins: uncompleted, non-snoozed tasks with estimatedMinutes <= 15.
+    // We over-fetch (limit 12) so the JS sort below has room to prefer
+    // energy-matching tasks before slicing down to 3 for display.
     db
-      .select({ id: tasks.id, title: tasks.title, estimatedMinutes: tasks.estimatedMinutes, coinValue: tasks.coinValue })
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        estimatedMinutes: tasks.estimatedMinutes,
+        coinValue: tasks.coinValue,
+        energyLevel: tasks.energyLevel,
+      })
       .from(tasks)
       .where(
         and(
@@ -106,7 +115,7 @@ export default async function DashboardPage() {
           or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, todayStr))
         )
       )
-      .limit(3),
+      .limit(12),
     // Count of 5-minute tasks for the "5 Min" CTA
     db
       .select({ count: count() })
@@ -129,10 +138,18 @@ export default async function DashboardPage() {
   const postponeLimit = postponeData?.questPostponeLimit ?? 3;
   const emotionalClosureEnabled = postponeData?.emotionalClosureEnabled ?? true;
 
-  // Energy check-in: if set today, pass it; otherwise null triggers the check-in prompt
-  const userEnergyToday = postponeData?.energyLevelDate === todayStr
-    ? (postponeData?.energyLevel ?? null)
-    : null;
+  // Energy state — we deliberately do NOT compare against todayStr (which is
+  // UTC) here. The raw level + date are passed to EnergyCheckinCard, which
+  // does the comparison in the browser using the user's actual local date.
+  // This is the structural fix for the timezone bug that hid the prompt for
+  // users east or west of UTC around midnight.
+  const cachedEnergyLevel = postponeData?.energyLevel ?? null;
+  const cachedEnergyLevelDate = postponeData?.energyLevelDate ?? null;
+  // For the "matches your energy" badge on DailyQuestCard we still need a
+  // best-effort server-side decision — accept the cached value when its
+  // date string equals the SSR-computed UTC today (close enough for the
+  // badge; the canonical render happens client-side after refresh).
+  const userEnergyToday = cachedEnergyLevelDate === todayStr ? cachedEnergyLevel : null;
 
   // Serialize Date fields — Next.js cannot pass Date objects from Server to Client Components
   const quest = rawQuest
@@ -153,6 +170,20 @@ export default async function DashboardPage() {
 
   const totalCompletions = completionCountRows[0]?.count ?? 0;
   const fiveMinCount = fiveMinCountRows[0]?.count ?? 0;
+
+  // Energy-aware Quick Wins sort: tasks matching today's reported energy
+  // come first, untagged tasks second, mismatched last. The same ordering
+  // logic also drives the 5-min view (see app/(app)/quick/page.tsx).
+  // We over-fetched 12 above; slice to 3 after sorting.
+  function energyMatchScore(taskEnergy: "HIGH" | "MEDIUM" | "LOW" | null): number {
+    if (!userEnergyToday) return 1; // no check-in → preserve original order roughly
+    if (taskEnergy === userEnergyToday) return 0; // perfect match
+    if (taskEnergy === null) return 1; // untagged is universally OK
+    return 2; // mismatch
+  }
+  const sortedQuickWins = [...quickWinTasks]
+    .sort((a, b) => energyMatchScore(a.energyLevel) - energyMatchScore(b.energyLevel))
+    .slice(0, 3);
 
   // Determine greeting based on time of day
   const hour = new Date().getHours();
@@ -211,6 +242,14 @@ export default async function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* ── Energy Check-in (above quest) ───────────────────────────────────── */}
+      <section className="-mb-4">
+        <EnergyCheckinCard
+          energyLevel={cachedEnergyLevel}
+          energyLevelDate={cachedEnergyLevelDate}
+        />
+      </section>
 
       {/* ── Daily Quest Hero Card ─────────────────────────────────────────────── */}
       <section>
@@ -337,7 +376,7 @@ export default async function DashboardPage() {
       )}
 
       {/* ── Quick Wins ── only shown if there are short tasks ────────────────── */}
-      {quickWinTasks.length > 0 && (
+      {sortedQuickWins.length > 0 && (
         <section>
           <div className="flex items-baseline gap-3 mb-3">
             <h2
@@ -364,14 +403,14 @@ export default async function DashboardPage() {
             className="rounded-xl overflow-hidden"
             style={{ border: "1px solid var(--border)" }}
           >
-            {quickWinTasks.map((task, i) => (
+            {sortedQuickWins.map((task, i) => (
               <div
                 key={task.id}
                 className="flex items-center justify-between px-4 py-3"
                 style={{
                   backgroundColor: "var(--bg-surface)",
                   borderBottom:
-                    i < quickWinTasks.length - 1 ? "1px solid var(--border)" : "none",
+                    i < sortedQuickWins.length - 1 ? "1px solid var(--border)" : "none",
                 }}
               >
                 <div className="flex items-center gap-3 min-w-0">

@@ -52,7 +52,8 @@ api/
   topics/[id]/reorder/route.ts       → PUT (reorder tasks within topic, body: {taskIds: string[]})
   daily-quest/route.ts               → GET (fetch today's quest, returns completed quest all day), POST (force new quest)
   daily-quest/postpone/route.ts      → POST (postpone quest, body: {taskId, timezone?}, enforces daily limit)
-  energy-checkin/route.ts            → POST (set daily energy level + select matching quest, body: {energyLevel, timezone?})
+  daily-quest/restore/route.ts       → POST (pin a specific task as today's quest — used as Undo for the energy auto-reroll, body: {taskId, timezone?})
+  energy-checkin/route.ts            → POST (record daily energy level + auto-reroll quest if mismatched via reselectQuestForEnergy; body: {energyLevel, timezone?}; returns {quest, swapped, previousQuestId?, previousQuestTitle?})
   wishlist/route.ts                  → GET (list), POST (create)
   wishlist/[id]/route.ts             → PATCH, DELETE
   wishlist/[id]/buy/route.ts         → POST (mark purchased, deduct coins)

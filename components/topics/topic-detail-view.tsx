@@ -42,6 +42,9 @@ interface TopicDetailViewProps {
   topicTitle: string;
   initialTasks: Task[];
   topicColor: string | null;
+  /** Topic's default energy level — passed through to TaskForm so the
+   *  energy picker can show the inheritance hint. */
+  topicDefaultEnergyLevel?: "HIGH" | "MEDIUM" | "LOW" | null;
 }
 
 /**
@@ -53,6 +56,7 @@ export function TopicDetailView({
   topicTitle,
   initialTasks,
   topicColor,
+  topicDefaultEnergyLevel = null,
 }: TopicDetailViewProps) {
   const t = useTranslations("topics");
   const router = useRouter();
@@ -407,7 +411,7 @@ export function TopicDetailView({
                 }
               : undefined
           }
-          topics={[{ id: topicId, title: topicTitle, color: topicColor }]}
+          topics={[{ id: topicId, title: topicTitle, color: topicColor, defaultEnergyLevel: topicDefaultEnergyLevel }]}
           defaultTopicId={topicId}
           onSuccess={handleFormSuccess}
           onCancel={() => {

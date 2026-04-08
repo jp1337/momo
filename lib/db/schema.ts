@@ -32,6 +32,7 @@ import {
   jsonb,
   unique,
   uniqueIndex,
+  index,
   primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -270,6 +271,14 @@ export const topics = pgTable("topics", {
   /** Archived topics are hidden from the main view but not deleted */
   archived: boolean("archived").notNull().default(false),
 
+  /**
+   * Default energy level inherited by new tasks created in this topic.
+   * Useful for "Sport" (HIGH) or "E-Mails beantworten" (LOW) topics — saves
+   * the user from picking the level on every task. NULL = no default.
+   * Existing tasks are not retro-tagged when this changes.
+   */
+  defaultEnergyLevel: energyLevelEnum("default_energy_level"),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -359,6 +368,46 @@ export const taskCompletions = pgTable("task_completions", {
 
   completedAt: timestamp("completed_at").notNull().defaultNow(),
 });
+
+/**
+ * Energy check-in history.
+ * Every energy check-in writes a row here — multiple entries per user per day
+ * are explicitly allowed because users may re-check-in (morning HIGH, afternoon
+ * LOW). The "current" value is the row with the largest createdAt for today.
+ *
+ * The cached current value is also stored on `users.energyLevel` /
+ * `users.energyLevelDate` for fast dashboard reads — this table is for the
+ * historical Stats view and pattern analysis.
+ */
+export const energyCheckins = pgTable(
+  "energy_checkins",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+
+    /**
+     * Local date (YYYY-MM-DD) in the user's timezone at the moment of
+     * check-in. Stored as the user's local day, not UTC, so calendar-day
+     * grouping in the Stats view does the right thing for users east of UTC.
+     */
+    date: date("date").notNull(),
+
+    /** The reported energy level. */
+    energyLevel: energyLevelEnum("energy_level").notNull(),
+
+    /** Wall-clock UTC timestamp — used for time-of-day analyses later. */
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    /** Per-user-per-day index — supports the "what is today's level" lookup. */
+    userDateIdx: index("energy_checkins_user_date_idx").on(table.userId, table.date),
+  })
+);
 
 /**
  * Wishlist items — things the user wants to buy.

@@ -531,7 +531,8 @@ Response: `{ "success": true }`
 | `GET` | `/api/daily-quest` | Yes | — | Get today's quest (auto-selects if none active) |
 | `POST` | `/api/daily-quest` | Yes | — | Force a new quest selection |
 | `POST` | `/api/daily-quest/postpone` | Yes | 10/min | Postpone today's quest to tomorrow |
-| `POST` | `/api/energy-checkin` | Yes | 30/min | Set daily energy level and select matching quest |
+| `POST` | `/api/daily-quest/restore` | Yes | — | Pin a specific task as today's quest (Undo for energy re-roll) |
+| `POST` | `/api/energy-checkin` | Yes | 30/min | Record daily energy level + auto re-roll quest if mismatched |
 
 ### GET /api/daily-quest
 
@@ -601,9 +602,7 @@ Response: `{ "ok": true, "postponesToday": 2, "postponeLimit": 3 }`
 
 ### POST /api/energy-checkin
 
-Records the user's daily energy level and selects a matching daily quest in one round-trip.
-The daily quest algorithm will prefer tasks whose `energyLevel` matches the user's check-in
-(or tasks with no energy level set). If no matching tasks exist, any eligible task is selected.
+Records the user's daily energy level and **automatically re-rolls the daily quest** if the active quest no longer matches the reported energy. Idempotent in all other cases (no quest yet, quest already matches, quest already completed, no better candidate exists). Writes to both the cached `users.energyLevel`/`energyLevelDate` columns *and* appends a row to `energy_checkins` so the historical Stats view can pick it up. Re-check-ins later in the day are explicitly supported.
 
 Request body:
 ```json
@@ -613,7 +612,30 @@ Request body:
 - `energyLevel` — required: `"HIGH"`, `"MEDIUM"`, or `"LOW"`
 - `timezone` — optional IANA timezone string (omit to use UTC)
 
-Response: `{ "quest": { ... } | null }`
+Response:
+```json
+{
+  "quest": { /* TaskWithTopic */ } | null,
+  "swapped": true,
+  "previousQuestId": "uuid",
+  "previousQuestTitle": "Call the dentist"
+}
+```
+
+- `quest` — the (possibly re-rolled) active quest after the call
+- `swapped` — true iff the quest was actually replaced
+- `previousQuestId` / `previousQuestTitle` — only present when `swapped` is true; pass `previousQuestId` back to `POST /api/daily-quest/restore` to undo the swap
+
+### POST /api/daily-quest/restore
+
+Pins a specific task as today's daily quest, replacing whatever is currently active. Used by the energy check-in card's Undo link to restore the pre-reroll quest. The target task must be owned by the user, not completed, and not snoozed past today — otherwise the response contains `quest: null`.
+
+Request body:
+```json
+{ "taskId": "uuid", "timezone": "Europe/Berlin" }
+```
+
+Response: `{ "quest": { /* TaskWithTopic */ } | null }`
 
 ---
 

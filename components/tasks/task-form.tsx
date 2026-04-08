@@ -15,6 +15,9 @@ interface TopicOption {
   id: string;
   title: string;
   color?: string | null;
+  /** Topic's default energy level — surfaces as a hint in the energy picker
+   *  when the user has not chosen one explicitly. */
+  defaultEnergyLevel?: "HIGH" | "MEDIUM" | "LOW" | null;
 }
 
 interface TaskFormData {
@@ -448,6 +451,27 @@ export function TaskForm({
                 );
               })}
             </div>
+            {/* Topic-default hint: if the picked topic has a defaultEnergyLevel
+                and the user has not picked one for this task, show what will
+                be inherited on save. */}
+            {formData.energyLevel === null && formData.topicId && (() => {
+              const selectedTopic = topics.find((tp) => tp.id === formData.topicId);
+              if (!selectedTopic?.defaultEnergyLevel) return null;
+              return (
+                <p
+                  className="text-xs mt-1.5"
+                  style={{
+                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                    color: "var(--accent-amber)",
+                  }}
+                >
+                  {t("form_energy_topic_default_hint", {
+                    level: t(`energy_${selectedTopic.defaultEnergyLevel.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low"),
+                    topic: selectedTopic.title,
+                  })}
+                </p>
+              );
+            })()}
           </div>
 
           {/* Notes */}

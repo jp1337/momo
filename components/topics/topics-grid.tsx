@@ -19,6 +19,7 @@ interface Topic {
   color: string | null;
   icon: string | null;
   priority: "HIGH" | "NORMAL" | "SOMEDAY";
+  defaultEnergyLevel: "HIGH" | "MEDIUM" | "LOW" | null;
   taskCount: number;
   completedCount: number;
 }
@@ -175,6 +176,7 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
                   color: editingTopic.color ?? "#4a8c5c",
                   icon: editingTopic.icon ?? "📁",
                   priority: editingTopic.priority,
+                  defaultEnergyLevel: editingTopic.defaultEnergyLevel ?? null,
                 }
               : undefined
           }

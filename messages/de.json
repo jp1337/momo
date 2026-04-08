@@ -105,7 +105,11 @@
     "energy_medium": "Normal",
     "energy_low": "Wenig Energie",
     "energy_match_badge": "Passt zu deinem Level",
-    "energy_checking_in": "Wird geladen..."
+    "energy_checking_in": "Wird geladen...",
+    "energy_card_subtitle_collapsed": "Heute: {level}",
+    "energy_card_change": "Ändern",
+    "energy_card_swapped": "Quest auf deine Energie angepasst — vorher: {title}",
+    "energy_card_swapped_undo": "Rückgängig"
   },
   "tasks": {
     "page_title": "Aufgaben",
@@ -173,6 +177,7 @@
     "time_30min": "30 min",
     "time_60min": "60 min",
     "form_label_energy": "Energielevel",
+    "form_energy_topic_default_hint": "Standard aus „{topic}\": {level} (wird beim Speichern angewendet).",
     "energy_any": "Egal",
     "energy_high": "Hoch",
     "energy_medium": "Mittel",
@@ -233,6 +238,9 @@
     "form_label_icon": "Symbol (Emoji)",
     "form_label_priority": "Priorität",
     "form_label_color": "Farbe",
+    "form_label_default_energy": "Standard-Energielevel",
+    "form_default_energy_none": "Kein Standard",
+    "form_default_energy_hint": "Neue Aufgaben in diesem Thema erben automatisch dieses Energielevel.",
     "form_label_description": "Beschreibung",
     "form_placeholder_title": "z.B. Steuererklärung, Umzug, Gesundheit",
     "form_placeholder_desc": "Optionale Beschreibung...",

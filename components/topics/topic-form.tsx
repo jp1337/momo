@@ -17,6 +17,7 @@ interface TopicFormData {
   color: string;
   icon: string;
   priority: "HIGH" | "NORMAL" | "SOMEDAY";
+  defaultEnergyLevel: "HIGH" | "MEDIUM" | "LOW" | null;
 }
 
 interface TopicFormProps {
@@ -34,6 +35,7 @@ const DEFAULT_FORM: TopicFormData = {
   color: "#4a8c5c",
   icon: "folder",
   priority: "NORMAL",
+  defaultEnergyLevel: null,
 };
 
 /** Preset color options */
@@ -95,6 +97,7 @@ export function TopicForm({
       color: formData.color || null,
       icon: formData.icon.trim() || null,
       priority: formData.priority,
+      defaultEnergyLevel: formData.defaultEnergyLevel,
     };
 
     setIsSubmitting(true);
@@ -284,6 +287,50 @@ export function TopicForm({
                 aria-label={t("form_aria_colorpicker")}
               />
             </div>
+          </div>
+
+          {/* Default energy level — inherited by new tasks in this topic */}
+          <div>
+            <label style={labelStyle}>{t("form_label_default_energy")}</label>
+            <div className="flex gap-2 flex-wrap">
+              {([null, "HIGH", "MEDIUM", "LOW"] as const).map((level) => {
+                const isSelected = formData.defaultEnergyLevel === level;
+                return (
+                  <button
+                    key={String(level)}
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, defaultEnergyLevel: level }))
+                    }
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150"
+                    style={{
+                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                      border: isSelected
+                        ? "1px solid var(--accent-amber)"
+                        : "1px solid var(--border)",
+                      backgroundColor: isSelected
+                        ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-elevated))"
+                        : "var(--bg-elevated)",
+                      color: isSelected ? "var(--accent-amber)" : "var(--text-muted)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {level === null
+                      ? t("form_default_energy_none")
+                      : t(`energy_${level.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low")}
+                  </button>
+                );
+              })}
+            </div>
+            <p
+              className="text-xs mt-1.5"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+              }}
+            >
+              {t("form_default_energy_hint")}
+            </p>
           </div>
 
           {/* Description */}

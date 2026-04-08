@@ -105,7 +105,11 @@
     "energy_medium": "Medium",
     "energy_low": "Low energy",
     "energy_match_badge": "Matches your energy",
-    "energy_checking_in": "Loading..."
+    "energy_checking_in": "Loading...",
+    "energy_card_subtitle_collapsed": "Today: {level}",
+    "energy_card_change": "Change",
+    "energy_card_swapped": "Quest swapped to better match your energy — was: {title}",
+    "energy_card_swapped_undo": "Undo"
   },
   "tasks": {
     "page_title": "Tasks",
@@ -173,6 +177,7 @@
     "time_30min": "30 min",
     "time_60min": "60 min",
     "form_label_energy": "Energy level",
+    "form_energy_topic_default_hint": "Default from \"{topic}\": {level} (will be applied on save).",
     "energy_any": "Any",
     "energy_high": "High",
     "energy_medium": "Medium",
@@ -233,6 +238,9 @@
     "form_label_icon": "Icon (emoji)",
     "form_label_priority": "Priority",
     "form_label_color": "Color",
+    "form_label_default_energy": "Default energy level",
+    "form_default_energy_none": "No default",
+    "form_default_energy_hint": "New tasks in this topic automatically inherit this energy level.",
     "form_label_description": "Description",
     "form_placeholder_title": "e.g. Tax Return, Moving, Health",
     "form_placeholder_desc": "Optional description...",
