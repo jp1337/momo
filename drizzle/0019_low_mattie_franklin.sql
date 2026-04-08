@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "due_today_reminder_enabled" boolean DEFAULT false NOT NULL;

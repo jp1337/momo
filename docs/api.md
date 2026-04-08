@@ -895,7 +895,7 @@ Response: `{ "success": true }` or `400` if channel not configured.
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | `POST` | `/api/push/subscribe` | Yes | Save push subscription + enable notifications |
-| `PATCH` | `/api/push/subscribe` | Yes | Update notification time without re-subscribing |
+| `PATCH` | `/api/push/subscribe` | Yes | Update reminder preferences (time, timezone, due-today toggle) |
 | `DELETE` | `/api/push/subscribe` | Yes | Remove subscription + disable notifications |
 | `POST` | `/api/push/test` | Yes | Send a test push notification to the current user |
 
@@ -916,12 +916,22 @@ Response: `{ "success": true }`
 
 ### PATCH /api/push/subscribe
 
-Updates only the `notificationTime` for the current user. Does not require the push subscription object.
+Updates reminder preferences for the current user. Does not require the push subscription object. All fields are optional, but at least one must be provided.
 
 Request body:
 ```json
-{ "notificationTime": "06:30" }
+{
+  "notificationTime": "06:30",
+  "timezone": "Europe/Berlin",
+  "dueTodayReminderEnabled": true
+}
 ```
+
+| Field | Type | Description |
+|---|---|---|
+| `notificationTime` | string (HH:MM) | Preferred daily-reminder time in the user's local timezone |
+| `timezone` | string (IANA) | IANA timezone identifier (max 64 chars), e.g. `Europe/Berlin` |
+| `dueTodayReminderEnabled` | boolean | Opt-in for the "Due today" reminder — silent on days with nothing due |
 
 Response: `{ "success": true }`
 
@@ -942,6 +952,7 @@ The Docker cron container calls `POST /api/cron` every 5 minutes. The server-sid
 
 | Job | Guard | Description |
 |---|---|---|
+| `due-today` | 5-min bucket | Send "due today" reminder to opted-in users at their local notification time. Silent on empty — no ping is sent when the user has no open, non-snoozed tasks with `due_date`/`next_due_date` = today. Runs before `daily-quest` so both pings don't collide |
 | `daily-quest` | 5-min bucket | Send daily quest push notifications based on user's local notification time |
 | `streak-reminder` | Once per day | Send streak-at-risk reminders to users who haven't completed a task today |
 | `weekly-review` | 5-min bucket | Send weekly review summary (Sunday 18:00 local time only) |

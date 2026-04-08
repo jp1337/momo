@@ -7,10 +7,11 @@
  * Returns: { success: true }
  *
  * PATCH /api/push/subscribe
- * Updates the notification time (and optionally timezone) for the user.
+ * Updates reminder preferences for the user. All fields are optional but at
+ * least one must be provided.
  * Does not require a push subscription object.
  * Requires: authentication
- * Body: { notificationTime: string, timezone?: string }
+ * Body: { notificationTime?: string, timezone?: string, dueTodayReminderEnabled?: boolean }
  * Returns: { success: true }
  *
  * DELETE /api/push/subscribe
@@ -149,13 +150,24 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const parsed = z.object({
-    notificationTime: z
-      .string()
-      .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
-      .transform((v) => v.slice(0, 5)),
-    timezone: z.string().min(1).max(64).optional(),
-  }).safeParse(body);
+  const parsed = z
+    .object({
+      notificationTime: z
+        .string()
+        .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
+        .transform((v) => v.slice(0, 5))
+        .optional(),
+      timezone: z.string().min(1).max(64).optional(),
+      dueTodayReminderEnabled: z.boolean().optional(),
+    })
+    .refine(
+      (v) =>
+        v.notificationTime !== undefined ||
+        v.timezone !== undefined ||
+        v.dueTodayReminderEnabled !== undefined,
+      { message: "At least one field must be provided" }
+    )
+    .safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -164,19 +176,27 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
     );
   }
 
+  const updates: Partial<typeof users.$inferInsert> = {};
+  if (parsed.data.notificationTime !== undefined) {
+    updates.notificationTime = parsed.data.notificationTime;
+  }
+  if (parsed.data.timezone !== undefined) {
+    updates.timezone = parsed.data.timezone;
+  }
+  if (parsed.data.dueTodayReminderEnabled !== undefined) {
+    updates.dueTodayReminderEnabled = parsed.data.dueTodayReminderEnabled;
+  }
+
   try {
-    await db
-      .update(users)
-      .set({
-        notificationTime: parsed.data.notificationTime,
-        ...(parsed.data.timezone ? { timezone: parsed.data.timezone } : {}),
-      })
-      .where(eq(users.id, user.userId));
+    await db.update(users).set(updates).where(eq(users.id, user.userId));
 
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[PATCH /api/push/subscribe]", err);
-    return NextResponse.json({ error: "Failed to update notification time" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update reminder preferences" },
+      { status: 500 }
+    );
   }
 }
 

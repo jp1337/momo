@@ -129,6 +129,18 @@ export const users = pgTable("users", {
    */
   timezone: text("timezone"),
 
+  /**
+   * Opt-in flag for the "Due today" reminder (see sendDueTodayNotifications in lib/push.ts).
+   * When true, the cron dispatcher sends a notification at the user's
+   * configured notificationTime *if* there is at least one non-completed,
+   * non-snoozed task whose due_date (or next_due_date, for recurring tasks)
+   * is today in the user's timezone. Silent on empty — no "all clear" pings.
+   * Default false so existing users don't get new noise without consent.
+   */
+  dueTodayReminderEnabled: boolean("due_today_reminder_enabled")
+    .notNull()
+    .default(false),
+
   /** User's preferred colour theme */
   theme: themeEnum("theme").notNull().default("system"),
 

@@ -59,6 +59,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `monthly_budget` | decimal | Wishlist monthly budget |
 | `notification_enabled` | boolean | Push notifications enabled |
 | `notification_time` | time | Daily reminder time (24h, e.g. `08:00`) |
+| `due_today_reminder_enabled` | boolean | Opt-in flag for the "Due today" reminder (default false). When true, the cron dispatcher sends a ping at `notification_time` iff the user has at least one non-completed, non-snoozed task whose `due_date` (or, for RECURRING tasks, `next_due_date`) equals today in the user's timezone. Silent on empty — no "all clear" notifications |
 | `push_subscription` | jsonb | Browser Web Push subscription object |
 | `theme` | enum | UI theme preference: `light`, `dark`, `system` |
 | `quest_postpones_today` | integer | Number of quest postponements the user has used today |

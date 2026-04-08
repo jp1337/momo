@@ -17,7 +17,7 @@
 import { db } from "@/lib/db";
 import { cronRuns } from "@/lib/db/schema";
 import { lt, eq, and } from "drizzle-orm";
-import { sendDailyQuestNotifications, sendStreakReminders, sendWeeklyReviewNotifications } from "@/lib/push";
+import { sendDailyQuestNotifications, sendStreakReminders, sendWeeklyReviewNotifications, sendDueTodayNotifications } from "@/lib/push";
 
 /** Retain cron run history for this many days — older rows are pruned after each run. */
 const CRON_RETENTION_DAYS = 30;
@@ -93,6 +93,14 @@ function getGuardKey(guard: GuardType): string {
  * Add new jobs here — they will be picked up automatically by runAllJobs().
  */
 const CRON_JOBS: CronJob[] = [
+  {
+    // Runs before daily-quest so the "due today" ping arrives first when
+    // both match the same 5-minute bucket.
+    name: "due-today",
+    handler: sendDueTodayNotifications,
+    guard: "5min-bucket",
+    logToDb: true,
+  },
   {
     name: "daily-quest",
     handler: sendDailyQuestNotifications,

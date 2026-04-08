@@ -376,6 +376,18 @@ Momo sends you a browser push notification each day to remind you of your Daily 
 
 The notification text includes the quest title, e.g. "Today's mission: Call the dentist." Tapping the notification opens Momo directly to the dashboard.
 
+### "Due today" reminder
+
+On top of the daily-quest ping, Momo can send a separate reminder listing the tasks that are actually **due today** — the ones with a specific `due date` of today, and recurring tasks whose next occurrence falls on today. Toggle **Remind me about tasks due today** in **Settings → Notifications** to opt in.
+
+**Silent on empty.** You will only be pinged when there is actually something due. On a day with nothing on the list, Momo stays quiet — no "all clear" notifications, no "you have 0 tasks" pings. This is deliberate: reminders that fire on empty days train you to swipe them away.
+
+- **One task due** → Title shows the task name, e.g. *"Heute fällig: Steuererklärung einreichen"*.
+- **Several tasks due** → Title shows the count, body lists the first three, rest as "… and N more".
+- **Snoozed tasks** are excluded. A task you snoozed until tomorrow will not trigger the reminder today, even if its original `due date` is today.
+- **Delivery time.** Uses the same time you picked for your daily reminder. Both pings arrive within a few seconds of each other.
+- **Channels.** Works with every channel you have configured — browser push, ntfy.sh, Pushover, Telegram, Email. Enable any one of them and the toggle becomes available.
+
 ### Requirements
 
 Push notifications require VAPID keys to be configured on the server. If you are self-hosting, see the [Environment Variables guide](/momo/environment-variables) for the `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` variables.

@@ -17,8 +17,8 @@
 
 import webpush from "web-push";
 import { db } from "@/lib/db";
-import { users, pushSubscriptions, taskCompletions, notificationChannels } from "@/lib/db/schema";
-import { eq, and, gt, gte, sql } from "drizzle-orm";
+import { users, pushSubscriptions, taskCompletions, notificationChannels, tasks } from "@/lib/db/schema";
+import { eq, and, gt, gte, or, isNull, lte, asc, sql } from "drizzle-orm";
 import { serverEnv } from "@/lib/env";
 import { getCurrentDailyQuest, selectDailyQuest } from "@/lib/daily-quest";
 import { getWeeklyReview } from "@/lib/weekly-review";
@@ -271,6 +271,208 @@ export async function sendDailyQuestNotifications(): Promise<{
       failed += result.failed;
     } catch (err) {
       console.error("[channels] Failed to send daily quest notification to", row.userId, err);
+      failed++;
+    }
+  }
+
+  return { sent, failed };
+}
+
+// ─── Due Today reminder ───────────────────────────────────────────────────────
+
+/**
+ * Fetches up to 10 tasks that are due today in the given user's timezone,
+ * excluding completed and snoozed tasks.
+ *
+ * "Due today" means:
+ *  - tasks.due_date equals today in the user's timezone, OR
+ *  - tasks.type = 'RECURRING' AND tasks.next_due_date equals today
+ * AND
+ *  - completed_at IS NULL
+ *  - snoozed_until IS NULL OR snoozed_until <= today
+ *
+ * Ordered by priority (ascending enum order, URGENT first) then title.
+ *
+ * @param userId - The user whose tasks to query
+ * @returns Array of { id, title } for each due-today task (max 10)
+ */
+async function fetchDueTodayTasks(
+  userId: string
+): Promise<Array<{ id: string; title: string }>> {
+  // "Today" in the user's own timezone, computed on the database side
+  const today = sql<string>`((NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))::date)`;
+
+  const rows = await db
+    .select({ id: tasks.id, title: tasks.title })
+    .from(tasks)
+    .innerJoin(users, eq(tasks.userId, users.id))
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        isNull(tasks.completedAt),
+        or(
+          eq(tasks.dueDate, today),
+          and(eq(tasks.type, "RECURRING"), eq(tasks.nextDueDate, today))
+        ),
+        or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, today))
+      )
+    )
+    .orderBy(asc(tasks.priority), asc(tasks.title))
+    .limit(10);
+
+  return rows;
+}
+
+/**
+ * Sends "due today" reminder notifications to all users who have
+ *   - notification_enabled = true
+ *   - due_today_reminder_enabled = true
+ *   - notification_time matching the current 5-minute bucket (in their tz)
+ *   - at least one non-completed, non-snoozed task with due_date = today
+ *     (or a RECURRING task with next_due_date = today)
+ *
+ * Silent on empty: users with no due tasks receive *no* ping. This is a
+ * deliberate UX choice — a "nothing due today" notification is muda and
+ * trains users to swipe away the reminder.
+ *
+ * Runs in the same 5-minute bucket as the daily-quest job. Registered
+ * *before* daily-quest in the dispatcher so the due-today ping arrives
+ * first when both match.
+ *
+ * @returns Object with sent and failed counts
+ */
+export async function sendDueTodayNotifications(): Promise<{
+  sent: number;
+  failed: number;
+}> {
+  let sent = 0;
+  let failed = 0;
+
+  // Same bucket SQL fragment as sendDailyQuestNotifications
+  const timeBucketCondition = and(
+    sql`EXTRACT(HOUR FROM ${users.notificationTime})
+        = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
+    sql`FLOOR(EXTRACT(MINUTE FROM ${users.notificationTime}) / 5)
+        = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
+  );
+
+  // Cache due-tasks per user so multi-device and multi-channel fan-out
+  // doesn't re-query. `null` sentinel = already checked and nothing due.
+  const dueCache = new Map<string, Array<{ id: string; title: string }> | null>();
+
+  /** Resolve due tasks once per user, using the cache. */
+  async function resolveDueTasks(
+    userId: string
+  ): Promise<Array<{ id: string; title: string }>> {
+    if (dueCache.has(userId)) return dueCache.get(userId) ?? [];
+    const rows = await fetchDueTodayTasks(userId);
+    dueCache.set(userId, rows.length > 0 ? rows : null);
+    return rows;
+  }
+
+  /**
+   * Builds the notification payload for a user's due-today tasks.
+   * Uses German/English fallback copy identical in spirit to the
+   * daily-quest payload (no per-user i18n in cron jobs — there's no
+   * request locale).
+   */
+  function buildPayload(
+    dueTasks: Array<{ id: string; title: string }>
+  ): NotificationPayload & ChannelPayload {
+    if (dueTasks.length === 1) {
+      const title = dueTasks[0].title.length > 80
+        ? `${dueTasks[0].title.slice(0, 77)}...`
+        : dueTasks[0].title;
+      return {
+        title: `Heute fällig: ${title}`,
+        body: "Open Momo to tick it off before the day moves on.",
+        icon: "/icon-192.png",
+        url: "/tasks",
+        tag: "due-today",
+      };
+    }
+
+    const preview = dueTasks.slice(0, 3).map((t) => t.title).join(" · ");
+    const remaining = dueTasks.length - 3;
+    const body =
+      remaining > 0
+        ? `${preview} · und ${remaining} weitere`
+        : preview;
+    return {
+      title: `${dueTasks.length} Tasks heute fällig`,
+      body,
+      icon: "/icon-192.png",
+      url: "/tasks",
+      tag: "due-today",
+    };
+  }
+
+  // ── Web Push block (only if VAPID is configured) ──
+  if (isVapidConfigured()) {
+    const eligibleSubscriptions = await db
+      .select({
+        userId: pushSubscriptions.userId,
+        subscription: pushSubscriptions.subscription,
+      })
+      .from(pushSubscriptions)
+      .innerJoin(users, eq(pushSubscriptions.userId, users.id))
+      .where(
+        and(
+          eq(users.notificationEnabled, true),
+          eq(users.dueTodayReminderEnabled, true),
+          timeBucketCondition
+        )
+      );
+
+    for (const row of eligibleSubscriptions) {
+      try {
+        const dueTasks = await resolveDueTasks(row.userId);
+        if (dueTasks.length === 0) continue; // silence-on-empty
+        await sendPushNotification(
+          row.userId,
+          row.subscription as PushSubscriptionData,
+          buildPayload(dueTasks)
+        );
+        sent++;
+      } catch (err) {
+        console.error(
+          "[push] Failed to send due-today notification to",
+          row.userId,
+          err
+        );
+        failed++;
+      }
+    }
+  }
+
+  // ── Notification channels block (ntfy, pushover, telegram, email) ──
+  const channelUsers = await db
+    .selectDistinct({
+      userId: notificationChannels.userId,
+    })
+    .from(notificationChannels)
+    .innerJoin(users, eq(notificationChannels.userId, users.id))
+    .where(
+      and(
+        eq(notificationChannels.enabled, true),
+        eq(users.dueTodayReminderEnabled, true),
+        timeBucketCondition
+      )
+    );
+
+  for (const row of channelUsers) {
+    try {
+      const dueTasks = await resolveDueTasks(row.userId);
+      if (dueTasks.length === 0) continue; // silence-on-empty
+      const result = await sendToAllChannels(row.userId, buildPayload(dueTasks));
+      sent += result.sent;
+      failed += result.failed;
+    } catch (err) {
+      console.error(
+        "[channels] Failed to send due-today notification to",
+        row.userId,
+        err
+      );
       failed++;
     }
   }
