@@ -170,6 +170,8 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 ## What's New
 
+**"Due today" reminder** — an optional push that fires at your normal daily notification time and lists the tasks actually due today. Snoozed tasks are excluded, recurring tasks are covered via their next occurrence, and — most importantly — the reminder is **silent on empty days**: no "all clear" pings that train you to swipe notifications away. Works via Web Push, ntfy.sh, Pushover, Telegram, or Email. Toggle it on under **Settings → Notifications**. [See Features →](/momo/features#due-today-reminder)
+
 **Passkeys (WebAuthn)** — sign in to Momo *without* a password. Register your Face ID, Touch ID, Windows Hello, Android biometrics or a YubiKey from **Settings → Two-factor authentication → Passkeys**, and the next time you visit `/login` just tap **Sign in with a passkey**. The same passkey doubles as your second factor — pick whichever is more convenient at sign-in time. Methods can be mixed: TOTP, passkey, both, neither. [Read the guide →](/momo/passkeys)
 
 **Two-Factor Authentication (TOTP)** — optional second factor via any authenticator app (Aegis, 2FAS, Google Authenticator, Authy, 1Password, Bitwarden, …). Setup wizard with QR code, 10 single-use backup codes, encrypted at rest with AES-256-GCM. Self-hosters can require a second factor for everyone with `REQUIRE_2FA=true`. [Read the guide →](/momo/two-factor-auth)
