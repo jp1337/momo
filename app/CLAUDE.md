@@ -23,6 +23,7 @@ Next.js 15 App Router pages and API routes. Thin layer — validates input, call
   login/        → OAuth provider buttons (GitHub, Discord, Google)
   login/2fa/    → Second-factor challenge — reached via the (app) layout gate when sessions.totp_verified_at IS NULL on a user with active 2FA
 setup/2fa/      → Forced 2FA setup page (REQUIRE_2FA hard-lock). Lives at the top level on purpose: must NOT inherit AppLayout's enforcement gate or the redirect would loop. Has its own minimal layout with auth() check only
+onboarding/     → Onboarding wizard for new users (4-step guided setup). Lives at the top level like setup/2fa/ — must NOT inherit AppLayout's onboarding gate or the redirect would loop. Own layout with auth() check only. Redirects to /dashboard if onboarding already completed
 (docs)/         → Public documentation routes (no auth)
   api-docs/     → Interactive OpenAPI / Swagger UI
 (legal)/        → Legal pages (no auth)
@@ -78,6 +79,7 @@ api/
   settings/notification-channels/route.ts     → GET (list channels), PUT (upsert channel)
   settings/notification-channels/[type]/route.ts → DELETE (remove channel)
   settings/notification-channels/[type]/test/route.ts → POST (send test notification)
+  onboarding/complete/route.ts       → POST (mark onboarding as completed; 10/min)
   openapi.json/route.ts              → GET (OpenAPI 3.1.0 spec, public)
 globals.css     → Design system CSS variables, Tailwind v4, Google Fonts
 layout.tsx      → Root layout: ThemeProvider (next-themes), font variables, root SEO metadata (metadataBase, OG, Twitter Cards, robots)
