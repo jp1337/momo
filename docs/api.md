@@ -677,8 +677,8 @@ Response: `{ "quest": { /* TaskWithTopic */ } | null }`
 | `POST` | `/api/wishlist` | Yes | 30/min | Create a new wishlist item |
 | `PATCH` | `/api/wishlist/:id` | Yes | — | Update a wishlist item (partial) |
 | `DELETE` | `/api/wishlist/:id` | Yes | — | Permanently delete a wishlist item |
-| `POST` | `/api/wishlist/:id/buy` | Yes | — | Mark item as bought (status → BOUGHT) |
-| `DELETE` | `/api/wishlist/:id/buy` | Yes | — | Revert bought item to OPEN |
+| `POST` | `/api/wishlist/:id/buy` | Yes | — | Mark item as bought (status → BOUGHT); deducts coins if `coinUnlockThreshold` is set |
+| `DELETE` | `/api/wishlist/:id/buy` | Yes | — | Revert bought item to OPEN; refunds coins if applicable |
 | `POST` | `/api/wishlist/:id/discard` | Yes | — | Mark item as discarded (status → DISCARDED) |
 
 ### GET /api/wishlist
@@ -731,13 +731,19 @@ Permanently deletes the item. Response: `{ "success": true }`
 
 ### POST /api/wishlist/:id/buy
 
-Sets item status to `BOUGHT`. Response: `{ "item": WishlistItem }`
+Sets item status to `BOUGHT`. If the item has a `coinUnlockThreshold`, the specified number of coins is atomically deducted from the user's balance in the same database transaction. Returns `422` with `{ "error": "INSUFFICIENT_COINS" }` if the user doesn't have enough coins.
+
+Response: `{ "item": WishlistItem, "coinsSpent": number }`
+
+- `coinsSpent` is `0` when the item has no `coinUnlockThreshold`.
 
 ### DELETE /api/wishlist/:id/buy
 
-Reverts a `BOUGHT` item back to `OPEN`. Returns `409` if item is not in `BOUGHT` state.
+Reverts a `BOUGHT` item back to `OPEN`. If the item had a `coinUnlockThreshold`, coins are atomically refunded to the user's balance. Returns `409` if item is not in `BOUGHT` state.
 
-Response: `{ "item": WishlistItem }`
+Response: `{ "item": WishlistItem, "coinsRefunded": number }`
+
+- `coinsRefunded` is `0` when the item had no `coinUnlockThreshold`.
 
 ### POST /api/wishlist/:id/discard
 

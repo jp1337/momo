@@ -1,13 +1,16 @@
 /**
  * POST /api/wishlist/:id/buy
- * Marks a wishlist item as bought (status → BOUGHT). Does not delete it.
+ * Marks a wishlist item as bought (status → BOUGHT).
+ * If the item has a coinUnlockThreshold, coins are atomically deducted.
  * Requires: authentication
- * Returns: { item: WishlistItem }
+ * Returns: { item: WishlistItem, coinsSpent: number }
+ * Error 422: { error: "INSUFFICIENT_COINS" } when user lacks coins
  *
  * DELETE /api/wishlist/:id/buy
  * Reverts a bought wishlist item back to OPEN status (undo buy).
+ * If coins were spent, they are atomically refunded.
  * Requires: authentication
- * Returns: { item: WishlistItem }
+ * Returns: { item: WishlistItem, coinsRefunded: number }
  */
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
@@ -15,7 +18,7 @@ import { markAsBought, unmarkAsBought } from "@/lib/wishlist";
 
 /**
  * POST /api/wishlist/:id/buy
- * Marks the specified wishlist item as bought.
+ * Marks the specified wishlist item as bought; deducts coins if threshold set.
  */
 export async function POST(
   request: Request,
@@ -28,10 +31,13 @@ export async function POST(
   const { id } = await params;
 
   try {
-    const item = await markAsBought(id, user.userId);
-    return Response.json({ item });
+    const { item, coinsSpent } = await markAsBought(id, user.userId);
+    return Response.json({ item, coinsSpent });
   } catch (error) {
     console.error("[POST /api/wishlist/:id/buy]", error);
+    if (error instanceof Error && error.message === "INSUFFICIENT_COINS") {
+      return Response.json({ error: "INSUFFICIENT_COINS" }, { status: 422 });
+    }
     const isNotFound = error instanceof Error && error.message.includes("not found");
     return Response.json(
       { error: isNotFound ? "Item not found" : "Internal server error" },
@@ -42,7 +48,7 @@ export async function POST(
 
 /**
  * DELETE /api/wishlist/:id/buy
- * Reverts a bought item back to OPEN status.
+ * Reverts a bought item back to OPEN status; refunds coins if applicable.
  */
 export async function DELETE(
   request: Request,
@@ -55,8 +61,8 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const item = await unmarkAsBought(id, user.userId);
-    return Response.json({ item });
+    const { item, coinsRefunded } = await unmarkAsBought(id, user.userId);
+    return Response.json({ item, coinsRefunded });
   } catch (error) {
     console.error("[DELETE /api/wishlist/:id/buy]", error);
     if (error instanceof Error && error.message.includes("not found")) {

@@ -293,6 +293,8 @@ Momo rewards real-world progress, not app activity. Everything you earn comes fr
 
 Each task has a coin value (1–10) set when the task is created. Completing the task deposits those coins into your balance. The balance is shown in the top navigation bar at all times. Undoing a completion refunds the coins.
 
+Coins are also the currency for the wishlist: when a wishlist item has a **coin threshold**, you must earn enough coins before you can buy it. Purchasing deducts the coins from your balance; undoing the purchase refunds them. This closes the gamification loop — coins are not just a score, they buy real rewards.
+
 ### Levels
 
 As your coin balance grows, you level up. There are 10 levels, each with a title:
@@ -355,13 +357,15 @@ Click **Add Item** and fill in:
 
 When you are ready to purchase, click **Buy**. Momo marks the item as bought, deducts the price from your monthly budget, and triggers a confetti animation.
 
+If the item has a **coin threshold**, the buy button shows the coin cost (e.g. "🪙 Buy (50 coins)"). Purchasing atomically deducts those coins from your balance — the coin counter in the navigation bar updates immediately. If you don't have enough coins yet, the buy button is disabled and a lock indicator shows how many more coins you need. Spending coins does **not** reduce your level — levels reflect cumulative effort and never go down.
+
 ### Discarding an item
 
 Changed your mind? Click **Discard** to remove an item from your active wishlist without deleting it. Discarded items are kept in history.
 
 ### Undoing a purchase or discard
 
-Both actions are reversible. Click **Undo** to revert a bought or discarded item back to open status. The budget deduction is also reversed on an undo.
+Both actions are reversible. Click **Undo** to revert a bought or discarded item back to open status. The budget deduction is also reversed on an undo. If the original purchase deducted coins, those coins are refunded to your balance.
 
 ### Monthly budget
 

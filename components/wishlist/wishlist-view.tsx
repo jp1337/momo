@@ -22,6 +22,7 @@ import { WishlistForm } from "@/components/wishlist/wishlist-form";
 import { SearchFilterBar } from "@/components/shared/search-filter-bar";
 import type { FilterGroup } from "@/components/shared/search-filter-bar";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
+import { dispatchCoinsEarned } from "@/lib/client/coin-events";
 
 /** Serialised wishlist item shape passed from the server page */
 export interface SerializedWishlistItem {
@@ -61,9 +62,11 @@ export function WishlistView({
   const tSearch = useTranslations("search");
   const [items, setItems] = useState<SerializedWishlistItem[]>(initialItems);
   const [budget, setBudget] = useState<SerializedBudgetSummary>(initialBudget);
+  const [coins, setCoins] = useState(userCoins);
   const [showForm, setShowForm] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [coinError, setCoinError] = useState<string | null>(null);
 
   /* ─── Search & Filter state ─────────────────────────────────────────────── */
   const [searchQuery, setSearchQuery] = useState("");
@@ -132,10 +135,23 @@ export function WishlistView({
     }
   };
 
-  /** Mark an item as bought */
+  /** Mark an item as bought; deducts coins if threshold is set */
   const handleBuy = async (id: string) => {
+    setCoinError(null);
     try {
-      await fetch(`/api/wishlist/${id}/buy`, { method: "POST" });
+      const res = await fetch(`/api/wishlist/${id}/buy`, { method: "POST" });
+      if (res.status === 422) {
+        setCoinError(t("error_insufficient_coins"));
+        setTimeout(() => setCoinError(null), 4000);
+        return;
+      }
+      if (!res.ok) return;
+      const data = await res.json();
+      const coinsSpent: number = data.coinsSpent ?? 0;
+      if (coinsSpent > 0) {
+        setCoins((prev) => prev - coinsSpent);
+        dispatchCoinsEarned(-coinsSpent);
+      }
       await refresh();
       triggerSmallConfetti();
     } catch {
@@ -143,10 +159,17 @@ export function WishlistView({
     }
   };
 
-  /** Revert a bought item to OPEN */
+  /** Revert a bought item to OPEN; refunds coins if applicable */
   const handleUnbuy = async (id: string) => {
     try {
-      await fetch(`/api/wishlist/${id}/buy`, { method: "DELETE" });
+      const res = await fetch(`/api/wishlist/${id}/buy`, { method: "DELETE" });
+      if (!res.ok) return;
+      const data = await res.json();
+      const coinsRefunded: number = data.coinsRefunded ?? 0;
+      if (coinsRefunded > 0) {
+        setCoins((prev) => prev + coinsRefunded);
+        dispatchCoinsEarned(coinsRefunded);
+      }
       await refresh();
     } catch {
       // no-op
@@ -332,6 +355,21 @@ export function WishlistView({
         </div>
       )}
 
+      {/* Insufficient coins error banner */}
+      {coinError && (
+        <div
+          className="rounded-lg px-4 py-3 text-sm font-medium"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            backgroundColor: "color-mix(in srgb, var(--accent-red) 12%, transparent)",
+            color: "var(--accent-red)",
+            border: "1px solid color-mix(in srgb, var(--accent-red) 25%, transparent)",
+          }}
+        >
+          {coinError}
+        </div>
+      )}
+
       {/* Open items grid */}
       {openItems.length === 0 && !isFiltering ? (
         <div
@@ -363,7 +401,7 @@ export function WishlistView({
               priority={item.priority}
               status={item.status}
               coinUnlockThreshold={item.coinUnlockThreshold}
-              userCoins={userCoins}
+              userCoins={coins}
               monthlyBudget={budget.monthlyBudget}
               remainingBudget={budget.remaining}
               onBuy={handleBuy}
@@ -417,7 +455,7 @@ export function WishlistView({
                   priority={item.priority}
                   status={item.status}
                   coinUnlockThreshold={item.coinUnlockThreshold}
-                  userCoins={userCoins}
+                  userCoins={coins}
                   monthlyBudget={budget.monthlyBudget}
                   remainingBudget={budget.remaining}
                   onBuy={handleBuy}

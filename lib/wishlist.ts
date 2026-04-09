@@ -19,6 +19,20 @@ import type {
 /** A wishlist item row as returned from the database */
 export type WishlistItem = typeof wishlistItems.$inferSelect;
 
+/** Result of marking a wishlist item as bought */
+export interface MarkAsBoughtResult {
+  item: WishlistItem;
+  /** Number of coins deducted (0 if no coinUnlockThreshold) */
+  coinsSpent: number;
+}
+
+/** Result of reverting a bought wishlist item */
+export interface UnmarkAsBoughtResult {
+  item: WishlistItem;
+  /** Number of coins refunded (0 if no coinUnlockThreshold) */
+  coinsRefunded: number;
+}
+
 /** Budget summary for a user */
 export interface BudgetSummary {
   /** The user's configured monthly budget (null if not set) */
@@ -152,43 +166,85 @@ export async function updateWishlistItem(
 
 /**
  * Marks a wishlist item as bought (status → BOUGHT). Does not delete it.
- * The item remains in the database as purchase history.
+ * If the item has a coinUnlockThreshold, coins are atomically deducted
+ * from the user's balance in a transaction.
  *
  * @param itemId - The wishlist item's UUID
  * @param userId - The authenticated user's UUID
- * @returns The updated wishlist item
+ * @returns The updated item and the number of coins spent
+ * @throws Error("INSUFFICIENT_COINS") if user doesn't have enough coins
  * @throws Error if item not found or not owned by user
  */
 export async function markAsBought(
   itemId: string,
   userId: string
-): Promise<WishlistItem> {
-  const rows = await db
-    .update(wishlistItems)
-    .set({ status: "BOUGHT" })
-    .where(and(eq(wishlistItems.id, itemId), eq(wishlistItems.userId, userId)))
-    .returning();
-
-  if (!rows[0]) {
+): Promise<MarkAsBoughtResult> {
+  // Load item first to check threshold
+  const existing = await getWishlistItemById(itemId, userId);
+  if (!existing) {
     throw new Error("Wishlist item not found or access denied");
   }
+  if (existing.status !== "OPEN") {
+    throw new Error("Wishlist item is not open");
+  }
 
-  return rows[0];
+  const threshold = existing.coinUnlockThreshold;
+
+  // No coin threshold — simple status update
+  if (threshold === null || threshold <= 0) {
+    const rows = await db
+      .update(wishlistItems)
+      .set({ status: "BOUGHT" })
+      .where(and(eq(wishlistItems.id, itemId), eq(wishlistItems.userId, userId)))
+      .returning();
+    return { item: rows[0], coinsSpent: 0 };
+  }
+
+  // Coin threshold set — atomic deduction in a transaction
+  const result = await db.transaction(async (tx) => {
+    // Read current coin balance
+    const [user] = await tx
+      .select({ coins: users.coins })
+      .from(users)
+      .where(eq(users.id, userId));
+
+    if (!user || user.coins < threshold) {
+      throw new Error("INSUFFICIENT_COINS");
+    }
+
+    // Deduct coins atomically
+    await tx
+      .update(users)
+      .set({ coins: sql`${users.coins} - ${threshold}` })
+      .where(eq(users.id, userId));
+
+    // Mark as bought
+    const rows = await tx
+      .update(wishlistItems)
+      .set({ status: "BOUGHT" })
+      .where(and(eq(wishlistItems.id, itemId), eq(wishlistItems.userId, userId)))
+      .returning();
+
+    return { item: rows[0], coinsSpent: threshold };
+  });
+
+  return result;
 }
 
 /**
  * Reverts a BOUGHT wishlist item back to OPEN status (undo buy).
+ * If the item had a coinUnlockThreshold, coins are atomically refunded
+ * to the user's balance (floored at 0 via GREATEST for safety).
  *
  * @param itemId - The wishlist item's UUID
  * @param userId - The authenticated user's UUID
- * @returns The updated wishlist item
+ * @returns The updated item and the number of coins refunded
  * @throws Error if item not found, not owned by user, or not in BOUGHT status
  */
 export async function unmarkAsBought(
   itemId: string,
   userId: string
-): Promise<WishlistItem> {
-  // Verify ownership and current status
+): Promise<UnmarkAsBoughtResult> {
   const existing = await getWishlistItemById(itemId, userId);
   if (!existing) {
     throw new Error("Wishlist item not found or access denied");
@@ -197,17 +253,37 @@ export async function unmarkAsBought(
     throw new Error("Wishlist item is not marked as bought");
   }
 
-  const rows = await db
-    .update(wishlistItems)
-    .set({ status: "OPEN" })
-    .where(and(eq(wishlistItems.id, itemId), eq(wishlistItems.userId, userId)))
-    .returning();
+  const threshold = existing.coinUnlockThreshold;
 
-  if (!rows[0]) {
-    throw new Error("Wishlist item not found or access denied");
+  // No coin threshold — simple status revert
+  if (threshold === null || threshold <= 0) {
+    const rows = await db
+      .update(wishlistItems)
+      .set({ status: "OPEN" })
+      .where(and(eq(wishlistItems.id, itemId), eq(wishlistItems.userId, userId)))
+      .returning();
+    return { item: rows[0], coinsRefunded: 0 };
   }
 
-  return rows[0];
+  // Coin threshold set — atomic refund in a transaction
+  const result = await db.transaction(async (tx) => {
+    // Refund coins atomically (GREATEST prevents negative balance)
+    await tx
+      .update(users)
+      .set({ coins: sql`GREATEST(${users.coins} + ${threshold}, 0)` })
+      .where(eq(users.id, userId));
+
+    // Revert status to OPEN
+    const rows = await tx
+      .update(wishlistItems)
+      .set({ status: "OPEN" })
+      .where(and(eq(wishlistItems.id, itemId), eq(wishlistItems.userId, userId)))
+      .returning();
+
+    return { item: rows[0], coinsRefunded: threshold };
+  });
+
+  return result;
 }
 
 /**

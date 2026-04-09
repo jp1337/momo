@@ -1807,20 +1807,25 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
               "application/json": {
                 schema: {
                   type: "object",
-                  required: ["item"],
+                  required: ["item", "coinsSpent"],
                   properties: {
                     item: { $ref: "#/components/schemas/WishlistItem" },
+                    coinsSpent: {
+                      type: "integer",
+                      description:
+                        "Number of coins deducted (0 if no coinUnlockThreshold).",
+                    },
                   },
                 },
               },
             },
           },
-          "400": {
+          "422": {
             description: "Insufficient coin balance.",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
-                example: { error: "Insufficient coins" },
+                example: { error: "INSUFFICIENT_COINS" },
               },
             },
           },
@@ -1847,9 +1852,14 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
               "application/json": {
                 schema: {
                   type: "object",
-                  required: ["item"],
+                  required: ["item", "coinsRefunded"],
                   properties: {
                     item: { $ref: "#/components/schemas/WishlistItem" },
+                    coinsRefunded: {
+                      type: "integer",
+                      description:
+                        "Number of coins refunded (0 if no coinUnlockThreshold).",
+                    },
                   },
                 },
               },
