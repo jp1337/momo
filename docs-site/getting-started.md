@@ -176,6 +176,8 @@ Momo supports five notification channels and you can use as many as you like in 
 1. **Browser Push** — go to **Settings → Notifications**, click **Enable Notifications**, allow the browser permission prompt, and pick your reminder time. Requires VAPID keys on the server (see [Environment Variables](/momo/environment-variables)).
 2. **ntfy.sh, Pushover, Telegram, Email** — open **Settings → Additional Notification Channels** and click the channel you want. Each has a one-page configuration form and a **Send test** button. The **Email** channel only appears if your instance has SMTP configured ([SMTP env vars](/momo/environment-variables#email-notifications-smtp)).
 
+If a notification doesn't arrive, check **Settings → Notification History** — it shows the last 50 delivery attempts with status and error details.
+
 See the [Features guide](/momo/features#additional-notification-channels) for setup details on each channel.
 
 ## Voice Control with Alexa (Optional)
