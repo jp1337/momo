@@ -47,7 +47,7 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **REST API & API Keys** — Full public REST API with personal access tokens (read-only flag, expiry dates). Interactive Swagger UI at `/api-docs`.
 - **Account Linking** — Connect multiple OAuth providers to one account.
 - **Multilingual** — German, English, and French UI with cookie-based locale switching. Add any language by dropping in a `messages/XX.json` file.
-- **Statistics** — Personal stats dashboard showing tasks completed, coins earned, streaks, level progress, achievements unlocked, and wishlist purchases.
+- **Statistics** — Personal stats dashboard with completion-rate per topic (sorted by avoidance), best weekdays bar chart, 90-day streak sparkline, energy trend chart, level progress, achievements, and wishlist overview. Fully localized (de/en/fr).
 - **Admin Panel** — Platform-wide statistics for operators (user growth, top users, achievement distribution). Protected by `ADMIN_USER_IDS` env var — only listed user UUIDs can access `/admin`.
 - **Procrastination Counter** — Every task tracks how many times it has been postponed. Tasks postponed 3 or more times award double coins on completion.
 - **Daily Quest Postpone Limit** — Configurable per-user daily postpone limit (1–5, default 3) in Settings. Prevents endless deferral of the one thing that matters.
