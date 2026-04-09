@@ -1416,8 +1416,10 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
         summary: "Import a topic from a template",
         description:
           "Creates a new topic with all predefined subtasks from a curated " +
-          "template (e.g. 'moving', 'taxes', 'fitness'). Titles and descriptions " +
-          "are resolved in the caller's current UI locale and inserted as plain " +
+          "template (e.g. 'moving', 'taxes', 'fitness', 'household'). The " +
+          "'household' template uses RECURRING tasks with default intervals; " +
+          "all other templates use ONE_TIME tasks. Titles and descriptions are " +
+          "resolved in the caller's current UI locale and inserted as plain " +
           "editable text. Runs atomically in a single transaction.",
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         requestBody: {
@@ -1430,7 +1432,7 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
                 properties: {
                   templateKey: {
                     type: "string",
-                    enum: ["moving", "taxes", "fitness"],
+                    enum: ["moving", "taxes", "fitness", "household"],
                     description: "Identifier of the template to import.",
                   },
                 },

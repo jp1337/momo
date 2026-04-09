@@ -536,11 +536,14 @@ The full template catalogue (icon, color, priority, sequential flag, default ene
 { "templateKey": "moving" }
 ```
 
-| Template key | Title (EN) | Tasks | Sequential |
-|---|---|---|---|
-| `moving` | Moving | 10 | yes |
-| `taxes` | Tax return | 6 | yes |
-| `fitness` | Workout routine | 7 | no |
+| Template key | Title (EN) | Tasks | Sequential | Task type |
+|---|---|---|---|---|
+| `moving` | Moving | 10 | yes | `ONE_TIME` |
+| `taxes` | Tax return | 6 | yes | `ONE_TIME` |
+| `fitness` | Workout routine | 7 | no | `ONE_TIME` |
+| `household` | Household | 6 | no | `RECURRING` |
+
+The `household` template imports six chores as `RECURRING` tasks with default intervals (laundry 7d, vacuuming 7d, kitchen 3d, bathroom 14d, windows 30d, bedding 14d). Their `nextDueDate` is set to the user's local today so they appear immediately in the Daily Quest pool and in the Habit Tracker (`/habits`). All other templates import `ONE_TIME` tasks.
 
 **Response:** `201 { "topic": Topic, "tasks": Task[] }` — the created topic and its tasks, ordered by `sortOrder`.
 
