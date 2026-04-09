@@ -138,11 +138,14 @@ The app is available at [http://localhost:3000](http://localhost:3000) with hot 
 
 1. Open [http://localhost:3000](http://localhost:3000)
 2. Click **Sign in** and choose your OAuth provider
-3. You'll be redirected to your dashboard
+3. A short **onboarding wizard** walks you through the basics: Momo's core concepts, creating your first topic and tasks, and enabling notifications. Every step can be skipped.
+4. After onboarding, you land on the dashboard
 
-On first login, a user account is created automatically in the database.
+On first login, a user account is created automatically in the database. The onboarding wizard appears only once — skip it or finish it, and it never returns.
 
 ## Creating Your First Task
+
+If you completed the onboarding wizard, you already have a topic and a few tasks. Otherwise:
 
 1. From the dashboard, click **New Task**
 2. Enter a title and optionally assign it to a **Topic**

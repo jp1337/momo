@@ -29,6 +29,7 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 
 ## 🌟 Features
 
+- **Onboarding Wizard** — Guided 4-step setup for new users: learn the core concepts (Quest, Energy, Coins, Streaks), create a first topic, add tasks, and enable notifications. Every step is skippable; existing accounts are unaffected.
 - **Daily Quest** — One small task, chosen for you each day. No overwhelm, just one step forward.
 - **Energy-aware Daily Quest** — Permanent check-in card on the dashboard: tell Momo whether you're at high / medium / low energy, and it auto-swaps the daily quest for a better-matching task (with Undo). Topics can set a default energy level that new tasks inherit. Quick Wins and 5-Minute Mode sort by energy fit. 14-day energy trend on `/stats`. Every check-in is logged so re-check-ins (morning HIGH, afternoon LOW) are preserved for pattern analysis.
 - **Topics & Subtasks** — Break big projects (like "Moving" or "Tax Return") into tiny, manageable pieces. Drag & drop to reorder tasks within a topic.

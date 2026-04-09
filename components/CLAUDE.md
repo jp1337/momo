@@ -49,6 +49,12 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `auth/forced-totp-setup.tsx` — Wraps TotpSetupWizard for the REQUIRE_2FA hard-lock page at `/setup/2fa`. No cancel path — after successful setup, renders the backup codes inline and demands an explicit "I have stored them safely" checkbox before the Continue button unlocks
 - `auth/passkey-login-button.tsx` — Passwordless primary-login button rendered above the OAuth providers on `/login`. Calls `POST /api/auth/passkey/login/options` → `startAuthentication()` → `POST /api/auth/passkey/login/verify` → hard-navigates to `/dashboard` so Server Components re-run with the newly set Auth.js session cookie
 - `auth/passkey-second-factor-button.tsx` — Passkey challenge button shown on `/login/2fa` as alternative (or sole option) alongside/instead of the TOTP code input. Calls `POST /api/auth/passkey/second-factor/{options,verify}` — on success, marks the existing session row as second-factor-verified, then hard-navigates to `/dashboard`
+- `onboarding/onboarding-wizard.tsx` — Main 4-step onboarding wizard shell. State machine: welcome → topic → tasks → notifications. Framer Motion step transitions (slide + spring). On finish calls POST /api/onboarding/complete then redirects to /dashboard. Every step skippable
+- `onboarding/onboarding-progress.tsx` — 4-dot progress indicator with animated active dot (amber) and completed dots (green). Framer Motion scale + color transitions
+- `onboarding/steps/welcome-step.tsx` — Step 1: four concept cards (Daily Quest, Energy, Coins, Streaks) with staggered entrance animation. FA icons, color-coded backgrounds
+- `onboarding/steps/create-topic-step.tsx` — Step 2: simplified inline topic creation form (title + IconPicker + color swatches). Calls POST /api/topics, auto-advances to tasks step on success
+- `onboarding/steps/add-tasks-step.tsx` — Step 3: quick-add tasks with Enter shortcut. AnimatePresence for add/remove. Shows "skipped" message if no topic was created
+- `onboarding/steps/notification-step.tsx` — Step 4: timezone auto-detection + web push toggle. Gracefully degrades for unsupported/denied browsers
 - `shared/search-filter-bar.tsx` — Reusable search input + filter chip bar; used on Tasks and Wishlist pages; follows LanguageSwitcher chip pattern (amber active, elevated inactive)
 - `api-keys/api-keys-view.tsx` — API key management (create form, one-time key display, revoke)
 - `animations/confetti.tsx` — Confetti burst on task completion / level-up
