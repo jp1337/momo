@@ -480,7 +480,10 @@ export default async function DashboardPage() {
               {
                 label: t("stat_streak"),
                 value: `${stats.streakCurrent}d`,
-                sub: stats.streakCurrent >= 7 ? "🔥" : stats.streakCurrent >= 3 ? "↑" : "·",
+                sub: (() => {
+                  const fire = stats.streakCurrent >= 7 ? "🔥" : stats.streakCurrent >= 3 ? "↑" : "·";
+                  return stats.streakShieldAvailable ? `${fire} 🛡️` : fire;
+                })(),
                 icon: faFire as IconDefinition,
                 accent: stats.streakCurrent >= 3 ? "var(--accent-amber)" : "var(--text-muted)",
                 pulse: stats.streakCurrent > 0,

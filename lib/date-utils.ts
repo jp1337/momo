@@ -107,3 +107,36 @@ export function getLocalYesterdayString(timezone?: string | null): string {
   const dd = String(yesterdayUtc.getUTCDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
+
+/**
+ * Returns the day before yesterday as a YYYY-MM-DD string in the given IANA timezone.
+ *
+ * Used by the Streak Shield to detect exactly-one-day gaps (streakLastDate === dayBeforeYesterday
+ * means the user missed exactly one day).
+ *
+ * @param timezone - IANA timezone identifier
+ * @returns Day-before-yesterday's date string in YYYY-MM-DD format
+ */
+export function getLocalDayBeforeYesterdayString(timezone?: string | null): string {
+  const todayStr = getLocalDateString(timezone);
+  const [y, m, d] = todayStr.split("-").map(Number);
+  const dbyUtc = new Date(Date.UTC(y, m - 1, d - 2));
+
+  if (timezone) {
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: timezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(dbyUtc);
+    } catch {
+      // Invalid timezone — fall through
+    }
+  }
+
+  const yyyy = dbyUtc.getUTCFullYear();
+  const mm = String(dbyUtc.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(dbyUtc.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}

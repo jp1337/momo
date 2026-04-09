@@ -113,6 +113,9 @@ export const users = pgTable("users", {
   /** Date of the last streak-qualifying action */
   streakLastDate: date("streak_last_date"),
 
+  /** Month (YYYY-MM) when the streak shield was last consumed. NULL = available. */
+  streakShieldUsedMonth: text("streak_shield_used_month"),
+
   /** Monthly budget for wishlist tracking (decimal for currency precision) */
   monthlyBudget: decimal("monthly_budget", { precision: 10, scale: 2 }),
 

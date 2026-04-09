@@ -67,7 +67,7 @@ description: Task management for people who struggle with procrastination. Open 
   <div class="feature-card">
     <div class="icon">🪙</div>
     <h3>Gamification</h3>
-    <p>Coins, streaks, levels, achievements. Small wins deserve real celebration.</p>
+    <p>Coins, streaks (with a monthly shield against single missed days), levels, achievements. Small wins deserve real celebration.</p>
   </div>
   <div class="feature-card">
     <div class="icon">💰</div>

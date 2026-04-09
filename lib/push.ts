@@ -708,3 +708,56 @@ export async function sendWeeklyReviewNotifications(): Promise<{
   return { sent, failed };
 }
 
+// ─── Streak Shield Notification ──────────────────────────────────────────────
+
+/**
+ * Sends a one-off notification to a single user informing them that their
+ * streak shield was consumed and their streak was preserved.
+ *
+ * Fires via both Web Push (all registered devices) and all configured
+ * notification channels (ntfy, pushover, telegram, email). Errors are
+ * logged but never thrown — callers should fire-and-forget.
+ *
+ * @param userId        - The user whose shield was consumed
+ * @param streakCurrent - The preserved streak length
+ */
+export async function sendStreakShieldNotification(
+  userId: string,
+  streakCurrent: number
+): Promise<void> {
+  const payload: NotificationPayload & ChannelPayload = {
+    title: `Your streak shield saved your ${streakCurrent}-day streak! 🛡️`,
+    body: "You missed a day, but your monthly Streak Shield kept your streak alive.",
+    icon: "/icon-192.png",
+    url: "/dashboard",
+    tag: "streak-shield",
+  };
+
+  // Web Push
+  if (isVapidConfigured()) {
+    const subs = await db
+      .select({ subscription: pushSubscriptions.subscription })
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+
+    for (const row of subs) {
+      try {
+        await sendPushNotification(
+          userId,
+          row.subscription as PushSubscriptionData,
+          payload
+        );
+      } catch (err) {
+        console.error("[push] Failed to send streak shield notification to", userId, err);
+      }
+    }
+  }
+
+  // Notification channels (ntfy, pushover, telegram, email)
+  try {
+    await sendToAllChannels(userId, payload);
+  } catch (err) {
+    console.error("[channels] Failed to send streak shield notification to", userId, err);
+  }
+}
+

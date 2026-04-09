@@ -14,7 +14,7 @@ import { db } from "@/lib/db";
 import type { Database } from "@/lib/db";
 import { users, achievements, userAchievements } from "@/lib/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
-import { getLocalDateString, getLocalYesterdayString } from "@/lib/date-utils";
+import { getLocalDateString, getLocalYesterdayString, getLocalDayBeforeYesterdayString } from "@/lib/date-utils";
 
 // ─── User Stats ───────────────────────────────────────────────────────────────
 
@@ -28,22 +28,31 @@ export async function getUserStats(userId: string): Promise<{
   coins: number;
   streakCurrent: number;
   level: number;
+  streakShieldAvailable: boolean;
 }> {
   const userRows = await db
     .select({
       coins: users.coins,
       streakCurrent: users.streakCurrent,
       level: users.level,
+      streakShieldUsedMonth: users.streakShieldUsedMonth,
+      timezone: users.timezone,
     })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
   if (!userRows[0]) {
-    return { coins: 0, streakCurrent: 0, level: 1 };
+    return { coins: 0, streakCurrent: 0, level: 1, streakShieldAvailable: true };
   }
 
-  return userRows[0];
+  const { streakShieldUsedMonth, timezone, ...rest } = userRows[0];
+  const currentMonth = getLocalDateString(timezone).slice(0, 7);
+
+  return {
+    ...rest,
+    streakShieldAvailable: streakShieldUsedMonth !== currentMonth,
+  };
 }
 
 /** A Drizzle transaction or the base db instance — used for transactional operations */
@@ -219,19 +228,23 @@ export interface AchievementContext {
  * Logic:
  *  - If streak_last_date is today (in user's timezone): no change
  *  - If streak_last_date is yesterday (in user's timezone): increment streak
+ *  - If streak_last_date is day-before-yesterday AND streak shield is available: preserve streak (shield consumed)
  *  - Otherwise: reset streak to 1
  * Always sets streak_last_date = today in the user's timezone.
+ *
+ * The streak shield protects the user's streak once per calendar month when
+ * exactly one day was missed. Multi-day gaps still reset the streak.
  *
  * @param userId   - The user's UUID
  * @param tx       - Optional Drizzle transaction
  * @param timezone - IANA timezone (e.g. "Europe/Berlin"). Falls back to UTC.
- * @returns Updated { streakCurrent, streakMax }
+ * @returns Updated { streakCurrent, streakMax, shieldUsed }
  */
 export async function updateStreak(
   userId: string,
   tx?: Tx,
   timezone?: string | null
-): Promise<{ streakCurrent: number; streakMax: number }> {
+): Promise<{ streakCurrent: number; streakMax: number; shieldUsed: boolean }> {
   const client = tx ?? db;
 
   const userRows = await client
@@ -239,32 +252,48 @@ export async function updateStreak(
       streakCurrent: users.streakCurrent,
       streakMax: users.streakMax,
       streakLastDate: users.streakLastDate,
+      streakShieldUsedMonth: users.streakShieldUsedMonth,
     })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
   if (!userRows[0]) {
-    return { streakCurrent: 0, streakMax: 0 };
+    return { streakCurrent: 0, streakMax: 0, shieldUsed: false };
   }
 
-  const { streakCurrent, streakMax, streakLastDate } = userRows[0];
+  const { streakCurrent, streakMax, streakLastDate, streakShieldUsedMonth } = userRows[0];
   const today = getLocalDateString(timezone);
   const yesterday = getLocalYesterdayString(timezone);
 
   // Already updated streak today (in user's timezone) — no change
   if (streakLastDate === today) {
-    return { streakCurrent, streakMax };
+    return { streakCurrent, streakMax, shieldUsed: false };
   }
 
   let newStreakCurrent: number;
+  let shieldActivated = false;
 
   if (streakLastDate === yesterday) {
     // Continuing streak from yesterday
     newStreakCurrent = streakCurrent + 1;
   } else {
-    // Streak broken or first completion — reset to 1
-    newStreakCurrent = 1;
+    // Gap detected — check if streak shield can save it
+    const dayBeforeYesterday = getLocalDayBeforeYesterdayString(timezone);
+    const currentMonth = today.slice(0, 7); // "YYYY-MM"
+
+    if (
+      streakCurrent > 0 &&
+      streakLastDate === dayBeforeYesterday &&
+      streakShieldUsedMonth !== currentMonth
+    ) {
+      // Shield: exactly 1 day missed, shield available → preserve streak
+      newStreakCurrent = streakCurrent;
+      shieldActivated = true;
+    } else {
+      // Streak broken or first completion — reset to 1
+      newStreakCurrent = 1;
+    }
   }
 
   const newStreakMax = Math.max(streakMax, newStreakCurrent);
@@ -275,10 +304,11 @@ export async function updateStreak(
       streakCurrent: newStreakCurrent,
       streakMax: newStreakMax,
       streakLastDate: today,
+      ...(shieldActivated ? { streakShieldUsedMonth: today.slice(0, 7) } : {}),
     })
     .where(eq(users.id, userId));
 
-  return { streakCurrent: newStreakCurrent, streakMax: newStreakMax };
+  return { streakCurrent: newStreakCurrent, streakMax: newStreakMax, shieldUsed: shieldActivated };
 }
 
 // ─── Achievement Unlock Logic ─────────────────────────────────────────────────
