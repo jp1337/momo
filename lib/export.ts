@@ -15,8 +15,9 @@ import {
   wishlistItems,
   userAchievements,
   achievements,
+  notificationLog,
 } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 /** Shape of the exported data bundle */
 export interface UserDataExport {
@@ -84,6 +85,14 @@ export interface UserDataExport {
     icon: string;
     earnedAt: Date;
   }>;
+  notificationLog: Array<{
+    channel: string;
+    title: string;
+    body: string | null;
+    status: string;
+    error: string | null;
+    sentAt: Date;
+  }>;
 }
 
 /**
@@ -106,6 +115,7 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
     completionRows,
     wishlistRows,
     achievementRows,
+    notificationLogRows,
   ] = await Promise.all([
     db
       .select({
@@ -197,6 +207,19 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
         eq(userAchievements.achievementId, achievements.id)
       )
       .where(eq(userAchievements.userId, userId)),
+
+    db
+      .select({
+        channel: notificationLog.channel,
+        title: notificationLog.title,
+        body: notificationLog.body,
+        status: notificationLog.status,
+        error: notificationLog.error,
+        sentAt: notificationLog.sentAt,
+      })
+      .from(notificationLog)
+      .where(eq(notificationLog.userId, userId))
+      .orderBy(desc(notificationLog.sentAt)),
   ]);
 
   const profile = userRows[0];
@@ -213,5 +236,6 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
     taskCompletions: completionRows,
     wishlistItems: wishlistRows,
     achievements: achievementRows,
+    notificationLog: notificationLogRows,
   };
 }

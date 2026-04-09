@@ -18,6 +18,7 @@ import { db } from "@/lib/db";
 import { cronRuns } from "@/lib/db/schema";
 import { lt, eq, and } from "drizzle-orm";
 import { sendDailyQuestNotifications, sendStreakReminders, sendWeeklyReviewNotifications, sendDueTodayNotifications } from "@/lib/push";
+import { cleanupNotificationLog } from "@/lib/notification-log";
 
 /** Retain cron run history for this many days — older rows are pruned after each run. */
 const CRON_RETENTION_DAYS = 30;
@@ -118,6 +119,12 @@ const CRON_JOBS: CronJob[] = [
     handler: sendWeeklyReviewNotifications,
     guard: "5min-bucket",
     logToDb: true,
+  },
+  {
+    name: "notification-log-cleanup",
+    handler: cleanupNotificationLog,
+    guard: "daily",
+    logToDb: false,
   },
 ];
 

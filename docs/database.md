@@ -24,6 +24,7 @@ The full schema is defined in `lib/db/schema.ts`.
 | `cron_runs` | Log of push-notification cron job executions (30-day retention) |
 | `quest_postponements` | Log of daily quest postponement events (for weekly review analytics) |
 | `notification_channels` | User-configured notification channels (ntfy, pushover, telegram, etc.) |
+| `notification_log` | Per-delivery log of every notification attempt (channel, status, error); auto-pruned after 30 days |
 | `totp_backup_codes` | One-time recovery codes for TOTP-based 2FA (SHA-256 hashed, single-use) |
 | `authenticators` | WebAuthn / Passkey credentials — one row per registered device (Auth.js-compatible schema + Momo display label) |
 | `energy_checkins` | Historical log of daily energy check-ins (multiple per day allowed) — drives the Stats page energy block. The cached "today" value also lives on `users.energyLevel` / `users.energyLevelDate` for fast dashboard reads. |
@@ -221,6 +222,25 @@ One row is inserted each time the user postpones their daily quest. Used by the 
 - `webhook`: `{ "url": "...", "secret": "..." }` (future)
 
 Adding new channel types requires no schema migration — only new code in `lib/notifications.ts` and `lib/validators/index.ts`.
+
+### `notification_log`
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | FK → users (cascade) |
+| `channel` | text | Delivery channel: `"web-push"`, `"ntfy"`, `"pushover"`, `"telegram"`, `"email"` |
+| `title` | text | Notification title as shown to the user |
+| `body` | text | Notification body (nullable) |
+| `status` | text | Delivery outcome: `"sent"` or `"failed"` |
+| `error` | text | Error message when status is `"failed"`; null on success |
+| `sent_at` | timestamp (tz) | When the delivery attempt was made |
+
+**Index:** `(user_id, sent_at)` — covers the Settings history query (last 50 per user) and the cleanup DELETE.
+
+**Retention:** The `notification-log-cleanup` daily cron job deletes rows older than 30 days.
+
+**Logging is fire-and-forget:** a failed DB insert never blocks or fails the actual notification delivery.
 
 ---
 

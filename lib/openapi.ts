@@ -2744,5 +2744,52 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
         },
       },
     },
+
+    "/api/settings/notification-history": {
+      get: {
+        summary: "List recent notification delivery attempts",
+        description:
+          "Returns the last 50 notification log entries for the authenticated user, " +
+          "sorted by most recent first. Each entry records a single channel delivery attempt.",
+        tags: ["Notification History"],
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        "x-readonly-safe": true,
+        responses: {
+          "200": {
+            description: "Notification log entries",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["entries"],
+                  properties: {
+                    entries: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        required: ["id", "channel", "title", "status", "sentAt"],
+                        properties: {
+                          id: { type: "string", format: "uuid" },
+                          channel: {
+                            type: "string",
+                            enum: ["web-push", "ntfy", "pushover", "telegram", "email"],
+                          },
+                          title: { type: "string" },
+                          body: { type: "string", nullable: true },
+                          status: { type: "string", enum: ["sent", "failed"] },
+                          error: { type: "string", nullable: true },
+                          sentAt: { type: "string", format: "date-time" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+        },
+      },
+    },
   },
 };

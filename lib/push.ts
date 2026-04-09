@@ -23,6 +23,7 @@ import { serverEnv } from "@/lib/env";
 import { getCurrentDailyQuest, selectDailyQuest } from "@/lib/daily-quest";
 import { getWeeklyReview } from "@/lib/weekly-review";
 import { sendToAllChannels, type NotificationPayload as ChannelPayload } from "@/lib/notifications";
+import { logNotification } from "@/lib/notification-log";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -126,6 +127,7 @@ export async function sendPushNotification(
       }),
       { TTL: 3600 } // 1 hour — deliver even if browser is momentarily disconnected
     );
+    logNotification({ userId, channel: "web-push", title: payload.title, body: payload.body, status: "sent" });
   } catch (err: unknown) {
     // 410 Gone = subscription is no longer valid; clean it up
     if (
@@ -139,6 +141,7 @@ export async function sendPushNotification(
         userId,
         "— removing from DB"
       );
+      logNotification({ userId, channel: "web-push", title: payload.title, body: payload.body, status: "failed", error: "Subscription expired (410)" });
       // Remove only this specific device subscription
       await db
         .delete(pushSubscriptions)
@@ -157,6 +160,15 @@ export async function sendPushNotification(
       }
       return;
     }
+    // Log the failure before re-throwing
+    logNotification({
+      userId,
+      channel: "web-push",
+      title: payload.title,
+      body: payload.body,
+      status: "failed",
+      error: err instanceof Error ? err.message : String(err),
+    });
     // Re-throw all other errors so callers can count failures
     throw err;
   }

@@ -14,6 +14,7 @@
  *  - linking_requests   Short-lived tokens for OAuth account linking flow
  *  - quest_postponements  Log of daily quest postponement events (for weekly review)
  *  - notification_channels  User-configured notification channels (ntfy, pushover, telegram, email; webhook future)
+ *  - notification_log   Per-delivery log of every notification attempt (channel, status, error)
  *  - totp_backup_codes  One-time recovery codes for TOTP-based 2FA
  *  - authenticators     WebAuthn/Passkey credentials (passwordless login + 2FA)
  */
@@ -718,6 +719,46 @@ export const notificationChannels = pgTable(
 );
 
 /**
+ * Per-delivery log of every notification attempt.
+ *
+ * Each row represents a single send attempt to one channel for one user.
+ * Used by the Settings → Notification History section so users can debug
+ * delivery issues ("did ntfy actually fire?"). Rows older than 30 days are
+ * pruned by the `notification-log-cleanup` cron job.
+ */
+export const notificationLog = pgTable(
+  "notification_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    /** The user who received (or should have received) this notification */
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+
+    /** Delivery channel: "web-push", "ntfy", "pushover", "telegram", "email" */
+    channel: text("channel").notNull(),
+
+    /** Notification title (short summary shown to the user) */
+    title: text("title").notNull(),
+
+    /** Notification body text (may be null for minimal payloads) */
+    body: text("body"),
+
+    /** Delivery outcome: "sent" or "failed" */
+    status: text("status").notNull(),
+
+    /** Error message when status is "failed"; null on success */
+    error: text("error"),
+
+    sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_notification_log_user_sent").on(table.userId, table.sentAt),
+  ]
+);
+
+/**
  * One-time backup codes for TOTP recovery.
  * Each row stores the SHA-256 hash of a single 10-character alphanumeric
  * code (mirrors the api_keys hashing pattern). Codes are generated in
@@ -832,6 +873,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   pushSubscriptions: many(pushSubscriptions),
   questPostponements: many(questPostponements),
   notificationChannels: many(notificationChannels),
+  notificationLog: many(notificationLog),
   totpBackupCodes: many(totpBackupCodes),
   authenticators: many(authenticators),
 }));
@@ -898,6 +940,10 @@ export const questPostponementsRelations = relations(questPostponements, ({ one 
 
 export const notificationChannelsRelations = relations(notificationChannels, ({ one }) => ({
   user: one(users, { fields: [notificationChannels.userId], references: [users.id] }),
+}));
+
+export const notificationLogRelations = relations(notificationLog, ({ one }) => ({
+  user: one(users, { fields: [notificationLog.userId], references: [users.id] }),
 }));
 
 export const totpBackupCodesRelations = relations(totpBackupCodes, ({ one }) => ({
