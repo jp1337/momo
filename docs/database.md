@@ -185,7 +185,7 @@ Index `energy_checkins_user_date_idx` on `(user_id, date)` supports the "what is
 | `url` | text | Optional product URL |
 | `priority` | enum | `WANT`, `NICE_TO_HAVE`, `SOMEDAY` |
 | `status` | enum | `OPEN`, `BOUGHT`, `DISCARDED` |
-| `coin_unlock_threshold` | integer | Minimum coins required to mark as bought |
+| `coin_unlock_threshold` | integer | Minimum coins required to mark as bought; coins are atomically deducted on purchase and refunded on undo |
 
 ### `quest_postponements`
 
