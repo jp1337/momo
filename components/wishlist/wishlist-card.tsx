@@ -114,7 +114,7 @@ export function WishlistCard({
 
   const handleTouchEnd = () => {
     if (touchStartX.current !== null) {
-      if (swipeX > SWIPE_THRESHOLD) {
+      if (swipeX > SWIPE_THRESHOLD && !needsMoreCoins) {
         handleAction(() => onBuy(id)); // buy
       } else if (swipeX < -SWIPE_THRESHOLD) {
         handleAction(() => onDiscard(id)); // discard
@@ -408,6 +408,17 @@ export function WishlistCard({
             {t("card_locked", { coins: coinsNeeded })}
           </span>
         )}
+        {isOpen && coinUnlockThreshold !== null && coinUnlockThreshold > 0 && !needsMoreCoins && (
+          <span
+            className="text-xs font-medium"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--accent-green)",
+            }}
+          >
+            {t("card_unlockable")}
+          </span>
+        )}
       </div>
 
       {/* URL link */}
@@ -434,17 +445,25 @@ export function WishlistCard({
             <>
               <button
                 onClick={() => handleAction(() => onBuy(id))}
-                disabled={isLoading}
+                disabled={isLoading || needsMoreCoins}
                 className="text-xs px-2.5 py-1 rounded-lg font-medium transition-colors"
                 style={{
                   fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  backgroundColor: "rgba(74,140,92,0.15)",
-                  color: "var(--accent-green)",
-                  border: "1px solid rgba(74,140,92,0.3)",
-                  cursor: isLoading ? "not-allowed" : "pointer",
+                  backgroundColor: needsMoreCoins
+                    ? "color-mix(in srgb, var(--text-muted) 10%, transparent)"
+                    : "rgba(74,140,92,0.15)",
+                  color: needsMoreCoins ? "var(--text-muted)" : "var(--accent-green)",
+                  border: needsMoreCoins
+                    ? "1px solid var(--border)"
+                    : "1px solid rgba(74,140,92,0.3)",
+                  cursor: isLoading || needsMoreCoins ? "not-allowed" : "pointer",
+                  opacity: needsMoreCoins ? 0.6 : 1,
                 }}
+                title={needsMoreCoins ? t("card_locked", { coins: coinsNeeded }) : undefined}
               >
-                {t("card_btn_bought")}
+                {coinUnlockThreshold !== null && coinUnlockThreshold > 0
+                  ? t("buy_with_coins", { coins: coinUnlockThreshold })
+                  : t("card_btn_bought")}
               </button>
               <button
                 onClick={() => handleAction(() => onDiscard(id))}
