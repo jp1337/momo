@@ -7,7 +7,7 @@
  */
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRepeat } from "@fortawesome/free-solid-svg-icons";
+import { faRepeat, faFire } from "@fortawesome/free-solid-svg-icons";
 import { resolveTopicIcon } from "@/lib/topic-icons";
 import type { HabitWithHistory } from "@/lib/habits";
 import { ContributionGrid } from "./contribution-grid";
@@ -20,6 +20,8 @@ interface HabitCardProps {
     statTotalYear: string;
     statLast30: string;
     statLast7: string;
+    statStreak: string;
+    statStreakEmpty: string;
     recurrenceEveryDay: string;
     recurrenceEveryNDays: string; // "alle {n} Tage"
     gridLabels: {
@@ -34,6 +36,16 @@ interface HabitCardProps {
       weekdayLabels: [string, string, string, string, string, string, string];
     };
   };
+  /**
+   * Pre-formatted current-streak value, e.g. "8 Wochen" or "Noch kein
+   * Streak". Built on the page because it needs `t()` + ICU plurals.
+   */
+  streakValueText: string;
+  /**
+   * Pre-formatted best-streak sub-label, e.g. "Rekord: 12" or "Neuer
+   * Rekord". `null` when the habit has never had a streak.
+   */
+  streakBestText: string | null;
 }
 
 /** Pretty-prints the recurrence interval, e.g. "täglich" or "alle 3 Tage". */
@@ -46,9 +58,16 @@ function formatRecurrence(
   return labels.recurrenceEveryNDays.replace("{n}", String(n));
 }
 
-export function HabitCard({ habit, year, labels }: HabitCardProps) {
+export function HabitCard({
+  habit,
+  year,
+  labels,
+  streakValueText,
+  streakBestText,
+}: HabitCardProps) {
   const topicColor = habit.topicColor ?? "var(--accent-green)";
   const topicIcon = habit.topicIcon ? resolveTopicIcon(habit.topicIcon) : faRepeat;
+  const hasStreak = habit.streak.current > 0;
 
   return (
     <article
@@ -107,6 +126,63 @@ export function HabitCard({ habit, year, labels }: HabitCardProps) {
 
       {/* ── Stat pills ────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-2.5">
+        {/* Streak pill — flame icon, current count, optional best sub-label. */}
+        <div
+          className="flex-1 min-w-[110px] flex flex-col gap-0.5 px-3 py-2 rounded-lg"
+          style={{
+            backgroundColor: hasStreak
+              ? "color-mix(in srgb, var(--accent-amber) 14%, var(--bg-elevated))"
+              : "var(--bg-elevated)",
+            border: hasStreak
+              ? "1px solid color-mix(in srgb, var(--accent-amber) 32%, var(--border))"
+              : "1px solid var(--border)",
+          }}
+        >
+          <span
+            className="text-[10px] uppercase tracking-wider flex items-center gap-1.5"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+            }}
+          >
+            <FontAwesomeIcon
+              icon={faFire}
+              aria-hidden="true"
+              style={{
+                width: "10px",
+                height: "10px",
+                color: hasStreak
+                  ? "var(--accent-amber)"
+                  : "var(--text-muted)",
+              }}
+            />
+            {labels.statStreak}
+          </span>
+          <span
+            className="text-base font-bold leading-tight"
+            style={{
+              fontFamily: "var(--font-display, 'Lora', serif)",
+              color: hasStreak
+                ? "var(--accent-amber)"
+                : "var(--text-muted)",
+              lineHeight: 1.15,
+            }}
+          >
+            {streakValueText}
+          </span>
+          {streakBestText && (
+            <span
+              className="text-[10px]"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+                marginTop: "1px",
+              }}
+            >
+              {streakBestText}
+            </span>
+          )}
+        </div>
         {[
           { label: labels.statTotalYear, value: habit.totalYear, strong: true },
           { label: labels.statLast30, value: habit.totalLast30, strong: false },
