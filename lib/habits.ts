@@ -27,6 +27,26 @@ export interface DailyCompletion {
   count: number;
 }
 
+/**
+ * Current and best streak for a single habit, expressed in *periods*.
+ *
+ * A period is a rolling window of `periodDays` days anchored on today's
+ * local date. For a habit with `recurrenceInterval = 7`, periods are
+ * `[today-6d … today]`, `[today-13d … today-7d]`, etc. The streak is the
+ * number of consecutive successful periods (≥ 1 completion per period)
+ * counted backwards from today.
+ *
+ * See {@link computeHabitStreak} for the full algorithm and edge cases.
+ */
+export interface HabitStreak {
+  /** Length of the currently running streak in periods. 0 if the last required period was missed. */
+  current: number;
+  /** Longest streak this habit has ever reached (across all time, not just the requested year). */
+  best: number;
+  /** Period length in days — `recurrenceInterval ?? 1`. Exposed so the UI can render units. */
+  periodDays: number;
+}
+
 /** A recurring task with its completion history for a given year. */
 export interface HabitWithHistory {
   id: string;
@@ -45,6 +65,8 @@ export interface HabitWithHistory {
   totalLast30: number;
   /** Sum of completions in the last 7 calendar days (relative to now) */
   totalLast7: number;
+  /** Current and all-time-best streak, computed over the habit's entire history. */
+  streak: HabitStreak;
 }
 
 /**
@@ -70,6 +92,132 @@ function toLocalDateString(date: Date, timezone?: string | null): string {
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
+}
+
+/**
+ * Parses a YYYY-MM-DD string into a stable "day index" — the number of
+ * days since 1970-01-01 at UTC midnight. Two dates on the same local day
+ * produce the same index regardless of timezone, which lets the streak
+ * algorithm do pure integer arithmetic on calendar days.
+ */
+function dayIndexFromIsoDate(iso: string): number {
+  const [y, m, d] = iso.split("-").map(Number);
+  return Math.floor(Date.UTC(y, m - 1, d) / 86_400_000);
+}
+
+/**
+ * Computes the current and best streak for one habit.
+ *
+ * A *period* is a rolling window of `N = recurrenceInterval ?? 1` days.
+ * The zeroth period is `[today - (N-1), today]`; the k-th period is the
+ * same window shifted back by `k * N` days. A period is "successful" if
+ * at least one completion lands inside it.
+ *
+ * **Current streak** — counted backwards from today:
+ *  1. If the zeroth period is successful, start the counter at 1 and
+ *     continue backwards.
+ *  2. If the zeroth period is *empty but still open* (trivially true by
+ *     definition — today is inside it), the streak is *not yet broken*:
+ *     we simply skip period 0 and count from period 1 onward. This gives
+ *     a "grace" effect so a weekly habit does not visually reset the
+ *     instant the user logs in on the morning after a completion.
+ *  3. The first empty period at `k ≥ 1` ends the count.
+ *
+ * **Best streak** — a linear pass over all completion days grouped into
+ * period indices. Consecutive indices extend the current run; a gap
+ * resets it. The maximum run ever seen wins.
+ *
+ * **Edge cases:**
+ *  - Multiple completions inside one period count as a single success.
+ *  - Habits with no completions return `{ current: 0, best: 0 }`.
+ *  - `recurrenceInterval <= 0` or `null` is normalized to 1.
+ *  - Snoozed/future-dated tasks are not handled here — snooze shifts the
+ *    `nextDueDate` but leaves `task_completions` untouched, so the streak
+ *    is unaffected (intentional: snooze pauses the reminder, not the
+ *    habit's record).
+ *  - **Calendar drift at long intervals** — recurrence today is a rolling
+ *    day count, not a calendar rule. A "monthly" habit with
+ *    `recurrenceInterval = 30` completed on Jan 9 and Feb 9 (= 31 days
+ *    later) places both completions in the same 30-day window from the
+ *    user's perspective once enough drift accumulates, which can
+ *    under-count long streaks. The roadmap's "Erweiterte
+ *    Wiederholungsregeln" item (WEEKDAY/MONTHLY/YEARLY recurrence rules)
+ *    will fix this at the source; until then, 1-day and 7-day intervals
+ *    are the reliable cases.
+ *
+ * @param completionDates - Distinct YYYY-MM-DD completion days in the
+ *   user's local timezone, in *any* order. Duplicate dates are tolerated.
+ * @param recurrenceInterval - Period length in days, `null` → 1.
+ * @param today - Today's YYYY-MM-DD in the user's local timezone.
+ * @returns The current and best streak counted in periods.
+ */
+export function computeHabitStreak(
+  completionDates: string[],
+  recurrenceInterval: number | null,
+  today: string
+): HabitStreak {
+  const periodDays =
+    recurrenceInterval && recurrenceInterval > 0 ? recurrenceInterval : 1;
+
+  if (completionDates.length === 0) {
+    return { current: 0, best: 0, periodDays };
+  }
+
+  const todayIdx = dayIndexFromIsoDate(today);
+
+  // Convert each completion to its period index relative to "today".
+  // Period 0 is [today - (N-1), today]; period k is that window shifted
+  // back by k * N. For a completion at day index `d`, its period index
+  // is `floor((todayIdx - d) / periodDays)`. Negative indices mean the
+  // completion happened *after* today (clock skew, test seeds); we drop
+  // those rather than misattributing them.
+  const periodSet = new Set<number>();
+  for (const iso of completionDates) {
+    const d = dayIndexFromIsoDate(iso);
+    const pIdx = Math.floor((todayIdx - d) / periodDays);
+    if (pIdx >= 0) periodSet.add(pIdx);
+  }
+
+  if (periodSet.size === 0) {
+    return { current: 0, best: 0, periodDays };
+  }
+
+  // ── Current streak (backwards from period 0) ─────────────────────────
+  let current = 0;
+  if (periodSet.has(0)) {
+    // Period 0 is successful — count it and walk backwards.
+    current = 1;
+    let k = 1;
+    while (periodSet.has(k)) {
+      current += 1;
+      k += 1;
+    }
+  } else {
+    // Period 0 has no completion yet — still "grace" because today is
+    // inside it. Skip period 0 and count from period 1 backwards.
+    let k = 1;
+    while (periodSet.has(k)) {
+      current += 1;
+      k += 1;
+    }
+  }
+
+  // ── Best streak (max consecutive run over all periods ever) ──────────
+  const sortedPeriods = Array.from(periodSet).sort((a, b) => a - b);
+  let best = 1;
+  let run = 1;
+  for (let i = 1; i < sortedPeriods.length; i++) {
+    if (sortedPeriods[i] === sortedPeriods[i - 1] + 1) {
+      run += 1;
+      if (run > best) best = run;
+    } else {
+      run = 1;
+    }
+  }
+  // The running streak is itself a candidate for "best".
+  if (current > best) best = current;
+
+  return { current, best, periodDays };
 }
 
 /**
@@ -155,6 +303,35 @@ export async function getHabitsWithHistory(
       )
     );
 
+  // Step 3: *all* completion dates for every recurring habit, ever —
+  // needed so the "best streak" reflects the all-time record and not
+  // just whatever happened to fall inside the year-view window. We only
+  // need the local date string per row, not the raw timestamp, so we
+  // let Postgres stream back the minimum data.
+  const allCompletionRows = await db
+    .select({
+      taskId: taskCompletions.taskId,
+      completedAt: taskCompletions.completedAt,
+    })
+    .from(taskCompletions)
+    .where(eq(taskCompletions.userId, userId));
+
+  const allDatesByTask = new Map<string, Set<string>>();
+  for (const row of allCompletionRows) {
+    const dateStr = toLocalDateString(row.completedAt, timezone);
+    let set = allDatesByTask.get(row.taskId);
+    if (!set) {
+      set = new Set();
+      allDatesByTask.set(row.taskId, set);
+    }
+    set.add(dateStr);
+  }
+
+  // "Today" in the user's local calendar drives the streak's period-0
+  // anchor. Using the same `toLocalDateString` helper keeps this
+  // consistent with the grid bucketing above.
+  const todayStr = toLocalDateString(now, timezone);
+
   // Aggregate in JS: for each habit, bucket completions by local date and
   // compute the three window totals. Using JS (rather than SQL GROUP BY)
   // keeps the timezone handling consistent with how the rest of the app
@@ -215,6 +392,8 @@ export async function getHabitsWithHistory(
       completions.sort((a, b) => a.date.localeCompare(b.date));
     }
     const t = totals.get(h.id) ?? { year: 0, last30: 0, last7: 0 };
+    const allDates = Array.from(allDatesByTask.get(h.id) ?? []);
+    const streak = computeHabitStreak(allDates, h.recurrenceInterval, todayStr);
     return {
       id: h.id,
       title: h.title,
@@ -227,6 +406,7 @@ export async function getHabitsWithHistory(
       totalYear: t.year,
       totalLast30: t.last30,
       totalLast7: t.last7,
+      streak,
     };
   });
 }
