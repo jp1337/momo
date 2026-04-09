@@ -23,9 +23,13 @@ import {
   getHabitsWithHistory,
   getEarliestCompletion,
   buildYearOptions,
+  type HabitStreak,
 } from "@/lib/habits";
 import { HabitCard } from "@/components/habits/habit-card";
 import { YearSelector } from "@/components/habits/year-selector";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 export const metadata: Metadata = {
   title: "Gewohnheiten — Momo",
@@ -58,8 +62,17 @@ export default async function HabitsPage({ searchParams }: HabitsPageProps) {
       ? Math.floor(parsedYear)
       : currentYear;
 
+  // Load the user's IANA timezone so the grid buckets + streak periods
+  // are rooted in the user's local calendar, not the server's UTC clock.
+  const userRows = await db
+    .select({ timezone: users.timezone })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const timezone = userRows[0]?.timezone ?? null;
+
   const [habits, earliest] = await Promise.all([
-    getHabitsWithHistory(userId, requestedYear),
+    getHabitsWithHistory(userId, requestedYear, timezone),
     getEarliestCompletion(userId),
   ]);
 
@@ -92,10 +105,36 @@ export default async function HabitsPage({ searchParams }: HabitsPageProps) {
     t("weekday_sun"),
   ] as [string, string, string, string, string, string, string];
 
+  /**
+   * Formats a streak count as a human sentence like "8 Wochen" or
+   * "3 Monate", choosing the period-length-appropriate unit. Unknown
+   * intervals fall back to a generic "{n} × {d}d" form so the UI never
+   * silently lies about what a "period" is.
+   */
+  function formatStreakValue(streak: HabitStreak): string {
+    const { current, periodDays } = streak;
+    if (current === 0) return t("stat_streak_empty");
+    switch (periodDays) {
+      case 1:
+        return t("streak_unit_days", { n: current });
+      case 7:
+        return t("streak_unit_weeks", { n: current });
+      case 14:
+        return t("streak_unit_biweeks", { n: current });
+      case 30:
+      case 31:
+        return t("streak_unit_months", { n: current });
+      default:
+        return t("streak_unit_generic", { n: current, d: periodDays });
+    }
+  }
+
   const cardLabels = {
     statTotalYear: t("stat_total_year"),
     statLast30: t("stat_last_30"),
     statLast7: t("stat_last_7"),
+    statStreak: t("stat_streak"),
+    statStreakEmpty: t("stat_streak_empty"),
     recurrenceEveryDay: t("recurrence_every_day"),
     recurrenceEveryNDays: t("recurrence_every_n_days"),
     gridLabels: {
@@ -197,14 +236,25 @@ export default async function HabitsPage({ searchParams }: HabitsPageProps) {
         </div>
       ) : (
         <div className="flex flex-col gap-5">
-          {habits.map((habit) => (
-            <HabitCard
-              key={habit.id}
-              habit={habit}
-              year={requestedYear}
-              labels={cardLabels}
-            />
-          ))}
+          {habits.map((habit) => {
+            const streakValueText = formatStreakValue(habit.streak);
+            const streakBestText =
+              habit.streak.best > 0
+                ? habit.streak.current > 0 && habit.streak.current === habit.streak.best
+                  ? t("stat_streak_best_current")
+                  : t("stat_streak_best", { n: habit.streak.best })
+                : null;
+            return (
+              <HabitCard
+                key={habit.id}
+                habit={habit}
+                year={requestedYear}
+                labels={cardLabels}
+                streakValueText={streakValueText}
+                streakBestText={streakBestText}
+              />
+            );
+          })}
         </div>
       )}
     </div>
