@@ -674,9 +674,12 @@ Open **Habits** from the sidebar (the sprout icon) to see a GitHub-style year gr
 
 The page lists one card per recurring task. On each card you get:
 
+- **A streak counter** — the amber flame pill shows how many consecutive *periods* you have hit the habit, counted backwards from today. For a weekly habit, one period is one week; for a daily habit, one day; for a "every three days" habit, one three-day window. Your all-time best streak for the same habit shows up underneath as a quieter sub-label, and if your current streak just matched or beat your record, you get a "New best" flourish instead of a number
 - **Three counters** — total completions this year, in the last 30 days, and in the last 7 days
 - **A full-year heatmap** — 53 weeks across, 7 days down, starting on Monday (ISO weeks). Empty days are hollow; completed days fill in with the Momo green
 - **A year selector** at the top — click a past year to browse an earlier grid
+
+**How the streak counts.** The current period you are in gets a "grace" — a weekly habit does not visually reset the moment Monday morning begins, only when a *full* past period goes by without a completion. Multiple completions inside the same period count as one, not two. Snoozing a task does not affect the streak record — snooze pauses the reminder, not the history. And the streak is computed over your entire Momo history, not just the currently selected year, so the "best" number is a true all-time record.
 
 The grid uses your **actual completion events**, not a theoretical "expected" schedule. If you have a task set to repeat every three days but you miraculously completed it seven days in a row, all seven days light up. If you skipped two months, you see the gap honestly — no fake streaks, no guilt dressed up as motivation.
 
