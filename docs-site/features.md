@@ -179,7 +179,7 @@ with a small set of curated **topic templates** — one click turns into a fully
 populated topic with all the usual subtasks already in the right order.
 
 Open the Topics page and press **📋 From template** next to the "New topic"
-button. A picker appears with three starter templates:
+button. A picker appears with four starter templates:
 
 - **Moving** — ten tasks in sequential order, from "Terminate the old lease"
   all the way to "Renovate the old flat"
@@ -187,12 +187,19 @@ button. A picker appears with three starter templates:
   submitting the return
 - **Workout routine** — seven parallel tasks for a single training session
   (warm-up, strength, cardio, cool-down, notes)
+- **Household** — six *recurring* chores with sensible default intervals:
+  laundry and vacuuming every week, kitchen every three days, bathroom and
+  bedsheets every two weeks, windows once a month. Every task is imported
+  as a recurring task, so it shows up in the Habit Tracker right away and
+  re-appears on its own schedule.
 
 Pick one, hit **Import**, and a new topic appears on your grid with the
 matching icon, colour and a default energy level that the subtasks inherit.
 The sequential templates (Moving, Tax return) are pre-flagged as
 [sequential topics](#sequential-topics), so Momo will only offer the next
-open step as your Daily Quest — no need to stare at ten tasks at once.
+open step as your Daily Quest — no need to stare at ten tasks at once. The
+Household template is intentionally *not* sequential — chores are
+independent and can happen in any order.
 
 **Good to know:**
 

@@ -22,6 +22,7 @@ import { topics, tasks, users } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import type { Locale } from "@/i18n/locales";
 import type { Task, Topic } from "@/lib/tasks";
+import { getLocalDateString } from "@/lib/date-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,10 @@ export interface TemplateTask {
   energyLevel?: "HIGH" | "MEDIUM" | "LOW";
   /** Optional estimate in minutes (5 / 15 / 30 / 60). */
   estimatedMinutes?: 5 | 15 | 30 | 60;
+  /** Task type. Defaults to `ONE_TIME` when omitted (backward-compatible). */
+  type?: "ONE_TIME" | "RECURRING";
+  /** Days between occurrences. Only meaningful when `type === "RECURRING"`. */
+  recurrenceInterval?: number;
 }
 
 /** A topic template — produces a topic + ordered list of subtasks on import. */
@@ -59,10 +64,15 @@ export interface Template {
   tasks: TemplateTask[];
 }
 
-export type TemplateKey = "moving" | "taxes" | "fitness";
+export type TemplateKey = "moving" | "taxes" | "fitness" | "household";
 
 /** All template keys in the order they should appear in the picker. */
-export const TEMPLATE_KEYS: readonly TemplateKey[] = ["moving", "taxes", "fitness"] as const;
+export const TEMPLATE_KEYS: readonly TemplateKey[] = [
+  "moving",
+  "taxes",
+  "fitness",
+  "household",
+] as const;
 
 // ─── Template Definitions ─────────────────────────────────────────────────────
 
@@ -133,6 +143,24 @@ export const TEMPLATES: Record<TemplateKey, Template> = {
       { titleKey: "fitness.task_7", energyLevel: "LOW", estimatedMinutes: 5 },
     ],
   },
+  household: {
+    key: "household",
+    titleKey: "household.title",
+    descriptionKey: "household.description",
+    icon: "broom",
+    color: "#5c8ab8",
+    priority: "NORMAL",
+    sequential: false,
+    defaultEnergyLevel: "MEDIUM",
+    tasks: [
+      { titleKey: "household.task_laundry", type: "RECURRING", recurrenceInterval: 7, estimatedMinutes: 30, energyLevel: "LOW" },
+      { titleKey: "household.task_vacuum", type: "RECURRING", recurrenceInterval: 7, estimatedMinutes: 15, energyLevel: "MEDIUM" },
+      { titleKey: "household.task_kitchen", type: "RECURRING", recurrenceInterval: 3, estimatedMinutes: 15, energyLevel: "LOW" },
+      { titleKey: "household.task_bathroom", type: "RECURRING", recurrenceInterval: 14, estimatedMinutes: 30, energyLevel: "MEDIUM" },
+      { titleKey: "household.task_windows", type: "RECURRING", recurrenceInterval: 30, estimatedMinutes: 60, energyLevel: "HIGH" },
+      { titleKey: "household.task_bedding", type: "RECURRING", recurrenceInterval: 14, estimatedMinutes: 15, energyLevel: "MEDIUM" },
+    ],
+  },
 };
 
 /**
@@ -163,6 +191,12 @@ export interface ImportTemplateResult {
  * next-intl in the provided locale so the DB rows contain plain, editable
  * text in the user's current UI language.
  *
+ * RECURRING template tasks (e.g. the household template) are honoured: each
+ * task's `type` and `recurrenceInterval` are forwarded to the DB row, and
+ * `nextDueDate` is set to the user's local today — mirrors the `createTask`
+ * behaviour in `lib/tasks.ts` so the imported recurring tasks are immediately
+ * visible to the daily-quest algorithm and the habit tracker.
+ *
  * @param userId - The authenticated user's UUID (ownership for topic + tasks)
  * @param key - Template key; rejected if not in `TEMPLATES`
  * @param locale - UI locale used to resolve template strings
@@ -185,6 +219,17 @@ export async function importTopicFromTemplate(
   const topicDescription = t(template.descriptionKey);
   const taskTitles = template.tasks.map((task) => t(task.titleKey));
 
+  // Pull the user's IANA timezone so RECURRING tasks get a local-today
+  // `nextDueDate` (UTC off-by-one avoidance, same as `createTask`).
+  const userRow = (
+    await db
+      .select({ timezone: users.timezone })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+  )[0];
+  const todayLocal = getLocalDateString(userRow?.timezone ?? null);
+
   return db.transaction(async (tx) => {
     const topicRows = await tx
       .insert(topics)
@@ -205,16 +250,22 @@ export async function importTopicFromTemplate(
     const taskRows = await tx
       .insert(tasks)
       .values(
-        template.tasks.map((task, index) => ({
-          userId,
-          topicId: newTopic.id,
-          title: taskTitles[index],
-          type: "ONE_TIME" as const,
-          priority: task.priority ?? template.priority,
-          energyLevel: task.energyLevel ?? template.defaultEnergyLevel,
-          estimatedMinutes: task.estimatedMinutes ?? null,
-          sortOrder: index,
-        }))
+        template.tasks.map((task, index) => {
+          const type = task.type ?? "ONE_TIME";
+          const isRecurring = type === "RECURRING";
+          return {
+            userId,
+            topicId: newTopic.id,
+            title: taskTitles[index],
+            type,
+            priority: task.priority ?? template.priority,
+            energyLevel: task.energyLevel ?? template.defaultEnergyLevel,
+            estimatedMinutes: task.estimatedMinutes ?? null,
+            recurrenceInterval: isRecurring ? (task.recurrenceInterval ?? null) : null,
+            nextDueDate: isRecurring ? todayLocal : null,
+            sortOrder: index,
+          };
+        })
       )
       .returning();
 

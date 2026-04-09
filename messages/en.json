@@ -692,6 +692,16 @@
       "task_5": "Cardio session (30 min)",
       "task_6": "Cool down and stretch",
       "task_7": "Jot down the progress"
+    },
+    "household": {
+      "title": "Household",
+      "description": "Recurring household routines with sensible default intervals — every task is fully editable after import.",
+      "task_laundry": "Do the laundry",
+      "task_vacuum": "Vacuum the floors",
+      "task_kitchen": "Clean the kitchen",
+      "task_bathroom": "Clean the bathroom",
+      "task_windows": "Clean the windows",
+      "task_bedding": "Change the bedsheets"
     }
   }
 }
