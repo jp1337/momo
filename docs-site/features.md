@@ -61,6 +61,21 @@ Click the **break-down (🔧) button** on any task card to split it into 2–10 
 
 > **Tip:** Use the break-down feature when a task feels too big to start. "Prepare tax return" becomes five small steps, and suddenly the wall is gone.
 
+### Bulk actions
+
+When you need to clean up, reorganise, or triage many tasks at once, switch to **bulk mode**. Click the **Select** button next to the "New Task" button. Every task now shows a selection checkbox instead of its completion toggle.
+
+Tap checkboxes to pick the tasks you want, or use **Select all** to grab everything at once. A floating action bar slides up from the bottom of the screen:
+
+- **Complete** — marks all selected tasks as done in one go. Recurring tasks are skipped (they have special completion logic). No coins or streak updates are triggered — bulk complete is a cleanup tool, not a shortcut for rewards.
+- **Move to topic** — opens a dropdown of your topics. Pick one to move all selected tasks into it, or choose **No topic** to remove them from their current topic.
+- **Priority** — set all selected tasks to High, Normal, or Someday.
+- **Delete** — permanently removes all selected tasks after a confirmation prompt.
+
+Click the **✕** on the action bar or press **Cancel** to exit bulk mode without changing anything.
+
+> **Tip:** Bulk actions are especially useful after importing a topic template or when triaging a long inbox of tasks you've been collecting.
+
 ### Search and filter
 
 A search bar and filter chips sit above the task list. Type a keyword to search titles and notes in real time. Use the **Priority** chips (High, Normal, Someday) or the **Topic** chips to narrow the list further. Filters combine — you can search for "dentist" while filtering to only High-priority tasks, for example.

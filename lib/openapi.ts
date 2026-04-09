@@ -1234,6 +1234,87 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       },
     },
 
+    "/api/tasks/bulk": {
+      patch: {
+        operationId: "bulkUpdateTasks",
+        tags: ["Tasks"],
+        summary: "Bulk action on multiple tasks",
+        description:
+          "Applies a bulk action (delete, complete, changeTopic, setPriority) to multiple tasks in a single transaction. " +
+          "Bulk complete skips gamification (no coins/streak/achievements) and ignores recurring tasks. Max 100 task IDs per request.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                oneOf: [
+                  {
+                    type: "object",
+                    required: ["action", "taskIds"],
+                    properties: {
+                      action: { type: "string", enum: ["delete"] },
+                      taskIds: { type: "array", items: { type: "string", format: "uuid" }, minItems: 1, maxItems: 100 },
+                    },
+                  },
+                  {
+                    type: "object",
+                    required: ["action", "taskIds"],
+                    properties: {
+                      action: { type: "string", enum: ["complete"] },
+                      taskIds: { type: "array", items: { type: "string", format: "uuid" }, minItems: 1, maxItems: 100 },
+                      timezone: { type: "string", maxLength: 64, nullable: true, description: "IANA timezone (optional)" },
+                    },
+                  },
+                  {
+                    type: "object",
+                    required: ["action", "taskIds", "topicId"],
+                    properties: {
+                      action: { type: "string", enum: ["changeTopic"] },
+                      taskIds: { type: "array", items: { type: "string", format: "uuid" }, minItems: 1, maxItems: 100 },
+                      topicId: { type: "string", format: "uuid", nullable: true, description: "Target topic ID, or null to remove from topic" },
+                    },
+                  },
+                  {
+                    type: "object",
+                    required: ["action", "taskIds", "priority"],
+                    properties: {
+                      action: { type: "string", enum: ["setPriority"] },
+                      taskIds: { type: "array", items: { type: "string", format: "uuid" }, minItems: 1, maxItems: 100 },
+                      priority: { type: "string", enum: ["HIGH", "NORMAL", "SOMEDAY"] },
+                    },
+                  },
+                ],
+                discriminator: { propertyName: "action" },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Bulk action applied successfully.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success", "affected"],
+                  properties: {
+                    success: { type: "boolean" },
+                    affected: { type: "integer", description: "Number of tasks actually modified/deleted" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
     // ─── Topics ──────────────────────────────────────────────────────────────
 
     "/api/topics": {

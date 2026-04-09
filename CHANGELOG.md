@@ -7,6 +7,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Bulk-Aktionen auf Tasks** — Mehrfachauswahl per Checkbox auf der Aufgabenliste. Aktionsleiste am unteren Bildschirmrand erscheint sobald ≥1 Task ausgewählt: Löschen, Topic wechseln, Priorität setzen, alle erledigen. Neuer `PATCH /api/tasks/bulk`-Endpoint mit Zod-validierter discriminated union. Bulk-Complete überspringt Gamification (Coins, Streak, Achievements) bewusst — das Feature ist ein Cleanup/Triage-Tool. Wiederkehrende Tasks werden beim Bulk-Erledigen ignoriert. Max 100 Tasks pro Aktion, Rate-Limit 10/min.
+
 ### Fixed
 
 - **Impressum und Datenschutzerklärung nicht länger indexierbar oder archivierbar** — beide Seiten tragen den Klarnamen und die Postadresse des Betreibers; aus Datenschutzgründen dürfen sie weder bei Google erscheinen noch im Internet Archive (archive.org / Wayback Machine) gespiegelt werden. Vorher waren sie explizit via `robots: { index: true, follow: true }` indexiert und sowohl in der `sitemap.xml` als auch im `allow`-Block von `robots.txt` gelistet. Fix: Beide Page-Komponenten in `app/(legal)/*/page.tsx` setzen jetzt `robots: { index: false, follow: false, noarchive: true, nosnippet: true, noimageindex: true }` (inkl. identischem `googleBot`-Block). Die Routen sind aus `app/sitemap.ts` entfernt und in `app/robots.ts` in die `disallow`-Liste verschoben. Zusätzlich setzt `robots.ts` für die bekannten Archiv-Crawler (`ia_archiver`, `archive.org_bot`, `Wayback Machine`) eine explizite `Disallow: /`-Regel als Best-Effort-Layer — der Internet Archive ignoriert robots.txt zwar offiziell seit 2017, respektiert aber den `noarchive`-Meta-Tag, der die primäre Verteidigung bildet. Die Seiten bleiben über Direktaufruf erreichbar (Pflicht laut § 5 DDG / DSGVO), werden aber nicht mehr gecrawlt.

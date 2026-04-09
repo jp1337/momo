@@ -19,9 +19,10 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faChevronDown, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faChevronDown, faChevronRight, faCheckDouble } from "@fortawesome/free-solid-svg-icons";
 import { TaskItem } from "./task-item";
 import { TaskForm } from "./task-form";
+import { BulkActionBar } from "./bulk-action-bar";
 import { SearchFilterBar } from "@/components/shared/search-filter-bar";
 import type { FilterGroup } from "@/components/shared/search-filter-bar";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
@@ -272,6 +273,24 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [topicFilter, setTopicFilter] = useState<string | null>(null);
 
+  /* ─── Bulk selection state ───────────────────────────────────────────── */
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+  }, []);
+
   const filteredTasks = useMemo(() => {
     let result = tasks;
     if (searchQuery) {
@@ -290,6 +309,11 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
     }
     return result;
   }, [tasks, searchQuery, priorityFilter, topicFilter]);
+
+  const selectAllVisible = useCallback(() => {
+    const ids = filteredTasks.filter((t) => t.completedAt === null).map((t) => t.id);
+    setSelectedIds(new Set(ids));
+  }, [filteredTasks]);
 
   const isFiltering =
     searchQuery.length > 0 || priorityFilter !== null || topicFilter !== null;
@@ -486,6 +510,81 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
     }
   }, []);
 
+  /* ─── Bulk action handlers ───────────────────────────────────────────── */
+
+  const handleBulkDelete = useCallback(async () => {
+    if (!window.confirm(t("bulk_confirm_delete", { count: selectedIds.size }))) return;
+    try {
+      const res = await fetch("/api/tasks/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", taskIds: [...selectedIds] }),
+      });
+      if (res.ok) {
+        setTasks((prev) => prev.filter((task) => !selectedIds.has(task.id)));
+        clearSelection();
+      }
+    } catch {
+      // silent fail
+    }
+  }, [selectedIds, t, clearSelection]);
+
+  const handleBulkComplete = useCallback(async () => {
+    try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const res = await fetch("/api/tasks/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "complete", taskIds: [...selectedIds], timezone }),
+      });
+      if (res.ok) {
+        clearSelection();
+        await refreshTasks();
+      }
+    } catch {
+      // silent fail
+    }
+  }, [selectedIds, clearSelection, refreshTasks]);
+
+  const handleBulkChangeTopic = useCallback(async (topicId: string | null) => {
+    try {
+      const res = await fetch("/api/tasks/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "changeTopic", taskIds: [...selectedIds], topicId }),
+      });
+      if (res.ok) {
+        clearSelection();
+        await refreshTasks();
+      }
+    } catch {
+      // silent fail
+    }
+  }, [selectedIds, clearSelection, refreshTasks]);
+
+  const handleBulkSetPriority = useCallback(async (priority: "HIGH" | "NORMAL" | "SOMEDAY") => {
+    try {
+      const res = await fetch("/api/tasks/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "setPriority", taskIds: [...selectedIds], priority }),
+      });
+      if (res.ok) {
+        clearSelection();
+        await refreshTasks();
+      }
+    } catch {
+      // silent fail
+    }
+  }, [selectedIds, clearSelection, refreshTasks]);
+
+  const hasNonCompletedSelected = useMemo(() => {
+    return [...selectedIds].some((id) => {
+      const task = tasks.find((t) => t.id === id);
+      return task && task.completedAt === null;
+    });
+  }, [selectedIds, tasks]);
+
   const topicMap = new Map(topics.map((t) => [t.id, t]));
   const grouped = groupTasks(filteredTasks);
   const hasAnyTasks = tasks.length > 0;
@@ -528,19 +627,65 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
         {subtitle}
       </p>
 
-      {/* New Task button */}
-      <div className="flex justify-end mb-6">
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            backgroundColor: "var(--accent-amber)",
-            color: "var(--bg-primary)",
-          }}
-        >
-          {t("new_task")}
-        </button>
+      {/* New Task + Select mode buttons */}
+      <div className="flex justify-end gap-2 mb-6">
+        {hasAnyTasks && (
+          selectionMode ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={selectedIds.size > 0 ? () => setSelectedIds(new Set()) : selectAllVisible}
+                className="px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  backgroundColor: "var(--bg-surface)",
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                {selectedIds.size > 0 ? t("bulk_deselect_all") : t("bulk_select_all")}
+              </button>
+              <button
+                onClick={clearSelection}
+                className="px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  backgroundColor: "var(--bg-surface)",
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--border)",
+                }}
+              >
+                {t("bulk_exit_select")}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setSelectionMode(true)}
+              className="px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                backgroundColor: "var(--bg-surface)",
+                color: "var(--text-muted)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <FontAwesomeIcon icon={faCheckDouble} className="w-3.5 h-3.5" />
+              {t("bulk_select")}
+            </button>
+          )
+        )}
+        {!selectionMode && (
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              backgroundColor: "var(--accent-amber)",
+              color: "var(--bg-primary)",
+            }}
+          >
+            {t("new_task")}
+          </button>
+        )}
       </div>
 
       {/* Search & Filter bar — only shown when there are tasks */}
@@ -640,6 +785,9 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                 snoozedUntil={task.snoozedUntil}
                 onSnooze={handleSnooze}
                 onUnsnooze={handleUnsnooze}
+                selectionMode={selectionMode}
+                isSelected={selectedIds.has(task.id)}
+                onToggleSelect={toggleSelect}
               />
             );
           })}
@@ -863,6 +1011,9 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                   onInlineEdit={handleInlineEdit}
                   onPromote={handlePromote}
                   onGoToTopic={handleGoToTopic}
+                  selectionMode={selectionMode}
+                  isSelected={selectedIds.has(task.id)}
+                  onToggleSelect={toggleSelect}
                 />
               );
             })}
@@ -898,6 +1049,18 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
           }}
         />
       )}
+
+      {/* Bulk action bar — visible when tasks are selected */}
+      <BulkActionBar
+        selectedCount={selectedIds.size}
+        topics={topics}
+        hasNonCompleted={hasNonCompletedSelected}
+        onDelete={handleBulkDelete}
+        onComplete={handleBulkComplete}
+        onChangeTopic={handleBulkChangeTopic}
+        onSetPriority={handleBulkSetPriority}
+        onClearSelection={clearSelection}
+      />
     </div>
   );
 }

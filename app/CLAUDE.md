@@ -46,6 +46,7 @@ api/
   tasks/[id]/route.ts                → GET (single), PATCH (update), DELETE
   tasks/[id]/complete/route.ts       → POST (complete + award coins, body: {timezone?}), DELETE (uncomplete + refund)
   tasks/[id]/snooze/route.ts         → POST (snooze until date, body: {snoozedUntil}), DELETE (unsnooze/wake up)
+  tasks/bulk/route.ts                → PATCH (bulk action on multiple tasks: delete/complete/changeTopic/setPriority; body: BulkTaskActionInput discriminated union; 10/min; bulk-complete skips gamification)
   tasks/[id]/breakdown/route.ts      → POST (split task into subtasks under new topic)
   topics/route.ts                    → GET (list with task counts), POST (create)
   topics/[id]/route.ts               → GET (with tasks sorted by sortOrder), PATCH, DELETE

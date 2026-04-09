@@ -54,6 +54,12 @@ interface TaskItemProps {
   onSnooze?: (id: string, snoozedUntil: string) => void;
   /** Called when the user unsnoozes (wakes up) a snoozed task */
   onUnsnooze?: (id: string) => void;
+  /** When true, the item shows a selection checkbox instead of normal completion behavior */
+  selectionMode?: boolean;
+  /** Whether this task is currently selected in bulk mode */
+  isSelected?: boolean;
+  /** Toggle selection for this task */
+  onToggleSelect?: (id: string) => void;
 }
 
 /**
@@ -86,6 +92,9 @@ export function TaskItem({
   snoozedUntil,
   onSnooze,
   onUnsnooze,
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelect,
 }: TaskItemProps) {
   const t = useTranslations("tasks");
 
@@ -332,34 +341,64 @@ export function TaskItem({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Checkbox */}
-      <button
-        onClick={handleCheckboxChange}
-        className="mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer"
-        style={{
-          borderColor: isCompleted ? "var(--accent-green)" : "var(--border)",
-          backgroundColor: isCompleted ? "var(--accent-green)" : "transparent",
-        }}
-        aria-label={isCompleted ? t("aria_uncomplete") : t("aria_complete")}
-      >
-        {isCompleted && (
-          <svg
-            width="10"
-            height="8"
-            viewBox="0 0 10 8"
-            fill="none"
-            style={{ color: "var(--bg-primary)" }}
-          >
-            <path
-              d="M1 4L3.5 6.5L9 1"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-      </button>
+      {/* Checkbox — selection mode shows a square select checkbox; normal mode shows completion */}
+      {selectionMode ? (
+        <button
+          onClick={() => onToggleSelect?.(id)}
+          className="mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer"
+          style={{
+            borderColor: isSelected ? "var(--accent-amber)" : "var(--border)",
+            backgroundColor: isSelected ? "var(--accent-amber)" : "transparent",
+          }}
+          aria-label={isSelected ? t("bulk_exit_select") : t("bulk_select")}
+        >
+          {isSelected && (
+            <svg
+              width="10"
+              height="8"
+              viewBox="0 0 10 8"
+              fill="none"
+              style={{ color: "var(--bg-primary)" }}
+            >
+              <path
+                d="M1 4L3.5 6.5L9 1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </button>
+      ) : (
+        <button
+          onClick={handleCheckboxChange}
+          className="mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer"
+          style={{
+            borderColor: isCompleted ? "var(--accent-green)" : "var(--border)",
+            backgroundColor: isCompleted ? "var(--accent-green)" : "transparent",
+          }}
+          aria-label={isCompleted ? t("aria_uncomplete") : t("aria_complete")}
+        >
+          {isCompleted && (
+            <svg
+              width="10"
+              height="8"
+              viewBox="0 0 10 8"
+              fill="none"
+              style={{ color: "var(--bg-primary)" }}
+            >
+              <path
+                d="M1 4L3.5 6.5L9 1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </button>
+      )}
 
       {/* Main content — flex-1 so the edit/delete cluster stays at top-right */}
       <div className="flex-1 min-w-0">
@@ -698,8 +737,8 @@ export function TaskItem({
         ) : null}
         </div>
 
-      {/* Edit + Delete cluster — top-right, identical positioning to TopicCard */}
-      {!isEditing && (
+      {/* Edit + Delete cluster — top-right, hidden in selection mode */}
+      {!isEditing && !selectionMode && (
         <div className="flex gap-1 flex-shrink-0 items-start pt-0.5">
           <button
             onClick={() => onEdit(id)}
