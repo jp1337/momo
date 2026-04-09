@@ -184,6 +184,37 @@ export const ReorderTasksInputSchema = z.object({
 
 export type ReorderTasksInput = z.infer<typeof ReorderTasksInputSchema>;
 
+// ─── Bulk Task Action Validators ─────────────────────────────────────────────
+
+/**
+ * Schema for bulk task actions.
+ * Discriminated union on `action` — each variant carries only the fields it needs.
+ * Max 100 task IDs per request to keep transaction size reasonable.
+ */
+export const BulkTaskActionInputSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("delete"),
+    taskIds: z.array(z.string().uuid("Invalid task ID")).min(1).max(100),
+  }),
+  z.object({
+    action: z.literal("complete"),
+    taskIds: z.array(z.string().uuid("Invalid task ID")).min(1).max(100),
+    timezone: TimezoneSchema,
+  }),
+  z.object({
+    action: z.literal("changeTopic"),
+    taskIds: z.array(z.string().uuid("Invalid task ID")).min(1).max(100),
+    topicId: z.string().uuid("Invalid topic ID").nullable(),
+  }),
+  z.object({
+    action: z.literal("setPriority"),
+    taskIds: z.array(z.string().uuid("Invalid task ID")).min(1).max(100),
+    priority: z.enum(["HIGH", "NORMAL", "SOMEDAY"]),
+  }),
+]);
+
+export type BulkTaskActionInput = z.infer<typeof BulkTaskActionInputSchema>;
+
 // ─── Topic Validators ─────────────────────────────────────────────────────────
 
 /**

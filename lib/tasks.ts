@@ -8,8 +8,8 @@
 
 import { db } from "@/lib/db";
 import { tasks, taskCompletions, users, topics } from "@/lib/db/schema";
-import { eq, and, isNull, desc, max, count, sql } from "drizzle-orm";
-import type { CreateTaskInput, UpdateTaskInput } from "@/lib/validators";
+import { eq, and, isNull, desc, max, count, sql, inArray } from "drizzle-orm";
+import type { CreateTaskInput, UpdateTaskInput, BulkTaskActionInput } from "@/lib/validators";
 import {
   updateStreak,
   checkAndUnlockAchievements,
@@ -755,6 +755,79 @@ export async function reorderTasks(
         .update(tasks)
         .set({ sortOrder: i })
         .where(and(eq(tasks.id, taskIds[i]), eq(tasks.userId, userId)));
+    }
+  });
+}
+
+// ─── Bulk Actions ───────────────────────────────────────────────────────────
+
+/**
+ * Applies a bulk action to multiple tasks in a single transaction.
+ *
+ * Supported actions:
+ *  - **delete**: removes all specified tasks (cascade deletes completions)
+ *  - **complete**: marks non-completed, non-recurring tasks as done (no gamification — this is a cleanup tool)
+ *  - **changeTopic**: moves tasks to a different topic (or null to remove from topic)
+ *  - **setPriority**: sets the priority on all specified tasks
+ *
+ * @param userId - The authenticated user's UUID (ownership filter on every query)
+ * @param input - Validated bulk action input (discriminated union)
+ * @returns The number of rows actually affected
+ */
+export async function bulkUpdateTasks(
+  userId: string,
+  input: BulkTaskActionInput
+): Promise<{ affected: number }> {
+  return db.transaction(async (tx) => {
+    const ownerFilter = and(
+      inArray(tasks.id, input.taskIds),
+      eq(tasks.userId, userId)
+    );
+
+    switch (input.action) {
+      case "delete": {
+        const deleted = await tx
+          .delete(tasks)
+          .where(ownerFilter)
+          .returning({ id: tasks.id });
+        return { affected: deleted.length };
+      }
+
+      case "complete": {
+        // Only complete non-recurring, non-completed tasks.
+        // Recurring tasks have special completion logic (nextDueDate recalc)
+        // and should be completed individually.
+        const updated = await tx
+          .update(tasks)
+          .set({ completedAt: new Date() })
+          .where(
+            and(
+              ownerFilter,
+              isNull(tasks.completedAt),
+              sql`${tasks.type} != 'RECURRING'`
+            )
+          )
+          .returning({ id: tasks.id });
+        return { affected: updated.length };
+      }
+
+      case "changeTopic": {
+        const updated = await tx
+          .update(tasks)
+          .set({ topicId: input.topicId })
+          .where(ownerFilter)
+          .returning({ id: tasks.id });
+        return { affected: updated.length };
+      }
+
+      case "setPriority": {
+        const updated = await tx
+          .update(tasks)
+          .set({ priority: input.priority })
+          .where(ownerFilter)
+          .returning({ id: tasks.id });
+        return { affected: updated.length };
+      }
     }
   });
 }

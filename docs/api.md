@@ -270,6 +270,7 @@ Valid values: `"de"`, `"en"`, `"fr"`. Response: `{ "success": true }`
 | `POST` | `/api/tasks/:id/promote-to-topic` | Yes | 10/min | Promote standalone task to a new topic |
 | `POST` | `/api/tasks/:id/snooze` | Yes | 30/min | Snooze task until a date (hidden from views) |
 | `DELETE` | `/api/tasks/:id/snooze` | Yes | — | Unsnooze task (make visible again) |
+| `PATCH` | `/api/tasks/bulk` | Yes | 10/min | Bulk action on multiple tasks (delete, complete, changeTopic, setPriority) |
 
 ### GET /api/tasks
 
@@ -444,6 +445,38 @@ Response (201 Created):
 {
   "topic": { "id": "uuid", "title": "Hochbeet bauen", ... }
 }
+```
+
+### PATCH /api/tasks/bulk
+
+Applies a bulk action to multiple tasks in a single transaction. Useful for cleanup, triage, and reorganization.
+
+**Note:** Bulk complete skips gamification (no coins, no streak, no achievements) — this is a cleanup tool, not a shortcut for earning rewards. Recurring tasks are skipped during bulk completion.
+
+Request body — discriminated union on `action`:
+
+```json
+// Delete multiple tasks
+{ "action": "delete", "taskIds": ["uuid1", "uuid2"] }
+
+// Complete multiple tasks (non-recurring only)
+{ "action": "complete", "taskIds": ["uuid1", "uuid2"], "timezone": "Europe/Berlin" }
+
+// Move tasks to a different topic (or null to remove from topic)
+{ "action": "changeTopic", "taskIds": ["uuid1", "uuid2"], "topicId": "uuid" }
+
+// Set priority on multiple tasks
+{ "action": "setPriority", "taskIds": ["uuid1", "uuid2"], "priority": "HIGH" }
+```
+
+Constraints:
+- `taskIds`: 1–100 UUIDs
+- `priority`: `"HIGH"` | `"NORMAL"` | `"SOMEDAY"`
+- `topicId`: valid UUID or `null`
+
+Response (200):
+```json
+{ "success": true, "affected": 5 }
 ```
 
 ---
