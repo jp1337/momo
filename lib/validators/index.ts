@@ -6,6 +6,7 @@
  */
 
 import { z } from "zod";
+import { TEMPLATE_KEYS, type TemplateKey } from "@/lib/templates";
 
 // ─── Shared Schemas ───────────────────────────────────────────────────────────
 
@@ -247,9 +248,13 @@ export type UpdateTopicInput = z.infer<typeof UpdateTopicInputSchema>;
  * Schema for importing a topic from a predefined template.
  * The actual template content (title, tasks, icon, color, …) lives in
  * `lib/templates.ts`; this schema only validates the caller-supplied key.
+ * The enum is derived from `TEMPLATE_KEYS` so a new template needs no
+ * follow-up edit here.
  */
 export const ImportTemplateInputSchema = z.object({
-  templateKey: z.enum(["moving", "taxes", "fitness"]),
+  templateKey: z.enum(
+    TEMPLATE_KEYS as unknown as readonly [TemplateKey, ...TemplateKey[]]
+  ),
 });
 
 export type ImportTemplateInput = z.infer<typeof ImportTemplateInputSchema>;

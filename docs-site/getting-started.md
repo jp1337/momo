@@ -151,8 +151,9 @@ On first login, a user account is created automatically in the database.
 
 **Tip — skip the blank page:** if you are facing a bigger project (a move,
 a tax return, a new workout habit), open the **Topics** page and press
-**📋 From template**. Momo ships with three curated starter topics that
-import a fully populated task list in one click — no typing required.
+**📋 From template**. Momo ships with four curated starter topics —
+Moving, Tax Return, Workout Routine and Household (recurring chores) —
+that import a fully populated task list in one click, no typing required.
 See the [Features guide](/momo/features#starting-from-a-template) for
 details.
 

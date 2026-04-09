@@ -47,7 +47,7 @@ description: Task management for people who struggle with procrastination. Open 
   <div class="feature-card">
     <div class="icon">📋</div>
     <h3>Topic Templates</h3>
-    <p>Skip the blank page: import Moving, Tax Return or Workout Routine as a fully populated topic in one click.</p>
+    <p>Skip the blank page: import Moving, Tax Return, Workout Routine or the Household chores as a fully populated topic in one click.</p>
   </div>
   <div class="feature-card">
     <div class="icon">⏰</div>
