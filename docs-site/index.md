@@ -62,7 +62,7 @@ description: Task management for people who struggle with procrastination. Open 
   <div class="feature-card">
     <div class="icon">🌱</div>
     <h3>Habit Tracker</h3>
-    <p>A GitHub-style year grid for every recurring task. Every green square is a completion — consistency becomes visible. <a href="/momo/features#habit-tracker">Read the guide →</a></p>
+    <p>A GitHub-style year grid for every recurring task. Every green square is a completion, and a per-habit streak counter shows how long you have been consistent — in days, weeks, or months. <a href="/momo/features#habit-tracker">Read the guide →</a></p>
   </div>
   <div class="feature-card">
     <div class="icon">🪙</div>
