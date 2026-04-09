@@ -672,13 +672,18 @@ If push notifications are enabled, Momo sends a summary notification every **Sun
 
 Visit **/stats** from the navigation to see your personal numbers:
 
-- Total tasks created and completed
-- Number of topics
-- Streak history over time
-- Total coins earned
-- Achievement count
+- **Overview** — total tasks created, total completions, current streak, best streak
+- **Streak history** — a 90-day sparkline showing how your streak developed over time, with today's value and the peak highlighted
+- **Progress** — your current level, coin balance, total coins earned, and a level progress bar
+- **Activity** — completions in the last 7 and 30 days, open tasks
+- **Best weekdays** — a bar chart showing which days of the week you complete the most tasks, with the best day highlighted
+- **Energy this week** — energy check-in summary (HIGH / MEDIUM / LOW counts) plus a 14-day mini-chart
+- **Tasks by type and priority** — progress bars breaking down your tasks
+- **Topics** — per-topic completion rate, sorted with the least-completed topics first so you can spot which topics you tend to avoid. Topics below 25% completion are highlighted in red, above 75% in green. Each topic also shows completions in the last 30 days
+- **Achievements** — all achievements with earned/locked status and unlock dates
+- **Wishlist** — bought, spent, open, and discarded counts
 
-Stats give you a view of long-term progress beyond the current streak.
+Stats are fully localized — they follow your chosen language (German, English, or French).
 
 ### Habit Tracker
 

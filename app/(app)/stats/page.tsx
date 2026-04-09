@@ -3,13 +3,16 @@
  *
  * Server Component. Zeigt:
  *  1. Übersicht (Aufgaben, Abschlüsse, Streaks)
- *  2. Fortschritt (Level, Coins, Level-Fortschrittsbalken)
- *  3. Aktivität (letzte 7/30 Tage, offene Aufgaben)
- *  4. Aufgaben nach Typ
- *  5. Aufgaben nach Priorität
- *  6. Topics mit Fortschritt
- *  7. Errungenschaften (verdient vs. gesperrt)
- *  8. Wunschliste-Statistiken
+ *  2. Streak-Verlauf (90-Tage Sparkline)
+ *  3. Fortschritt (Level, Coins, Level-Fortschrittsbalken)
+ *  4. Aktivität (letzte 7/30 Tage, offene Aufgaben)
+ *  5. Beste Wochentage (7-Spalten Balkenchart)
+ *  6. Energie diese Woche
+ *  7. Aufgaben nach Typ
+ *  8. Aufgaben nach Priorität
+ *  9. Topics mit Fortschritt (sortiert nach Completion-Rate)
+ * 10. Errungenschaften (verdient vs. gesperrt)
+ * 11. Wunschliste-Statistiken
  *
  * Requires: authentication (redirects to /login if no session)
  */
@@ -25,6 +28,8 @@ import {
   getEnergyCheckinDayCount,
 } from "@/lib/energy";
 import { EnergyWeekBlock } from "@/components/stats/energy-week-block";
+import { WeekdayChart } from "@/components/stats/weekday-chart";
+import { StreakSparkline } from "@/components/stats/streak-sparkline";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLock,
@@ -35,19 +40,11 @@ import {
   faChartBar,
 } from "@fortawesome/free-solid-svg-icons";
 import { resolveTopicIcon } from "@/lib/topic-icons";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
   title: "Statistiken — Momo",
 };
-
-/** Formats a Date to a German locale date string */
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("de-DE", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 /**
  * Statistics page for the authenticated user.
@@ -60,12 +57,14 @@ export default async function StatsPage() {
   }
 
   const userId = session.user.id;
-  const [stats, energyWeekCounts, energyHistory, energyDayCount] = await Promise.all([
-    getUserStatistics(userId),
-    getEnergyLevelCounts(userId, 7),
-    getEnergyHistory(userId, 14),
-    getEnergyCheckinDayCount(userId),
-  ]);
+  const [stats, energyWeekCounts, energyHistory, energyDayCount, t] =
+    await Promise.all([
+      getUserStatistics(userId),
+      getEnergyLevelCounts(userId, 7),
+      getEnergyHistory(userId, 14),
+      getEnergyCheckinDayCount(userId),
+      getTranslations("stats"),
+    ]);
 
   // Level progression
   const currentLevelDef =
@@ -94,6 +93,32 @@ export default async function StatsPage() {
     stats.tasksByPriority.NORMAL +
     stats.tasksByPriority.SOMEDAY;
 
+  // Weekday labels
+  const weekdayLabels = [
+    t("weekday_mon"),
+    t("weekday_tue"),
+    t("weekday_wed"),
+    t("weekday_thu"),
+    t("weekday_fri"),
+    t("weekday_sat"),
+    t("weekday_sun"),
+  ];
+
+  // Best weekday
+  const bestWeekdayCount = Math.max(...stats.completionsByWeekday);
+
+  // Streak sparkline peak
+  const streakPeak = Math.max(...stats.streakHistory, 0);
+
+  /** Formats a Date to a locale-aware date string */
+  function formatDate(date: Date): string {
+    return date.toLocaleDateString("de-DE", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
+
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-8">
       {/* Page title */}
@@ -112,7 +137,7 @@ export default async function StatsPage() {
               color: "var(--text-primary)",
             }}
           >
-            Statistiken
+            {t("page_title")}
           </h1>
         </div>
         <p
@@ -122,7 +147,7 @@ export default async function StatsPage() {
             color: "var(--text-muted)",
           }}
         >
-          Dein persönlicher Überblick über Fortschritt und Aktivität.
+          {t("page_subtitle")}
         </p>
       </div>
 
@@ -135,27 +160,27 @@ export default async function StatsPage() {
             color: "var(--text-muted)",
           }}
         >
-          Übersicht
+          {t("section_overview")}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             {
-              label: "Aufgaben erstellt",
+              label: t("tasks_created"),
               value: stats.totalTasksCreated,
               icon: faListCheck,
             },
             {
-              label: "Abschlüsse gesamt",
+              label: t("completions_total"),
               value: stats.totalCompletions,
               icon: faCircleCheck,
             },
             {
-              label: "Aktueller Streak",
+              label: t("current_streak"),
               value: `${stats.streakCurrent}d`,
               icon: faFire,
             },
             {
-              label: "Bester Streak",
+              label: t("best_streak"),
               value: `${stats.streakMax}d`,
               icon: faTrophy,
             },
@@ -200,7 +225,27 @@ export default async function StatsPage() {
         </div>
       </section>
 
-      {/* ── Section 2: Fortschritt ───────────────────────────────────────────── */}
+      {/* ── Section 2: Streak-Verlauf ────────────────────────────────────────── */}
+      {stats.streakHistory.length > 0 && stats.streakHistory.some((v) => v > 0) && (
+        <section>
+          <h2
+            className="text-xs font-semibold uppercase tracking-widest mb-3"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+            }}
+          >
+            {t("section_streak_history")}
+          </h2>
+          <StreakSparkline
+            data={stats.streakHistory}
+            todayLabel={t("streak_today", { count: stats.streakCurrent })}
+            peakLabel={t("streak_peak", { count: streakPeak })}
+          />
+        </section>
+      )}
+
+      {/* ── Section 3: Fortschritt ───────────────────────────────────────────── */}
       <section>
         <h2
           className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -209,7 +254,7 @@ export default async function StatsPage() {
             color: "var(--text-muted)",
           }}
         >
-          Fortschritt
+          {t("section_progress")}
         </h2>
         <div
           className="rounded-xl p-6 flex flex-col gap-5"
@@ -248,8 +293,9 @@ export default async function StatsPage() {
                   color: "var(--text-muted)",
                 }}
               >
-                Level {stats.level}
-                {nextLevelDef && ` → ${nextLevelDef.title} (Level ${nextLevelDef.level})`}
+                {t("level_label", { level: stats.level })}
+                {nextLevelDef &&
+                  ` ${t("level_next", { title: nextLevelDef.title, level: nextLevelDef.level })}`}
               </p>
             </div>
           </div>
@@ -264,7 +310,7 @@ export default async function StatsPage() {
                   color: "var(--text-muted)",
                 }}
               >
-                {stats.coins} Coins
+                {t("coins_label", { count: stats.coins })}
               </span>
               {nextLevelDef && (
                 <span
@@ -274,7 +320,7 @@ export default async function StatsPage() {
                     color: "var(--text-muted)",
                   }}
                 >
-                  Ziel: {nextLevelDef.minCoins} Coins
+                  {t("coins_goal", { count: nextLevelDef.minCoins })}
                 </span>
               )}
             </div>
@@ -303,7 +349,7 @@ export default async function StatsPage() {
                 color: "var(--text-muted)",
               }}
             >
-              {levelProgress}% zum nächsten Level
+              {t("level_percent", { percent: levelProgress })}
             </p>
           </div>
 
@@ -317,7 +363,7 @@ export default async function StatsPage() {
                   color: "var(--text-muted)",
                 }}
               >
-                Aktuelles Guthaben
+                {t("current_balance")}
               </p>
               <p
                 className="text-2xl font-bold"
@@ -337,7 +383,7 @@ export default async function StatsPage() {
                   color: "var(--text-muted)",
                 }}
               >
-                Gesamt verdient
+                {t("total_earned")}
               </p>
               <p
                 className="text-2xl font-bold"
@@ -359,12 +405,12 @@ export default async function StatsPage() {
               color: "var(--text-muted)",
             }}
           >
-            Mitglied seit {formatDate(stats.memberSince)}
+            {t("member_since", { date: formatDate(stats.memberSince) })}
           </p>
         </div>
       </section>
 
-      {/* ── Section 3: Aktivität ─────────────────────────────────────────────── */}
+      {/* ── Section 4: Aktivität ─────────────────────────────────────────────── */}
       <section>
         <h2
           className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -373,19 +419,19 @@ export default async function StatsPage() {
             color: "var(--text-muted)",
           }}
         >
-          Aktivität
+          {t("section_activity")}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             {
-              label: "Abschlüsse letzte 7 Tage",
+              label: t("completions_7d"),
               value: stats.completionsLast7Days,
             },
             {
-              label: "Abschlüsse letzte 30 Tage",
+              label: t("completions_30d"),
               value: stats.completionsLast30Days,
             },
-            { label: "Offene Aufgaben", value: stats.openTasks },
+            { label: t("open_tasks"), value: stats.openTasks },
           ].map((item) => (
             <div
               key={item.label}
@@ -418,6 +464,27 @@ export default async function StatsPage() {
         </div>
       </section>
 
+      {/* ── Section 5: Beste Wochentage ──────────────────────────────────────── */}
+      {stats.completionsByWeekday.some((v) => v > 0) && (
+        <section>
+          <h2
+            className="text-xs font-semibold uppercase tracking-widest mb-3"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+            }}
+          >
+            {t("section_weekdays")}
+          </h2>
+          <WeekdayChart
+            data={stats.completionsByWeekday}
+            labels={weekdayLabels}
+            bestDayLabel={t("best_day")}
+            bestDayCount={t("completions_count", { count: bestWeekdayCount })}
+          />
+        </section>
+      )}
+
       {/* ── Energie-Verlauf ──────────────────────────────────────────────────── */}
       <section>
         <h2
@@ -427,7 +494,7 @@ export default async function StatsPage() {
             color: "var(--text-muted)",
           }}
         >
-          Energie diese Woche
+          {t("section_energy")}
         </h2>
         <EnergyWeekBlock
           weekCounts={energyWeekCounts}
@@ -436,7 +503,7 @@ export default async function StatsPage() {
         />
       </section>
 
-      {/* ── Section 4: Aufgaben nach Typ ─────────────────────────────────────── */}
+      {/* ── Section 6: Aufgaben nach Typ ─────────────────────────────────────── */}
       <section>
         <h2
           className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -445,7 +512,7 @@ export default async function StatsPage() {
             color: "var(--text-muted)",
           }}
         >
-          Aufgaben nach Typ
+          {t("section_tasks_by_type")}
         </h2>
         <div
           className="rounded-xl p-6 flex flex-col gap-4"
@@ -455,10 +522,10 @@ export default async function StatsPage() {
           }}
         >
           {[
-            { label: "Einmalig", value: stats.tasksByType.ONE_TIME },
-            { label: "Wiederkehrend", value: stats.tasksByType.RECURRING },
+            { label: t("type_one_time"), value: stats.tasksByType.ONE_TIME },
+            { label: t("type_recurring"), value: stats.tasksByType.RECURRING },
             {
-              label: "Tagesquest-fähig",
+              label: t("type_daily_eligible"),
               value: stats.tasksByType.DAILY_ELIGIBLE,
             },
           ].map((row) => {
@@ -511,7 +578,7 @@ export default async function StatsPage() {
         </div>
       </section>
 
-      {/* ── Section 5: Aufgaben nach Priorität ──────────────────────────────── */}
+      {/* ── Section 7: Aufgaben nach Priorität ──────────────────────────────── */}
       <section>
         <h2
           className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -520,7 +587,7 @@ export default async function StatsPage() {
             color: "var(--text-muted)",
           }}
         >
-          Aufgaben nach Priorität
+          {t("section_tasks_by_priority")}
         </h2>
         <div
           className="rounded-xl p-6 flex flex-col gap-4"
@@ -530,9 +597,9 @@ export default async function StatsPage() {
           }}
         >
           {[
-            { label: "Hoch", value: stats.tasksByPriority.HIGH },
-            { label: "Normal", value: stats.tasksByPriority.NORMAL },
-            { label: "Irgendwann", value: stats.tasksByPriority.SOMEDAY },
+            { label: t("priority_high"), value: stats.tasksByPriority.HIGH },
+            { label: t("priority_normal"), value: stats.tasksByPriority.NORMAL },
+            { label: t("priority_someday"), value: stats.tasksByPriority.SOMEDAY },
           ].map((row) => {
             const pct =
               totalByPriority > 0
@@ -583,7 +650,7 @@ export default async function StatsPage() {
         </div>
       </section>
 
-      {/* ── Section 6: Topics ────────────────────────────────────────────────── */}
+      {/* ── Section 8: Topics ────────────────────────────────────────────────── */}
       {stats.topicsWithStats.length > 0 && (
         <section>
           <h2
@@ -593,7 +660,7 @@ export default async function StatsPage() {
               color: "var(--text-muted)",
             }}
           >
-            Topics ({stats.totalTopics})
+            {t("section_topics", { count: stats.totalTopics })}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {stats.topicsWithStats.map((topic) => {
@@ -603,6 +670,13 @@ export default async function StatsPage() {
                       (topic.completedTasks / topic.totalTasks) * 100
                     )
                   : 0;
+              // Color-code by completion rate
+              const rateColor =
+                pct < 25
+                  ? "var(--accent-red, #e06c75)"
+                  : pct >= 75
+                    ? "var(--accent-green)"
+                    : topic.color ?? "var(--accent-amber)";
               return (
                 <div
                   key={topic.id}
@@ -657,20 +731,34 @@ export default async function StatsPage() {
                         height: 6,
                         borderRadius: 3,
                         width: `${pct}%`,
-                        backgroundColor:
-                          topic.color ?? "var(--accent-amber)",
+                        backgroundColor: rateColor,
                       }}
                     />
                   </div>
-                  <p
-                    className="text-xs mt-1"
-                    style={{
-                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    {pct}% abgeschlossen
-                  </p>
+                  <div className="flex justify-between mt-1">
+                    <p
+                      className="text-xs"
+                      style={{
+                        fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                        color: rateColor,
+                      }}
+                    >
+                      {t("topic_completed_pct", { percent: pct })}
+                    </p>
+                    {topic.completionsLast30Days > 0 && (
+                      <p
+                        className="text-xs"
+                        style={{
+                          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                          color: "var(--text-muted)",
+                        }}
+                      >
+                        {t("topic_completions_30d", {
+                          count: topic.completionsLast30Days,
+                        })}
+                      </p>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -678,7 +766,7 @@ export default async function StatsPage() {
         </section>
       )}
 
-      {/* ── Section 7: Errungenschaften ──────────────────────────────────────── */}
+      {/* ── Section 9: Errungenschaften ──────────────────────────────────────── */}
       <section>
         <h2
           className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -687,9 +775,10 @@ export default async function StatsPage() {
             color: "var(--text-muted)",
           }}
         >
-          Errungenschaften (
-          {stats.achievements.filter((a) => a.earnedAt !== null).length}/
-          {stats.achievements.length})
+          {t("section_achievements", {
+            earned: stats.achievements.filter((a) => a.earnedAt !== null).length,
+            total: stats.achievements.length,
+          })}
         </h2>
         {stats.achievements.length === 0 ? (
           <p
@@ -699,7 +788,7 @@ export default async function StatsPage() {
               color: "var(--text-muted)",
             }}
           >
-            Keine Errungenschaften gefunden.
+            {t("no_achievements")}
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -723,7 +812,7 @@ export default async function StatsPage() {
                         icon={faLock}
                         className="w-5 h-5"
                         style={{ color: "var(--text-muted)" }}
-                        aria-label="Gesperrt"
+                        aria-label={t("achievement_locked")}
                       />
                     )}
                   </span>
@@ -756,7 +845,9 @@ export default async function StatsPage() {
                           color: "var(--accent-amber)",
                         }}
                       >
-                        Verdient am {formatDate(achievement.earnedAt)}
+                        {t("achievement_earned_at", {
+                          date: formatDate(achievement.earnedAt),
+                        })}
                       </span>
                     )}
                   </div>
@@ -767,7 +858,7 @@ export default async function StatsPage() {
         )}
       </section>
 
-      {/* ── Section 8: Wunschliste ───────────────────────────────────────────── */}
+      {/* ── Section 10: Wunschliste ──────────────────────────────────────────── */}
       <section>
         <h2
           className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -776,27 +867,27 @@ export default async function StatsPage() {
             color: "var(--text-muted)",
           }}
         >
-          Wunschliste
+          {t("section_wishlist")}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             {
-              label: "Gekauft",
+              label: t("wishlist_bought"),
               value: stats.wishlistStats.bought,
               accent: "var(--accent-green)",
             },
             {
-              label: "Ausgegeben",
+              label: t("wishlist_spent"),
               value: `${stats.wishlistStats.totalSpent.toFixed(2)} €`,
               accent: "var(--accent-amber)",
             },
             {
-              label: "Offen",
+              label: t("wishlist_open"),
               value: stats.wishlistStats.open,
               accent: "var(--text-primary)",
             },
             {
-              label: "Verworfen",
+              label: t("wishlist_discarded"),
               value: stats.wishlistStats.discarded,
               accent: "var(--text-muted)",
             },
