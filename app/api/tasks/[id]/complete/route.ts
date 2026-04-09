@@ -7,7 +7,8 @@
  *   coinsEarned: number,
  *   newLevel: { level: number; title: string } | null,
  *   unlockedAchievements: Array<{ key: string; title: string; icon: string }>,
- *   streakCurrent: number
+ *   streakCurrent: number,
+ *   shieldUsed: boolean
  * }
  *
  * DELETE /api/tasks/:id/complete
@@ -57,6 +58,7 @@ export async function POST(
       newLevel: result.newLevel,
       unlockedAchievements: result.unlockedAchievements,
       streakCurrent: result.streakCurrent,
+      shieldUsed: result.shieldUsed,
     });
   } catch (error) {
     console.error("[POST /api/tasks/:id/complete]", error);

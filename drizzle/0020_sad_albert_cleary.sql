@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "streak_shield_used_month" text;

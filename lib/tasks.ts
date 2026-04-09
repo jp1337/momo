@@ -52,6 +52,8 @@ export interface CompleteTaskResult {
   unlockedAchievements: UnlockedAchievement[];
   /** User's current streak after this completion */
   streakCurrent: number;
+  /** True if the streak shield was consumed to preserve the streak */
+  shieldUsed: boolean;
 }
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -367,11 +369,23 @@ export async function completeTask(
   // Update streak outside the transaction — a transient streak failure should
   // not roll back the task completion or coin award.
   let streakCurrent = 0;
+  let shieldUsed = false;
   try {
     const streakResult = await updateStreak(userId, undefined, timezone);
     streakCurrent = streakResult.streakCurrent;
+    shieldUsed = streakResult.shieldUsed;
   } catch (err) {
     console.error("[completeTask] streak update failed (non-fatal):", err);
+  }
+
+  // Fire-and-forget streak shield notification if shield was consumed
+  if (shieldUsed) {
+    // Dynamic import to avoid circular dependency (push.ts imports from db/schema)
+    import("@/lib/push").then(({ sendStreakShieldNotification }) =>
+      sendStreakShieldNotification(userId, streakCurrent).catch((err) =>
+        console.error("[completeTask] shield notification failed (non-fatal):", err)
+      )
+    );
   }
 
   // Count total completions and check achievements after streak is known
@@ -406,6 +420,7 @@ export async function completeTask(
     newLevel,
     unlockedAchievements,
     streakCurrent,
+    shieldUsed,
   };
 }
 
