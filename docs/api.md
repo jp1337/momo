@@ -1150,6 +1150,24 @@ Revokes the current feed token. The subscription URL stops working immediately. 
 
 ---
 
+## Onboarding Routes
+
+Manages the one-time onboarding wizard for new users.
+
+### POST /api/onboarding/complete
+
+Marks the authenticated user's onboarding as completed. Called when the user finishes or skips the onboarding wizard.
+
+- **Auth:** Session required
+- **Body:** none
+- **Rate limit:** 10/min per user
+- **Response:**
+```json
+{ "success": true }
+```
+
+---
+
 ## Response Format
 
 All routes return consistent JSON. On error, `error` is always a human-readable string.

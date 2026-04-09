@@ -203,6 +203,9 @@ export const users = pgTable("users", {
     withTimezone: true,
   }),
 
+  /** Whether the user has completed the onboarding wizard. False for new users. */
+  onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
