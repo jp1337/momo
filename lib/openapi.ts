@@ -1080,7 +1080,7 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
               "application/json": {
                 schema: {
                   type: "object",
-                  required: ["task", "coinsAwarded", "newBalance"],
+                  required: ["task", "coinsAwarded", "newBalance", "shieldUsed"],
                   properties: {
                     task: { $ref: "#/components/schemas/Task" },
                     coinsAwarded: {
@@ -1090,6 +1090,12 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
                     newBalance: {
                       type: "integer",
                       description: "User's updated coin balance.",
+                    },
+                    shieldUsed: {
+                      type: "boolean",
+                      description:
+                        "True when the monthly Streak Shield was consumed to preserve " +
+                        "the streak (exactly one day missed, shield not yet used this month).",
                     },
                   },
                 },

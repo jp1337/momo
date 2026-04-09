@@ -360,9 +360,12 @@ Response:
   "coinsEarned": 2,
   "newLevel": { "level": 3, "title": "Alltagsmeister" } | null,
   "unlockedAchievements": [{ "key": "first_task", "title": "Erster Schritt", "icon": "🌱" }],
-  "streakCurrent": 5
+  "streakCurrent": 5,
+  "shieldUsed": false
 }
 ```
+
+`shieldUsed` is `true` when the user's monthly Streak Shield was consumed to preserve the streak (exactly one day missed, shield not yet used this calendar month). When the shield fires, a notification is sent via all configured channels.
 
 ### DELETE /api/tasks/:id/complete
 
