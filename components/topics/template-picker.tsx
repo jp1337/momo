@@ -21,7 +21,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faListOl } from "@fortawesome/free-solid-svg-icons";
 import { resolveTopicIcon } from "@/lib/topic-icons";
 
-type TemplateKey = "moving" | "taxes" | "fitness";
+type TemplateKey = "moving" | "taxes" | "fitness" | "household";
 
 /**
  * Static client-side mirror of `lib/templates.ts`. Only the fields needed for
@@ -38,6 +38,7 @@ const CLIENT_TEMPLATES: {
   { key: "moving", icon: "house", color: "#c97b3e", sequential: true, taskCount: 10 },
   { key: "taxes", icon: "coins", color: "#4a8c5c", sequential: true, taskCount: 6 },
   { key: "fitness", icon: "dumbbell", color: "#8a5cf0", sequential: false, taskCount: 7 },
+  { key: "household", icon: "broom", color: "#5c8ab8", sequential: false, taskCount: 6 },
 ];
 
 interface TemplatePickerProps {

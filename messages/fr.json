@@ -692,6 +692,16 @@
       "task_5": "Séance cardio (30 min)",
       "task_6": "Retour au calme et étirements",
       "task_7": "Noter les progrès"
+    },
+    "household": {
+      "title": "Ménage",
+      "description": "Routines ménagères récurrentes avec des intervalles par défaut raisonnables — toutes les tâches sont modifiables après l'import.",
+      "task_laundry": "Faire la lessive",
+      "task_vacuum": "Passer l'aspirateur",
+      "task_kitchen": "Nettoyer la cuisine",
+      "task_bathroom": "Nettoyer la salle de bain",
+      "task_windows": "Laver les vitres",
+      "task_bedding": "Changer les draps"
     }
   }
 }

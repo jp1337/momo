@@ -692,6 +692,16 @@
       "task_5": "Cardio-Einheit (30 min)",
       "task_6": "Cool-Down und Stretching",
       "task_7": "Fortschritt kurz notieren"
+    },
+    "household": {
+      "title": "Haushalt",
+      "description": "Wiederkehrende Haushaltsroutinen mit sinnvollen Standard-Intervallen — alle Aufgaben sind nach dem Import voll anpassbar.",
+      "task_laundry": "Wäsche waschen",
+      "task_vacuum": "Staubsaugen",
+      "task_kitchen": "Küche reinigen",
+      "task_bathroom": "Bad putzen",
+      "task_windows": "Fenster putzen",
+      "task_bedding": "Bettwäsche wechseln"
     }
   }
 }
