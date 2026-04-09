@@ -491,6 +491,19 @@ Self-hosters: see the [Email Notifications (SMTP) section of the Environment Var
 
 A generic outbound webhook channel is still planned — see the [Roadmap](https://github.com/jp1337/momo/blob/main/ROADMAP.md).
 
+### Notification history
+
+Not sure if your notifications are being delivered? Go to **Settings → Notification History** to see the last 50 delivery attempts across all channels. Each entry shows:
+
+- **Time** — when the notification was sent
+- **Channel** — which channel was used (Web Push, ntfy, Pushover, Telegram, or Email)
+- **Title** — the notification title
+- **Status** — "Sent" (green) or "Failed" (red)
+
+If a notification failed, click the entry to see the error message. This is especially useful when setting up a new channel or debugging why notifications stopped arriving.
+
+Entries are automatically deleted after 30 days.
+
 ---
 
 ## Installing Momo as an App (PWA)

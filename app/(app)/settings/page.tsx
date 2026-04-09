@@ -18,6 +18,7 @@ import { users, accounts, pushSubscriptions, notificationChannels } from "@/lib/
 import { eq } from "drizzle-orm";
 import { NotificationSettings } from "@/components/settings/notification-settings";
 import { NotificationChannels } from "@/components/settings/notification-channels";
+import { NotificationHistory } from "@/components/settings/notification-history";
 import { isEmailChannelAvailable } from "@/lib/notifications";
 import { ProfileSettings } from "@/components/settings/profile-settings";
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
@@ -242,6 +243,40 @@ export default async function SettingsPage() {
           emailAvailable={isEmailChannelAvailable()}
           defaultEmailAddress={user.email ?? ""}
         />
+      </section>
+
+      {/* Notification History section */}
+      <section
+        className="rounded-xl p-6 flex flex-col gap-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            className="text-base font-semibold"
+            style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("section_notification_history")}
+          </h2>
+          <p
+            className="text-sm"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui)",
+            }}
+          >
+            {t("notification_history_hint")}
+          </p>
+        </div>
+
+        <Suspense fallback={null}>
+          <NotificationHistory />
+        </Suspense>
       </section>
 
       {/* Security / Two-Factor Authentication section */}

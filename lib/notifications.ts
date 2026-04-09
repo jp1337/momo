@@ -24,6 +24,7 @@ import { eq, and } from "drizzle-orm";
 import nodemailer, { type Transporter } from "nodemailer";
 import { serverEnv, clientEnv } from "@/lib/env";
 import { renderEmailTemplate } from "@/lib/email-templates";
+import { logNotification } from "@/lib/notification-log";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -383,7 +384,20 @@ export async function sendToAllChannels(
       if (!channel) {
         throw new Error(`Unsupported channel type: ${ch.type}`);
       }
-      await channel.send(payload);
+      try {
+        await channel.send(payload);
+        logNotification({ userId, channel: ch.type, title: payload.title, body: payload.body, status: "sent" });
+      } catch (err) {
+        logNotification({
+          userId,
+          channel: ch.type,
+          title: payload.title,
+          body: payload.body,
+          status: "failed",
+          error: err instanceof Error ? err.message : String(err),
+        });
+        throw err;
+      }
     })
   );
 
@@ -436,15 +450,26 @@ export async function sendTestNotification(
     return false;
   }
 
+  const testPayload = {
+    title: "Momo Test",
+    body: "If you see this, your notification channel is working!",
+    url: "/settings",
+    tag: "test",
+  };
+
   try {
-    await channel.send({
-      title: "Momo Test",
-      body: "If you see this, your notification channel is working!",
-      url: "/settings",
-      tag: "test",
-    });
+    await channel.send(testPayload);
+    logNotification({ userId, channel: channelType, title: testPayload.title, body: testPayload.body, status: "sent" });
     return true;
   } catch (err) {
+    logNotification({
+      userId,
+      channel: channelType,
+      title: testPayload.title,
+      body: testPayload.body,
+      status: "failed",
+      error: err instanceof Error ? err.message : String(err),
+    });
     console.error(`[notifications] Test send failed for ${channelType}:`, err);
     return false;
   }

@@ -935,6 +935,49 @@ Response: `{ "success": true }` or `400` if channel not configured.
 
 ---
 
+## Notification History
+
+| Method | Path | Auth | Rate Limit | Description |
+|---|---|---|---|---|
+| `GET` | `/api/settings/notification-history` | Yes | — | List last 50 notification delivery attempts |
+
+### GET /api/settings/notification-history
+
+Returns recent notification delivery attempts for the authenticated user, sorted by most recent first. Each entry represents a single channel delivery attempt.
+
+Response:
+```json
+{
+  "entries": [
+    {
+      "id": "uuid",
+      "channel": "ntfy",
+      "title": "Deine Daily Quest wartet",
+      "body": "Heutige Mission: Steuererklärung abgeben",
+      "status": "sent",
+      "error": null,
+      "sentAt": "2026-04-09T08:00:00Z"
+    },
+    {
+      "id": "uuid",
+      "channel": "web-push",
+      "title": "Momo Test",
+      "body": "If you see this, your notification channel is working!",
+      "status": "failed",
+      "error": "Subscription expired (410)",
+      "sentAt": "2026-04-09T07:55:00Z"
+    }
+  ]
+}
+```
+
+Channel values: `web-push`, `ntfy`, `pushover`, `telegram`, `email`.
+Status values: `sent`, `failed`. When `status` is `failed`, the `error` field contains the reason.
+
+Entries are automatically deleted after 30 days by the `notification-log-cleanup` cron job.
+
+---
+
 ## Push Notification Routes
 
 | Method | Path | Auth | Description |

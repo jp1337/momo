@@ -77,6 +77,7 @@ api/
   locale/route.ts                    → POST (set UI locale cookie)
   settings/quest/route.ts            → PATCH (save quest settings: postpone limit, emotional closure toggle)
   settings/notification-channels/route.ts     → GET (list channels), PUT (upsert channel)
+  settings/notification-history/route.ts      → GET (last 50 notification delivery attempts for the user)
   settings/notification-channels/[type]/route.ts → DELETE (remove channel)
   settings/notification-channels/[type]/test/route.ts → POST (send test notification)
   onboarding/complete/route.ts       → POST (mark onboarding as completed; 10/min)
