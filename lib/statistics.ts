@@ -76,6 +76,8 @@ export interface UserStatistics {
     color: string | null;
     totalTasks: number;
     completedTasks: number;
+    /** Number of task completions in this topic over the last 30 days */
+    completionsLast30Days: number;
   }>;
   /** All achievements, with earnedAt = null for locked ones */
   achievements: Array<{
@@ -95,6 +97,10 @@ export interface UserStatistics {
   };
   /** Sum of coinValue for all task completion records */
   coinsEarnedAllTime: number;
+  /** Completions grouped by weekday (0=Mon … 6=Sun) */
+  completionsByWeekday: number[];
+  /** Streak value for each of the last 90 days (oldest → newest) */
+  streakHistory: number[];
 }
 
 /**
@@ -166,6 +172,8 @@ export async function getUserStatistics(
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
   const [
     userRow,
     taskCounts,
@@ -174,6 +182,9 @@ export async function getUserStatistics(
     achievementRows,
     wishlistRows,
     coinsRows,
+    weekdayRows,
+    completionDateRows,
+    topicCompletions30dRows,
   ] = await Promise.all([
     // User profile + gamification fields
     db
@@ -278,6 +289,45 @@ export async function getUserStatistics(
       .from(taskCompletions)
       .innerJoin(tasks, eq(taskCompletions.taskId, tasks.id))
       .where(eq(taskCompletions.userId, userId)),
+
+    // Completions grouped by weekday (0=Mon … 6=Sun via ISO day mapping)
+    db
+      .select({
+        dow: sql<number>`EXTRACT(ISODOW FROM ${taskCompletions.completedAt})::int`,
+        total: count(),
+      })
+      .from(taskCompletions)
+      .where(eq(taskCompletions.userId, userId))
+      .groupBy(sql`EXTRACT(ISODOW FROM ${taskCompletions.completedAt})`),
+
+    // All completion dates for the last 90 days (for streak history reconstruction)
+    db
+      .select({
+        date: sql<string>`${taskCompletions.completedAt}::date::text`,
+      })
+      .from(taskCompletions)
+      .where(
+        and(
+          eq(taskCompletions.userId, userId),
+          gte(taskCompletions.completedAt, ninetyDaysAgo)
+        )
+      ),
+
+    // Per-topic completions in the last 30 days
+    db
+      .select({
+        topicId: tasks.topicId,
+        total: count(),
+      })
+      .from(taskCompletions)
+      .innerJoin(tasks, eq(taskCompletions.taskId, tasks.id))
+      .where(
+        and(
+          eq(taskCompletions.userId, userId),
+          gte(taskCompletions.completedAt, thirtyDaysAgo)
+        )
+      )
+      .groupBy(tasks.topicId),
   ]);
 
   // ─── Aggregate task counts ───────────────────────────────────────────────────
@@ -344,6 +394,24 @@ export async function getUserStatistics(
   // Existing users were backfilled to their task count at migration time (see 0004_messy_zodiak.sql).
   const totalTasksCreated = user?.totalTasksCreated ?? taskCounts.length;
 
+  // ─── Completions by weekday ──────────────────────────────────────────────────
+  // ISODOW: 1=Mon … 7=Sun → map to 0-indexed array (0=Mon … 6=Sun)
+  const completionsByWeekday = [0, 0, 0, 0, 0, 0, 0];
+  for (const row of weekdayRows) {
+    const idx = row.dow - 1; // ISODOW 1-based → 0-based
+    if (idx >= 0 && idx < 7) completionsByWeekday[idx] = row.total;
+  }
+
+  // ─── Per-topic completions last 30 days ──────────────────────────────────────
+  const topicCompletions30d = new Map<string | null, number>();
+  for (const row of topicCompletions30dRows) {
+    topicCompletions30d.set(row.topicId, row.total);
+  }
+
+  // ─── Streak history (last 90 days) ───────────────────────────────────────────
+  const completionDates = new Set(completionDateRows.map((r) => r.date));
+  const streakHistory = computeStreakHistory(completionDates, 90);
+
   return {
     totalTasksCreated,
     openTasks,
@@ -359,14 +427,22 @@ export async function getUserStatistics(
     memberSince,
     tasksByType,
     tasksByPriority,
-    topicsWithStats: topicRows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      icon: r.icon,
-      color: r.color,
-      totalTasks: r.totalTasks,
-      completedTasks: Number(r.completedTasks),
-    })),
+    topicsWithStats: topicRows
+      .map((r) => ({
+        id: r.id,
+        title: r.title,
+        icon: r.icon,
+        color: r.color,
+        totalTasks: r.totalTasks,
+        completedTasks: Number(r.completedTasks),
+        completionsLast30Days: topicCompletions30d.get(r.id) ?? 0,
+      }))
+      .sort((a, b) => {
+        // Sort by completion rate ascending — avoided topics first
+        const rateA = a.totalTasks > 0 ? a.completedTasks / a.totalTasks : 0;
+        const rateB = b.totalTasks > 0 ? b.completedTasks / b.totalTasks : 0;
+        return rateA - rateB;
+      }),
     achievements: achievementRows.map((r) => ({
       id: r.id,
       key: r.key,
@@ -382,7 +458,56 @@ export async function getUserStatistics(
       totalSpent,
     },
     coinsEarnedAllTime: parseInt(coinsRows[0]?.total ?? "0", 10),
+    completionsByWeekday,
+    streakHistory,
   };
+}
+
+// ─── Streak History ─────────────────────────────────────────────────────────
+
+/**
+ * Reconstructs daily streak values for the last N days from completion dates.
+ *
+ * Walks backwards from today and for each day computes what the streak
+ * was at end-of-day: if the user completed at least one task that day,
+ * the streak increments; otherwise it resets to 0.
+ *
+ * @param completionDates - Set of YYYY-MM-DD strings with at least one completion
+ * @param days - Number of days to compute (e.g. 90)
+ * @returns Array of streak values, oldest → newest
+ */
+export function computeStreakHistory(
+  completionDates: Set<string>,
+  days: number
+): number[] {
+  const result: number[] = [];
+  const now = new Date();
+
+  // First, build the full date list (oldest → newest)
+  const dates: string[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    dates.push(d.toLocaleDateString("en-CA"));
+  }
+
+  // Walk forward, tracking streak
+  let streak = 0;
+  // To get accurate initial streak, we need to look further back
+  // Check the day before our window to seed the streak
+  const dayBefore = new Date(now);
+  dayBefore.setDate(now.getDate() - days);
+  // We don't have data before our window, so streak starts at 0
+  for (const date of dates) {
+    if (completionDates.has(date)) {
+      streak++;
+    } else {
+      streak = 0;
+    }
+    result.push(streak);
+  }
+
+  return result;
 }
 
 // ─── Admin Statistics ─────────────────────────────────────────────────────────
