@@ -785,5 +785,58 @@
     "wishlist_spent": "Ausgegeben",
     "wishlist_open": "Offen",
     "wishlist_discarded": "Verworfen"
+  },
+  "onboarding": {
+    "page_title": "Willkommen bei Momo",
+    "skip": "Überspringen",
+    "next": "Weiter",
+    "back": "Zurück",
+    "finish": "Momo starten",
+    "sign_out": "Abmelden",
+    "progress_step": "Schritt {current} von {total}",
+
+    "welcome_title": "Willkommen, {name}!",
+    "welcome_title_anonymous": "Willkommen!",
+    "welcome_subtitle": "Wir zeigen dir, wie Momo dir hilft, Dinge zu erledigen — eine Aufgabe nach der anderen.",
+    "concept_quest_title": "Tagesquest",
+    "concept_quest_desc": "Jeden Tag wählt Momo eine Aufgabe für dich aus. Kein Überfordern, nur eine klare Sache.",
+    "concept_energy_title": "Energie",
+    "concept_energy_desc": "Bewerte dein Energielevel und Momo passt die Aufgaben an deine Tagesform an.",
+    "concept_coins_title": "Münzen",
+    "concept_coins_desc": "Verdiene Münzen durch erledigte Aufgaben. Gib sie für Wünsche auf deiner Wunschliste aus.",
+    "concept_streaks_title": "Streaks",
+    "concept_streaks_desc": "Erledige täglich deine Quest und baue einen Streak auf. Ein Schild schützt dich einmal im Monat.",
+
+    "topic_title": "Erstelle dein erstes Thema",
+    "topic_subtitle": "Themen sind Ordner für deine Aufgaben — wie „Umzug", „Gesundheit" oder „Nebenprojekt".",
+    "topic_name_label": "Themenname",
+    "topic_name_placeholder": "z.B. Umzug, Gesundheit, Arbeit...",
+    "topic_icon_label": "Symbol",
+    "topic_color_label": "Farbe",
+    "topic_created": "Thema erstellt!",
+    "topic_error": "Thema konnte nicht erstellt werden. Bitte versuche es erneut.",
+
+    "tasks_title": "Füge Aufgaben hinzu",
+    "tasks_subtitle": "Füge ein paar Aufgaben zu „{topicName}" hinzu.",
+    "tasks_skipped_title": "Noch kein Thema",
+    "tasks_skipped_subtitle": "Du hast die Themen-Erstellung übersprungen. Du kannst Themen und Aufgaben später in der App anlegen.",
+    "tasks_placeholder": "Was muss erledigt werden?",
+    "tasks_add": "Hinzufügen",
+    "tasks_hint": "Enter drücken zum Hinzufügen",
+    "tasks_added_count": "{count, plural, =0 {Noch keine Aufgaben} one {1 Aufgabe hinzugefügt} other {{count} Aufgaben hinzugefügt}}",
+    "tasks_error": "Aufgabe konnte nicht hinzugefügt werden. Bitte versuche es erneut.",
+
+    "notifications_title": "Bleib dran",
+    "notifications_subtitle": "Erhalte eine tägliche Erinnerung für deine Quest. Du kannst das jederzeit in den Einstellungen ändern.",
+    "notifications_timezone_label": "Deine Zeitzone",
+    "notifications_timezone_detected": "Erkannt: {timezone}",
+    "notifications_push_label": "Push-Benachrichtigungen aktivieren",
+    "notifications_push_hint": "Momo erinnert dich täglich an deine Quest.",
+    "notifications_push_denied": "Benachrichtigungen wurden im Browser blockiert. Du kannst sie in deinen Browser-Einstellungen aktivieren.",
+    "notifications_push_unsupported": "Push-Benachrichtigungen werden in diesem Browser nicht unterstützt.",
+    "notifications_push_enabled": "Benachrichtigungen aktiviert!",
+
+    "complete_title": "Alles bereit!",
+    "complete_subtitle": "Deine erste Quest wartet auf dem Dashboard. Viel Erfolg!"
   }
 }

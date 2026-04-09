@@ -66,6 +66,15 @@ export default async function AppLayout({
     if (!verified) redirect("/login/2fa");
   }
 
+  // ── Onboarding gate ─────────────────────────────────────────────────
+  // New users who haven't completed onboarding are redirected to the
+  // guided setup wizard. The /onboarding route has its own layout
+  // outside (app) to avoid an infinite redirect loop.
+  const { isOnboardingCompleted } = await import("@/lib/onboarding");
+  if (!(await isOnboardingCompleted(user.id!))) {
+    redirect("/onboarding");
+  }
+
   const { coins } = await getUserStats(user.id!);
 
   // Admin check: ADMIN_USER_IDS is a comma-separated list of user UUIDs.

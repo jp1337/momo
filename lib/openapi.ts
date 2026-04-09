@@ -2263,6 +2263,36 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       },
     },
 
+    // ─── Onboarding ──────────────────────────────────────────────────────────
+
+    "/api/onboarding/complete": {
+      post: {
+        operationId: "completeOnboarding",
+        tags: ["Onboarding"],
+        summary: "Mark onboarding as completed",
+        description:
+          "Sets `onboarding_completed = true` for the authenticated user. " +
+          "Called when the user finishes or skips the onboarding wizard.",
+        security: [{ cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "Onboarding marked as completed.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { success: { type: "boolean" } },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
     // ─── User ─────────────────────────────────────────────────────────────────
 
     "/api/user/export": {

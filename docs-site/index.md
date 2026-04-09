@@ -170,6 +170,8 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 ## What's New
 
+**Onboarding Wizard** — new users are greeted by a short 4-step guided setup: learn the core concepts (Quest, Energy, Coins, Streaks), create a first topic, add a few tasks, and optionally enable push notifications. Every step can be skipped, and the wizard never appears again once completed. Existing accounts are not affected. [See Features →](/momo/features#onboarding)
+
 **Bulk Actions** — select multiple tasks at once, then batch-delete, complete, move to a topic, or set priority from a floating action bar at the bottom of the screen. Useful for cleanup after a template import or inbox triage. Bulk-complete deliberately skips gamification — it's a cleanup tool, not a coin shortcut. [See Features →](/momo/features#bulk-actions)
 
 **"Due today" reminder** — an optional push that fires at your normal daily notification time and lists the tasks actually due today. Snoozed tasks are excluded, recurring tasks are covered via their next occurrence, and — most importantly — the reminder is **silent on empty days**: no "all clear" pings that train you to swipe notifications away. Works via Web Push, ntfy.sh, Pushover, Telegram, or Email. Toggle it on under **Settings → Notifications**. [See Features →](/momo/features#due-today-reminder)

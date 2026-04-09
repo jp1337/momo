@@ -785,5 +785,58 @@
     "wishlist_spent": "Dépensé",
     "wishlist_open": "Ouvert",
     "wishlist_discarded": "Écarté"
+  },
+  "onboarding": {
+    "page_title": "Bienvenue sur Momo",
+    "skip": "Passer",
+    "next": "Suivant",
+    "back": "Retour",
+    "finish": "Commencer avec Momo",
+    "sign_out": "Se déconnecter",
+    "progress_step": "Étape {current} sur {total}",
+
+    "welcome_title": "Bienvenue, {name} !",
+    "welcome_title_anonymous": "Bienvenue !",
+    "welcome_subtitle": "Découvrez comment Momo vous aide à avancer — une tâche à la fois.",
+    "concept_quest_title": "Quête du jour",
+    "concept_quest_desc": "Chaque jour, Momo choisit une tâche pour vous. Pas de surcharge, juste une chose claire.",
+    "concept_energy_title": "Énergie",
+    "concept_energy_desc": "Évaluez votre niveau d'énergie et Momo adaptera les tâches à votre forme du jour.",
+    "concept_coins_title": "Pièces",
+    "concept_coins_desc": "Gagnez des pièces en complétant des tâches. Dépensez-les pour des souhaits de votre liste.",
+    "concept_streaks_title": "Séries",
+    "concept_streaks_desc": "Complétez votre quête chaque jour pour maintenir votre série. Un bouclier vous protège une fois par mois.",
+
+    "topic_title": "Créez votre premier sujet",
+    "topic_subtitle": "Les sujets regroupent vos tâches — comme « Déménagement », « Santé » ou « Projet perso ».",
+    "topic_name_label": "Nom du sujet",
+    "topic_name_placeholder": "ex. Déménagement, Santé, Travail...",
+    "topic_icon_label": "Icône",
+    "topic_color_label": "Couleur",
+    "topic_created": "Sujet créé !",
+    "topic_error": "Impossible de créer le sujet. Veuillez réessayer.",
+
+    "tasks_title": "Ajoutez des tâches",
+    "tasks_subtitle": "Ajoutez quelques tâches à « {topicName} » pour commencer.",
+    "tasks_skipped_title": "Pas encore de sujet",
+    "tasks_skipped_subtitle": "Vous avez sauté la création de sujet. Vous pourrez ajouter des sujets et des tâches plus tard dans l'app.",
+    "tasks_placeholder": "Que faut-il faire ?",
+    "tasks_add": "Ajouter",
+    "tasks_hint": "Appuyez sur Entrée pour ajouter",
+    "tasks_added_count": "{count, plural, =0 {Aucune tâche} one {1 tâche ajoutée} other {{count} tâches ajoutées}}",
+    "tasks_error": "Impossible d'ajouter la tâche. Veuillez réessayer.",
+
+    "notifications_title": "Restez motivé",
+    "notifications_subtitle": "Recevez un rappel quotidien pour votre quête. Modifiable à tout moment dans les Paramètres.",
+    "notifications_timezone_label": "Votre fuseau horaire",
+    "notifications_timezone_detected": "Détecté : {timezone}",
+    "notifications_push_label": "Activer les notifications push",
+    "notifications_push_hint": "Momo vous enverra un rappel quotidien pour votre quête.",
+    "notifications_push_denied": "Les notifications sont bloquées par votre navigateur. Activez-les dans les paramètres du navigateur.",
+    "notifications_push_unsupported": "Les notifications push ne sont pas supportées dans ce navigateur.",
+    "notifications_push_enabled": "Notifications activées !",
+
+    "complete_title": "Tout est prêt !",
+    "complete_subtitle": "Votre première quête vous attend sur le tableau de bord. Bonne chance !"
   }
 }

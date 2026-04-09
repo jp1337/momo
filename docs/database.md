@@ -74,6 +74,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `totp_enabled_at` | timestamptz | **Source of truth** for "is 2FA active". NULL means off, even if `totp_secret` is non-NULL |
 | `calendar_feed_token_hash` | text (unique) | SHA-256 hash of the user's personal iCal feed token. NULL = no feed active. Plaintext token is shown once at creation and never persisted — mirrors the `api_keys` pattern. See [api.md](api.md#calendar-feed-routes) |
 | `calendar_feed_token_created_at` | timestamptz | Timestamp when the current feed token was generated. Displayed in the settings UI ("active since …") |
+| `onboarding_completed` | boolean | Whether the user has completed the onboarding wizard. Default `false` for new users. The `(app)` layout gate redirects to `/onboarding` when `false`. Backfill migration sets all pre-existing users to `true` |
 
 ### `sessions` (second-factor column)
 

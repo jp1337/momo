@@ -10,6 +10,21 @@ This guide walks you through everything Momo offers. Whether you are just gettin
 
 ---
 
+## Onboarding
+
+When you sign in to Momo for the first time, a short guided wizard helps you get set up:
+
+1. **Welcome** — four cards introduce you to Momo's core concepts: Daily Quest, Energy, Coins, and Streaks.
+2. **Create your first topic** — a simplified form lets you pick a name, icon, and color for your first topic. Topics group related tasks together (e.g. "Moving", "Health", "Side Project").
+3. **Add a few tasks** — a quick-add field lets you type task titles and hit Enter. Each task is added to the topic you just created.
+4. **Notifications** — Momo detects your timezone and offers to enable push notifications so you receive a daily quest reminder.
+
+Every step can be skipped — the wizard is a gentle guide, not a gate. Once you finish (or skip through), Momo marks your onboarding as done and you land on the dashboard. The wizard never appears again.
+
+If you signed up before the onboarding feature was added, you will not see the wizard — existing accounts are automatically marked as onboarded.
+
+---
+
 ## Tasks
 
 Tasks are the heart of Momo. Every task can carry as much or as little detail as you need.
@@ -727,14 +742,13 @@ If your account is listed in the `ADMIN_USER_IDS` environment variable, you can 
 
 ## What to Try First
 
-If you are new to Momo, here is a suggested order to explore the features:
+If you are new to Momo, the [onboarding wizard](#onboarding) walks you through the first steps automatically. After that, here is what to explore next:
 
-1. **Create three tasks** — try different priorities and types
-2. **Check your Daily Quest** on the dashboard
-3. **Complete a task** and watch the coins land
-4. **Create a topic** and move one task into it
-5. **Add a wishlist item** with a coin threshold
-6. **Enable push notifications** so Momo can nudge you tomorrow
+1. **Check your Daily Quest** on the dashboard
+2. **Complete a task** and watch the coins land
+3. **Add a wishlist item** with a coin threshold
+4. **Try different priorities and task types** (one-time, recurring)
+5. **Explore the Habit Tracker** to see your recurring tasks visualized
 
 That is enough to make Momo part of your day. Everything else — streaks, achievements, API keys, Alexa — can wait until you are comfortable.
 
