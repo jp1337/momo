@@ -983,7 +983,7 @@ Entries are automatically deleted after 30 days by the `notification-log-cleanup
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | `POST` | `/api/push/subscribe` | Yes | Save push subscription + enable notifications |
-| `PATCH` | `/api/push/subscribe` | Yes | Update reminder preferences (time, timezone, due-today toggle) |
+| `PATCH` | `/api/push/subscribe` | Yes | Update reminder preferences (time, timezone, due-today toggle, morning briefing) |
 | `DELETE` | `/api/push/subscribe` | Yes | Remove subscription + disable notifications |
 | `POST` | `/api/push/test` | Yes | Send a test push notification to the current user |
 
@@ -1011,7 +1011,9 @@ Request body:
 {
   "notificationTime": "06:30",
   "timezone": "Europe/Berlin",
-  "dueTodayReminderEnabled": true
+  "dueTodayReminderEnabled": true,
+  "morningBriefingEnabled": true,
+  "morningBriefingTime": "08:00"
 }
 ```
 
@@ -1020,6 +1022,8 @@ Request body:
 | `notificationTime` | string (HH:MM) | Preferred daily-reminder time in the user's local timezone |
 | `timezone` | string (IANA) | IANA timezone identifier (max 64 chars), e.g. `Europe/Berlin` |
 | `dueTodayReminderEnabled` | boolean | Opt-in for the "Due today" reminder — silent on days with nothing due |
+| `morningBriefingEnabled` | boolean | Opt-in for the morning briefing daily digest — consolidates quest, due tasks, streak, and achievements into one message. Suppresses individual quest and due-today reminders when enabled |
+| `morningBriefingTime` | string (HH:MM) | Time for the morning briefing in the user's local timezone (default `08:00`). Independent from `notificationTime` |
 
 Response: `{ "success": true }`
 
