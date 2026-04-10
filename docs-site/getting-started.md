@@ -178,6 +178,8 @@ Momo supports five notification channels and you can use as many as you like in 
 
 If a notification doesn't arrive, check **Settings → Notification History** — it shows the last 50 delivery attempts with status and error details.
 
+Once you have at least one channel configured, you can enable the **Morning Briefing** in **Settings → Morning Briefing** — a single daily digest that replaces the individual quest and due-today reminders with one compact message. See the [Features guide](/momo/features#morning-briefing-daily-digest) for details.
+
 See the [Features guide](/momo/features#additional-notification-channels) for setup details on each channel.
 
 ## Voice Control with Alexa (Optional)

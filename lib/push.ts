@@ -17,8 +17,8 @@
 
 import webpush from "web-push";
 import { db } from "@/lib/db";
-import { users, pushSubscriptions, taskCompletions, notificationChannels, tasks } from "@/lib/db/schema";
-import { eq, and, gt, gte, or, isNull, lte, asc, sql } from "drizzle-orm";
+import { users, pushSubscriptions, taskCompletions, notificationChannels, tasks, userAchievements, achievements } from "@/lib/db/schema";
+import { eq, and, gt, gte, or, isNull, lte, asc, desc, sql } from "drizzle-orm";
 import { serverEnv } from "@/lib/env";
 import { getCurrentDailyQuest, selectDailyQuest } from "@/lib/daily-quest";
 import { getWeeklyReview } from "@/lib/weekly-review";
@@ -247,7 +247,11 @@ export async function sendDailyQuestNotifications(): Promise<{
       })
       .from(pushSubscriptions)
       .innerJoin(users, eq(pushSubscriptions.userId, users.id))
-      .where(and(eq(users.notificationEnabled, true), timeBucketCondition));
+      .where(and(
+        eq(users.notificationEnabled, true),
+        eq(users.morningBriefingEnabled, false), // digest users get this via morning briefing
+        timeBucketCondition,
+      ));
 
     for (const row of eligibleSubscriptions) {
       try {
@@ -273,7 +277,11 @@ export async function sendDailyQuestNotifications(): Promise<{
     })
     .from(notificationChannels)
     .innerJoin(users, eq(notificationChannels.userId, users.id))
-    .where(and(eq(notificationChannels.enabled, true), timeBucketCondition));
+    .where(and(
+      eq(notificationChannels.enabled, true),
+      eq(users.morningBriefingEnabled, false), // digest users get this via morning briefing
+      timeBucketCondition,
+    ));
 
   for (const row of channelUsers) {
     try {
@@ -432,6 +440,7 @@ export async function sendDueTodayNotifications(): Promise<{
         and(
           eq(users.notificationEnabled, true),
           eq(users.dueTodayReminderEnabled, true),
+          eq(users.morningBriefingEnabled, false), // digest users get this via morning briefing
           timeBucketCondition
         )
       );
@@ -468,6 +477,7 @@ export async function sendDueTodayNotifications(): Promise<{
       and(
         eq(notificationChannels.enabled, true),
         eq(users.dueTodayReminderEnabled, true),
+        eq(users.morningBriefingEnabled, false), // digest users get this via morning briefing
         timeBucketCondition
       )
     );
@@ -713,6 +723,214 @@ export async function sendWeeklyReviewNotifications(): Promise<{
       failed += result.failed;
     } catch (err) {
       console.error("[channels] Failed to send weekly review notification to", row.userId, err);
+      failed++;
+    }
+  }
+
+  return { sent, failed };
+}
+
+// ─── Morning Briefing (Daily Digest) ────────────────────────────────────────
+
+/**
+ * Data gathered for a single user's morning briefing.
+ */
+interface BriefingData {
+  questTitle: string | null;
+  dueTasks: Array<{ id: string; title: string }>;
+  streakCurrent: number;
+  recentAchievements: Array<{ title: string; icon: string }>;
+}
+
+/**
+ * Sends morning briefing (daily digest) notifications to all users who have
+ *   - morning_briefing_enabled = true
+ *   - morning_briefing_time matching the current 5-minute bucket (in their tz)
+ *   - at least one delivery method (Web Push or notification channel)
+ *
+ * The briefing consolidates: daily quest, due-today tasks, current streak,
+ * and achievements unlocked in the last 24 hours into one message.
+ *
+ * Always sends when enabled — even on a "light" day with nothing due, because
+ * the user opted in to a daily ritual. Uses a motivational fallback message.
+ *
+ * Users with morning briefing enabled are excluded from the individual
+ * daily-quest and due-today cron jobs to avoid duplicate pings.
+ *
+ * Called by the unified dispatcher in lib/cron.ts.
+ *
+ * @returns Object with sent and failed counts
+ */
+export async function sendMorningBriefingNotifications(): Promise<{
+  sent: number;
+  failed: number;
+}> {
+  let sent = 0;
+  let failed = 0;
+
+  // Time-bucket WHERE clause using morningBriefingTime (not notificationTime)
+  const timeBucketCondition = and(
+    eq(users.morningBriefingEnabled, true),
+    sql`EXTRACT(HOUR FROM ${users.morningBriefingTime})
+        = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
+    sql`FLOOR(EXTRACT(MINUTE FROM ${users.morningBriefingTime}) / 5)
+        = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
+  );
+
+  // Cache briefing data per user for multi-device + channel fan-out
+  const briefingCache = new Map<string, BriefingData>();
+
+  /** Fetch achievements unlocked in the last 24 hours for a user. */
+  async function fetchRecentAchievements(
+    userId: string
+  ): Promise<Array<{ title: string; icon: string }>> {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const rows = await db
+      .select({
+        title: achievements.title,
+        icon: achievements.icon,
+      })
+      .from(userAchievements)
+      .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
+      .where(
+        and(
+          eq(userAchievements.userId, userId),
+          gte(userAchievements.earnedAt, cutoff)
+        )
+      )
+      .orderBy(desc(userAchievements.earnedAt))
+      .limit(5);
+    return rows;
+  }
+
+  /** Resolve briefing data once per user, using cache. */
+  async function resolveBriefing(
+    userId: string,
+    timezone: string | null,
+    streakCurrent: number
+  ): Promise<BriefingData> {
+    if (briefingCache.has(userId)) return briefingCache.get(userId)!;
+
+    const [questTitle, dueTasks, recentAchievements] = await Promise.all([
+      getCurrentDailyQuest(userId).then(
+        (q) => q?.title ?? null,
+        () => null
+      ),
+      fetchDueTodayTasks(userId),
+      fetchRecentAchievements(userId),
+    ]);
+
+    // If no existing quest, try to select one (triggers selection for the day)
+    let finalQuestTitle = questTitle;
+    if (!finalQuestTitle) {
+      try {
+        const quest = await selectDailyQuest(userId, timezone);
+        finalQuestTitle = quest?.title ?? null;
+      } catch {
+        // Non-critical — briefing still sends without quest
+      }
+    }
+
+    const data: BriefingData = {
+      questTitle: finalQuestTitle,
+      dueTasks,
+      streakCurrent,
+      recentAchievements,
+    };
+    briefingCache.set(userId, data);
+    return data;
+  }
+
+  /** Build the briefing notification payload. */
+  function buildPayload(data: BriefingData): NotificationPayload & ChannelPayload {
+    const lines: string[] = [];
+
+    if (data.questTitle) {
+      const title = data.questTitle.length > 60
+        ? `${data.questTitle.slice(0, 57)}...`
+        : data.questTitle;
+      lines.push(`🎯 Quest: ${title}`);
+    }
+
+    if (data.dueTasks.length > 0) {
+      const preview = data.dueTasks.slice(0, 3).map((t) => t.title).join(", ");
+      const remaining = data.dueTasks.length - 3;
+      const suffix = remaining > 0 ? ` +${remaining}` : "";
+      lines.push(`📋 Fällig: ${preview}${suffix}`);
+    }
+
+    if (data.streakCurrent > 0) {
+      lines.push(`🔥 Streak: ${data.streakCurrent} Tage`);
+    }
+
+    if (data.recentAchievements.length > 0) {
+      const achievementList = data.recentAchievements
+        .map((a) => `${a.icon} ${a.title}`)
+        .join(", ");
+      lines.push(`🏆 Neu: ${achievementList}`);
+    }
+
+    const body = lines.length > 0
+      ? lines.join(" · ")
+      : "Keine Aufgaben heute — genieß den freien Tag! ☀️";
+
+    return {
+      title: "Guten Morgen! Dein Momo-Briefing",
+      body,
+      icon: "/icon-192.png",
+      url: "/dashboard",
+      tag: "morning-briefing",
+    };
+  }
+
+  // ── Web Push block (only if VAPID is configured) ──
+  if (isVapidConfigured()) {
+    const eligibleSubscriptions = await db
+      .select({
+        userId: pushSubscriptions.userId,
+        subscription: pushSubscriptions.subscription,
+        timezone: users.timezone,
+        streakCurrent: users.streakCurrent,
+      })
+      .from(pushSubscriptions)
+      .innerJoin(users, eq(pushSubscriptions.userId, users.id))
+      .where(and(eq(users.notificationEnabled, true), timeBucketCondition));
+
+    for (const row of eligibleSubscriptions) {
+      try {
+        const data = await resolveBriefing(row.userId, row.timezone, row.streakCurrent);
+        await sendPushNotification(
+          row.userId,
+          row.subscription as PushSubscriptionData,
+          buildPayload(data)
+        );
+        sent++;
+      } catch (err) {
+        console.error("[push] Failed to send morning briefing to", row.userId, err);
+        failed++;
+      }
+    }
+  }
+
+  // ── Notification channels block (ntfy, pushover, telegram, email) ──
+  const channelUsers = await db
+    .selectDistinct({
+      userId: notificationChannels.userId,
+      timezone: users.timezone,
+      streakCurrent: users.streakCurrent,
+    })
+    .from(notificationChannels)
+    .innerJoin(users, eq(notificationChannels.userId, users.id))
+    .where(and(eq(notificationChannels.enabled, true), timeBucketCondition));
+
+  for (const row of channelUsers) {
+    try {
+      const data = await resolveBriefing(row.userId, row.timezone, row.streakCurrent);
+      const result = await sendToAllChannels(row.userId, buildPayload(data));
+      sent += result.sent;
+      failed += result.failed;
+    } catch (err) {
+      console.error("[channels] Failed to send morning briefing to", row.userId, err);
       failed++;
     }
   }

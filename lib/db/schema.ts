@@ -145,6 +145,22 @@ export const users = pgTable("users", {
     .notNull()
     .default(false),
 
+  /**
+   * Opt-in daily digest: consolidates quest + due tasks + streak + achievements
+   * into one push at `morningBriefingTime`. Replaces individual quest and
+   * due-today reminders when enabled.
+   */
+  morningBriefingEnabled: boolean("morning_briefing_enabled")
+    .notNull()
+    .default(false),
+
+  /**
+   * Time of day for the morning briefing (24h format, user's local timezone).
+   * Separate from notificationTime so users can get the digest earlier/later
+   * than individual reminders. Default: 08:00.
+   */
+  morningBriefingTime: time("morning_briefing_time").notNull().default("08:00"),
+
   /** User's preferred colour theme */
   theme: themeEnum("theme").notNull().default("system"),
 

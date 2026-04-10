@@ -29,6 +29,7 @@ import { EmotionalClosureSettings } from "@/components/settings/emotional-closur
 import { SecuritySection } from "@/components/settings/security-section";
 import { PasskeysSection } from "@/components/settings/passkeys-section";
 import { CalendarFeedSection } from "@/components/settings/calendar-feed-section";
+import { MorningBriefingSettings } from "@/components/settings/morning-briefing-settings";
 import { getCalendarFeedStatus } from "@/lib/calendar";
 import { getUserTotpStatus } from "@/lib/totp";
 import { listUserPasskeys } from "@/lib/webauthn";
@@ -67,6 +68,8 @@ export default async function SettingsPage() {
         dueTodayReminderEnabled: users.dueTodayReminderEnabled,
         questPostponeLimit: users.questPostponeLimit,
         emotionalClosureEnabled: users.emotionalClosureEnabled,
+        morningBriefingEnabled: users.morningBriefingEnabled,
+        morningBriefingTime: users.morningBriefingTime,
       })
       .from(users)
       .where(eq(users.id, session.user.id))
@@ -244,6 +247,43 @@ export default async function SettingsPage() {
           defaultEmailAddress={user.email ?? ""}
         />
       </section>
+
+      {/* Morning Briefing section — visible when at least one delivery method exists */}
+      {(activeSubs.length > 0 || channelRows.some((c) => c.enabled)) && (
+        <section
+          className="rounded-xl p-6 flex flex-col gap-4"
+          style={{
+            backgroundColor: "var(--bg-surface)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <div className="flex flex-col gap-1">
+            <h2
+              className="text-base font-semibold"
+              style={{
+                fontFamily: "var(--font-ui)",
+                color: "var(--text-primary)",
+              }}
+            >
+              {t("section_morning_briefing")}
+            </h2>
+            <p
+              className="text-sm"
+              style={{
+                color: "var(--text-muted)",
+                fontFamily: "var(--font-ui)",
+              }}
+            >
+              {t("morning_briefing_hint")}
+            </p>
+          </div>
+
+          <MorningBriefingSettings
+            initialEnabled={user.morningBriefingEnabled}
+            initialTime={user.morningBriefingTime ?? "08:00"}
+          />
+        </section>
+      )}
 
       {/* Notification History section */}
       <section
