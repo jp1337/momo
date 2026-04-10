@@ -38,6 +38,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `settings/language-switcher.tsx` — UI language switcher (de/en/fr); POSTs to /api/locale
 - `settings/delete-account.tsx` — Danger zone: account deletion with confirmation dialog
 - `settings/profile-settings.tsx` — Inline profile editor: name, email, avatar upload with preview; PATCHes /api/user/profile; uses next/image for remote URLs, plain img for data URLs (CSP-safe)
+- `settings/morning-briefing-settings.tsx` — Morning briefing (daily digest) toggle + time picker; visible when user has ≥1 delivery method; PATCHes /api/push/subscribe with morningBriefingEnabled/morningBriefingTime
 - `settings/notification-channels.tsx` — Multi-channel notification settings: list/add/remove/test channels (ntfy.sh, Pushover, Telegram, Email; future: Webhook); inline NtfyForm/PushoverForm/TelegramForm/EmailForm; toggle enable/disable per channel; props `emailAvailable` + `defaultEmailAddress` thread instance SMTP config + account email from the Server Component, hiding the "+ Email" button when SMTP is unset
 - `settings/notification-history.tsx` — Client component: fetches and displays last 50 notification delivery attempts from GET /api/settings/notification-history. Table/list with channel badge (icon + label), title, timestamp (relative), status badge (green sent / red failed). Failed entries expand on click to show error message. Refresh button, loading skeleton, empty state
 - `settings/quest-settings.tsx` — Slider to configure daily quest postpone limit (1–5, default 3)

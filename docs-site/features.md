@@ -504,6 +504,25 @@ If a notification failed, click the entry to see the error message. This is espe
 
 Entries are automatically deleted after 30 days.
 
+### Morning briefing (daily digest)
+
+Tired of getting multiple separate pings each morning? The **Morning Briefing** rolls everything into one compact daily digest:
+
+- **Daily Quest** — the task Momo picked for you today
+- **Due tasks** — recurring and one-time tasks due today
+- **Streak** — your current streak length
+- **New achievements** — anything you unlocked in the last 24 hours
+
+**How to enable it:**
+
+1. Go to **Settings → Morning Briefing** (only visible once you have at least one notification channel configured)
+2. Toggle **Enable morning briefing**
+3. Pick your preferred briefing time (default: 08:00)
+
+When the morning briefing is enabled, the individual daily-quest and due-today reminders are automatically suppressed — you won't get duplicate pings. The streak reminder (later in the day) still fires separately.
+
+Even on a completely empty day, the briefing arrives with a friendly "nothing due — enjoy your free day" message. This is deliberate: you opted into a daily ritual, and Momo respects that.
+
 ---
 
 ## Installing Momo as an App (PWA)

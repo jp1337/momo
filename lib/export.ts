@@ -130,6 +130,8 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
         monthlyBudget: users.monthlyBudget,
         notificationEnabled: users.notificationEnabled,
         notificationTime: users.notificationTime,
+        morningBriefingEnabled: users.morningBriefingEnabled,
+        morningBriefingTime: users.morningBriefingTime,
         theme: users.theme,
         createdAt: users.createdAt,
       })

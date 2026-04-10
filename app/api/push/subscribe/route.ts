@@ -159,12 +159,20 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
         .optional(),
       timezone: z.string().min(1).max(64).optional(),
       dueTodayReminderEnabled: z.boolean().optional(),
+      morningBriefingEnabled: z.boolean().optional(),
+      morningBriefingTime: z
+        .string()
+        .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
+        .transform((v) => v.slice(0, 5))
+        .optional(),
     })
     .refine(
       (v) =>
         v.notificationTime !== undefined ||
         v.timezone !== undefined ||
-        v.dueTodayReminderEnabled !== undefined,
+        v.dueTodayReminderEnabled !== undefined ||
+        v.morningBriefingEnabled !== undefined ||
+        v.morningBriefingTime !== undefined,
       { message: "At least one field must be provided" }
     )
     .safeParse(body);
@@ -185,6 +193,12 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   }
   if (parsed.data.dueTodayReminderEnabled !== undefined) {
     updates.dueTodayReminderEnabled = parsed.data.dueTodayReminderEnabled;
+  }
+  if (parsed.data.morningBriefingEnabled !== undefined) {
+    updates.morningBriefingEnabled = parsed.data.morningBriefingEnabled;
+  }
+  if (parsed.data.morningBriefingTime !== undefined) {
+    updates.morningBriefingTime = parsed.data.morningBriefingTime;
   }
 
   try {
