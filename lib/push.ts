@@ -503,6 +503,217 @@ export async function sendDueTodayNotifications(): Promise<{
   return { sent, failed };
 }
 
+// ─── Recurring Due reminder ─────────────────────────────────────────────────
+
+/**
+ * Fetches up to 10 recurring tasks that are due today in the given user's
+ * timezone, excluding completed, snoozed and paused tasks.
+ *
+ * "Due today" for recurring tasks means:
+ *  - tasks.type = 'RECURRING'
+ *  - tasks.next_due_date equals today in the user's timezone
+ * AND
+ *  - completed_at IS NULL
+ *  - snoozed_until IS NULL OR snoozed_until <= today
+ *  - paused_until IS NULL
+ *
+ * Ordered by priority (ascending enum order, URGENT first) then title.
+ *
+ * @param userId - The user whose recurring tasks to query
+ * @returns Array of { id, title } for each due recurring task (max 10)
+ */
+async function fetchRecurringDueTasks(
+  userId: string
+): Promise<Array<{ id: string; title: string }>> {
+  const today = sql<string>`((NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))::date)`;
+
+  const rows = await db
+    .select({ id: tasks.id, title: tasks.title })
+    .from(tasks)
+    .innerJoin(users, eq(tasks.userId, users.id))
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        eq(tasks.type, "RECURRING"),
+        isNull(tasks.completedAt),
+        eq(tasks.nextDueDate, today),
+        or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, today)),
+        isNull(tasks.pausedUntil)
+      )
+    )
+    .orderBy(asc(tasks.priority), asc(tasks.title))
+    .limit(10);
+
+  return rows;
+}
+
+/**
+ * Sends dedicated recurring-task due notifications to all users who have
+ *   - notification_enabled = true (for web push) or at least one enabled channel
+ *   - recurring_due_reminder_enabled = true
+ *   - morning_briefing_enabled = false (digest users already get due tasks)
+ *   - notification_time matching the current 5-minute bucket (in their tz)
+ *   - at least one non-completed, non-snoozed recurring task with next_due_date = today
+ *
+ * Key difference from the "due-today" reminder: this sends **individual
+ * notifications per task** when 1–3 recurring tasks are due, giving each
+ * its own system notification entry. When >3 are due, they are bundled
+ * into a single summary to avoid flooding the notification shade.
+ *
+ * Silent on empty: users with no recurring tasks due receive *no* ping.
+ *
+ * @returns Object with sent and failed counts
+ */
+export async function sendRecurringDueNotifications(): Promise<{
+  sent: number;
+  failed: number;
+}> {
+  let sent = 0;
+  let failed = 0;
+
+  const timeBucketCondition = and(
+    sql`EXTRACT(HOUR FROM ${users.notificationTime})
+        = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
+    sql`FLOOR(EXTRACT(MINUTE FROM ${users.notificationTime}) / 5)
+        = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
+  );
+
+  // Cache recurring-due tasks per user so multi-device and multi-channel
+  // fan-out doesn't re-query. `null` sentinel = already checked and nothing due.
+  const dueCache = new Map<string, Array<{ id: string; title: string }> | null>();
+
+  /** Resolve recurring due tasks once per user, using the cache. */
+  async function resolveRecurringDueTasks(
+    userId: string
+  ): Promise<Array<{ id: string; title: string }>> {
+    if (dueCache.has(userId)) return dueCache.get(userId) ?? [];
+    const rows = await fetchRecurringDueTasks(userId);
+    dueCache.set(userId, rows.length > 0 ? rows : null);
+    return rows;
+  }
+
+  /**
+   * Builds notification payloads for a user's recurring due tasks.
+   * Returns an array — one payload per task when ≤3, one bundled when >3.
+   */
+  function buildPayloads(
+    dueTasks: Array<{ id: string; title: string }>
+  ): Array<NotificationPayload & ChannelPayload> {
+    if (dueTasks.length <= 3) {
+      // Individual notification per task
+      return dueTasks.map((task) => {
+        const title = task.title.length > 80
+          ? `${task.title.slice(0, 77)}...`
+          : task.title;
+        return {
+          title: `🔁 ${title}`,
+          body: "Wiederkehrende Aufgabe ist heute fällig.",
+          icon: "/icon-192.png",
+          url: "/tasks",
+          tag: `recurring-due-${task.id}`,
+        };
+      });
+    }
+
+    // Bundled notification for >3 tasks
+    const preview = dueTasks.slice(0, 3).map((t) => t.title).join(" · ");
+    const remaining = dueTasks.length - 3;
+    const body =
+      remaining > 0
+        ? `${preview} · und ${remaining} weitere`
+        : preview;
+    return [
+      {
+        title: `🔁 ${dueTasks.length} wiederkehrende Tasks fällig`,
+        body,
+        icon: "/icon-192.png",
+        url: "/tasks",
+        tag: "recurring-due",
+      },
+    ];
+  }
+
+  // ── Web Push block (only if VAPID is configured) ──
+  if (isVapidConfigured()) {
+    const eligibleSubscriptions = await db
+      .select({
+        userId: pushSubscriptions.userId,
+        subscription: pushSubscriptions.subscription,
+      })
+      .from(pushSubscriptions)
+      .innerJoin(users, eq(pushSubscriptions.userId, users.id))
+      .where(
+        and(
+          eq(users.notificationEnabled, true),
+          eq(users.recurringDueReminderEnabled, true),
+          eq(users.morningBriefingEnabled, false),
+          timeBucketCondition
+        )
+      );
+
+    for (const row of eligibleSubscriptions) {
+      try {
+        const dueTasks = await resolveRecurringDueTasks(row.userId);
+        if (dueTasks.length === 0) continue; // silence-on-empty
+        const payloads = buildPayloads(dueTasks);
+        for (const payload of payloads) {
+          await sendPushNotification(
+            row.userId,
+            row.subscription as PushSubscriptionData,
+            payload
+          );
+          sent++;
+        }
+      } catch (err) {
+        console.error(
+          "[push] Failed to send recurring-due notification to",
+          row.userId,
+          err
+        );
+        failed++;
+      }
+    }
+  }
+
+  // ── Notification channels block (ntfy, pushover, telegram, email) ──
+  const channelUsers = await db
+    .selectDistinct({
+      userId: notificationChannels.userId,
+    })
+    .from(notificationChannels)
+    .innerJoin(users, eq(notificationChannels.userId, users.id))
+    .where(
+      and(
+        eq(notificationChannels.enabled, true),
+        eq(users.recurringDueReminderEnabled, true),
+        eq(users.morningBriefingEnabled, false),
+        timeBucketCondition
+      )
+    );
+
+  for (const row of channelUsers) {
+    try {
+      const dueTasks = await resolveRecurringDueTasks(row.userId);
+      if (dueTasks.length === 0) continue; // silence-on-empty
+      const payloads = buildPayloads(dueTasks);
+      for (const payload of payloads) {
+        const result = await sendToAllChannels(row.userId, payload);
+        sent += result.sent;
+        failed += result.failed;
+      }
+    } catch (err) {
+      console.error(
+        "[channels] Failed to send recurring-due notification to",
+        row.userId,
+        err
+      );
+      failed++;
+    }
+  }
+
+  return { sent, failed };
+}
+
 /**
  * Sends streak reminder notifications to all devices of users who are at risk
  * of losing their streak.

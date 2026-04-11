@@ -451,6 +451,17 @@ On top of the daily-quest ping, Momo can send a separate reminder listing the ta
 - **Delivery time.** Uses the same time you picked for your daily reminder. Both pings arrive within a few seconds of each other.
 - **Channels.** Works with every channel you have configured — browser push, ntfy.sh, Pushover, Telegram, Email. Enable any one of them and the toggle becomes available.
 
+### Individual recurring-task reminders
+
+Want each recurring task to stand out on its own? Toggle **Send individual reminders for recurring tasks** in **Settings → Notifications** and every recurring task that is due today gets its own dedicated notification — separate from the bundled "due today" reminder.
+
+- **1–3 recurring tasks due** → Each task gets its own notification with its title, e.g. *"🔁 Wäsche waschen"*.
+- **4+ recurring tasks due** → Bundled into a single summary to avoid flooding your notification shade.
+- **Paused and snoozed tasks** are excluded, just like the due-today reminder.
+- **Morning briefing users** don't get these — the briefing already covers due tasks.
+
+This is ideal if you have a handful of weekly habits and want each one to pop up as a distinct, actionable reminder rather than being buried in a list.
+
 ### Requirements
 
 Push notifications require VAPID keys to be configured on the server. If you are self-hosting, see the [Environment Variables guide](/momo/environment-variables) for the `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` variables.
@@ -533,7 +544,7 @@ Tired of getting multiple separate pings each morning? The **Morning Briefing** 
 2. Toggle **Enable morning briefing**
 3. Pick your preferred briefing time (default: 08:00)
 
-When the morning briefing is enabled, the individual daily-quest and due-today reminders are automatically suppressed — you won't get duplicate pings. The streak reminder (later in the day) still fires separately.
+When the morning briefing is enabled, the individual daily-quest, due-today, and recurring-task reminders are automatically suppressed — you won't get duplicate pings. The streak reminder (later in the day) still fires separately.
 
 Even on a completely empty day, the briefing arrives with a friendly "nothing due — enjoy your free day" message. This is deliberate: you opted into a daily ritual, and Momo respects that.
 
@@ -694,6 +705,7 @@ Your timezone affects all scheduled actions:
 
 - **Daily Quest reminder** — sent at your configured notification time in your local time
 - **Due-today reminder** — checks which tasks are due "today" in your timezone
+- **Recurring-task reminder** — checks which recurring tasks are due "today" in your timezone
 - **Morning Briefing** — delivered at your briefing time in your timezone
 - **Weekly Review** — sent on Sunday at 18:00 in your timezone
 

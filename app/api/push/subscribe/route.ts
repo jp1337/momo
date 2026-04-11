@@ -159,6 +159,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
         .optional(),
       timezone: z.string().min(1).max(64).optional(),
       dueTodayReminderEnabled: z.boolean().optional(),
+      recurringDueReminderEnabled: z.boolean().optional(),
       morningBriefingEnabled: z.boolean().optional(),
       morningBriefingTime: z
         .string()
@@ -171,6 +172,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
         v.notificationTime !== undefined ||
         v.timezone !== undefined ||
         v.dueTodayReminderEnabled !== undefined ||
+        v.recurringDueReminderEnabled !== undefined ||
         v.morningBriefingEnabled !== undefined ||
         v.morningBriefingTime !== undefined,
       { message: "At least one field must be provided" }
@@ -193,6 +195,9 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   }
   if (parsed.data.dueTodayReminderEnabled !== undefined) {
     updates.dueTodayReminderEnabled = parsed.data.dueTodayReminderEnabled;
+  }
+  if (parsed.data.recurringDueReminderEnabled !== undefined) {
+    updates.recurringDueReminderEnabled = parsed.data.recurringDueReminderEnabled;
   }
   if (parsed.data.morningBriefingEnabled !== undefined) {
     updates.morningBriefingEnabled = parsed.data.morningBriefingEnabled;

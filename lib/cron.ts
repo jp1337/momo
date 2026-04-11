@@ -17,7 +17,7 @@
 import { db } from "@/lib/db";
 import { cronRuns } from "@/lib/db/schema";
 import { lt, eq, and } from "drizzle-orm";
-import { sendDailyQuestNotifications, sendStreakReminders, sendWeeklyReviewNotifications, sendDueTodayNotifications, sendMorningBriefingNotifications } from "@/lib/push";
+import { sendDailyQuestNotifications, sendStreakReminders, sendWeeklyReviewNotifications, sendDueTodayNotifications, sendRecurringDueNotifications, sendMorningBriefingNotifications } from "@/lib/push";
 import { cleanupNotificationLog } from "@/lib/notification-log";
 import { autoEndVacations } from "@/lib/vacation";
 
@@ -108,6 +108,15 @@ const CRON_JOBS: CronJob[] = [
     // both match the same 5-minute bucket.
     name: "due-today",
     handler: sendDueTodayNotifications,
+    guard: "5min-bucket",
+    logToDb: true,
+  },
+  {
+    // Individual per-task notifications for recurring tasks due today.
+    // Runs after due-today so the generic overview arrives first, then
+    // individual recurring reminders follow as separate notifications.
+    name: "recurring-due",
+    handler: sendRecurringDueNotifications,
     guard: "5min-bucket",
     logToDb: true,
   },
