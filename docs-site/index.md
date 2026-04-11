@@ -172,6 +172,8 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 **Onboarding Wizard** — new users are greeted by a short 4-step guided setup: learn the core concepts (Quest, Energy, Coins, Streaks), create a first topic, add a few tasks, and optionally enable push notifications. Every step can be skipped, and the wizard never appears again once completed. Existing accounts are not affected. [See Features →](/momo/features#onboarding)
 
+**Vacation Mode** — going on holiday or feeling under the weather? Pause all recurring tasks at once from **Settings → Vacation Mode**. Your habit streaks stay protected, due dates shift automatically when you return, and paused tasks vanish from quests, notifications, and your calendar feed. A daily background job ends vacation on the chosen date — or end it early with one click. [See Features →](/momo/features#vacation-mode--pause-all-recurring-tasks)
+
 **Bulk Actions** — select multiple tasks at once, then batch-delete, complete, move to a topic, or set priority from a floating action bar at the bottom of the screen. Useful for cleanup after a template import or inbox triage. Bulk-complete deliberately skips gamification — it's a cleanup tool, not a coin shortcut. [See Features →](/momo/features#bulk-actions)
 
 **Morning Briefing** — one daily digest instead of many pings. Opt in under **Settings → Morning Briefing** to receive your quest, due tasks, streak, and new achievements in a single message at your chosen time (default 08:00). Replaces the individual quest and due-today reminders automatically. [See Features →](/momo/features#morning-briefing-daily-digest)

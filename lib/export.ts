@@ -132,6 +132,7 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
         notificationTime: users.notificationTime,
         morningBriefingEnabled: users.morningBriefingEnabled,
         morningBriefingTime: users.morningBriefingTime,
+        vacationEndDate: users.vacationEndDate,
         theme: users.theme,
         createdAt: users.createdAt,
       })
@@ -167,6 +168,8 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
         completedAt: tasks.completedAt,
         coinValue: tasks.coinValue,
         isDailyQuest: tasks.isDailyQuest,
+        pausedAt: tasks.pausedAt,
+        pausedUntil: tasks.pausedUntil,
         createdAt: tasks.createdAt,
       })
       .from(tasks)
