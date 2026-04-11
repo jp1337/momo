@@ -137,6 +137,7 @@ export default async function HabitsPage({ searchParams }: HabitsPageProps) {
     statStreakEmpty: t("stat_streak_empty"),
     recurrenceEveryDay: t("recurrence_every_day"),
     recurrenceEveryNDays: t("recurrence_every_n_days"),
+    pausedUntilLabel: t("habit_paused_until"),
     gridLabels: {
       gridAriaLabel: t("grid_aria_label"),
       tooltipOne: t("cell_tooltip_one"),

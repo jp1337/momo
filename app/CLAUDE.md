@@ -78,6 +78,7 @@ api/
   settings/quest/route.ts            → PATCH (save quest settings: postpone limit, emotional closure toggle)
   settings/notification-channels/route.ts     → GET (list channels), PUT (upsert channel)
   settings/notification-history/route.ts      → GET (last 50 notification delivery attempts for the user)
+  settings/vacation-mode/route.ts    → GET (vacation status), PATCH (activate/deactivate vacation mode; 10/min; sets pausedAt/pausedUntil on all RECURRING tasks, shifts nextDueDate on deactivation)
   settings/notification-channels/[type]/route.ts → DELETE (remove channel)
   settings/notification-channels/[type]/test/route.ts → POST (send test notification)
   onboarding/complete/route.ts       → POST (mark onboarding as completed; 10/min)

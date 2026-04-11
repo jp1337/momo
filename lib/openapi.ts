@@ -2167,6 +2167,75 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       },
     },
 
+    "/api/settings/vacation-mode": {
+      get: {
+        operationId: "getVacationModeStatus",
+        tags: ["Settings"],
+        summary: "Get vacation mode status",
+        description:
+          "Returns whether the authenticated user currently has vacation mode active " +
+          "and the configured end date.",
+        responses: {
+          200: {
+            description: "Vacation mode status",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object" as const,
+                  properties: {
+                    active: { type: "boolean" as const },
+                    endDate: { type: "string" as const, format: "date", nullable: true },
+                  },
+                },
+              },
+            },
+          },
+          401: { $ref: "#/components/responses/Unauthorized" },
+        },
+      },
+      patch: {
+        operationId: "updateVacationMode",
+        tags: ["Settings"],
+        summary: "Activate or deactivate vacation mode",
+        description:
+          "When activated, all RECURRING tasks are paused (pausedAt + pausedUntil set). " +
+          "When deactivated, nextDueDate is shifted forward by the actual pause duration. " +
+          "Rate-limited to 10 requests per minute.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object" as const,
+                required: ["enabled"],
+                properties: {
+                  enabled: { type: "boolean" as const },
+                  endDate: { type: "string" as const, format: "date", description: "Required when enabled = true" },
+                  timezone: { type: "string" as const, description: "IANA timezone" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Vacation mode updated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object" as const,
+                  properties: { success: { type: "boolean" as const } },
+                },
+              },
+            },
+          },
+          401: { $ref: "#/components/responses/Unauthorized" },
+          422: { $ref: "#/components/responses/ValidationError" },
+          429: { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
     "/api/settings/calendar-feed": {
       get: {
         operationId: "getCalendarFeedStatus",

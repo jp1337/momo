@@ -211,6 +211,7 @@ export async function buildIcsForUser(
       and(
         eq(tasks.userId, userId),
         isNull(tasks.completedAt),
+        isNull(tasks.pausedUntil),
         or(isNotNull(tasks.dueDate), isNotNull(tasks.nextDueDate))
       )
     );

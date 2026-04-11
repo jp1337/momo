@@ -223,6 +223,13 @@ export const users = pgTable("users", {
   /** Whether the user has completed the onboarding wizard. False for new users. */
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
 
+  /**
+   * End date of vacation mode (YYYY-MM-DD, inclusive). Null = no active vacation.
+   * When set, all RECURRING tasks have their pausedAt/pausedUntil columns populated.
+   * A daily cron job auto-ends vacation once this date has passed.
+   */
+  vacationEndDate: date("vacation_end_date"),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -404,6 +411,21 @@ export const tasks = pgTable("tasks", {
 
   /** Sort position within a topic. Lower values appear first. Default 0, assigned sequentially on creation. */
   sortOrder: integer("sort_order").notNull().default(0),
+
+  /**
+   * Date when this task was paused (YYYY-MM-DD). Null = not paused.
+   * Set by vacation mode activation; used to calculate the actual pause
+   * duration when unpausing (nextDueDate shifts by `today - pausedAt` days).
+   */
+  pausedAt: date("paused_at"),
+
+  /**
+   * Date until which this task is paused (YYYY-MM-DD, inclusive). Null = active.
+   * Paused tasks are excluded from daily quest selection, due-today notifications,
+   * and the iCal feed. Distinct from snoozedUntil: pause also shifts nextDueDate
+   * on deactivation and excludes the period from habit streak calculations.
+   */
+  pausedUntil: date("paused_until"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

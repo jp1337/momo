@@ -169,6 +169,13 @@
       "when": 1775816440243,
       "tag": "0023_first_layla_miller",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1775894679053,
+      "tag": "0024_sudden_hydra",
+      "breakpoints": true
     }
   ]
 }
