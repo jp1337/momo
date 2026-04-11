@@ -78,7 +78,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // Create a fresh Auth.js database session row for the resolved user.
-  const sessionToken = await createPasskeyLoginSession(verified.userId);
+  const sessionToken = await createPasskeyLoginSession(verified.userId, {
+    userAgent: request.headers.get("user-agent"),
+    ipAddress:
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown",
+  });
 
   // Set the canonical Auth.js session cookie. Cookie name depends on
   // whether we're behind HTTPS — match the Auth.js v5 naming.

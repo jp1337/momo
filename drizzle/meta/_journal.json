@@ -176,6 +176,13 @@
       "when": 1775894679053,
       "tag": "0024_sudden_hydra",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1775936287961,
+      "tag": "0026_active_sessions",
+      "breakpoints": true
     }
   ]
 }

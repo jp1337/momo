@@ -82,11 +82,15 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `onboarding_completed` | boolean | Whether the user has completed the onboarding wizard. Default `false` for new users. The `(app)` layout gate redirects to `/onboarding` when `false`. Backfill migration sets all pre-existing users to `true` |
 | `vacation_end_date` | date | End date of vacation mode (YYYY-MM-DD, inclusive). Null = no active vacation. When set, all RECURRING tasks have `paused_at`/`paused_until` populated. A daily cron job (`vacation-mode-auto-end`) auto-ends vacation once this date has passed |
 
-### `sessions` (second-factor column)
+### `sessions` (extended columns)
 
 | Column | Type | Description |
 |---|---|---|
 | `second_factor_verified_at` | timestamptz | Per-session second-factor verification timestamp (TOTP, backup code, or passkey assertion). NULL on every fresh OAuth session until the user passes the `/login/2fa` challenge. The `(app)` layout gate redirects to `/login/2fa` when `userHasSecondFactor(userId)` is true and this is NULL. Sessions created by the passwordless-passkey primary login flow are inserted with this column already set because a passkey is inherently MFA. *(Historically named `totp_verified_at`; renamed in migration `0015_passkeys` when Passkey support landed.)* |
+| `created_at` | timestamptz | When the session was created. NULL for legacy sessions created before migration `0026`. Populated on first request for OAuth sessions, or immediately for passkey login sessions |
+| `last_active_at` | timestamptz | Last time session metadata was refreshed (throttled to ~1h intervals via in-memory map). NULL for legacy sessions |
+| `user_agent` | text | Raw User-Agent header captured on login or first request. Used to derive browser/OS labels in the "Active Sessions" settings UI |
+| `ip_address` | text | Client IP (from `x-forwarded-for` / `x-real-ip` / direct connection). Displayed in the "Active Sessions" settings UI |
 
 ### `totp_backup_codes`
 

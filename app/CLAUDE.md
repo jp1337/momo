@@ -43,6 +43,9 @@ api/
   auth/passkey/second-factor/options/route.ts → POST (assertion options for a known user — allow-list scoped; session required)
   auth/passkey/second-factor/verify/route.ts  → POST (verify assertion, mark current session as second-factor-verified; session required)
   auth/passkey/[id]/route.ts                → PATCH (rename credential), DELETE (revoke credential; blocks last-factor removal when REQUIRE_2FA=true)
+  auth/sessions/route.ts                   → GET (list all active sessions with device info, IP, timestamps; 30/min)
+  auth/sessions/[id]/route.ts              → DELETE (revoke session by SHA-256 hash ID; blocks current session revocation; 10/min)
+  auth/sessions/revoke-others/route.ts     → POST (revoke all sessions except current; 5/min)
   tasks/route.ts                     → GET (list, ?topicId/type/completed filters), POST (create)
   tasks/[id]/route.ts                → GET (single), PATCH (update), DELETE
   tasks/[id]/complete/route.ts       → POST (complete + award coins, body: {timezone?}), DELETE (uncomplete + refund)

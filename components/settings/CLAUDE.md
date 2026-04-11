@@ -14,6 +14,7 @@ Client components for the `/settings` page. Each file is one section of the sett
 - `emotional-closure-settings.tsx` — Affirmation toggle; PATCHes /api/settings/quest
 - `security-section.tsx` — TOTP 2FA panel: enable, disable, regenerate backup codes (re-verify required)
 - `passkeys-section.tsx` — WebAuthn credential list: register, rename, remove; uses @simplewebauthn/browser
+- `active-sessions.tsx` — Active sessions list: shows all login sessions with device/browser/OS, IP, timestamps; current session highlighted with green "This device" badge; revoke individual sessions or all-other-sessions; fetches from GET /api/auth/sessions, DELETEs via /api/auth/sessions/:id and POST /api/auth/sessions/revoke-others
 - `totp-setup-wizard.tsx` — 2-step TOTP setup modal: QR code → first-code verification
 - `backup-codes-display.tsx` — Read-only backup code grid with copy + download
 - `calendar-feed-section.tsx` — iCal feed: create/rotate/revoke token; one-time URL display

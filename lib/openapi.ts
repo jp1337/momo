@@ -70,6 +70,7 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
     { name: "API Keys", description: "Personal Access Token management" },
     { name: "Notification Channels", description: "Multi-channel notification management (ntfy.sh, etc.)" },
     { name: "Calendar", description: "iCal calendar feed subscription" },
+    { name: "Sessions", description: "Active session management (view and revoke login sessions)" },
   ],
   components: {
     securitySchemes: {
@@ -2161,6 +2162,126 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           "404": {
             description: "Unknown or revoked token.",
           },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    // ─── Active Sessions ──────────────────────────────────────────────────────
+
+    "/api/auth/sessions": {
+      get: {
+        operationId: "listSessions",
+        tags: ["Sessions"],
+        summary: "List active sessions",
+        description:
+          "Returns all non-expired sessions for the authenticated user, " +
+          "with device info, IP address, and timestamps. The current session " +
+          "is marked with `isCurrent: true`. Session tokens are never exposed — " +
+          "a truncated SHA-256 hash serves as the public identifier.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        "x-readonly-safe": true,
+        responses: {
+          "200": {
+            description: "List of active sessions.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    sessions: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string", description: "Truncated SHA-256 hash (16 hex chars)" },
+                          isCurrent: { type: "boolean" },
+                          browser: { type: "string" },
+                          os: { type: "string" },
+                          deviceLabel: { type: "string" },
+                          ipAddress: { type: "string", nullable: true },
+                          createdAt: { type: "string", format: "date-time", nullable: true },
+                          lastActiveAt: { type: "string", format: "date-time", nullable: true },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/auth/sessions/{id}": {
+      delete: {
+        operationId: "revokeSession",
+        tags: ["Sessions"],
+        summary: "Revoke a single session",
+        description:
+          "Deletes a specific session by its public hash ID. The current " +
+          "session cannot be revoked (returns 400 CANNOT_REVOKE_CURRENT).",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string", pattern: "^[0-9a-f]{16}$" },
+            description: "Truncated SHA-256 hash of the session token.",
+          },
+        ],
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "Session revoked.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { success: { type: "boolean", const: true } },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Cannot revoke the current session or invalid ID format.",
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { description: "Session not found." },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/auth/sessions/revoke-others": {
+      post: {
+        operationId: "revokeAllOtherSessions",
+        tags: ["Sessions"],
+        summary: "Revoke all other sessions",
+        description:
+          "Deletes all sessions for the user except the current one. " +
+          "Returns the count of revoked sessions.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "All other sessions revoked.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { revoked: { type: "integer" } },
+                },
+              },
+            },
+          },
+          "400": { description: "Could not identify current session." },
+          "401": { $ref: "#/components/responses/Unauthorized" },
           "429": { $ref: "#/components/responses/TooManyRequests" },
           "500": { $ref: "#/components/responses/InternalServerError" },
         },

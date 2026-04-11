@@ -22,6 +22,7 @@ import {
   userHasSecondFactor,
 } from "@/lib/totp";
 import { serverEnv } from "@/lib/env";
+import { maybeUpdateSessionMetadata } from "@/lib/sessions";
 
 /** Resolved caller identity returned by resolveApiUser() */
 export interface ApiUser {
@@ -67,6 +68,17 @@ export async function resolveApiUser(
   // ── 2. Session cookie (browser / Auth.js) ────────────────────────────────
   const session = await auth();
   if (session?.user?.id) {
+    // Fire-and-forget: update session metadata (UA, IP, lastActiveAt)
+    // throttled to at most once per hour per session.
+    try {
+      const cookieStore = await cookies();
+      const sessionToken = readSessionTokenFromCookieStore(cookieStore);
+      if (sessionToken) {
+        maybeUpdateSessionMetadata(sessionToken, request.headers);
+      }
+    } catch {
+      // Silently ignore — metadata is best-effort
+    }
     return { userId: session.user.id, readonly: false };
   }
 
