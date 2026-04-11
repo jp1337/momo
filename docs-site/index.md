@@ -170,6 +170,8 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 ## What's New
 
+**Individual Recurring-Task Reminders** — each recurring task that is due today gets its own notification instead of being bundled into a single "due today" list. If three or fewer recurring tasks are due, each one pops up separately so you can act on them individually. More than three? They're bundled into a summary to keep your notification shade clean. Opt in under **Settings → Notifications**. [See Features →](/momo/features#individual-recurring-task-reminders)
+
 **Onboarding Wizard** — new users are greeted by a short 4-step guided setup: learn the core concepts (Quest, Energy, Coins, Streaks), create a first topic, add a few tasks, and optionally enable push notifications. Every step can be skipped, and the wizard never appears again once completed. Existing accounts are not affected. [See Features →](/momo/features#onboarding)
 
 **Vacation Mode** — going on holiday or feeling under the weather? Pause all recurring tasks at once from **Settings → Vacation Mode**. Your habit streaks stay protected, due dates shift automatically when you return, and paused tasks vanish from quests, notifications, and your calendar feed. A daily background job ends vacation on the chosen date — or end it early with one click. [See Features →](/momo/features#vacation-mode--pause-all-recurring-tasks)
