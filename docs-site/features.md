@@ -139,6 +139,20 @@ Snoozed tasks disappear from the main list, Quick Wins, and the Daily Quest. The
 
 To wake a task up early, expand the Snoozed section and click the amber clock icon on the task.
 
+### Vacation mode — pause all recurring tasks
+
+Going on holiday or feeling under the weather? **Vacation mode** pauses every recurring task at once so your habit statistics stay clean and your streak is protected.
+
+Open **Settings > Vacation Mode**, pick an end date, and click **Start vacation mode**. While active:
+
+- All recurring tasks get a "paused" badge on the Habits page
+- Paused tasks won't appear as your Daily Quest
+- No "due today" notifications for paused tasks
+- Paused tasks are hidden from your calendar feed
+- Your habit streak counts paused days as successful — no reset
+
+When the end date arrives, a daily background job automatically ends the vacation and shifts every recurring task's next due date forward by the actual number of paused days. You can also end vacation mode early from the Settings page — Momo adjusts the due dates based on how many days you actually paused, not the originally planned end date.
+
 ### Swipe gestures on mobile
 
 On a phone or tablet:

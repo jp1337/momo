@@ -295,6 +295,14 @@ export async function completeTask(
     throw new Error("Task is already completed");
   }
 
+  // Prevent completing paused tasks (vacation mode)
+  if (task.pausedUntil) {
+    const today = getLocalDateString(timezone);
+    if (task.pausedUntil >= today) {
+      throw new Error("Cannot complete a paused task");
+    }
+  }
+
   const { task: updatedTask, coinsEarned, newLevel, newCoins, levelAfter } =
     await db.transaction(async (tx) => {
       const now = new Date();

@@ -7,7 +7,7 @@
  */
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRepeat, faFire } from "@fortawesome/free-solid-svg-icons";
+import { faRepeat, faFire, faPause } from "@fortawesome/free-solid-svg-icons";
 import { resolveTopicIcon } from "@/lib/topic-icons";
 import type { HabitWithHistory } from "@/lib/habits";
 import { ContributionGrid } from "./contribution-grid";
@@ -24,6 +24,7 @@ interface HabitCardProps {
     statStreakEmpty: string;
     recurrenceEveryDay: string;
     recurrenceEveryNDays: string; // "alle {n} Tage"
+    pausedUntilLabel: string; // "Pausiert bis {date}"
     gridLabels: {
       gridAriaLabel: string;
       tooltipOne: string;
@@ -120,6 +121,24 @@ export function HabitCard({
               </>
             )}
             <span>{formatRecurrence(habit.recurrenceInterval, labels)}</span>
+            {habit.paused && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--accent-amber) 15%, transparent)",
+                    color: "var(--accent-amber)",
+                    border: "1px solid color-mix(in srgb, var(--accent-amber) 30%, transparent)",
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPause} style={{ width: "8px", height: "8px" }} />
+                  {habit.pausedUntil
+                    ? labels.pausedUntilLabel.replace("{date}", habit.pausedUntil)
+                    : labels.pausedUntilLabel.replace("{date}", "")}
+                </span>
+              </>
+            )}
           </p>
         </div>
       </header>

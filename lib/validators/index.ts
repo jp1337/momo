@@ -567,3 +567,26 @@ export const TotpVerifyInputSchema = z
   });
 
 export type TotpVerifyInput = z.infer<typeof TotpVerifyInputSchema>;
+
+// ─── Vacation Mode Validators ───────────────────────────────────────────────
+
+/**
+ * Schema for activating or deactivating vacation mode.
+ * When `enabled = true`, `endDate` is required (YYYY-MM-DD, must be today or later).
+ * When `enabled = false`, `endDate` is ignored.
+ */
+export const VacationModeInputSchema = z
+  .object({
+    enabled: z.boolean(),
+    endDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "End date must be in YYYY-MM-DD format")
+      .optional(),
+    timezone: TimezoneSchema,
+  })
+  .refine((d) => !d.enabled || d.endDate, {
+    message: "End date is required when enabling vacation mode",
+    path: ["endDate"],
+  });
+
+export type VacationModeInput = z.infer<typeof VacationModeInputSchema>;

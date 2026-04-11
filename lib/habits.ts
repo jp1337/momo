@@ -67,6 +67,10 @@ export interface HabitWithHistory {
   totalLast7: number;
   /** Current and all-time-best streak, computed over the habit's entire history. */
   streak: HabitStreak;
+  /** Whether this habit is currently paused (vacation mode). */
+  paused: boolean;
+  /** End date of the current pause, if any (YYYY-MM-DD). */
+  pausedUntil: string | null;
 }
 
 /**
@@ -149,17 +153,50 @@ function dayIndexFromIsoDate(iso: string): number {
  *   user's local timezone, in *any* order. Duplicate dates are tolerated.
  * @param recurrenceInterval - Period length in days, `null` → 1.
  * @param today - Today's YYYY-MM-DD in the user's local timezone.
+ * @param pausedRanges - Optional array of `{ from, to }` date ranges
+ *   (YYYY-MM-DD, inclusive) during which the habit was paused (vacation mode).
+ *   Periods that fall entirely within a paused range are treated as
+ *   "successful" — they do not break the streak.
  * @returns The current and best streak counted in periods.
  */
 export function computeHabitStreak(
   completionDates: string[],
   recurrenceInterval: number | null,
-  today: string
+  today: string,
+  pausedRanges?: Array<{ from: string; to: string }>
 ): HabitStreak {
   const periodDays =
     recurrenceInterval && recurrenceInterval > 0 ? recurrenceInterval : 1;
 
-  if (completionDates.length === 0) {
+  // Build a set of period indices that are "paused" — periods whose entire
+  // window [today - (k+1)*N + 1, today - k*N] falls within a paused range.
+  const pausedPeriods = new Set<number>();
+  if (pausedRanges && pausedRanges.length > 0) {
+    const todayIdx = dayIndexFromIsoDate(today);
+    for (const range of pausedRanges) {
+      const fromIdx = dayIndexFromIsoDate(range.from);
+      const toIdx = dayIndexFromIsoDate(range.to);
+      // For each period k, the window covers days
+      // [todayIdx - (k+1)*periodDays + 1, todayIdx - k*periodDays].
+      // A period is "paused" if its entire window is within [fromIdx, toIdx].
+      // We iterate only over the periods that could overlap the range.
+      const maxK = Math.floor((todayIdx - fromIdx) / periodDays);
+      const minK = Math.max(0, Math.floor((todayIdx - toIdx) / periodDays));
+      for (let k = minK; k <= maxK; k++) {
+        const windowEnd = todayIdx - k * periodDays;
+        const windowStart = windowEnd - periodDays + 1;
+        if (windowStart >= fromIdx && windowEnd <= toIdx) {
+          pausedPeriods.add(k);
+        }
+      }
+    }
+  }
+
+  /** Returns true if the period has a completion OR is fully paused. */
+  const periodOk = (k: number, pSet: Set<number>): boolean =>
+    pSet.has(k) || pausedPeriods.has(k);
+
+  if (completionDates.length === 0 && pausedPeriods.size === 0) {
     return { current: 0, best: 0, periodDays };
   }
 
@@ -178,17 +215,17 @@ export function computeHabitStreak(
     if (pIdx >= 0) periodSet.add(pIdx);
   }
 
-  if (periodSet.size === 0) {
+  if (periodSet.size === 0 && pausedPeriods.size === 0) {
     return { current: 0, best: 0, periodDays };
   }
 
   // ── Current streak (backwards from period 0) ─────────────────────────
   let current = 0;
-  if (periodSet.has(0)) {
-    // Period 0 is successful — count it and walk backwards.
+  if (periodOk(0, periodSet)) {
+    // Period 0 is successful (completed or paused) — count it and walk backwards.
     current = 1;
     let k = 1;
-    while (periodSet.has(k)) {
+    while (periodOk(k, periodSet)) {
       current += 1;
       k += 1;
     }
@@ -196,15 +233,18 @@ export function computeHabitStreak(
     // Period 0 has no completion yet — still "grace" because today is
     // inside it. Skip period 0 and count from period 1 backwards.
     let k = 1;
-    while (periodSet.has(k)) {
+    while (periodOk(k, periodSet)) {
       current += 1;
       k += 1;
     }
   }
 
   // ── Best streak (max consecutive run over all periods ever) ──────────
-  const sortedPeriods = Array.from(periodSet).sort((a, b) => a - b);
-  let best = 1;
+  // Merge completion periods and paused periods into one sorted array
+  const allOkPeriods = new Set([...periodSet, ...pausedPeriods]);
+  const sortedPeriods = Array.from(allOkPeriods).sort((a, b) => a - b);
+
+  let best = sortedPeriods.length > 0 ? 1 : 0;
   let run = 1;
   for (let i = 1; i < sortedPeriods.length; i++) {
     if (sortedPeriods[i] === sortedPeriods[i - 1] + 1) {
@@ -268,6 +308,8 @@ export async function getHabitsWithHistory(
       topicTitle: topics.title,
       topicColor: topics.color,
       topicIcon: topics.icon,
+      pausedAt: tasks.pausedAt,
+      pausedUntil: tasks.pausedUntil,
     })
     .from(tasks)
     .leftJoin(topics, eq(tasks.topicId, topics.id))
@@ -393,7 +435,12 @@ export async function getHabitsWithHistory(
     }
     const t = totals.get(h.id) ?? { year: 0, last30: 0, last7: 0 };
     const allDates = Array.from(allDatesByTask.get(h.id) ?? []);
-    const streak = computeHabitStreak(allDates, h.recurrenceInterval, todayStr);
+    // Build paused ranges for streak calculation (current pause only — v1 limitation)
+    const pausedRanges: Array<{ from: string; to: string }> = [];
+    if (h.pausedAt && h.pausedUntil) {
+      pausedRanges.push({ from: h.pausedAt, to: h.pausedUntil });
+    }
+    const streak = computeHabitStreak(allDates, h.recurrenceInterval, todayStr, pausedRanges);
     return {
       id: h.id,
       title: h.title,
@@ -407,6 +454,8 @@ export async function getHabitsWithHistory(
       totalLast30: t.last30,
       totalLast7: t.last7,
       streak,
+      paused: h.pausedUntil !== null,
+      pausedUntil: h.pausedUntil,
     };
   });
 }

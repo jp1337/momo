@@ -334,7 +334,8 @@ async function fetchDueTodayTasks(
           eq(tasks.dueDate, today),
           and(eq(tasks.type, "RECURRING"), eq(tasks.nextDueDate, today))
         ),
-        or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, today))
+        or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, today)),
+        isNull(tasks.pausedUntil)
       )
     )
     .orderBy(asc(tasks.priority), asc(tasks.title))

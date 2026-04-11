@@ -78,6 +78,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `calendar_feed_token_hash` | text (unique) | SHA-256 hash of the user's personal iCal feed token. NULL = no feed active. Plaintext token is shown once at creation and never persisted — mirrors the `api_keys` pattern. See [api.md](api.md#calendar-feed-routes) |
 | `calendar_feed_token_created_at` | timestamptz | Timestamp when the current feed token was generated. Displayed in the settings UI ("active since …") |
 | `onboarding_completed` | boolean | Whether the user has completed the onboarding wizard. Default `false` for new users. The `(app)` layout gate redirects to `/onboarding` when `false`. Backfill migration sets all pre-existing users to `true` |
+| `vacation_end_date` | date | End date of vacation mode (YYYY-MM-DD, inclusive). Null = no active vacation. When set, all RECURRING tasks have `paused_at`/`paused_until` populated. A daily cron job (`vacation-mode-auto-end`) auto-ends vacation once this date has passed |
 
 ### `sessions` (second-factor column)
 
@@ -149,6 +150,8 @@ factor for `lib/totp.ts::userHasSecondFactor` and therefore for the
 | `snoozed_until` | date | Date (YYYY-MM-DD) until which this task is hidden from all active views. Null = visible. When snoozed_until <= today, the task reappears automatically |
 | `energy_level` | enum | Energy required: `HIGH`, `MEDIUM`, `LOW`. Null = matches any energy level. Used by the daily quest algorithm to prefer tasks matching the user's daily check-in |
 | `sort_order` | integer | Position within a topic (0-based). Lower values appear first. Auto-assigned on creation; updated by the reorder endpoint |
+| `paused_at` | date | Date (YYYY-MM-DD) when this task was paused (vacation mode). Null = not paused. Used to compute the actual pause duration when deactivating vacation mode |
+| `paused_until` | date | Date (YYYY-MM-DD, inclusive) until which this task is paused. Null = active. Paused tasks are excluded from daily quest, due-today notifications, and iCal feed. Unlike snooze, pause also shifts `next_due_date` on deactivation and excludes the period from habit streak calculations |
 
 ### `topics`
 

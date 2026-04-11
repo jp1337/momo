@@ -19,6 +19,7 @@ import { cronRuns } from "@/lib/db/schema";
 import { lt, eq, and } from "drizzle-orm";
 import { sendDailyQuestNotifications, sendStreakReminders, sendWeeklyReviewNotifications, sendDueTodayNotifications, sendMorningBriefingNotifications } from "@/lib/push";
 import { cleanupNotificationLog } from "@/lib/notification-log";
+import { autoEndVacations } from "@/lib/vacation";
 
 /** Retain cron run history for this many days — older rows are pruned after each run. */
 const CRON_RETENTION_DAYS = 30;
@@ -133,6 +134,12 @@ const CRON_JOBS: CronJob[] = [
     handler: cleanupNotificationLog,
     guard: "daily",
     logToDb: false,
+  },
+  {
+    name: "vacation-mode-auto-end",
+    handler: autoEndVacations,
+    guard: "daily",
+    logToDb: true,
   },
 ];
 

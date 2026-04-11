@@ -148,6 +148,9 @@ async function pickBestTask(
   // Exclude snoozed tasks from all quest candidates
   const notSnoozed = or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, today));
 
+  // Exclude paused tasks (vacation mode) from all quest candidates
+  const notPaused = or(isNull(tasks.pausedUntil), lt(tasks.pausedUntil, today));
+
   // Energy preference filter: matches user energy or untagged tasks
   const energyPreferred = userEnergy
     ? or(eq(tasks.energyLevel, userEnergy), isNull(tasks.energyLevel))
@@ -173,7 +176,8 @@ async function pickBestTask(
           eq(tasks.topicId, topic.id),
           eq(tasks.userId, userId),
           isNull(tasks.completedAt),
-          notSnoozed
+          notSnoozed,
+          notPaused
         )
       )
       .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt));
@@ -237,6 +241,7 @@ async function pickBestTask(
       lt(tasks.dueDate, today),
       ne(tasks.type, "RECURRING"),
       notSnoozed,
+      notPaused,
       notBlocked
     ),
     { orderBy: tasks.dueDate }
@@ -252,6 +257,7 @@ async function pickBestTask(
       eq(tasks.priority, "HIGH"),
       ne(tasks.type, "RECURRING"),
       notSnoozed,
+      notPaused,
       notBlocked
     )
   );
@@ -265,6 +271,7 @@ async function pickBestTask(
       isNotNull(tasks.nextDueDate),
       lte(tasks.nextDueDate, today),
       notSnoozed,
+      notPaused,
       notBlocked
     )
   );
@@ -277,6 +284,7 @@ async function pickBestTask(
       isNull(tasks.completedAt),
       or(eq(tasks.type, "ONE_TIME"), eq(tasks.type, "DAILY_ELIGIBLE")),
       notSnoozed,
+      notPaused,
       notBlocked
     ),
     { randomPool: true }

@@ -978,6 +978,60 @@ Entries are automatically deleted after 30 days by the `notification-log-cleanup
 
 ---
 
+## Vacation Mode
+
+| Method | Path | Auth | Rate Limit | Description |
+|---|---|---|---|---|
+| `GET` | `/api/settings/vacation-mode` | Yes | — | Get current vacation mode status |
+| `PATCH` | `/api/settings/vacation-mode` | Yes | 10/min | Activate or deactivate vacation mode |
+
+### GET /api/settings/vacation-mode
+
+Returns the current vacation mode status for the authenticated user.
+
+**Response:**
+
+```json
+{
+  "active": true,
+  "endDate": "2026-04-20"
+}
+```
+
+### PATCH /api/settings/vacation-mode
+
+Activates or deactivates vacation mode. When activated, all RECURRING tasks are paused (`pausedAt` + `pausedUntil` set). When deactivated, `nextDueDate` is shifted forward by the actual pause duration.
+
+**Request body (activate):**
+
+```json
+{
+  "enabled": true,
+  "endDate": "2026-04-20",
+  "timezone": "Europe/Berlin"
+}
+```
+
+**Request body (deactivate):**
+
+```json
+{
+  "enabled": false,
+  "timezone": "Europe/Berlin"
+}
+```
+
+**Response:** `{ "success": true }`
+
+**Error codes:**
+
+| Status | Code | Reason |
+|---|---|---|
+| 422 | Validation | `endDate` missing when `enabled = true`, or invalid format |
+| 429 | Rate limit | More than 10 requests per minute |
+
+---
+
 ## Push Notification Routes
 
 | Method | Path | Auth | Description |

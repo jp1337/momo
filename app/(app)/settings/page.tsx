@@ -30,6 +30,7 @@ import { SecuritySection } from "@/components/settings/security-section";
 import { PasskeysSection } from "@/components/settings/passkeys-section";
 import { CalendarFeedSection } from "@/components/settings/calendar-feed-section";
 import { MorningBriefingSettings } from "@/components/settings/morning-briefing-settings";
+import { VacationModeSettings } from "@/components/settings/vacation-mode-settings";
 import { getCalendarFeedStatus } from "@/lib/calendar";
 import { getUserTotpStatus } from "@/lib/totp";
 import { listUserPasskeys } from "@/lib/webauthn";
@@ -70,6 +71,7 @@ export default async function SettingsPage() {
         emotionalClosureEnabled: users.emotionalClosureEnabled,
         morningBriefingEnabled: users.morningBriefingEnabled,
         morningBriefingTime: users.morningBriefingTime,
+        vacationEndDate: users.vacationEndDate,
       })
       .from(users)
       .where(eq(users.id, session.user.id))
@@ -409,6 +411,32 @@ export default async function SettingsPage() {
         </div>
 
         <QuestSettings initialPostponeLimit={user.questPostponeLimit} />
+      </section>
+
+      {/* Vacation Mode section */}
+      <section
+        className="rounded-xl p-6 flex flex-col gap-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            className="text-base font-semibold"
+            style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("section_vacation_mode")}
+          </h2>
+        </div>
+
+        <VacationModeSettings
+          initialActive={user.vacationEndDate !== null}
+          initialEndDate={user.vacationEndDate}
+        />
       </section>
 
       {/* Emotional Closure section */}
