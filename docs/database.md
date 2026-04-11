@@ -59,6 +59,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `streak_last_date` | date | Date of last streak-qualifying action |
 | `streak_shield_used_month` | text | Month (YYYY-MM) when the Streak Shield was last consumed. NULL = shield available. Resets naturally when the calendar month changes |
 | `monthly_budget` | decimal | Wishlist monthly budget |
+| `timezone` | text | IANA timezone identifier (e.g. `Europe/Berlin`, `America/New_York`). Used for all server-side cron jobs (Morning Briefing, Due-Today, Daily Quest, Weekly Review). Settable explicitly via Settings → Timezone or auto-detected from the browser. NULL falls back to UTC |
 | `notification_enabled` | boolean | Push notifications enabled |
 | `notification_time` | time | Daily reminder time (24h, e.g. `08:00`) |
 | `due_today_reminder_enabled` | boolean | Opt-in flag for the "Due today" reminder (default false). When true, the cron dispatcher sends a ping at `notification_time` iff the user has at least one non-completed, non-snoozed task whose `due_date` (or, for RECURRING tasks, `next_due_date`) equals today in the user's timezone. Silent on empty — no "all clear" notifications |
