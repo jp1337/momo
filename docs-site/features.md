@@ -592,6 +592,27 @@ If you self-host Momo, you can require a second factor for everyone by setting t
 
 ---
 
+## Active Sessions
+
+The **Active Sessions** section in Settings shows every device currently signed in to your account. Each entry displays:
+
+- **Browser and OS** (e.g. "Chrome on Windows", "Safari on iOS")
+- **IP address** of the device
+- **When the session was created** and **when it was last active**
+
+The session you are using right now is highlighted in green with a "This device" badge and cannot be revoked (no self-lockout).
+
+### Revoking sessions
+
+If you see a session you don't recognise — or you simply want to sign out everywhere else — you have two options:
+
+- **Revoke** a single session by clicking the red "Revoke" button next to it. That device is immediately signed out.
+- **Sign out all other devices** with the button at the bottom. Only your current session stays active.
+
+This is the same pattern you know from GitHub, Google, or Apple. Check it whenever you sign in from a shared computer, or if you suspect someone else has access to your account.
+
+---
+
 ## API Keys
 
 Momo has a full REST API. Personal access tokens let you integrate Momo with other tools, scripts, or voice assistants like Alexa.

@@ -1283,6 +1283,57 @@ Revokes the current feed token. The subscription URL stops working immediately. 
 
 ---
 
+## Active Sessions Routes
+
+Manage active login sessions. Users can view all sessions with device info and revoke individual or all-other sessions. Session tokens are never exposed to the client — a truncated SHA-256 hash serves as the public identifier.
+
+### GET /api/auth/sessions
+
+Returns all non-expired sessions for the authenticated user.
+
+- **Auth:** Session or Bearer token required
+- **Rate limit:** 30/min per user
+- **Response:**
+```json
+{
+  "sessions": [
+    {
+      "id": "a1b2c3d4e5f67890",
+      "isCurrent": true,
+      "browser": "Chrome",
+      "os": "Windows",
+      "deviceLabel": "Chrome on Windows",
+      "ipAddress": "192.168.1.100",
+      "createdAt": "2026-04-10T14:30:00.000Z",
+      "lastActiveAt": "2026-04-11T09:15:00.000Z"
+    }
+  ]
+}
+```
+
+### DELETE /api/auth/sessions/:id
+
+Revokes a specific session by its 16-char hex hash ID. The current session cannot be revoked.
+
+- **Auth:** Session or Bearer token required (read-write)
+- **Params:** `id` — 16-char hex hash of the session token
+- **Rate limit:** 10/min per user
+- **Response:** `{ "success": true }` or 404 if not found
+- **Error:** 400 `CANNOT_REVOKE_CURRENT` when attempting to revoke the current session
+
+### POST /api/auth/sessions/revoke-others
+
+Revokes all sessions except the current one.
+
+- **Auth:** Session or Bearer token required (read-write)
+- **Rate limit:** 5/min per user
+- **Response:**
+```json
+{ "revoked": 3 }
+```
+
+---
+
 ## Onboarding Routes
 
 Manages the one-time onboarding wizard for new users.

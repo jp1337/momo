@@ -297,6 +297,18 @@ export const sessions = pgTable("sessions", {
   secondFactorVerifiedAt: timestamp("second_factor_verified_at", {
     withTimezone: true,
   }),
+
+  /** When this session was created (NULL for legacy sessions) */
+  createdAt: timestamp("created_at", { withTimezone: true }),
+
+  /** Last time metadata was refreshed (throttled to ~1h intervals) */
+  lastActiveAt: timestamp("last_active_at", { withTimezone: true }),
+
+  /** Raw User-Agent header captured on login / first request */
+  userAgent: text("user_agent"),
+
+  /** Client IP (from x-forwarded-for / x-real-ip / direct) */
+  ipAddress: text("ip_address"),
 });
 
 /** Magic link / email verification tokens */

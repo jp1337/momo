@@ -32,9 +32,12 @@ import { PasskeysSection } from "@/components/settings/passkeys-section";
 import { CalendarFeedSection } from "@/components/settings/calendar-feed-section";
 import { MorningBriefingSettings } from "@/components/settings/morning-briefing-settings";
 import { VacationModeSettings } from "@/components/settings/vacation-mode-settings";
+import { ActiveSessions } from "@/components/settings/active-sessions";
 import { getCalendarFeedStatus } from "@/lib/calendar";
-import { getUserTotpStatus } from "@/lib/totp";
+import { getUserTotpStatus, readSessionTokenFromCookieStore } from "@/lib/totp";
 import { listUserPasskeys } from "@/lib/webauthn";
+import { listUserSessions } from "@/lib/sessions";
+import { cookies } from "next/headers";
 import { serverEnv } from "@/lib/env";
 import { getTranslations, getLocale } from "next-intl/server";
 import { Suspense } from "react";
@@ -57,8 +60,12 @@ export default async function SettingsPage() {
   const tClosure = await getTranslations("closure");
   const locale = await getLocale();
 
-  // Fetch user preferences, linked accounts, push subscriptions, notification channels, 2FA status, and passkeys from DB
-  const [userRows, linkedAccountRows, activeSubs, channelRows, totpStatus, passkeys, calendarFeed] = await Promise.all([
+  // Read the current session token for the active sessions list
+  const cookieStore = await cookies();
+  const currentSessionToken = readSessionTokenFromCookieStore(cookieStore) ?? "";
+
+  // Fetch user preferences, linked accounts, push subscriptions, notification channels, 2FA status, passkeys, and active sessions from DB
+  const [userRows, linkedAccountRows, activeSubs, channelRows, totpStatus, passkeys, calendarFeed, activeSessions] = await Promise.all([
     db
       .select({
         name: users.name,
@@ -99,6 +106,7 @@ export default async function SettingsPage() {
     getUserTotpStatus(session.user.id),
     listUserPasskeys(session.user.id),
     getCalendarFeedStatus(session.user.id),
+    listUserSessions(session.user.id, currentSessionToken),
   ]);
 
   const user = userRows[0];
@@ -383,6 +391,17 @@ export default async function SettingsPage() {
             hasTotp={totpStatus.enabled}
           />
         </div>
+      </section>
+
+      {/* Active Sessions section */}
+      <section
+        className="rounded-xl p-6 flex flex-col gap-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <ActiveSessions initialSessions={activeSessions} />
       </section>
 
       {/* Quest Settings section */}

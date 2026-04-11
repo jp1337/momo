@@ -323,7 +323,8 @@ export const PASSKEY_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
  *          caller is responsible for setting this as the Auth.js cookie.
  */
 export async function createPasskeyLoginSession(
-  userId: string
+  userId: string,
+  options?: { userAgent?: string | null; ipAddress?: string | null }
 ): Promise<string> {
   const sessionToken = randomUUID();
   const now = new Date();
@@ -332,6 +333,10 @@ export async function createPasskeyLoginSession(
     userId,
     expires: new Date(now.getTime() + PASSKEY_SESSION_TTL_MS),
     secondFactorVerifiedAt: now,
+    createdAt: now,
+    lastActiveAt: now,
+    userAgent: options?.userAgent ?? null,
+    ipAddress: options?.ipAddress ?? null,
   });
   // Touch the users row so Auth.js session callbacks get fresh info on
   // the next request — no-op if nothing to update.

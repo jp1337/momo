@@ -33,7 +33,8 @@ All server-side business logic and infrastructure. API routes import from here �
 - `rate-limit.ts` — In-memory rate limiter (sliding window) applied to mutation API routes
 - `wishlist.ts` — getUserWishlistItems, createWishlistItem, updateWishlistItem, deleteWishlistItem, buyWishlistItem, discardWishlistItem
 - `api-keys.ts` — generateApiKey (256-bit), createApiKey, listApiKeys, revokeApiKey, resolveApiKeyUser
-- `api-auth.ts` — resolveApiUser() — Bearer Token + Session Cookie, readonlyKeyResponse(); resolveVerifiedApiUser() (opt-in 2FA-aware variant — Bearer tokens are exempt; cookie sessions return TOTP_REQUIRED / TOTP_SETUP_REQUIRED if not verified) + verifiedAuthErrorResponse()
+- `sessions.ts` — Active session management: `listUserSessions` (sanitised SessionSummary[] with truncated SHA-256 hash as public ID, never exposes raw token), `revokeSession` (by hash ID), `revokeAllOtherSessions`, `touchSessionMetadata` (updates UA/IP/lastActiveAt), `maybeUpdateSessionMetadata` (throttled to 1h, fire-and-forget — called from `resolveApiUser`), `parseUserAgent` (simple regex → browser/OS/deviceLabel, no external dependency), `extractIp` (x-forwarded-for → x-real-ip → "unknown")
+- `api-auth.ts` — resolveApiUser() — Bearer Token + Session Cookie, readonlyKeyResponse(); resolveVerifiedApiUser() (opt-in 2FA-aware variant — Bearer tokens are exempt; cookie sessions return TOTP_REQUIRED / TOTP_SETUP_REQUIRED if not verified) + verifiedAuthErrorResponse(). Cookie-session branch also calls `maybeUpdateSessionMetadata` (fire-and-forget) to keep session device info fresh
 - `openapi.ts` — Full OpenAPI 3.1.0 specification object (served at /api/openapi.json)
 - `statistics.ts` — getUserStatistics(userId), getAdminStatistics() — aggregated stats for /stats and /admin pages
 - `export.ts` — buildUserExport(userId) — GDPR data export (all user data as JSON)
