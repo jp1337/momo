@@ -63,6 +63,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `notification_enabled` | boolean | Push notifications enabled |
 | `notification_time` | time | Daily reminder time (24h, e.g. `08:00`) |
 | `due_today_reminder_enabled` | boolean | Opt-in flag for the "Due today" reminder (default false). When true, the cron dispatcher sends a ping at `notification_time` iff the user has at least one non-completed, non-snoozed task whose `due_date` (or, for RECURRING tasks, `next_due_date`) equals today in the user's timezone. Silent on empty — no "all clear" notifications |
+| `recurring_due_reminder_enabled` | boolean | Opt-in flag for per-task recurring due reminders (default false). Sends individual notifications for each RECURRING task whose `next_due_date` is today (≤3 individual, >3 bundled). Suppressed when `morning_briefing_enabled` is true. Uses `notification_time` for delivery timing |
 | `morning_briefing_enabled` | boolean | Opt-in daily digest (default false). Consolidates quest, due tasks, streak, and new achievements into one message. Suppresses individual daily-quest and due-today reminders when enabled |
 | `morning_briefing_time` | time | Briefing delivery time (24h, default `08:00`). Separate from `notification_time` — users can receive the digest at a different time than individual reminders |
 | `push_subscription` | jsonb | Browser Web Push subscription object |

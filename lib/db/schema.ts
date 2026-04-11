@@ -146,6 +146,17 @@ export const users = pgTable("users", {
     .default(false),
 
   /**
+   * Opt-in flag for per-task recurring due reminders (see sendRecurringDueNotifications in lib/push.ts).
+   * When true, the cron dispatcher sends an individual notification for each
+   * recurring task whose next_due_date is today in the user's timezone.
+   * Suppressed when morningBriefingEnabled is true (briefing already covers due tasks).
+   * Default false so existing users don't get new noise without consent.
+   */
+  recurringDueReminderEnabled: boolean("recurring_due_reminder_enabled")
+    .notNull()
+    .default(false),
+
+  /**
    * Opt-in daily digest: consolidates quest + due tasks + streak + achievements
    * into one push at `morningBriefingTime`. Replaces individual quest and
    * due-today reminders when enabled.

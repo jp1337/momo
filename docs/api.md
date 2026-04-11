@@ -1066,7 +1066,7 @@ Activates or deactivates vacation mode. When activated, all RECURRING tasks are 
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | `POST` | `/api/push/subscribe` | Yes | Save push subscription + enable notifications |
-| `PATCH` | `/api/push/subscribe` | Yes | Update reminder preferences (time, timezone, due-today toggle, morning briefing) |
+| `PATCH` | `/api/push/subscribe` | Yes | Update reminder preferences (time, timezone, due-today toggle, recurring-due toggle, morning briefing) |
 | `DELETE` | `/api/push/subscribe` | Yes | Remove subscription + disable notifications |
 | `POST` | `/api/push/test` | Yes | Send a test push notification to the current user |
 
@@ -1095,6 +1095,7 @@ Request body:
   "notificationTime": "06:30",
   "timezone": "Europe/Berlin",
   "dueTodayReminderEnabled": true,
+  "recurringDueReminderEnabled": true,
   "morningBriefingEnabled": true,
   "morningBriefingTime": "08:00"
 }
@@ -1105,6 +1106,7 @@ Request body:
 | `notificationTime` | string (HH:MM) | Preferred daily-reminder time in the user's local timezone |
 | `timezone` | string (IANA) | IANA timezone identifier (max 64 chars), e.g. `Europe/Berlin` |
 | `dueTodayReminderEnabled` | boolean | Opt-in for the "Due today" reminder — silent on days with nothing due |
+| `recurringDueReminderEnabled` | boolean | Opt-in for per-task recurring due reminders — sends individual notifications for each recurring task due today (≤3 individual, >3 bundled). Suppressed when morning briefing is enabled |
 | `morningBriefingEnabled` | boolean | Opt-in for the morning briefing daily digest — consolidates quest, due tasks, streak, and achievements into one message. Suppresses individual quest and due-today reminders when enabled |
 | `morningBriefingTime` | string (HH:MM) | Time for the morning briefing in the user's local timezone (default `08:00`). Independent from `notificationTime` |
 
@@ -1128,6 +1130,7 @@ The Docker cron container calls `POST /api/cron` every 5 minutes. The server-sid
 | Job | Guard | Description |
 |---|---|---|
 | `due-today` | 5-min bucket | Send "due today" reminder to opted-in users at their local notification time. Silent on empty — no ping is sent when the user has no open, non-snoozed tasks with `due_date`/`next_due_date` = today. Runs before `daily-quest` so both pings don't collide |
+| `recurring-due` | 5-min bucket | Send individual per-task notifications for recurring tasks due today. Each recurring task gets its own notification (≤3 tasks) or a bundled summary (>3). Suppressed when morning briefing is enabled. Silent on empty |
 | `daily-quest` | 5-min bucket | Send daily quest push notifications based on user's local notification time |
 | `streak-reminder` | Once per day | Send streak-at-risk reminders to users who haven't completed a task today |
 | `weekly-review` | 5-min bucket | Send weekly review summary (Sunday 18:00 local time only) |

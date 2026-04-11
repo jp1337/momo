@@ -35,6 +35,8 @@ interface NotificationSettingsProps {
   initialTime: string;
   /** Whether the "Due today" reminder is currently enabled (from DB) */
   initialDueTodayEnabled: boolean;
+  /** Whether the recurring-due individual reminder is currently enabled (from DB) */
+  initialRecurringDueEnabled: boolean;
   /**
    * Whether the user has at least one enabled notification channel
    * (ntfy/pushover/telegram/email). Used to decide whether to show the
@@ -61,6 +63,7 @@ export function NotificationSettings({
   initialEnabled,
   initialTime,
   initialDueTodayEnabled,
+  initialRecurringDueEnabled,
   hasAnyChannel,
   vapidPublicKey,
 }: NotificationSettingsProps) {
@@ -71,6 +74,7 @@ export function NotificationSettings({
     (initialTime || "08:00").slice(0, 5)
   );
   const [dueTodayEnabled, setDueTodayEnabled] = useState(initialDueTodayEnabled);
+  const [recurringDueEnabled, setRecurringDueEnabled] = useState(initialRecurringDueEnabled);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"success" | "error">("success");
@@ -322,6 +326,35 @@ export function NotificationSettings({
     }
   }
 
+  /**
+   * Persists the recurring-due individual reminder toggle to the server.
+   * Updates optimistically and rolls back on failure.
+   */
+  async function handleRecurringDueToggle(next: boolean) {
+    const previous = recurringDueEnabled;
+    setRecurringDueEnabled(next);
+    try {
+      const res = await fetch("/api/push/subscribe", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recurringDueReminderEnabled: next }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error ?? t("notif_test_failed"));
+      }
+      setMessageType("success");
+      setMessage(t("notif_recurring_due_saved"));
+    } catch (err) {
+      console.error("[NotificationSettings] Recurring-due toggle failed:", err);
+      setRecurringDueEnabled(previous);
+      setMessageType("error");
+      setMessage(
+        err instanceof Error ? err.message : t("notif_test_failed")
+      );
+    }
+  }
+
   /** Sends a test push notification */
   async function handleTest() {
     setIsSaving(true);
@@ -475,6 +508,35 @@ export function NotificationSettings({
             style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
           >
             {t("notif_due_today_hint")}
+          </p>
+        </div>
+      )}
+
+      {/*
+        Recurring-due individual reminder toggle — visible whenever the user
+        has any delivery method. Sends one notification per recurring task
+        that is due today (up to 3 individual, then bundled).
+      */}
+      {(status === "active" || hasAnyChannel) && (
+        <div className="flex flex-col gap-1.5">
+          <label
+            className="flex items-center gap-2 text-sm font-medium cursor-pointer"
+            style={{ color: "var(--text-primary)", fontFamily: "var(--font-ui)" }}
+          >
+            <input
+              type="checkbox"
+              checked={recurringDueEnabled}
+              onChange={(e) => handleRecurringDueToggle(e.target.checked)}
+              className="w-4 h-4 cursor-pointer"
+              style={{ accentColor: "var(--accent-green)" }}
+            />
+            {t("notif_recurring_due")}
+          </label>
+          <p
+            className="text-xs ml-6"
+            style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
+          >
+            {t("notif_recurring_due_hint")}
           </p>
         </div>
       )}
