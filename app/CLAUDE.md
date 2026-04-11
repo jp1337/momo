@@ -76,6 +76,7 @@ api/
   user/delete/route.ts               → DELETE (full account deletion)
   locale/route.ts                    → POST (set UI locale cookie)
   settings/quest/route.ts            → PATCH (save quest settings: postpone limit, emotional closure toggle)
+  settings/timezone/route.ts         → GET (user's stored IANA timezone), PATCH (update timezone; 10/min; validates via Intl.DateTimeFormat)
   settings/notification-channels/route.ts     → GET (list channels), PUT (upsert channel)
   settings/notification-history/route.ts      → GET (last 50 notification delivery attempts for the user)
   settings/vacation-mode/route.ts    → GET (vacation status), PATCH (activate/deactivate vacation mode; 10/min; sets pausedAt/pausedUntil on all RECURRING tasks, shifts nextDueDate on deactivation)

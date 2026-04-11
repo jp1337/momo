@@ -791,6 +791,8 @@ Sets item status to `DISCARDED`. Response: `{ "item": WishlistItem }`
 | `GET` | `/api/settings/budget` | Yes | Get current monthly budget + spending summary |
 | `PATCH` | `/api/settings/budget` | Yes | Update monthly budget |
 | `PATCH` | `/api/settings/quest` | Yes | Update quest settings (postpone limit, emotional closure) |
+| `GET` | `/api/settings/timezone` | Yes | Get user's stored IANA timezone |
+| `PATCH` | `/api/settings/timezone` | Yes (rw) | Update user's IANA timezone (10/min) |
 
 ### GET /api/settings/budget
 
@@ -827,6 +829,33 @@ Updates quest-related user settings. At least one field must be provided.
 | `emotionalClosureEnabled` | boolean | Show affirmation/quote after quest completion (optional) |
 
 Response: `{ "success": true }`
+
+### GET /api/settings/timezone
+
+Returns the user's stored IANA timezone. Returns `null` if no timezone has been explicitly set (server-side cron jobs fall back to UTC).
+
+```json
+{ "timezone": "Europe/Berlin" }
+```
+
+### PATCH /api/settings/timezone
+
+Updates the user's IANA timezone. Affects all server-side cron jobs (Morning Briefing, Due-Today, Daily Quest, Weekly Review). Rate-limited to 10 requests per minute. Read-only API keys receive 403.
+
+**Request body:**
+
+```json
+{ "timezone": "America/New_York" }
+```
+
+**Response:** `{ "success": true }`
+
+**Error codes:**
+
+| Status | Code | Reason |
+|---|---|---|
+| 422 | Validation | Invalid or empty IANA timezone identifier |
+| 429 | Rate limit | More than 10 requests per minute |
 
 ---
 

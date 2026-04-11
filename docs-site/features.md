@@ -686,6 +686,19 @@ Go to **Settings** and choose from:
 
 The selected language applies to all UI elements, labels, and system messages.
 
+### Setting your timezone
+
+Go to **Settings → Timezone** to explicitly choose your IANA timezone (e.g. "Europe/Berlin", "America/New_York"). By default Momo detects your timezone from your browser, but you can override it if you are traveling, using a VPN, or if the browser detection is incorrect.
+
+Your timezone affects all scheduled actions:
+
+- **Daily Quest reminder** — sent at your configured notification time in your local time
+- **Due-today reminder** — checks which tasks are due "today" in your timezone
+- **Morning Briefing** — delivered at your briefing time in your timezone
+- **Weekly Review** — sent on Sunday at 18:00 in your timezone
+
+If your saved timezone differs from what the browser detects, a subtle hint below the dropdown shows you the mismatch. Click **"Use browser timezone"** to reset to the detected value.
+
 ### Changing the theme
 
 Use the theme toggle in the navbar to switch between:

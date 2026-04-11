@@ -2167,6 +2167,77 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       },
     },
 
+    "/api/settings/timezone": {
+      get: {
+        operationId: "getTimezone",
+        tags: ["Settings"],
+        summary: "Get user timezone",
+        description:
+          "Returns the authenticated user's stored IANA timezone. " +
+          "Returns null if no timezone has been explicitly set (falls back to UTC server-side).",
+        responses: {
+          200: {
+            description: "Current timezone",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object" as const,
+                  properties: {
+                    timezone: { type: "string" as const, nullable: true, example: "Europe/Berlin" },
+                  },
+                },
+              },
+            },
+          },
+          401: { $ref: "#/components/responses/Unauthorized" },
+        },
+      },
+      patch: {
+        operationId: "updateTimezone",
+        tags: ["Settings"],
+        summary: "Update user timezone",
+        description:
+          "Sets the user's IANA timezone. Affects all server-side cron jobs " +
+          "(Morning Briefing, Due-Today, Daily Quest, Weekly Review). " +
+          "Rate-limited to 10 requests per minute.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object" as const,
+                required: ["timezone"],
+                properties: {
+                  timezone: {
+                    type: "string" as const,
+                    description: "IANA timezone identifier (e.g. Europe/Berlin, America/New_York)",
+                    example: "Europe/Berlin",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Timezone updated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object" as const,
+                  properties: { success: { type: "boolean" as const } },
+                },
+              },
+            },
+          },
+          401: { $ref: "#/components/responses/Unauthorized" },
+          403: { $ref: "#/components/responses/Forbidden" },
+          422: { $ref: "#/components/responses/ValidationError" },
+          429: { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
     "/api/settings/vacation-mode": {
       get: {
         operationId: "getVacationModeStatus",
