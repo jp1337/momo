@@ -295,6 +295,9 @@ Response:
       "type": "ONE_TIME",
       "priority": "NORMAL",
       "recurrenceInterval": null,
+      "recurrenceType": "INTERVAL",
+      "recurrenceWeekdays": null,
+      "recurrenceFixed": false,
       "dueDate": "2026-04-05",
       "nextDueDate": null,
       "completedAt": null,
@@ -319,24 +322,23 @@ Request body:
 | `coinValue` | integer | No | Coin reward on completion |
 | `notes` | string | No | Free-text notes |
 | `topicId` | UUID | No | Assign to an existing topic |
-| `recurrenceInterval` | integer (days) | Conditionally | Required when `type` is `RECURRING` |
+| `recurrenceInterval` | integer (days) | Conditionally | Required when `type` is `RECURRING` and `recurrenceType` is `INTERVAL` |
+| `recurrenceType` | `INTERVAL`\|`WEEKDAY`\|`MONTHLY`\|`YEARLY` | No | Recurrence rule type. Defaults to `INTERVAL`. |
+| `recurrenceWeekdays` | integer[] | Conditionally | Required when `recurrenceType` is `WEEKDAY`. Array of weekday indices: 0=Mon … 6=Sun. E.g. `[0,2]` = Mon+Wed. |
+| `recurrenceFixed` | boolean | No | `false` (default) = advance `nextDueDate` from completion date. `true` = advance from the scheduled date (same calendar day every time). Only affects `MONTHLY`/`YEARLY`. |
 | `timezone` | IANA timezone string | No | Used to calculate `nextDueDate` for `RECURRING` tasks in non-UTC timezones (max 64 chars). Falls back to UTC if omitted. |
 
 ```json
 {
-  "title": "Buy groceries",
-  "type": "ONE_TIME",
-  "priority": "NORMAL",
-  "dueDate": "2026-04-05",
-  "coinValue": 2,
-  "notes": "Optional notes",
-  "topicId": "uuid-or-null",
-  "recurrenceInterval": null,
+  "title": "Weekly review",
+  "type": "RECURRING",
+  "recurrenceType": "WEEKDAY",
+  "recurrenceWeekdays": [0, 4],
   "timezone": "Europe/Berlin"
 }
 ```
 
-`type` is required. For `RECURRING` tasks, `recurrenceInterval` (integer, days) is required. Response: `{ "task": Task }` — Status `201`
+`type` is required. For `RECURRING` tasks the recurrence configuration must be valid (see table above). Response: `{ "task": Task }` — Status `201`
 
 ### PATCH /api/tasks/:id
 
@@ -345,7 +347,7 @@ All fields optional. Same shape as POST body. Response: `{ "task": Task }`
 ### POST /api/tasks/:id/complete
 
 Awards `coinValue` coins to the user, updates the daily streak, checks and unlocks achievements (awarding their coin rewards), and — if the completed task is the daily quest — updates the quest streak.
-For `RECURRING` tasks: advances `nextDueDate` by `recurrenceInterval` days and resets `completedAt`.
+For `RECURRING` tasks: advances `nextDueDate` according to the task's recurrence rule (`recurrenceType`) and resets `completedAt`. Rolling rules advance from today; fixed rules advance from the current `nextDueDate`.
 
 Optional request body (JSON):
 ```json
@@ -1302,7 +1304,11 @@ Unknown, revoked, or malformed tokens return **404** (not 401) so the endpoint d
 **Event rules:**
 - All events are all-day `VEVENT`s (`DTSTART;VALUE=DATE:YYYYMMDD`)
 - UID is `task-<taskId>@momo` — stable across polls, so updates merge in place
-- `RECURRING` tasks get `RRULE:FREQ=DAILY;INTERVAL=<recurrenceInterval>` with DTSTART = `next_due_date` and no UNTIL
+- `RECURRING` tasks get an RRULE based on their `recurrenceType`:
+  - `INTERVAL`: `RRULE:FREQ=DAILY;INTERVAL=<recurrenceInterval>`
+  - `WEEKDAY`: `RRULE:FREQ=WEEKLY;BYDAY=MO,WE` (comma-separated weekday codes)
+  - `MONTHLY`: `RRULE:FREQ=MONTHLY;BYMONTHDAY=D`
+  - `YEARLY`: `RRULE:FREQ=YEARLY;BYMONTH=M;BYMONTHDAY=D`
 - `SUMMARY` = task title; `DESCRIPTION` = notes + topic name + deep link; `URL` = deep link into Momo; `CATEGORIES` = topic name
 
 **Rate limit:** 60 requests / minute / token.
