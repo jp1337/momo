@@ -48,6 +48,9 @@ export async function PATCH(request: Request) {
     const result = await bulkUpdateTasks(user.userId, parsed.data);
     return Response.json({ success: true, affected: result.affected });
   } catch (error) {
+    if (error instanceof Error && error.message === "Topic not found or access denied") {
+      return Response.json({ error: "Topic not found" }, { status: 404 });
+    }
     console.error("[PATCH /api/tasks/bulk]", error);
     return Response.json({ error: "Bulk operation failed" }, { status: 500 });
   }

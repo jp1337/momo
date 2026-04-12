@@ -96,6 +96,9 @@ export async function POST(request: Request) {
     const task = await createTask(user.userId, parsed.data, timezone);
     return Response.json({ task }, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "Topic not found or access denied") {
+      return Response.json({ error: "Topic not found" }, { status: 404 });
+    }
     console.error("[POST /api/tasks]", error);
     return Response.json({ error: "Failed to create task" }, { status: 500 });
   }

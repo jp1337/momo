@@ -227,8 +227,11 @@ export async function createTask(
         })
         .from(topics)
         .leftJoin(tasks, eq(tasks.topicId, topics.id))
-        .where(eq(topics.id, input.topicId))
+        .where(and(eq(topics.id, input.topicId), eq(topics.userId, userId)))
         .groupBy(topics.defaultEnergyLevel);
+      if (!result) {
+        throw new Error("Topic not found or access denied");
+      }
       sortOrder = (result?.maxOrder ?? -1) + 1;
       inheritedEnergyLevel = result?.defaultEnergyLevel ?? null;
     }
@@ -299,7 +302,17 @@ export async function updateTask(
   const updateValues: Partial<typeof tasks.$inferInsert> = {};
 
   if (input.title !== undefined) updateValues.title = input.title;
-  if (input.topicId !== undefined) updateValues.topicId = input.topicId;
+  if (input.topicId !== undefined) {
+    if (input.topicId !== null) {
+      const owns = await db
+        .select({ id: topics.id })
+        .from(topics)
+        .where(and(eq(topics.id, input.topicId), eq(topics.userId, userId)))
+        .limit(1);
+      if (!owns[0]) throw new Error("Topic not found or access denied");
+    }
+    updateValues.topicId = input.topicId;
+  }
   if (input.notes !== undefined) updateValues.notes = input.notes;
   if (input.type !== undefined) updateValues.type = input.type;
   if (input.priority !== undefined) updateValues.priority = input.priority;
@@ -1035,6 +1048,14 @@ export async function bulkUpdateTasks(
       }
 
       case "changeTopic": {
+        if (input.topicId !== null) {
+          const owns = await tx
+            .select({ id: topics.id })
+            .from(topics)
+            .where(and(eq(topics.id, input.topicId), eq(topics.userId, userId)))
+            .limit(1);
+          if (!owns[0]) throw new Error("Topic not found or access denied");
+        }
         const updated = await tx
           .update(tasks)
           .set({ topicId: input.topicId })
