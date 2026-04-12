@@ -70,11 +70,12 @@ export async function resolveApiUser(
   if (session?.user?.id) {
     // Fire-and-forget: update session metadata (UA, IP, lastActiveAt)
     // throttled to at most once per hour per session.
+    // Passing userId enables new-device notification on first touch.
     try {
       const cookieStore = await cookies();
       const sessionToken = readSessionTokenFromCookieStore(cookieStore);
       if (sessionToken) {
-        maybeUpdateSessionMetadata(sessionToken, request.headers);
+        maybeUpdateSessionMetadata(sessionToken, request.headers, session.user.id);
       }
     } catch {
       // Silently ignore — metadata is best-effort

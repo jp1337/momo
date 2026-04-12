@@ -9,9 +9,10 @@
  */
 
 import { createHash } from "crypto";
-import { and, eq, gt, isNull, ne } from "drizzle-orm";
+import { and, eq, gt, isNotNull, isNull, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { sessions } from "@/lib/db/schema";
+import { sessions, users } from "@/lib/db/schema";
+import { sendToAllChannels } from "@/lib/notifications";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -213,12 +214,17 @@ export async function revokeAllOtherSessions(
  * Updates device metadata on a session row. Sets `createdAt` if it
  * was previously NULL (first touch after legacy/adapter creation).
  *
+ * When `userId` is provided and this is the first touch for the session,
+ * triggers a new-device notification check (fire-and-forget).
+ *
  * @param sessionToken - The raw session token
  * @param headers - The request's Headers object (for UA and IP)
+ * @param userId - Optional user ID; enables new-device notification check
  */
 export async function touchSessionMetadata(
   sessionToken: string,
-  headers: Headers
+  headers: Headers,
+  userId?: string
 ): Promise<void> {
   const now = new Date();
   const ua = headers.get("user-agent") ?? null;
@@ -229,8 +235,10 @@ export async function touchSessionMetadata(
     .set({ lastActiveAt: now, userAgent: ua, ipAddress: ip })
     .where(eq(sessions.sessionToken, sessionToken));
 
-  // Set createdAt only on first touch (when it's still NULL)
-  await db
+  // Set createdAt only on first touch (when it's still NULL).
+  // The rowCount tells us whether this was a first touch — use it to
+  // trigger the new-device notification exactly once per new session.
+  const firstTouchResult = await db
     .update(sessions)
     .set({ createdAt: now })
     .where(
@@ -239,6 +247,78 @@ export async function touchSessionMetadata(
         isNull(sessions.createdAt)
       )
     );
+
+  if ((firstTouchResult.rowCount ?? 0) > 0 && userId) {
+    // Fire-and-forget — never block the request
+    notifyIfNewDevice(userId, ua, ip).catch(() => {});
+  }
+}
+
+/**
+ * Sends a notification on all configured channels when the current session's
+ * device fingerprint (SHA-256 of User-Agent + IP) has not been seen in any
+ * prior session for this user.
+ *
+ * No-op when:
+ *  - The user has disabled `loginNotificationNewDevice`
+ *  - This is the user's very first session (nothing to compare against)
+ *  - The device fingerprint matches a known prior session
+ *
+ * @param userId - The authenticated user's UUID
+ * @param ua - User-Agent header value (may be null)
+ * @param ip - Client IP address
+ */
+async function notifyIfNewDevice(
+  userId: string,
+  ua: string | null,
+  ip: string
+): Promise<void> {
+  // Check user preference
+  const userRows = await db
+    .select({ loginNotificationNewDevice: users.loginNotificationNewDevice })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!userRows[0]?.loginNotificationNewDevice) return;
+
+  // Fetch all other sessions that have already been touched (createdAt IS NOT NULL)
+  const priorSessions = await db
+    .select({ userAgent: sessions.userAgent, ipAddress: sessions.ipAddress })
+    .from(sessions)
+    .where(
+      and(
+        eq(sessions.userId, userId),
+        gt(sessions.expires, new Date()),
+        isNotNull(sessions.createdAt)
+      )
+    );
+
+  // First-ever login — no prior sessions to compare against, skip
+  if (priorSessions.length === 0) return;
+
+  // Compute fingerprint = truncated SHA-256(ua:ip)
+  const fingerprint = (rawUa: string | null, rawIp: string) =>
+    createHash("sha256")
+      .update(`${rawUa ?? ""}:${rawIp}`)
+      .digest("hex")
+      .slice(0, 16);
+
+  const currentFp = fingerprint(ua, ip);
+  const knownFps = new Set(
+    priorSessions.map((s) => fingerprint(s.userAgent ?? null, s.ipAddress ?? "unknown"))
+  );
+
+  // Known device — nothing to report
+  if (knownFps.has(currentFp)) return;
+
+  const device = parseUserAgent(ua).deviceLabel;
+
+  await sendToAllChannels(userId, {
+    title: "🔐 Neues Gerät erkannt",
+    body: `Neue Anmeldung von ${device} (${ip}). Falls du das nicht warst, widerrufe die Session in den Einstellungen.`,
+    url: "/settings",
+  });
 }
 
 // ── Throttled Touch ────────────────────────────────────────────────────────────
@@ -253,12 +333,17 @@ const TOUCH_INTERVAL_MS = 60 * 60 * 1000;
  * Conditionally updates session metadata, throttled to at most once
  * per hour per session. Fire-and-forget — errors are swallowed.
  *
+ * When `userId` is provided it is forwarded to `touchSessionMetadata`
+ * so that new-device detection can fire on the first touch.
+ *
  * @param sessionToken - The raw session token
  * @param headers - The request's Headers object
+ * @param userId - Optional user ID; enables new-device notification on first touch
  */
 export function maybeUpdateSessionMetadata(
   sessionToken: string,
-  headers: Headers
+  headers: Headers,
+  userId?: string
 ): void {
   const now = Date.now();
   const last = lastTouched.get(sessionToken);
@@ -266,7 +351,7 @@ export function maybeUpdateSessionMetadata(
   lastTouched.set(sessionToken, now);
 
   // Fire-and-forget — never block the request
-  touchSessionMetadata(sessionToken, headers).catch(() => {
+  touchSessionMetadata(sessionToken, headers, userId).catch(() => {
     // Silently ignore — metadata is best-effort
   });
 }

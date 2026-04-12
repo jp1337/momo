@@ -208,6 +208,16 @@ export const users = pgTable("users", {
   /** Whether to show an affirmation/quote after completing the daily quest (default: on) */
   emotionalClosureEnabled: boolean("emotional_closure_enabled").notNull().default(true),
 
+  /**
+   * Opt-in: send a notification on all configured channels when a login is
+   * detected from a device fingerprint (User-Agent + IP) that has not been
+   * seen in any prior session. Fires at most once per new session.
+   * Default false — users must consciously enable it.
+   */
+  loginNotificationNewDevice: boolean("login_notification_new_device")
+    .notNull()
+    .default(false),
+
   /** Today's self-reported energy level for daily quest matching. Null = not yet checked in today. */
   energyLevel: energyLevelEnum("energy_level"),
 

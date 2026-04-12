@@ -597,7 +597,12 @@
     "session_err_generic": "Something went wrong. Please try again.",
     "session_no_other": "No other active sessions.",
     "session_ip_label": "IP: {ip}",
-    "session_revoking": "Revoking…"
+    "session_revoking": "Revoking…",
+    "login_notification_section_title": "Monitor logins",
+    "login_notification_label": "Notify on new devices",
+    "login_notification_description": "Receive a notification on all configured channels when you log in from a previously unseen device.",
+    "login_notification_saved": "Setting saved.",
+    "login_notification_error": "Failed to save. Please try again."
   },
   "animations": {
     "achievement_title": "Achievement unlocked!",

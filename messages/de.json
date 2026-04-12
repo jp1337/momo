@@ -597,7 +597,12 @@
     "session_err_generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
     "session_no_other": "Keine anderen aktiven Sitzungen.",
     "session_ip_label": "IP: {ip}",
-    "session_revoking": "Wird widerrufen…"
+    "session_revoking": "Wird widerrufen…",
+    "login_notification_section_title": "Anmeldungen überwachen",
+    "login_notification_label": "Neue Geräte benachrichtigen",
+    "login_notification_description": "Erhalte eine Benachrichtigung auf allen konfigurierten Kanälen, wenn du dich von einem bisher unbekannten Gerät anmeldest.",
+    "login_notification_saved": "Einstellung gespeichert.",
+    "login_notification_error": "Fehler beim Speichern. Bitte erneut versuchen."
   },
   "animations": {
     "achievement_title": "Achievement freigeschaltet!",

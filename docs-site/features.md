@@ -634,6 +634,14 @@ If you see a session you don't recognise — or you simply want to sign out ever
 
 This is the same pattern you know from GitHub, Google, or Apple. Check it whenever you sign in from a shared computer, or if you suspect someone else has access to your account.
 
+### Login notifications for new devices
+
+Under the **Active Sessions** section you will find a **"Notify on new devices"** toggle. When enabled, you receive a notification — via every delivery channel you have set up — the moment a login is detected from a device that has not been seen before.
+
+The detection compares a fingerprint of the browser's User-Agent and IP address against all your existing sessions. The first time you ever sign in, no notification is sent (there is nothing to compare against yet). Subsequent logins from a new browser, a different computer, or an unfamiliar IP will trigger the alert immediately.
+
+If you receive an unexpected alert, open the **Active Sessions** list and revoke the unfamiliar session straight away.
+
 ---
 
 ## API Keys

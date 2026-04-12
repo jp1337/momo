@@ -597,7 +597,12 @@
     "session_err_generic": "Une erreur est survenue. Veuillez réessayer.",
     "session_no_other": "Aucune autre session active.",
     "session_ip_label": "IP : {ip}",
-    "session_revoking": "Révocation…"
+    "session_revoking": "Révocation…",
+    "login_notification_section_title": "Surveiller les connexions",
+    "login_notification_label": "Notifier les nouveaux appareils",
+    "login_notification_description": "Recevez une notification sur tous les canaux configurés lorsque vous vous connectez depuis un appareil inconnu.",
+    "login_notification_saved": "Paramètre enregistré.",
+    "login_notification_error": "Échec de l'enregistrement. Veuillez réessayer."
   },
   "animations": {
     "achievement_title": "Succès débloqué !",
