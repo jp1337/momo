@@ -504,6 +504,201 @@ export async function sendDueTodayNotifications(): Promise<{
   return { sent, failed };
 }
 
+// ─── Overdue reminder ────────────────────────────────────────────────────────
+
+/**
+ * Fetches up to 10 tasks that are overdue for the given user.
+ *
+ * "Overdue" means:
+ *  - tasks.due_date < today in the user's timezone
+ *  - tasks.due_date >= today - 30 days (recency guard — older tasks are excluded)
+ *  - completed_at IS NULL
+ *  - snoozed_until IS NULL OR snoozed_until < today
+ *  - paused_at IS NULL (vacation mode guard)
+ *
+ * Ordered by priority (ascending enum order, URGENT first) then due_date ASC.
+ *
+ * @param userId - The user whose tasks to query
+ * @returns Array of { id, title, dueDate } for each overdue task (max 10)
+ */
+async function fetchOverdueTasks(
+  userId: string
+): Promise<Array<{ id: string; title: string; dueDate: string | null }>> {
+  // "Today" in the user's own timezone, computed on the database side
+  const today = sql<string>`((NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))::date)`;
+  const thirtyDaysAgo = sql<string>`((NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))::date - interval '30 days')`;
+
+  const rows = await db
+    .select({ id: tasks.id, title: tasks.title, dueDate: tasks.dueDate })
+    .from(tasks)
+    .innerJoin(users, eq(tasks.userId, users.id))
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        isNull(tasks.completedAt),
+        sql`${tasks.dueDate} < ${today}`,
+        sql`${tasks.dueDate} >= ${thirtyDaysAgo}`,
+        or(isNull(tasks.snoozedUntil), sql`${tasks.snoozedUntil} < ${today}`),
+        isNull(tasks.pausedAt)
+      )
+    )
+    .orderBy(asc(tasks.priority), asc(tasks.dueDate))
+    .limit(10);
+
+  return rows;
+}
+
+/**
+ * Sends "overdue" reminder notifications to all users who have
+ *   - notification_enabled = true (or a configured channel)
+ *   - overdue_reminder_enabled = true
+ *   - morning_briefing_enabled = false (briefing users are suppressed)
+ *   - notification_time matching the current 5-minute bucket (in their tz)
+ *   - at least one non-completed, non-snoozed, non-paused task with
+ *     due_date in the past 30 days
+ *
+ * Silent on empty: users with no overdue tasks receive *no* ping.
+ *
+ * @returns Object with sent and failed counts
+ */
+export async function sendOverdueNotifications(): Promise<{
+  sent: number;
+  failed: number;
+}> {
+  let sent = 0;
+  let failed = 0;
+
+  // Same bucket SQL fragment as sendDailyQuestNotifications
+  const timeBucketCondition = and(
+    sql`EXTRACT(HOUR FROM ${users.notificationTime})
+        = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
+    sql`FLOOR(EXTRACT(MINUTE FROM ${users.notificationTime}) / 5)
+        = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
+  );
+
+  // Cache overdue tasks per user — multi-device / multi-channel fan-out
+  // shares the same query result. `null` sentinel = no overdue tasks.
+  const overdueCache = new Map<string, Array<{ id: string; title: string; dueDate: string | null }> | null>();
+
+  /** Resolve overdue tasks once per user, using the cache. */
+  async function resolveOverdueTasks(
+    userId: string
+  ): Promise<Array<{ id: string; title: string; dueDate: string | null }>> {
+    if (overdueCache.has(userId)) return overdueCache.get(userId) ?? [];
+    const rows = await fetchOverdueTasks(userId);
+    overdueCache.set(userId, rows.length > 0 ? rows : null);
+    return rows;
+  }
+
+  /**
+   * Builds the notification payload for a user's overdue tasks.
+   */
+  function buildPayload(
+    overdueTasks: Array<{ id: string; title: string; dueDate: string | null }>
+  ): NotificationPayload & ChannelPayload {
+    if (overdueTasks.length === 1) {
+      const title = overdueTasks[0].title.length > 80
+        ? `${overdueTasks[0].title.slice(0, 77)}...`
+        : overdueTasks[0].title;
+      return {
+        title: `Überfällig: ${title}`,
+        body: "Diese Aufgabe wurde noch nicht erledigt. Jetzt abhaken?",
+        icon: "/icon-192.png",
+        url: "/tasks",
+        tag: "overdue-reminder",
+      };
+    }
+
+    const preview = overdueTasks.slice(0, 3).map((t) => t.title).join(" · ");
+    const remaining = overdueTasks.length - 3;
+    const body =
+      remaining > 0
+        ? `${preview} · und ${remaining} weitere`
+        : preview;
+    return {
+      title: `${overdueTasks.length} überfällige Aufgaben`,
+      body,
+      icon: "/icon-192.png",
+      url: "/tasks",
+      tag: "overdue-reminder",
+    };
+  }
+
+  // ── Web Push block (only if VAPID is configured) ──
+  if (isVapidConfigured()) {
+    const eligibleSubscriptions = await db
+      .select({
+        userId: pushSubscriptions.userId,
+        subscription: pushSubscriptions.subscription,
+      })
+      .from(pushSubscriptions)
+      .innerJoin(users, eq(pushSubscriptions.userId, users.id))
+      .where(
+        and(
+          eq(users.notificationEnabled, true),
+          eq(users.overdueReminderEnabled, true),
+          eq(users.morningBriefingEnabled, false),
+          timeBucketCondition
+        )
+      );
+
+    for (const row of eligibleSubscriptions) {
+      try {
+        const overdueTasks = await resolveOverdueTasks(row.userId);
+        if (overdueTasks.length === 0) continue; // silence-on-empty
+        await sendPushNotification(
+          row.userId,
+          row.subscription as PushSubscriptionData,
+          buildPayload(overdueTasks)
+        );
+        sent++;
+      } catch (err) {
+        console.error(
+          "[push] Failed to send overdue notification to",
+          row.userId,
+          err
+        );
+        failed++;
+      }
+    }
+  }
+
+  // ── Notification channels block (ntfy, pushover, telegram, email) ──
+  const channelUsers = await db
+    .selectDistinct({
+      userId: notificationChannels.userId,
+    })
+    .from(notificationChannels)
+    .innerJoin(users, eq(notificationChannels.userId, users.id))
+    .where(
+      and(
+        eq(notificationChannels.enabled, true),
+        eq(users.overdueReminderEnabled, true),
+        eq(users.morningBriefingEnabled, false),
+        timeBucketCondition
+      )
+    );
+
+  for (const row of channelUsers) {
+    try {
+      const overdueTasks = await resolveOverdueTasks(row.userId);
+      if (overdueTasks.length === 0) continue; // silence-on-empty
+      const result = await sendToAllChannels(row.userId, buildPayload(overdueTasks));
+      sent += result.sent;
+      failed += result.failed;
+    } catch (err) {
+      console.error(
+        "[channels] Failed to send overdue notification to",
+        row.userId,
+        err
+      );
+      failed++;
+    }
+  }
+
+  return { sent, failed };
+}
+
 // ─── Recurring Due reminder ─────────────────────────────────────────────────
 
 /**

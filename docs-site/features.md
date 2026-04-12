@@ -474,6 +474,19 @@ On top of the daily-quest ping, Momo can send a separate reminder listing the ta
 - **Delivery time.** Uses the same time you picked for your daily reminder. Both pings arrive within a few seconds of each other.
 - **Channels.** Works with every channel you have configured — browser push, ntfy.sh, Pushover, Telegram, Email. Enable any one of them and the toggle becomes available.
 
+### Overdue task reminder
+
+Sometimes tasks slip through the cracks — a due date passes, life happens, and before you know it there is a small pile of things you meant to do. Toggle **Overdue task reminder** in **Settings → Notifications** and Momo will send you a daily nudge as long as any tasks are overdue.
+
+- **What counts as overdue.** Any task with a `due date` in the past (up to 30 days back) that you have not yet completed, snoozed, or paused.
+- **One task overdue** → Notification title is *"Überfällig: [task title]"* with a prompt to check it off.
+- **Several tasks overdue** → Summary notification listing the first three, plus a count for the rest.
+- **Silent on empty.** No notification fires when you have nothing overdue — only when there is actually something to act on.
+- **Paused and snoozed tasks** are excluded. Tasks paused by Vacation Mode or snoozed to a future date won't trigger the reminder.
+- **Morning briefing users** are automatically excluded — enable the briefing if you want a single consolidated morning push instead.
+- **Delivery time.** Uses the same notification time you configured for your daily reminder.
+- **Channels.** Works with every delivery method you have set up — browser push, ntfy.sh, Pushover, Telegram, Email, Webhook.
+
 ### Individual recurring-task reminders
 
 Want each recurring task to stand out on its own? Toggle **Send individual reminders for recurring tasks** in **Settings → Notifications** and every recurring task that is due today gets its own dedicated notification — separate from the bundled "due today" reminder.
@@ -781,6 +794,7 @@ Your timezone affects all scheduled actions:
 
 - **Daily Quest reminder** — sent at your configured notification time in your local time
 - **Due-today reminder** — checks which tasks are due "today" in your timezone
+- **Overdue reminder** — checks which tasks have a past due date (up to 30 days back) in your timezone
 - **Recurring-task reminder** — checks which recurring tasks are due "today" in your timezone
 - **Morning Briefing** — delivered at your briefing time in your timezone
 - **Weekly Review** — sent on Sunday at 18:00 in your timezone

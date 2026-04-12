@@ -171,6 +171,18 @@ export const users = pgTable("users", {
     .default(false),
 
   /**
+   * Opt-in flag for the overdue reminder (see sendOverdueNotifications in lib/push.ts).
+   * When true, the cron dispatcher sends a notification at the user's
+   * configured notificationTime listing tasks whose due_date is in the past
+   * and have not been completed, snoozed, or paused (up to 30 days back).
+   * Suppressed when morningBriefingEnabled is true.
+   * Default false — new noise requires explicit opt-in.
+   */
+  overdueReminderEnabled: boolean("overdue_reminder_enabled")
+    .notNull()
+    .default(false),
+
+  /**
    * Opt-in daily digest: consolidates quest + due tasks + streak + achievements
    * into one push at `morningBriefingTime`. Replaces individual quest and
    * due-today reminders when enabled.

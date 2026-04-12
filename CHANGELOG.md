@@ -27,6 +27,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Überfällig-Erinnerung** — neuer opt-in Notification-Typ: täglicher Push/Channel-Reminder für Aufgaben, die ihr Fälligkeitsdatum überschritten haben (bis zu 30 Tage zurück). Sendet eine Einzel-Benachrichtigung bei einer überfälligen Aufgabe oder eine Zusammenfassung bei mehreren. Silent on empty — kein Ping, wenn nichts überfällig ist. Unterdrückt für Morgen-Briefing-Nutzer. Neuer Cron-Job `overdue-reminder`, Toggle in den Notification-Settings, neues DB-Feld `overdue_reminder_enabled` (Migration `0030`). Alle konfigurierten Kanäle (Web Push, ntfy, Pushover, Telegram, E-Mail, Webhook) unterstützt.
 - **Webhook-Benachrichtigungskanal** — neuer generischer Outbound-Webhook-Kanal in den Notification-Settings. Sendet einen HTTP-POST mit JSON-Payload (`event`, `title`, `body`, `url`, `tag`, `timestamp`) an eine beliebige URL. Optionale HMAC-SHA256-Signierung via `X-Momo-Signature`-Header. Nützlich für Integrationen mit Home Assistant, n8n, Zapier, Make oder eigenen Servern. Kein Schema-Migration nötig — `config` ist bereits JSONB.
 - **GET /api/user** — liefert jetzt Gamification-Stats (`coins`, `level`, `streakCurrent`, `streakShieldAvailable`); bisher war nur DELETE dokumentiert.
 - **GET /api/user/profile** — liefert `name`, `email`, `image`; bisher fehlte der lesende Endpunkt.
