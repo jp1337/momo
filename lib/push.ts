@@ -370,11 +370,12 @@ export async function sendDueTodayNotifications(): Promise<{
   let sent = 0;
   let failed = 0;
 
-  // Same bucket SQL fragment as sendDailyQuestNotifications
+  // Uses the per-reminder dueTodayReminderTime column so users can set a
+  // different time than their global notificationTime.
   const timeBucketCondition = and(
-    sql`EXTRACT(HOUR FROM ${users.notificationTime})
+    sql`EXTRACT(HOUR FROM ${users.dueTodayReminderTime})
         = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
-    sql`FLOOR(EXTRACT(MINUTE FROM ${users.notificationTime}) / 5)
+    sql`FLOOR(EXTRACT(MINUTE FROM ${users.dueTodayReminderTime}) / 5)
         = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
   );
 
@@ -568,11 +569,12 @@ export async function sendOverdueNotifications(): Promise<{
   let sent = 0;
   let failed = 0;
 
-  // Same bucket SQL fragment as sendDailyQuestNotifications
+  // Uses the per-reminder overdueReminderTime column so users can set a
+  // different time than their global notificationTime (e.g. evening reminder).
   const timeBucketCondition = and(
-    sql`EXTRACT(HOUR FROM ${users.notificationTime})
+    sql`EXTRACT(HOUR FROM ${users.overdueReminderTime})
         = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
-    sql`FLOOR(EXTRACT(MINUTE FROM ${users.notificationTime}) / 5)
+    sql`FLOOR(EXTRACT(MINUTE FROM ${users.overdueReminderTime}) / 5)
         = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
   );
 
@@ -767,10 +769,12 @@ export async function sendRecurringDueNotifications(): Promise<{
   let sent = 0;
   let failed = 0;
 
+  // Uses the per-reminder recurringDueReminderTime column so users can set a
+  // different time than their global notificationTime.
   const timeBucketCondition = and(
-    sql`EXTRACT(HOUR FROM ${users.notificationTime})
+    sql`EXTRACT(HOUR FROM ${users.recurringDueReminderTime})
         = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
-    sql`FLOOR(EXTRACT(MINUTE FROM ${users.notificationTime}) / 5)
+    sql`FLOOR(EXTRACT(MINUTE FROM ${users.recurringDueReminderTime}) / 5)
         = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
   );
 
@@ -1068,11 +1072,14 @@ export async function sendWeeklyReviewNotifications(): Promise<{
   let sent = 0;
   let failed = 0;
 
-  // Sunday 18:00–18:04 in user's local timezone
+  // Sunday at the user-configured weeklyReviewTime (previously hardcoded to 18:00).
+  // Uses the same 5-minute bucket matching as all other reminder types.
   const sundayCondition = and(
     sql`EXTRACT(DOW FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) = 0`,
-    sql`EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) = 18`,
-    sql`FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5) = 0`
+    sql`EXTRACT(HOUR FROM ${users.weeklyReviewTime})
+        = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
+    sql`FLOOR(EXTRACT(MINUTE FROM ${users.weeklyReviewTime}) / 5)
+        = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
   );
 
   // Cache review data per user for multi-device + channel fan-out

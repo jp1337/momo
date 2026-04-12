@@ -1163,19 +1163,27 @@ Request body:
   "overdueReminderEnabled": true,
   "recurringDueReminderEnabled": true,
   "morningBriefingEnabled": true,
-  "morningBriefingTime": "08:00"
+  "morningBriefingTime": "08:00",
+  "dueTodayReminderTime": "08:00",
+  "recurringDueReminderTime": "08:00",
+  "overdueReminderTime": "20:00",
+  "weeklyReviewTime": "18:00"
 }
 ```
 
 | Field | Type | Description |
 |---|---|---|
-| `notificationTime` | string (HH:MM) | Preferred daily-reminder time in the user's local timezone |
+| `notificationTime` | string (HH:MM) | Shared time for the daily-quest and streak reminders in the user's local timezone |
 | `timezone` | string (IANA) | IANA timezone identifier (max 64 chars), e.g. `Europe/Berlin` |
 | `dueTodayReminderEnabled` | boolean | Opt-in for the "Due today" reminder — silent on days with nothing due |
 | `overdueReminderEnabled` | boolean | Opt-in for the overdue reminder — daily notification for tasks past their due date (up to 30 days back). Silent on empty. Suppressed when morning briefing is enabled |
 | `recurringDueReminderEnabled` | boolean | Opt-in for per-task recurring due reminders — sends individual notifications for each recurring task due today (≤3 individual, >3 bundled). Suppressed when morning briefing is enabled |
 | `morningBriefingEnabled` | boolean | Opt-in for the morning briefing daily digest — consolidates quest, due tasks, streak, and achievements into one message. Suppresses individual quest and due-today reminders when enabled |
 | `morningBriefingTime` | string (HH:MM) | Time for the morning briefing in the user's local timezone (default `08:00`). Independent from `notificationTime` |
+| `dueTodayReminderTime` | string (HH:MM) | Independent time for the "Due today" reminder (default `08:00`). Overrides `notificationTime` for this reminder type |
+| `recurringDueReminderTime` | string (HH:MM) | Independent time for per-task recurring due reminders (default `08:00`). Overrides `notificationTime` for this reminder type |
+| `overdueReminderTime` | string (HH:MM) | Independent time for the overdue reminder (default `08:00`). Overrides `notificationTime` for this reminder type |
+| `weeklyReviewTime` | string (HH:MM) | Time for the Sunday weekly review notification (default `18:00`). Previously hardcoded |
 
 Response: `{ "success": true }`
 

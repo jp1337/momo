@@ -211,6 +211,13 @@
       "when": 1776001162215,
       "tag": "0029_login_notification_new_device",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1776020127623,
+      "tag": "0030_broken_xorn",
+      "breakpoints": true
     }
   ]
 }
