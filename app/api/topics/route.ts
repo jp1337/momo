@@ -15,6 +15,10 @@ import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { getUserTopics, createTopic } from "@/lib/topics";
 import { CreateTopicInputSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { db } from "@/lib/db";
+import { topics, users } from "@/lib/db/schema";
+import { eq, and, sql } from "drizzle-orm";
+import { checkAndUnlockAchievements } from "@/lib/gamification";
 
 /**
  * GET /api/topics
@@ -63,6 +67,36 @@ export async function POST(request: Request) {
 
   try {
     const topic = await createTopic(user.userId, parsed.data);
+
+    // Fire-and-forget achievement check for topic milestones
+    (async () => {
+      try {
+        const [topicCountRows, seqTopicRows] = await Promise.all([
+          db.select({ count: sql<number>`count(*)` }).from(topics).where(eq(topics.userId, user.userId)),
+          db.select({ id: topics.id }).from(topics).where(and(eq(topics.userId, user.userId), eq(topics.sequential, true))).limit(1),
+        ]);
+        const topicsCreated = Number(topicCountRows[0]?.count ?? 0);
+        const hasSequentialTopic = seqTopicRows.length > 0;
+        const result = await checkAndUnlockAchievements(user.userId, {
+          totalCompleted: 0,
+          streakCurrent: 0,
+          coins: 0,
+          level: 1,
+          topicsCreated,
+          hasSequentialTopic,
+        });
+        if (result.coinsAwarded > 0) {
+          await db.update(users).set({ coins: sql`${users.coins} + ${result.coinsAwarded}` }).where(eq(users.id, user.userId));
+        }
+        if (result.unlocked.length > 0) {
+          const { sendAchievementNotifications } = await import("@/lib/push");
+          await sendAchievementNotifications(user.userId, result.unlocked);
+        }
+      } catch (err) {
+        console.error("[POST /api/topics] achievement check failed (non-fatal):", err);
+      }
+    })();
+
     return Response.json({ topic }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/topics]", error);

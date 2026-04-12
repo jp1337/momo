@@ -21,7 +21,8 @@
     "quick_mode": "5 Min",
     "review": "Review",
     "focus_mode": "Focus",
-    "habits": "Habits"
+    "habits": "Habits",
+    "achievements": "Achievements"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -849,7 +850,6 @@
     "finish": "Start using Momo",
     "sign_out": "Sign out",
     "progress_step": "Step {current} of {total}",
-
     "welcome_title": "Welcome, {name}!",
     "welcome_title_anonymous": "Welcome!",
     "welcome_subtitle": "Let us show you how Momo helps you get things done — one task at a time.",
@@ -861,7 +861,6 @@
     "concept_coins_desc": "Earn coins by completing tasks. Spend them on wishes from your wishlist.",
     "concept_streaks_title": "Streaks",
     "concept_streaks_desc": "Complete your daily quest every day to build a streak. A shield protects you once a month.",
-
     "topic_title": "Create your first topic",
     "topic_subtitle": "Topics are buckets for your tasks — like \"Moving\", \"Health\", or \"Side Project\".",
     "topic_name_label": "Topic name",
@@ -870,7 +869,6 @@
     "topic_color_label": "Color",
     "topic_created": "Topic created!",
     "topic_error": "Could not create topic. Please try again.",
-
     "tasks_title": "Add some tasks",
     "tasks_subtitle": "Add a few tasks to \"{topicName}\" to get started.",
     "tasks_skipped_title": "No topic yet",
@@ -880,7 +878,6 @@
     "tasks_hint": "Press Enter to add",
     "tasks_added_count": "{count, plural, =0 {No tasks yet} one {1 task added} other {{count} tasks added}}",
     "tasks_error": "Could not add task. Please try again.",
-
     "notifications_title": "Stay on track",
     "notifications_subtitle": "Get a daily reminder for your quest. You can change this anytime in Settings.",
     "notifications_timezone_label": "Your timezone",
@@ -890,8 +887,27 @@
     "notifications_push_denied": "Notifications are blocked by your browser. You can enable them in your browser settings.",
     "notifications_push_unsupported": "Push notifications are not supported in this browser.",
     "notifications_push_enabled": "Notifications enabled!",
-
     "complete_title": "You're all set!",
     "complete_subtitle": "Your first quest is waiting on the dashboard. Good luck!"
+  },
+  "achievements": {
+    "page_title": "Achievements",
+    "page_subtitle": "{earned} of {total} unlocked",
+    "rarity_common": "Common",
+    "rarity_rare": "Rare",
+    "rarity_epic": "Epic",
+    "rarity_legendary": "Legendary",
+    "secret_title": "???",
+    "secret_description": "This achievement is secret — explore Momo to unlock it",
+    "locked": "Locked",
+    "earned_at": "Earned on {date}",
+    "coin_reward": "+{coins} coins",
+    "progress": "{current} / {total}",
+    "section_legendary": "Legendary",
+    "section_epic": "Epic",
+    "section_rare": "Rare",
+    "section_common": "Common",
+    "section_secret": "Secret",
+    "no_achievements": "No achievements yet — complete tasks to unlock them!"
   }
 }

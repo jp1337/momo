@@ -154,3 +154,52 @@ export async function getEnergyCheckinDayCount(userId: string): Promise<number> 
     .where(eq(energyCheckins.userId, userId));
   return Number(rows[0]?.count ?? 0);
 }
+
+/**
+ * Computes the user's current consecutive energy check-in streak.
+ * Counts backwards from today — each day must have at least one check-in.
+ * A gap of one or more days without a check-in resets the count.
+ *
+ * Used by the achievement system to award the "Im Gleichgewicht" badge
+ * after 7 consecutive days.
+ *
+ * @param userId   - Authenticated user UUID
+ * @param timezone - IANA timezone used to interpret the local date. Falls back to UTC.
+ * @returns Number of consecutive days (including today) with a check-in
+ */
+export async function getEnergyCheckinStreak(
+  userId: string,
+  timezone?: string | null
+): Promise<number> {
+  // Fetch the last 60 days of check-ins — enough to cover any realistic streak
+  const cutoff = new Date();
+  cutoff.setUTCDate(cutoff.getUTCDate() - 60);
+
+  const rows = await db
+    .select({ date: energyCheckins.date })
+    .from(energyCheckins)
+    .where(
+      and(
+        eq(energyCheckins.userId, userId),
+        gte(energyCheckins.createdAt, cutoff)
+      )
+    );
+
+  // Deduplicate to one entry per date
+  const datesWithCheckin = new Set(rows.map((r) => r.date));
+
+  const today = getLocalDateString(timezone);
+
+  // Walk backwards from today counting consecutive days
+  let streak = 0;
+  const current = new Date(today + "T00:00:00Z");
+
+  while (true) {
+    const dateStr = current.toISOString().split("T")[0];
+    if (!datesWithCheckin.has(dateStr)) break;
+    streak += 1;
+    current.setUTCDate(current.getUTCDate() - 1);
+  }
+
+  return streak;
+}

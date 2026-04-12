@@ -24,6 +24,7 @@ import { getCurrentDailyQuest, selectDailyQuest } from "@/lib/daily-quest";
 import { getWeeklyReview } from "@/lib/weekly-review";
 import { sendToAllChannels, type NotificationPayload as ChannelPayload } from "@/lib/notifications";
 import { logNotification } from "@/lib/notification-log";
+import type { UnlockedAchievement } from "@/lib/gamification";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1200,6 +1201,64 @@ export async function sendStreakShieldNotification(
     await sendToAllChannels(userId, payload);
   } catch (err) {
     console.error("[channels] Failed to send streak shield notification to", userId, err);
+  }
+}
+
+/**
+ * Sends a push notification for each newly unlocked achievement via all
+ * configured channels (web push + ntfy/pushover/telegram/email).
+ *
+ * Capped at 3 notifications per call to prevent spammy bursts when multiple
+ * achievements are unlocked simultaneously. Fire-and-forget — callers should
+ * not await this function.
+ *
+ * @param userId   - The user to notify
+ * @param unlocked - Newly unlocked achievements to announce
+ */
+export async function sendAchievementNotifications(
+  userId: string,
+  unlocked: UnlockedAchievement[]
+): Promise<void> {
+  if (unlocked.length === 0) return;
+
+  // Cap at 3 to avoid notification spam
+  const toNotify = unlocked.slice(0, 3);
+
+  for (const achievement of toNotify) {
+    const payload: NotificationPayload & ChannelPayload = {
+      title: `🏅 Achievement freigeschaltet!`,
+      body: `${achievement.icon} ${achievement.title} (+${achievement.coinReward} Coins)`,
+      icon: "/icon-192.png",
+      url: "/achievements",
+      tag: `achievement-${achievement.key}`,
+    };
+
+    // Web Push
+    if (isVapidConfigured()) {
+      const subs = await db
+        .select({ subscription: pushSubscriptions.subscription })
+        .from(pushSubscriptions)
+        .where(eq(pushSubscriptions.userId, userId));
+
+      for (const row of subs) {
+        try {
+          await sendPushNotification(
+            userId,
+            row.subscription as PushSubscriptionData,
+            payload
+          );
+        } catch (err) {
+          console.error("[push] Failed to send achievement notification to", userId, err);
+        }
+      }
+    }
+
+    // Notification channels (ntfy, pushover, telegram, email)
+    try {
+      await sendToAllChannels(userId, payload);
+    } catch (err) {
+      console.error("[channels] Failed to send achievement notification to", userId, err);
+    }
   }
 }
 

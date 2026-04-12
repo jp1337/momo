@@ -241,6 +241,16 @@ export const users = pgTable("users", {
    */
   vacationEndDate: date("vacation_end_date"),
 
+  /**
+   * Current consecutive-day streak of daily quest completions.
+   * Incremented each day the user completes at least one daily quest.
+   * Resets to 1 on gaps (no shield mechanism — quests are optional).
+   */
+  questStreakCurrent: integer("quest_streak_current").notNull().default(0),
+
+  /** Date (YYYY-MM-DD, user's timezone) of the last daily quest completion — used for quest streak tracking */
+  questStreakLastDate: date("quest_streak_last_date"),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -556,6 +566,24 @@ export const achievements = pgTable("achievements", {
 
   /** Emoji or icon identifier for display */
   icon: text("icon").notNull(),
+
+  /**
+   * Rarity tier: common | rare | epic | legendary
+   * Drives the coin reward and visual styling of the achievement.
+   */
+  rarity: text("rarity").notNull().default("common"),
+
+  /**
+   * Coins awarded to the user when this achievement is first unlocked.
+   * Common: 10 | Rare: 25 | Epic: 50 | Legendary: 100
+   */
+  coinReward: integer("coin_reward").notNull().default(10),
+
+  /**
+   * When true, the achievement is hidden (title + description shown as "???")
+   * until the user has actually earned it. Used for surprise/Easter-egg achievements.
+   */
+  secret: boolean("secret").notNull().default(false),
 });
 
 /**

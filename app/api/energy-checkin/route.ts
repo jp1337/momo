@@ -27,9 +27,13 @@
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { reselectQuestForEnergy } from "@/lib/daily-quest";
-import { recordEnergyCheckin } from "@/lib/energy";
+import { recordEnergyCheckin, getEnergyCheckinStreak } from "@/lib/energy";
 import { EnergyCheckinSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
+import { checkAndUnlockAchievements } from "@/lib/gamification";
 
 export async function POST(request: Request) {
   const user = await resolveApiUser(request);
@@ -62,6 +66,29 @@ export async function POST(request: Request) {
 
     // Re-roll the quest if it no longer matches the new energy.
     const reroll = await reselectQuestForEnergy(user.userId, energyLevel, timezone);
+
+    // Fire-and-forget achievement check for energy check-in streak
+    (async () => {
+      try {
+        const energyCheckinStreak = await getEnergyCheckinStreak(user.userId, timezone);
+        const result = await checkAndUnlockAchievements(user.userId, {
+          totalCompleted: 0,
+          streakCurrent: 0,
+          coins: 0,
+          level: 1,
+          energyCheckinStreak,
+        });
+        if (result.coinsAwarded > 0) {
+          await db.update(users).set({ coins: sql`${users.coins} + ${result.coinsAwarded}` }).where(eq(users.id, user.userId));
+        }
+        if (result.unlocked.length > 0) {
+          const { sendAchievementNotifications } = await import("@/lib/push");
+          await sendAchievementNotifications(user.userId, result.unlocked);
+        }
+      } catch (err) {
+        console.error("[POST /api/energy-checkin] achievement check failed (non-fatal):", err);
+      }
+    })();
 
     return Response.json({
       quest: reroll.quest,
