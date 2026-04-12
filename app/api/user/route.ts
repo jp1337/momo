@@ -1,4 +1,10 @@
 /**
+ * GET /api/user
+ * Returns the authenticated user's stats and level information.
+ *
+ * Auth:    Required
+ * Returns: { coins: number, level: number, streakCurrent: number, streakShieldAvailable: boolean }
+ *
  * DELETE /api/user
  * Permanently deletes the authenticated user's account and all associated data.
  *
@@ -13,7 +19,24 @@
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { deleteUser } from "@/lib/users";
+import { getUserStats } from "@/lib/gamification";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+
+/**
+ * GET — Fetch the authenticated user's stats.
+ */
+export async function GET(request: Request) {
+  const user = await resolveApiUser(request);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const stats = await getUserStats(user.userId);
+    return Response.json(stats);
+  } catch (error) {
+    console.error("[GET /api/user]", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
 
 export async function DELETE(request: Request) {
   const user = await resolveApiUser(request);

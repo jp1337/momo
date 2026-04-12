@@ -7,6 +7,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Push-Benachrichtigungen vollständig auf Deutsch** — Daily-Quest-Fallback, Fällig-heute-Body, Streak-Reminder und Streak-Schutzschild-Meldungen waren teilweise auf Englisch; alle Texte sind jetzt einheitlich auf Deutsch.
+
+### Added
+
+- **GET /api/user** — liefert jetzt Gamification-Stats (`coins`, `level`, `streakCurrent`, `streakShieldAvailable`); bisher war nur DELETE dokumentiert.
+- **GET /api/user/profile** — liefert `name`, `email`, `image`; bisher fehlte der lesende Endpunkt.
+- **GET /api/settings/quest** — liefert aktuelle Quest-Einstellungen (`postponeLimit`, `emotionalClosureEnabled`); bisher nur PATCH vorhanden.
+- **GET + PATCH /api/settings/login-notification** — GET liefert den aktuellen Toggle-Wert; PATCH war bisher vollständig undokumentiert im OpenAPI-Spec.
+- **OpenAPI-Spec** — 7 fehlende Endpunkte nachgetragen: `POST /api/tasks/{id}/breakdown`, `POST /api/tasks/{id}/promote-to-topic`, `POST /api/daily-quest/restore`, `POST/PATCH/DELETE /api/push/subscribe`, `POST /api/push/test`, `GET+PATCH /api/settings/login-notification`.
+
 ## [0.2.0] - 2026-04-12
 
 ### Added

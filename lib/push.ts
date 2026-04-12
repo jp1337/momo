@@ -230,8 +230,8 @@ export async function sendDailyQuestNotifications(): Promise<{
           tag: "daily-quest",
         }
       : {
-          title: "Your daily quest awaits",
-          body: "Open Momo to see today's mission. One small step forward.",
+          title: "Deine Daily Quest wartet",
+          body: "Öffne Momo, um deine heutige Mission zu sehen. Ein kleiner Schritt nach vorne.",
           icon: "/icon-192.png",
           url: "/dashboard",
           tag: "daily-quest",
@@ -407,7 +407,7 @@ export async function sendDueTodayNotifications(): Promise<{
         : dueTasks[0].title;
       return {
         title: `Heute fällig: ${title}`,
-        body: "Open Momo to tick it off before the day moves on.",
+        body: "Öffne Momo und hake es noch heute ab.",
         icon: "/icon-192.png",
         url: "/tasks",
         tag: "due-today",
@@ -763,8 +763,8 @@ export async function sendStreakReminders(): Promise<{
   /** Build streak reminder payload. */
   function buildPayload(streakCurrent: number): NotificationPayload & ChannelPayload {
     return {
-      title: `Keep your ${streakCurrent}-day streak alive!`,
-      body: "You haven't completed a task today yet. Don't let your streak slip.",
+      title: `Halte deinen ${streakCurrent}-Tage-Streak am Leben!`,
+      body: "Du hast heute noch keine Aufgabe erledigt. Lass deinen Streak nicht abreißen.",
       icon: "/icon-192.png",
       url: "/dashboard",
       tag: "streak-reminder",
@@ -1169,8 +1169,8 @@ export async function sendStreakShieldNotification(
   streakCurrent: number
 ): Promise<void> {
   const payload: NotificationPayload & ChannelPayload = {
-    title: `Your streak shield saved your ${streakCurrent}-day streak! 🛡️`,
-    body: "You missed a day, but your monthly Streak Shield kept your streak alive.",
+    title: `Dein Streak-Schutzschild hat deinen ${streakCurrent}-Tage-Streak gerettet! 🛡️`,
+    body: "Du hast einen Tag ausgelassen, aber dein monatlicher Streak-Schutzschild hat ihn bewahrt.",
     icon: "/icon-192.png",
     url: "/dashboard",
     tag: "streak-shield",
