@@ -198,6 +198,34 @@ export const users = pgTable("users", {
    */
   morningBriefingTime: time("morning_briefing_time").notNull().default("08:00"),
 
+  /**
+   * Time of day for the "Due today" reminder (24h format, user's local timezone).
+   * Separate from notificationTime so users can choose a different time for this reminder.
+   * Default: 08:00 — preserves existing behaviour for current users.
+   */
+  dueTodayReminderTime: time("due_today_reminder_time").notNull().default("08:00"),
+
+  /**
+   * Time of day for the recurring-due reminder (24h format, user's local timezone).
+   * Separate from notificationTime so users can receive recurring task reminders
+   * at a different time than the global notification. Default: 08:00.
+   */
+  recurringDueReminderTime: time("recurring_due_reminder_time").notNull().default("08:00"),
+
+  /**
+   * Time of day for the overdue reminder (24h format, user's local timezone).
+   * Separate from notificationTime so users can choose when to be reminded about
+   * overdue tasks. Default: 08:00 — preserves existing behaviour for current users.
+   */
+  overdueReminderTime: time("overdue_reminder_time").notNull().default("08:00"),
+
+  /**
+   * Time of day for the weekly review notification on Sundays (24h format, user's
+   * local timezone). Previously hardcoded to 18:00 — now user-configurable.
+   * Default: 18:00 — preserves existing behaviour for current users.
+   */
+  weeklyReviewTime: time("weekly_review_time").notNull().default("18:00"),
+
   /** User's preferred colour theme */
   theme: themeEnum("theme").notNull().default("system"),
 

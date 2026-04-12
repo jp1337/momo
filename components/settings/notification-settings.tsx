@@ -31,7 +31,7 @@ type NotificationStatus =
 interface NotificationSettingsProps {
   /** Whether the user currently has notifications enabled (from DB) */
   initialEnabled: boolean;
-  /** Current notification time from DB (HH:MM) */
+  /** Current notification time from DB (HH:MM) — shared by daily-quest and streak reminders */
   initialTime: string;
   /** Whether the "Due today" reminder is currently enabled (from DB) */
   initialDueTodayEnabled: boolean;
@@ -39,6 +39,14 @@ interface NotificationSettingsProps {
   initialRecurringDueEnabled: boolean;
   /** Whether the overdue reminder is currently enabled (from DB) */
   initialOverdueEnabled: boolean;
+  /** Per-type reminder time from DB (HH:MM) */
+  initialDueTodayTime: string;
+  /** Per-type reminder time from DB (HH:MM) */
+  initialRecurringDueTime: string;
+  /** Per-type reminder time from DB (HH:MM) */
+  initialOverdueTime: string;
+  /** Weekly review notification time from DB (HH:MM) — defaults 18:00 */
+  initialWeeklyReviewTime: string;
   /**
    * Whether the user has at least one enabled notification channel
    * (ntfy/pushover/telegram/email). Used to decide whether to show the
@@ -67,6 +75,10 @@ export function NotificationSettings({
   initialDueTodayEnabled,
   initialRecurringDueEnabled,
   initialOverdueEnabled,
+  initialDueTodayTime,
+  initialRecurringDueTime,
+  initialOverdueTime,
+  initialWeeklyReviewTime,
   hasAnyChannel,
   vapidPublicKey,
 }: NotificationSettingsProps) {
@@ -79,10 +91,26 @@ export function NotificationSettings({
   const [dueTodayEnabled, setDueTodayEnabled] = useState(initialDueTodayEnabled);
   const [recurringDueEnabled, setRecurringDueEnabled] = useState(initialRecurringDueEnabled);
   const [overdueEnabled, setOverdueEnabled] = useState(initialOverdueEnabled);
+  const [dueTodayTime, setDueTodayTime] = useState(
+    (initialDueTodayTime || "08:00").slice(0, 5)
+  );
+  const [recurringDueTime, setRecurringDueTime] = useState(
+    (initialRecurringDueTime || "08:00").slice(0, 5)
+  );
+  const [overdueTime, setOverdueTime] = useState(
+    (initialOverdueTime || "08:00").slice(0, 5)
+  );
+  const [weeklyReviewTime, setWeeklyReviewTime] = useState(
+    (initialWeeklyReviewTime || "18:00").slice(0, 5)
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"success" | "error">("success");
   const timeSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dueTodayTimeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recurringDueTimeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const overdueTimeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const weeklyReviewTimeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /** Check browser support and current permission state on mount */
   useEffect(() => {
@@ -388,6 +416,114 @@ export function NotificationSettings({
     }
   }
 
+  /** Debounced save for due-today reminder time */
+  function handleDueTodayTimeChange(newTime: string) {
+    setDueTodayTime(newTime);
+    if (dueTodayTimeTimer.current) clearTimeout(dueTodayTimeTimer.current);
+    dueTodayTimeTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/push/subscribe", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dueTodayReminderTime: newTime }),
+        });
+        if (res.ok) {
+          setMessageType("success");
+          setMessage(t("notif_time_saved"));
+        } else {
+          const data = await res.json() as { error?: string };
+          setMessageType("error");
+          setMessage(data.error ?? t("notif_test_failed"));
+        }
+      } catch (err) {
+        console.error("[NotificationSettings] Due-today time update failed:", err);
+        setMessageType("error");
+        setMessage(t("notif_test_failed"));
+      }
+    }, 600);
+  }
+
+  /** Debounced save for recurring-due reminder time */
+  function handleRecurringDueTimeChange(newTime: string) {
+    setRecurringDueTime(newTime);
+    if (recurringDueTimeTimer.current) clearTimeout(recurringDueTimeTimer.current);
+    recurringDueTimeTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/push/subscribe", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recurringDueReminderTime: newTime }),
+        });
+        if (res.ok) {
+          setMessageType("success");
+          setMessage(t("notif_time_saved"));
+        } else {
+          const data = await res.json() as { error?: string };
+          setMessageType("error");
+          setMessage(data.error ?? t("notif_test_failed"));
+        }
+      } catch (err) {
+        console.error("[NotificationSettings] Recurring-due time update failed:", err);
+        setMessageType("error");
+        setMessage(t("notif_test_failed"));
+      }
+    }, 600);
+  }
+
+  /** Debounced save for overdue reminder time */
+  function handleOverdueTimeChange(newTime: string) {
+    setOverdueTime(newTime);
+    if (overdueTimeTimer.current) clearTimeout(overdueTimeTimer.current);
+    overdueTimeTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/push/subscribe", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ overdueReminderTime: newTime }),
+        });
+        if (res.ok) {
+          setMessageType("success");
+          setMessage(t("notif_time_saved"));
+        } else {
+          const data = await res.json() as { error?: string };
+          setMessageType("error");
+          setMessage(data.error ?? t("notif_test_failed"));
+        }
+      } catch (err) {
+        console.error("[NotificationSettings] Overdue time update failed:", err);
+        setMessageType("error");
+        setMessage(t("notif_test_failed"));
+      }
+    }, 600);
+  }
+
+  /** Debounced save for weekly review time */
+  function handleWeeklyReviewTimeChange(newTime: string) {
+    setWeeklyReviewTime(newTime);
+    if (weeklyReviewTimeTimer.current) clearTimeout(weeklyReviewTimeTimer.current);
+    weeklyReviewTimeTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/push/subscribe", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ weeklyReviewTime: newTime }),
+        });
+        if (res.ok) {
+          setMessageType("success");
+          setMessage(t("notif_time_saved"));
+        } else {
+          const data = await res.json() as { error?: string };
+          setMessageType("error");
+          setMessage(data.error ?? t("notif_test_failed"));
+        }
+      } catch (err) {
+        console.error("[NotificationSettings] Weekly review time update failed:", err);
+        setMessageType("error");
+        setMessage(t("notif_test_failed"));
+      }
+    }, 600);
+  }
+
   /** Sends a test push notification */
   async function handleTest() {
     setIsSaving(true);
@@ -542,6 +678,28 @@ export function NotificationSettings({
           >
             {t("notif_due_today_hint")}
           </p>
+          {dueTodayEnabled && (
+            <div className="flex items-center gap-3 ml-6">
+              <label
+                className="text-sm"
+                style={{ color: "var(--text-secondary)", fontFamily: "var(--font-ui)" }}
+              >
+                {t("notif_due_today_time_label")}
+              </label>
+              <input
+                type="time"
+                value={dueTodayTime}
+                onChange={(e) => handleDueTodayTimeChange(e.target.value)}
+                className="rounded-lg px-3 py-1.5 text-sm border"
+                style={{
+                  background: "var(--bg-secondary)",
+                  borderColor: "var(--border)",
+                  color: "var(--text-primary)",
+                  fontFamily: "var(--font-body)",
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -571,6 +729,28 @@ export function NotificationSettings({
           >
             {t("notif_recurring_due_hint")}
           </p>
+          {recurringDueEnabled && (
+            <div className="flex items-center gap-3 ml-6">
+              <label
+                className="text-sm"
+                style={{ color: "var(--text-secondary)", fontFamily: "var(--font-ui)" }}
+              >
+                {t("notif_recurring_due_time_label")}
+              </label>
+              <input
+                type="time"
+                value={recurringDueTime}
+                onChange={(e) => handleRecurringDueTimeChange(e.target.value)}
+                className="rounded-lg px-3 py-1.5 text-sm border"
+                style={{
+                  background: "var(--bg-secondary)",
+                  borderColor: "var(--border)",
+                  color: "var(--text-primary)",
+                  fontFamily: "var(--font-body)",
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -599,6 +779,60 @@ export function NotificationSettings({
             style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
           >
             {t("notif_overdue_hint")}
+          </p>
+          {overdueEnabled && (
+            <div className="flex items-center gap-3 ml-6">
+              <label
+                className="text-sm"
+                style={{ color: "var(--text-secondary)", fontFamily: "var(--font-ui)" }}
+              >
+                {t("notif_overdue_time_label")}
+              </label>
+              <input
+                type="time"
+                value={overdueTime}
+                onChange={(e) => handleOverdueTimeChange(e.target.value)}
+                className="rounded-lg px-3 py-1.5 text-sm border"
+                style={{
+                  background: "var(--bg-secondary)",
+                  borderColor: "var(--border)",
+                  color: "var(--text-primary)",
+                  fontFamily: "var(--font-body)",
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Weekly review time — always-on Sunday reminder, configurable time */}
+      {(status === "active" || hasAnyChannel) && (
+        <div className="flex flex-col gap-1.5 pt-1">
+          <div className="flex items-center gap-3">
+            <label
+              className="text-sm font-medium"
+              style={{ color: "var(--text-primary)", fontFamily: "var(--font-ui)" }}
+            >
+              {t("notif_weekly_review_time_label")}
+            </label>
+            <input
+              type="time"
+              value={weeklyReviewTime}
+              onChange={(e) => handleWeeklyReviewTimeChange(e.target.value)}
+              className="rounded-lg px-3 py-1.5 text-sm border"
+              style={{
+                background: "var(--bg-secondary)",
+                borderColor: "var(--border)",
+                color: "var(--text-primary)",
+                fontFamily: "var(--font-body)",
+              }}
+            />
+          </div>
+          <p
+            className="text-xs"
+            style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
+          >
+            {t("notif_weekly_review_time_hint")}
           </p>
         </div>
       )}

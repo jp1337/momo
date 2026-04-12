@@ -7,6 +7,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Per-Reminder-Type Notification Times** — Each opt-in reminder now has its own configurable notification time, independent of the global `notificationTime`. New time pickers appear in Settings under each enabled toggle:
+  - "Due today" reminder: `dueTodayReminderTime` (default `08:00`)
+  - Recurring-due reminder: `recurringDueReminderTime` (default `08:00`)
+  - Overdue reminder: `overdueReminderTime` (default `08:00`)
+  - Weekly review (Sundays): `weeklyReviewTime` (default `18:00`, previously hardcoded)
+  All four fields are accepted by `PATCH /api/push/subscribe`. Migration `0030_broken_xorn.sql` adds the four `time` columns to `users`.
+
 ### Fixed
 
 - **Vacation Mode: `enabled` → `active` umbenannt** — `PATCH /api/settings/vacation-mode` akzeptiert jetzt `active` statt `enabled` im Request-Body, passend zum `active`-Feld in der GET-Antwort. Frontend-Komponente und Validator aktualisiert.

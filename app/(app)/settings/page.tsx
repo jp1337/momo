@@ -78,6 +78,10 @@ export default async function SettingsPage() {
         dueTodayReminderEnabled: users.dueTodayReminderEnabled,
         overdueReminderEnabled: users.overdueReminderEnabled,
         recurringDueReminderEnabled: users.recurringDueReminderEnabled,
+        dueTodayReminderTime: users.dueTodayReminderTime,
+        recurringDueReminderTime: users.recurringDueReminderTime,
+        overdueReminderTime: users.overdueReminderTime,
+        weeklyReviewTime: users.weeklyReviewTime,
         questPostponeLimit: users.questPostponeLimit,
         emotionalClosureEnabled: users.emotionalClosureEnabled,
         morningBriefingEnabled: users.morningBriefingEnabled,
@@ -221,6 +225,10 @@ export default async function SettingsPage() {
           initialDueTodayEnabled={user.dueTodayReminderEnabled}
           initialOverdueEnabled={user.overdueReminderEnabled}
           initialRecurringDueEnabled={user.recurringDueReminderEnabled}
+          initialDueTodayTime={user.dueTodayReminderTime ?? "08:00"}
+          initialRecurringDueTime={user.recurringDueReminderTime ?? "08:00"}
+          initialOverdueTime={user.overdueReminderTime ?? "08:00"}
+          initialWeeklyReviewTime={user.weeklyReviewTime ?? "18:00"}
           hasAnyChannel={channelRows.some((c) => c.enabled)}
           vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
         />

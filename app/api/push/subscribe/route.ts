@@ -11,7 +11,7 @@
  * least one must be provided.
  * Does not require a push subscription object.
  * Requires: authentication
- * Body: { notificationTime?: string, timezone?: string, dueTodayReminderEnabled?: boolean, overdueReminderEnabled?: boolean, recurringDueReminderEnabled?: boolean, morningBriefingEnabled?: boolean, morningBriefingTime?: string }
+ * Body: { notificationTime?: string, timezone?: string, dueTodayReminderEnabled?: boolean, overdueReminderEnabled?: boolean, recurringDueReminderEnabled?: boolean, morningBriefingEnabled?: boolean, morningBriefingTime?: string, dueTodayReminderTime?: string, recurringDueReminderTime?: string, overdueReminderTime?: string, weeklyReviewTime?: string }
  * Returns: { success: true }
  *
  * DELETE /api/push/subscribe
@@ -150,23 +150,27 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  /** Reusable HH:MM time field schema */
+  const timeField = z
+    .string()
+    .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
+    .transform((v) => v.slice(0, 5))
+    .optional();
+
   const parsed = z
     .object({
-      notificationTime: z
-        .string()
-        .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
-        .transform((v) => v.slice(0, 5))
-        .optional(),
+      notificationTime: timeField,
       timezone: z.string().min(1).max(64).optional(),
       dueTodayReminderEnabled: z.boolean().optional(),
       overdueReminderEnabled: z.boolean().optional(),
       recurringDueReminderEnabled: z.boolean().optional(),
       morningBriefingEnabled: z.boolean().optional(),
-      morningBriefingTime: z
-        .string()
-        .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
-        .transform((v) => v.slice(0, 5))
-        .optional(),
+      morningBriefingTime: timeField,
+      /** Per-reminder-type time fields (all independent of notificationTime) */
+      dueTodayReminderTime: timeField,
+      recurringDueReminderTime: timeField,
+      overdueReminderTime: timeField,
+      weeklyReviewTime: timeField,
     })
     .refine(
       (v) =>
@@ -176,7 +180,11 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
         v.overdueReminderEnabled !== undefined ||
         v.recurringDueReminderEnabled !== undefined ||
         v.morningBriefingEnabled !== undefined ||
-        v.morningBriefingTime !== undefined,
+        v.morningBriefingTime !== undefined ||
+        v.dueTodayReminderTime !== undefined ||
+        v.recurringDueReminderTime !== undefined ||
+        v.overdueReminderTime !== undefined ||
+        v.weeklyReviewTime !== undefined,
       { message: "At least one field must be provided" }
     )
     .safeParse(body);
@@ -209,6 +217,18 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   }
   if (parsed.data.morningBriefingTime !== undefined) {
     updates.morningBriefingTime = parsed.data.morningBriefingTime;
+  }
+  if (parsed.data.dueTodayReminderTime !== undefined) {
+    updates.dueTodayReminderTime = parsed.data.dueTodayReminderTime;
+  }
+  if (parsed.data.recurringDueReminderTime !== undefined) {
+    updates.recurringDueReminderTime = parsed.data.recurringDueReminderTime;
+  }
+  if (parsed.data.overdueReminderTime !== undefined) {
+    updates.overdueReminderTime = parsed.data.overdueReminderTime;
+  }
+  if (parsed.data.weeklyReviewTime !== undefined) {
+    updates.weeklyReviewTime = parsed.data.weeklyReviewTime;
   }
 
   try {
