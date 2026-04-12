@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-04-12
+
 ### Added
 
 - **Login-Benachrichtigung bei neuem Gerät** — opt-in Sicherheits-Feature in den Settings: Erhalte eine Benachrichtigung auf allen konfigurierten Kanälen (Web Push, ntfy, Pushover, Telegram, Email), wenn eine Anmeldung von einem bisher unbekannten Gerät erkannt wird. Die Erkennung basiert auf einem SHA-256-Fingerprint aus User-Agent + IP-Adresse; existierende Sessions werden als Vergleichsbasis herangezogen. Beim allerersten Login (keine Vergleichsdaten) wird keine Benachrichtigung ausgelöst. Der Check feuert nur beim ersten authentifizierten Request nach einer neuen Session (First-Touch-Mechanismus in `touchSessionMetadata`) — nie mehr als einmal pro Session. Neuer Toggle im Settings-Bereich „Aktive Sitzungen". Neuer Endpoint `PATCH /api/settings/login-notification` (Rate-Limit 10/min). DB: neue Spalte `users.login_notification_new_device` (boolean, default false, Migration `0029`). i18n in de/en/fr.
@@ -443,3 +445,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Purchase history section (collapsed by default, shows bought + discarded items)
 - Bought items shown with green left border and "Bought" badge
 - Discarded items shown with 50% opacity and strikethrough title
+
+[Unreleased]: https://github.com/jp1337/momo/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/jp1337/momo/releases/tag/v0.1.0
