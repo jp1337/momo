@@ -554,7 +554,11 @@ export const WebhookConfigSchema = z.object({
     .string()
     .min(1, "URL is required")
     .max(2000, "URL must be 2000 characters or less")
-    .url("Must be a valid URL (https://…)"),
+    .url("Must be a valid URL")
+    .refine(
+      (url) => url.startsWith("https://"),
+      "Webhook URL must use HTTPS (http:// is not allowed)"
+    ),
   secret: z
     .string()
     .max(200, "Secret must be 200 characters or less")

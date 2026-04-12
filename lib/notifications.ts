@@ -348,6 +348,13 @@ class WebhookChannel implements NotificationChannel {
   constructor(private readonly config: WebhookConfig) {}
 
   async send(payload: NotificationPayload): Promise<void> {
+    // Defense-in-depth: enforce HTTPS at runtime even if the DB has a stale
+    // http:// URL saved from before the validator was tightened.
+    const parsedUrl = new URL(this.config.url);
+    if (parsedUrl.protocol !== "https:") {
+      throw new Error("Webhook URL must use HTTPS — refusing to send to non-HTTPS endpoint");
+    }
+
     const body = JSON.stringify({
       event: "momo.notification",
       title: payload.title,

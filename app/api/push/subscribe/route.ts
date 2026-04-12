@@ -69,7 +69,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const parsed = subscribeBodySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid request body", details: parsed.error.flatten() },
+      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
       { status: 422 }
     );
   }
@@ -181,7 +181,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid request body", details: parsed.error.flatten() },
+      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
       { status: 422 }
     );
   }
