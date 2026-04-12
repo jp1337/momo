@@ -37,6 +37,8 @@ interface NotificationSettingsProps {
   initialDueTodayEnabled: boolean;
   /** Whether the recurring-due individual reminder is currently enabled (from DB) */
   initialRecurringDueEnabled: boolean;
+  /** Whether the overdue reminder is currently enabled (from DB) */
+  initialOverdueEnabled: boolean;
   /**
    * Whether the user has at least one enabled notification channel
    * (ntfy/pushover/telegram/email). Used to decide whether to show the
@@ -64,6 +66,7 @@ export function NotificationSettings({
   initialTime,
   initialDueTodayEnabled,
   initialRecurringDueEnabled,
+  initialOverdueEnabled,
   hasAnyChannel,
   vapidPublicKey,
 }: NotificationSettingsProps) {
@@ -75,6 +78,7 @@ export function NotificationSettings({
   );
   const [dueTodayEnabled, setDueTodayEnabled] = useState(initialDueTodayEnabled);
   const [recurringDueEnabled, setRecurringDueEnabled] = useState(initialRecurringDueEnabled);
+  const [overdueEnabled, setOverdueEnabled] = useState(initialOverdueEnabled);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageType, setMessageType] = useState<"success" | "error">("success");
@@ -355,6 +359,35 @@ export function NotificationSettings({
     }
   }
 
+  /**
+   * Persists the overdue reminder toggle to the server.
+   * Updates optimistically and rolls back on failure.
+   */
+  async function handleOverdueToggle(next: boolean) {
+    const previous = overdueEnabled;
+    setOverdueEnabled(next);
+    try {
+      const res = await fetch("/api/push/subscribe", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ overdueReminderEnabled: next }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error ?? t("notif_test_failed"));
+      }
+      setMessageType("success");
+      setMessage(t("notif_overdue_saved"));
+    } catch (err) {
+      console.error("[NotificationSettings] Overdue toggle failed:", err);
+      setOverdueEnabled(previous);
+      setMessageType("error");
+      setMessage(
+        err instanceof Error ? err.message : t("notif_test_failed")
+      );
+    }
+  }
+
   /** Sends a test push notification */
   async function handleTest() {
     setIsSaving(true);
@@ -537,6 +570,35 @@ export function NotificationSettings({
             style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
           >
             {t("notif_recurring_due_hint")}
+          </p>
+        </div>
+      )}
+
+      {/*
+        Overdue reminder toggle — visible whenever the user has any delivery
+        method. Notifies once a day about tasks past their due date (up to 30
+        days back). Silent on empty: no ping when nothing is overdue.
+      */}
+      {(status === "active" || hasAnyChannel) && (
+        <div className="flex flex-col gap-1.5">
+          <label
+            className="flex items-center gap-2 text-sm font-medium cursor-pointer"
+            style={{ color: "var(--text-primary)", fontFamily: "var(--font-ui)" }}
+          >
+            <input
+              type="checkbox"
+              checked={overdueEnabled}
+              onChange={(e) => handleOverdueToggle(e.target.checked)}
+              className="w-4 h-4 cursor-pointer"
+              style={{ accentColor: "var(--accent-green)" }}
+            />
+            {t("notif_overdue")}
+          </label>
+          <p
+            className="text-xs ml-6"
+            style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
+          >
+            {t("notif_overdue_hint")}
           </p>
         </div>
       )}

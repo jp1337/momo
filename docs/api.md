@@ -1160,6 +1160,7 @@ Request body:
   "notificationTime": "06:30",
   "timezone": "Europe/Berlin",
   "dueTodayReminderEnabled": true,
+  "overdueReminderEnabled": true,
   "recurringDueReminderEnabled": true,
   "morningBriefingEnabled": true,
   "morningBriefingTime": "08:00"
@@ -1171,6 +1172,7 @@ Request body:
 | `notificationTime` | string (HH:MM) | Preferred daily-reminder time in the user's local timezone |
 | `timezone` | string (IANA) | IANA timezone identifier (max 64 chars), e.g. `Europe/Berlin` |
 | `dueTodayReminderEnabled` | boolean | Opt-in for the "Due today" reminder — silent on days with nothing due |
+| `overdueReminderEnabled` | boolean | Opt-in for the overdue reminder — daily notification for tasks past their due date (up to 30 days back). Silent on empty. Suppressed when morning briefing is enabled |
 | `recurringDueReminderEnabled` | boolean | Opt-in for per-task recurring due reminders — sends individual notifications for each recurring task due today (≤3 individual, >3 bundled). Suppressed when morning briefing is enabled |
 | `morningBriefingEnabled` | boolean | Opt-in for the morning briefing daily digest — consolidates quest, due tasks, streak, and achievements into one message. Suppresses individual quest and due-today reminders when enabled |
 | `morningBriefingTime` | string (HH:MM) | Time for the morning briefing in the user's local timezone (default `08:00`). Independent from `notificationTime` |

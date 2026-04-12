@@ -17,7 +17,7 @@
 import { db } from "@/lib/db";
 import { cronRuns } from "@/lib/db/schema";
 import { lt, eq, and } from "drizzle-orm";
-import { sendDailyQuestNotifications, sendStreakReminders, sendWeeklyReviewNotifications, sendDueTodayNotifications, sendRecurringDueNotifications, sendMorningBriefingNotifications } from "@/lib/push";
+import { sendDailyQuestNotifications, sendStreakReminders, sendWeeklyReviewNotifications, sendDueTodayNotifications, sendRecurringDueNotifications, sendMorningBriefingNotifications, sendOverdueNotifications } from "@/lib/push";
 import { cleanupNotificationLog } from "@/lib/notification-log";
 import { autoEndVacations } from "@/lib/vacation";
 
@@ -100,6 +100,13 @@ const CRON_JOBS: CronJob[] = [
     // in one message; individual jobs skip them.
     name: "morning-briefing",
     handler: sendMorningBriefingNotifications,
+    guard: "5min-bucket",
+    logToDb: true,
+  },
+  {
+    // Runs before due-today: overdue tasks are older and should arrive first.
+    name: "overdue-reminder",
+    handler: sendOverdueNotifications,
     guard: "5min-bucket",
     logToDb: true,
   },

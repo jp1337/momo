@@ -11,7 +11,7 @@
  * least one must be provided.
  * Does not require a push subscription object.
  * Requires: authentication
- * Body: { notificationTime?: string, timezone?: string, dueTodayReminderEnabled?: boolean }
+ * Body: { notificationTime?: string, timezone?: string, dueTodayReminderEnabled?: boolean, overdueReminderEnabled?: boolean, recurringDueReminderEnabled?: boolean, morningBriefingEnabled?: boolean, morningBriefingTime?: string }
  * Returns: { success: true }
  *
  * DELETE /api/push/subscribe
@@ -159,6 +159,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
         .optional(),
       timezone: z.string().min(1).max(64).optional(),
       dueTodayReminderEnabled: z.boolean().optional(),
+      overdueReminderEnabled: z.boolean().optional(),
       recurringDueReminderEnabled: z.boolean().optional(),
       morningBriefingEnabled: z.boolean().optional(),
       morningBriefingTime: z
@@ -172,6 +173,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
         v.notificationTime !== undefined ||
         v.timezone !== undefined ||
         v.dueTodayReminderEnabled !== undefined ||
+        v.overdueReminderEnabled !== undefined ||
         v.recurringDueReminderEnabled !== undefined ||
         v.morningBriefingEnabled !== undefined ||
         v.morningBriefingTime !== undefined,
@@ -195,6 +197,9 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   }
   if (parsed.data.dueTodayReminderEnabled !== undefined) {
     updates.dueTodayReminderEnabled = parsed.data.dueTodayReminderEnabled;
+  }
+  if (parsed.data.overdueReminderEnabled !== undefined) {
+    updates.overdueReminderEnabled = parsed.data.overdueReminderEnabled;
   }
   if (parsed.data.recurringDueReminderEnabled !== undefined) {
     updates.recurringDueReminderEnabled = parsed.data.recurringDueReminderEnabled;

@@ -122,7 +122,8 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 - **Webhook-System** — ausgehende Webhooks bei Task-erstellt / Task-abgeschlossen
 - ✅ **Notification-Scheduler: „Fällig heute"-Reminder** — opt-in Push/Channel-Reminder zur täglichen Notification-Time, listet Tasks mit `due_date = heute` bzw. RECURRING-Tasks mit `next_due_date = heute` (snoozed ausgeschlossen). **Silent on empty** — kein Ping, wenn nichts fällig ist. Eigener `due-today`-Cron-Job (5-Min-Bucket vor `daily-quest`), neue `users.due_today_reminder_enabled`-Spalte (Migration `drizzle/0019_low_mattie_franklin.sql`), Settings-Toggle sichtbar sobald Web Push *oder* ein Notification-Channel konfiguriert ist. Weekly Review Push + konfigurierbare Uhrzeit sind Teil früherer Iterationen
-- **Notification-Scheduler erweitern** — weitere Ausbaustufen: Overdue-Reminder, konfigurierbare Uhrzeit *pro* Reminder-Typ, benutzerdefinierte Jobs
+- ✅ **Notification-Scheduler: Overdue-Reminder** — opt-in Push/Channel-Reminder für Aufgaben, die ihr Fälligkeitsdatum überschritten haben (bis zu 30 Tage zurück). **Silent on empty** — kein Ping wenn nichts überfällig ist. Unterdrückt bei aktiviertem Morgen-Briefing. Neuer Cron-Job `overdue-reminder` (5-Min-Bucket, vor `due-today`), neue `users.overdue_reminder_enabled`-Spalte (Migration `drizzle/0030_overdue_reminder.sql`), Settings-Toggle in Notification-Settings. Einzel-Benachrichtigung bei 1 überfälliger Aufgabe, Zusammenfassung bei mehreren.
+- **Notification-Scheduler erweitern** — weitere Ausbaustufen: konfigurierbare Uhrzeit *pro* Reminder-Typ, benutzerdefinierte Jobs
 
 ---
 
