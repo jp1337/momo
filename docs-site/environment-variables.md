@@ -141,6 +141,7 @@ curl -X POST https://your-domain.com/api/cron \
 | `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | Public URL of the application. Used for notification links, the PWA, and **SEO** (`robots.txt`, `sitemap.xml`, Open Graph tags, JSON-LD). Set this to your real HTTPS origin in production or search engines will index `localhost`. |
 | `NEXTAUTH_URL` | `http://localhost:3000` | Auth.js callback base URL. Must exactly match the Homepage URL and Authorized redirect URI configured in each OAuth provider app. In production: `https://your-domain.com` |
 | `NODE_ENV` | `development` | Runtime environment: `development`, `production`, or `test`. Set to `production` in all production deployments. |
+| `DISABLE_UPDATE_CHECK` | `false` | Set to `true` to disable the automatic update check. When enabled, Momo queries the GitHub Releases API once per 24 hours and shows a banner in the Admin panel when a newer version is available. Disable this for air-gap or offline installations where outbound access to `api.github.com` is not permitted. |
 
 In production, set both `NEXT_PUBLIC_APP_URL` and `NEXTAUTH_URL` to your public HTTPS domain:
 
