@@ -9,6 +9,81 @@
 import { db } from "@/lib/db";
 import { tasks, taskCompletions, users, topics, wishlistItems } from "@/lib/db/schema";
 import { eq, and, isNull, desc, max, count, sql, inArray, gte } from "drizzle-orm";
+
+// ─── Recurrence Date Helpers ─────────────────────────────────────────────────
+
+/**
+ * Advances a YYYY-MM-DD base date by `days` days.
+ * Pure arithmetic — avoids DST pitfalls by working in UTC.
+ *
+ * @param base - YYYY-MM-DD base date
+ * @param days - Number of days to advance
+ * @returns YYYY-MM-DD result date
+ */
+function nextDueInterval(base: string, days: number): string {
+  const [y, m, d] = base.split("-").map(Number);
+  const next = new Date(Date.UTC(y, m - 1, d + days));
+  return next.toISOString().split("T")[0];
+}
+
+/**
+ * Finds the next occurrence of any of the given weekdays *after* base.
+ * Weekdays are 0 = Monday … 6 = Sunday (ISO weekday convention).
+ * Always advances at least one day so the task is not re-due today.
+ *
+ * @param base - YYYY-MM-DD date to advance from
+ * @param weekdays - Array of weekday indices (0–6); must be non-empty
+ * @returns YYYY-MM-DD of the earliest matching future weekday
+ */
+function nextDueWeekday(base: string, weekdays: number[]): string {
+  if (weekdays.length === 0) return nextDueInterval(base, 7);
+  const [y, m, d] = base.split("-").map(Number);
+  // Normalize: JS getUTCDay() returns 0=Sun…6=Sat; convert to 0=Mon…6=Sun
+  const jsToIso = (jsDay: number) => (jsDay + 6) % 7;
+  let candidate = new Date(Date.UTC(y, m - 1, d + 1)); // start tomorrow
+  for (let i = 0; i < 7; i++) {
+    const isoDay = jsToIso(candidate.getUTCDay());
+    if (weekdays.includes(isoDay)) {
+      return candidate.toISOString().split("T")[0];
+    }
+    candidate = new Date(candidate.getTime() + 86_400_000);
+  }
+  // Fallback (should never be reached for valid weekdays)
+  return nextDueInterval(base, 7);
+}
+
+/**
+ * Advances a YYYY-MM-DD date by exactly one calendar month, clamping
+ * to the last valid day of the target month (e.g. Jan 31 → Feb 28/29).
+ *
+ * @param base - YYYY-MM-DD date to advance from
+ * @returns YYYY-MM-DD result date
+ */
+function nextDueMonthly(base: string): string {
+  const [y, m, d] = base.split("-").map(Number);
+  // m is 1-indexed in ISO strings; Date.UTC uses 0-indexed months.
+  // Passing m (not m-1) advances to the next month directly.
+  // Clamp day to last valid day of the target month to handle e.g. Jan 31 → Feb 28.
+  const maxDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); // last day of target month
+  const clampedDay = Math.min(d, maxDay);
+  return new Date(Date.UTC(y, m, clampedDay)).toISOString().split("T")[0];
+}
+
+/**
+ * Advances a YYYY-MM-DD date by exactly one calendar year, clamping
+ * to the last valid day of the target month (handles Feb 29 in non-leap years).
+ *
+ * @param base - YYYY-MM-DD date to advance from
+ * @returns YYYY-MM-DD result date
+ */
+function nextDueYearly(base: string): string {
+  const [y, m, d] = base.split("-").map(Number);
+  const nextYear = y + 1;
+  const maxDay = new Date(Date.UTC(nextYear, m, 0)).getUTCDate(); // last day of same month next year
+  const clampedDay = Math.min(d, maxDay);
+  const next = new Date(Date.UTC(nextYear, m - 1, clampedDay));
+  return next.toISOString().split("T")[0];
+}
 import type { CreateTaskInput, UpdateTaskInput, BulkTaskActionInput } from "@/lib/validators";
 import {
   updateStreak,
@@ -176,6 +251,11 @@ export async function createTask(
         type: input.type,
         priority: input.priority ?? "NORMAL",
         recurrenceInterval: input.recurrenceInterval ?? null,
+        recurrenceType: input.recurrenceType ?? "INTERVAL",
+        recurrenceWeekdays: input.recurrenceWeekdays
+          ? JSON.stringify(input.recurrenceWeekdays)
+          : null,
+        recurrenceFixed: input.recurrenceFixed ?? false,
         dueDate: input.dueDate ?? null,
         // For RECURRING tasks, set nextDueDate to dueDate (or local today) so the
         // task is immediately visible to the daily quest algorithm.
@@ -225,6 +305,14 @@ export async function updateTask(
   if (input.priority !== undefined) updateValues.priority = input.priority;
   if (input.recurrenceInterval !== undefined)
     updateValues.recurrenceInterval = input.recurrenceInterval;
+  if (input.recurrenceType !== undefined)
+    updateValues.recurrenceType = input.recurrenceType ?? "INTERVAL";
+  if (input.recurrenceWeekdays !== undefined)
+    updateValues.recurrenceWeekdays = input.recurrenceWeekdays
+      ? JSON.stringify(input.recurrenceWeekdays)
+      : null;
+  if (input.recurrenceFixed !== undefined)
+    updateValues.recurrenceFixed = input.recurrenceFixed ?? false;
   if (input.dueDate !== undefined) updateValues.dueDate = input.dueDate;
   if (input.coinValue !== undefined) updateValues.coinValue = input.coinValue;
   if (input.estimatedMinutes !== undefined) updateValues.estimatedMinutes = input.estimatedMinutes;
@@ -313,12 +401,33 @@ export async function completeTask(
       let updatedTask: Task;
 
       if (task.type === "RECURRING") {
-        // Calculate next due date: user's local today + recurrenceInterval days
-        const intervalDays = task.recurrenceInterval ?? 1;
-        const baseStr = getLocalDateString(timezone);
-        const [y, m, d] = baseStr.split("-").map(Number);
-        const nextDueUtc = new Date(Date.UTC(y, m - 1, d + intervalDays));
-        const nextDueStr = nextDueUtc.toISOString().split("T")[0]; // YYYY-MM-DD
+        // Determine base date: rolling uses today, fixed uses current nextDueDate.
+        // INTERVAL and WEEKDAY are always rolling/calendar-aligned respectively.
+        const recType = task.recurrenceType ?? "INTERVAL";
+        const today = getLocalDateString(timezone);
+        const baseDate =
+          (recType === "MONTHLY" || recType === "YEARLY") && task.recurrenceFixed && task.nextDueDate
+            ? task.nextDueDate  // fixed: advance from scheduled date
+            : today;            // rolling: advance from today (completion date)
+
+        let nextDueStr: string;
+        if (recType === "WEEKDAY") {
+          const weekdays = (() => {
+            try {
+              return JSON.parse(task.recurrenceWeekdays ?? "[0]") as number[];
+            } catch {
+              return [0]; // default Monday on parse error
+            }
+          })();
+          nextDueStr = nextDueWeekday(baseDate, weekdays);
+        } else if (recType === "MONTHLY") {
+          nextDueStr = nextDueMonthly(baseDate);
+        } else if (recType === "YEARLY") {
+          nextDueStr = nextDueYearly(baseDate);
+        } else {
+          // INTERVAL (default / legacy)
+          nextDueStr = nextDueInterval(baseDate, task.recurrenceInterval ?? 1);
+        }
 
         const rows = await tx
           .update(tasks)
