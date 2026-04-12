@@ -5,7 +5,7 @@ Client components for the `/settings` page. Each file is one section of the sett
 
 ## Contents
 - `profile-settings.tsx` — Name, email, avatar upload; PATCHes /api/user/profile
-- `notification-settings.tsx` — Web Push enable/disable/test + daily reminder time + due-today toggle + recurring-due individual reminder toggle; receives `vapidPublicKey` as prop
+- `notification-settings.tsx` — Web Push enable/disable/test + daily reminder time + due-today toggle + overdue reminder toggle + recurring-due individual reminder toggle; receives `vapidPublicKey` as prop
 - `notification-channels.tsx` — Multi-channel setup: ntfy.sh, Pushover, Telegram, Email, **Webhook**; inline forms per channel (WebhookForm: URL + HMAC-SHA256 signing checkbox + secret field); `emailAvailable` + `defaultEmailAddress` props from server
 - `notification-history.tsx` — Fetches last 50 delivery attempts from GET /api/settings/notification-history; expandable error details on failed entries
 - `morning-briefing-settings.tsx` — Daily digest toggle + time picker; PATCHes /api/push/subscribe
