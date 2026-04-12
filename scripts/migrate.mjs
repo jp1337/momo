@@ -247,13 +247,8 @@ try {
 
   let seededAny = false;
   let removedStale = 0;
-  // Once we hit the first genuinely pending migration (not tracked, not in DB),
-  // all subsequent entries are also pending — no need to inspect them.
-  let pendingFromHere = false;
 
   for (const entry of journal.entries) {
-    if (pendingFromHere) break;
-
     try {
       const sqlPath = join(migrationsFolder, `${entry.tag}.sql`);
       const sqlContent = readFileSync(sqlPath, "utf8");
@@ -265,7 +260,6 @@ try {
       if (tracked && !appliedInDb) {
         // Stale tracking entry: migration was recorded as applied but its DB
         // objects are missing. Remove it so migrate() will actually run it.
-        // Do NOT break — more stale entries may follow and must also be cleared.
         await client.query(
           `DELETE FROM drizzle."__drizzle_migrations" WHERE hash = $1`,
           [hash]
@@ -283,10 +277,12 @@ try {
       }
 
       if (!tracked && !appliedInDb) {
-        // First genuinely pending migration — migrate() handles this and all
-        // subsequent entries sequentially. No need to inspect further.
-        pendingFromHere = true;
-        break;
+        // Pending migration — migrate() will apply this.
+        // Do NOT break here: later migrations may already be applied in the DB
+        // out-of-order (e.g. via a manual ALTER or a partial previous run).
+        // Those must be seeded before migrate() runs, otherwise migrate() would
+        // attempt to re-apply them and fail with "column/table already exists".
+        continue;
       }
 
       // tracked && appliedInDb — already in sync, nothing to do.
