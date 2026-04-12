@@ -145,7 +145,10 @@ factor for `lib/totp.ts::userHasSecondFactor` and therefore for the
 | `title` | text | Task title |
 | `type` | enum | `ONE_TIME`, `RECURRING`, `DAILY_ELIGIBLE` |
 | `priority` | enum | `HIGH`, `NORMAL`, `SOMEDAY` |
-| `recurrence_interval` | integer | Days between recurrences (RECURRING only) |
+| `recurrence_interval` | integer | Days between recurrences (INTERVAL type only) |
+| `recurrence_type` | enum | `INTERVAL` (default), `WEEKDAY`, `MONTHLY`, `YEARLY` — recurrence rule type |
+| `recurrence_weekdays` | text (JSON) | JSON array of weekday indices (0=Mon … 6=Sun) for `WEEKDAY` type, e.g. `"[0,2]"` = Mon+Wed |
+| `recurrence_fixed` | boolean | `false` = rolling (advance from completion date); `true` = fixed (advance from scheduled date). Affects `MONTHLY`/`YEARLY` only. |
 | `due_date` | date | User-set due date |
 | `next_due_date` | date | Computed next due for recurring tasks |
 | `completed_at` | timestamp | Set when ONE_TIME task is completed |

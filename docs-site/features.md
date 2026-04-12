@@ -49,8 +49,23 @@ Every task belongs to one of three types:
 | Type | What it does |
 |---|---|
 | **One-time** | Appears in the list once. When completed, it is done for good. |
-| **Recurring** | Automatically resets after a set number of days (e.g. every 7 days for weekly laundry). When you complete it, the due date shifts forward so the task reappears when it is next due. |
+| **Recurring** | Automatically resets on a schedule you choose. When you complete it, the next due date shifts forward so the task reappears when it is next due. Four schedule types are available — see below. |
 | **Daily Eligible** | Stays in the regular list but is also added to the pool from which Momo draws your daily quest. |
+
+#### Recurrence schedule types
+
+When creating or editing a **Recurring** task, you can choose from four schedule types:
+
+| Type | How it works | Example |
+|---|---|---|
+| **Interval** | Every N days from your last completion (rolling) | "Take vitamins — every 1 day" |
+| **Weekday** | On specific days of the week; pick one or more | "Team meeting — every Monday and Wednesday" |
+| **Monthly** | Once a month, same day | "Pay rent — 1st of every month" |
+| **Yearly** | Once a year, same date | "File taxes — 15 March every year" |
+
+For **Monthly** and **Yearly** tasks you can also toggle **Fixed calendar date**:
+- **Fixed (on)**: next due date always advances from the *scheduled* date — the task stays on the same calendar day regardless of when you actually complete it.
+- **Fixed (off)** (default): next due date advances from your *completion date* — more forgiving if you run a few days late.
 
 ### Completing and undoing tasks
 
@@ -671,7 +686,11 @@ Your calendar app will poll the feed every few hours and refresh automatically.
 
 - Every task that is **not yet completed** and has either a **due date** or (for recurring tasks) a **next-due date**.
 - Tasks appear as **all-day events** — Momo tasks don't have a time of day.
-- **Recurring tasks** show up as a series — if you have a task that repeats every 7 days, your calendar will show it as a weekly event, open-ended.
+- **Recurring tasks** show up as a series in your calendar:
+  - *Interval*: repeats every N days (e.g. every 7 days → weekly event)
+  - *Weekday*: repeats on specific days, e.g. every Monday and Wednesday
+  - *Monthly*: repeats on the same day of each month
+  - *Yearly*: repeats on the same date each year
 - **Snoozed tasks** stay visible in the calendar even while hidden on your dashboard — the feed shows what's on the plan, not what you need to act on *today*.
 - Each event title is the task title, the description contains your notes plus a direct link back into Momo, and the topic (if any) is set as the event category so you can colour-code them.
 
@@ -826,7 +845,13 @@ The page lists one card per recurring task. On each card you get:
 - **A full-year heatmap** — 53 weeks across, 7 days down, starting on Monday (ISO weeks). Empty days are hollow; completed days fill in with the Momo green
 - **A year selector** at the top — click a past year to browse an earlier grid
 
-**How the streak counts.** The current period you are in gets a "grace" — a weekly habit does not visually reset the moment Monday morning begins, only when a *full* past period goes by without a completion. Multiple completions inside the same period count as one, not two. Snoozing a task does not affect the streak record — snooze pauses the reminder, not the history. And the streak is computed over your entire Momo history, not just the currently selected year, so the "best" number is a true all-time record.
+**How the streak counts.** The period depends on the task's recurrence rule:
+- *Interval* habits: one period = the configured interval in days (e.g. every 3 days → a 3-day window)
+- *Weekday* habits: one period = one calendar week (Mon–Sun)
+- *Monthly* habits: one period = one calendar month
+- *Yearly* habits: one period = one calendar year
+
+The current period always gets a "grace" — a weekly habit does not visually reset the moment Monday morning begins, only when a *full* past period goes by without a completion. Multiple completions inside the same period count as one, not two. Snoozing a task does not affect the streak record — snooze pauses the reminder, not the history. And the streak is computed over your entire Momo history, not just the currently selected year, so the "best" number is a true all-time record.
 
 The grid uses your **actual completion events**, not a theoretical "expected" schedule. If you have a task set to repeat every three days but you miraculously completed it seven days in a row, all seven days light up. If you skipped two months, you see the gap honestly — no fake streaks, no guilt dressed up as motivation.
 
