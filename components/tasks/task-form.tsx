@@ -27,6 +27,9 @@ interface TaskFormData {
   type: "ONE_TIME" | "RECURRING" | "DAILY_ELIGIBLE";
   priority: "HIGH" | "NORMAL" | "SOMEDAY";
   recurrenceInterval: string;
+  recurrenceType: "INTERVAL" | "WEEKDAY" | "MONTHLY" | "YEARLY";
+  recurrenceWeekdays: number[];
+  recurrenceFixed: boolean;
   dueDate: string;
   coinValue: string;
   estimatedMinutes: 5 | 15 | 30 | 60 | null;
@@ -46,6 +49,17 @@ interface TaskFormProps {
   onCancel: () => void;
 }
 
+/** Weekday indices 0=Mon…6=Sun with their translation key suffixes */
+const WEEKDAYS = [
+  { idx: 0, key: "recurrence_weekday_mon" },
+  { idx: 1, key: "recurrence_weekday_tue" },
+  { idx: 2, key: "recurrence_weekday_wed" },
+  { idx: 3, key: "recurrence_weekday_thu" },
+  { idx: 4, key: "recurrence_weekday_fri" },
+  { idx: 5, key: "recurrence_weekday_sat" },
+  { idx: 6, key: "recurrence_weekday_sun" },
+] as const;
+
 /**
  * Default empty form state.
  */
@@ -56,6 +70,9 @@ const DEFAULT_FORM: TaskFormData = {
   type: "ONE_TIME",
   priority: "NORMAL",
   recurrenceInterval: "7",
+  recurrenceType: "INTERVAL",
+  recurrenceWeekdays: [],
+  recurrenceFixed: false,
   dueDate: "",
   coinValue: "1",
   estimatedMinutes: null,
@@ -113,21 +130,38 @@ export function TaskForm({
       return;
     }
 
-    if (formData.type === "RECURRING" && !formData.recurrenceInterval) {
-      setError(t("form_error_interval"));
-      return;
+    if (formData.type === "RECURRING") {
+      const rType = formData.recurrenceType;
+      if (rType === "INTERVAL" && !formData.recurrenceInterval) {
+        setError(t("form_error_interval"));
+        return;
+      }
+      if (rType === "WEEKDAY" && formData.recurrenceWeekdays.length === 0) {
+        setError(t("recurrence_weekday_error"));
+        return;
+      }
     }
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       title: formData.title.trim(),
       topicId: formData.topicId || null,
       notes: formData.notes.trim() || null,
       type: formData.type,
       priority: formData.priority,
       recurrenceInterval:
-        formData.type === "RECURRING"
+        formData.type === "RECURRING" && formData.recurrenceType === "INTERVAL"
           ? parseInt(formData.recurrenceInterval, 10)
           : null,
+      recurrenceType: formData.type === "RECURRING" ? formData.recurrenceType : undefined,
+      recurrenceWeekdays:
+        formData.type === "RECURRING" && formData.recurrenceType === "WEEKDAY"
+          ? formData.recurrenceWeekdays
+          : undefined,
+      recurrenceFixed:
+        formData.type === "RECURRING" &&
+        (formData.recurrenceType === "MONTHLY" || formData.recurrenceType === "YEARLY")
+          ? formData.recurrenceFixed
+          : undefined,
       dueDate: formData.dueDate || null,
       coinValue: parseInt(formData.coinValue, 10) || 1,
       estimatedMinutes: formData.estimatedMinutes,
@@ -309,23 +343,155 @@ export function TaskForm({
             </div>
           </div>
 
-          {/* Recurrence interval — only for RECURRING */}
+          {/* Recurrence configuration — only for RECURRING */}
           {formData.type === "RECURRING" && (
-            <div>
-              <label htmlFor="task-recurrence" style={labelStyle}>
-                {t("form_label_interval")}{" "}
-                <span style={{ color: "var(--accent-red)" }}>*</span>
-              </label>
-              <input
-                id="task-recurrence"
-                name="recurrenceInterval"
-                type="number"
-                value={formData.recurrenceInterval}
-                onChange={handleChange}
-                min={1}
-                max={365}
-                style={inputStyle}
-              />
+            <div className="flex flex-col gap-3">
+              {/* Recurrence type selector */}
+              <div>
+                <label style={labelStyle}>
+                  {t("recurrence_type_label")}{" "}
+                  <span style={{ color: "var(--accent-red)" }}>*</span>
+                </label>
+                <div className="flex gap-1.5 flex-wrap">
+                  {(["INTERVAL", "WEEKDAY", "MONTHLY", "YEARLY"] as const).map((rType) => {
+                    const isSelected = formData.recurrenceType === rType;
+                    const labelKey = `recurrence_type_${rType.toLowerCase()}` as
+                      | "recurrence_type_interval"
+                      | "recurrence_type_weekday"
+                      | "recurrence_type_monthly"
+                      | "recurrence_type_yearly";
+                    return (
+                      <button
+                        key={rType}
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            recurrenceType: rType,
+                            // Reset weekdays when switching away from WEEKDAY
+                            recurrenceWeekdays: rType === "WEEKDAY" ? prev.recurrenceWeekdays : [],
+                          }))
+                        }
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150"
+                        style={{
+                          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                          border: isSelected
+                            ? "1px solid var(--accent-amber)"
+                            : "1px solid var(--border)",
+                          backgroundColor: isSelected
+                            ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-elevated))"
+                            : "var(--bg-elevated)",
+                          color: isSelected ? "var(--accent-amber)" : "var(--text-muted)",
+                        }}
+                      >
+                        {t(labelKey)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* INTERVAL: days input */}
+              {formData.recurrenceType === "INTERVAL" && (
+                <div>
+                  <label htmlFor="task-recurrence" style={labelStyle}>
+                    {t("form_label_interval")}
+                  </label>
+                  <input
+                    id="task-recurrence"
+                    name="recurrenceInterval"
+                    type="number"
+                    value={formData.recurrenceInterval}
+                    onChange={handleChange}
+                    min={1}
+                    max={365}
+                    style={inputStyle}
+                  />
+                </div>
+              )}
+
+              {/* WEEKDAY: day toggle buttons */}
+              {formData.recurrenceType === "WEEKDAY" && (
+                <div>
+                  <label style={labelStyle}>{t("recurrence_weekday_label")}</label>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {WEEKDAYS.map(({ idx, key }) => {
+                      const isSelected = formData.recurrenceWeekdays.includes(idx);
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              recurrenceWeekdays: isSelected
+                                ? prev.recurrenceWeekdays.filter((d) => d !== idx)
+                                : [...prev.recurrenceWeekdays, idx].sort((a, b) => a - b),
+                            }))
+                          }
+                          className="w-10 h-10 rounded-lg text-sm font-semibold transition-all duration-150"
+                          style={{
+                            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                            border: isSelected
+                              ? "1px solid var(--accent-amber)"
+                              : "1px solid var(--border)",
+                            backgroundColor: isSelected
+                              ? "color-mix(in srgb, var(--accent-amber) 20%, var(--bg-elevated))"
+                              : "var(--bg-elevated)",
+                            color: isSelected ? "var(--accent-amber)" : "var(--text-muted)",
+                          }}
+                        >
+                          {t(key as Parameters<typeof t>[0])}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* MONTHLY / YEARLY: fixed vs. rolling toggle */}
+              {(formData.recurrenceType === "MONTHLY" || formData.recurrenceType === "YEARLY") && (
+                <div>
+                  <p
+                    className="text-sm mb-2"
+                    style={{
+                      color: "var(--text-muted)",
+                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                    }}
+                  >
+                    {formData.recurrenceType === "MONTHLY"
+                      ? t("recurrence_monthly_hint")
+                      : t("recurrence_yearly_hint")}
+                  </p>
+                  <label
+                    className="flex items-center gap-2 cursor-pointer"
+                    style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)" }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.recurrenceFixed}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, recurrenceFixed: e.target.checked }))
+                      }
+                      style={{ accentColor: "var(--accent-amber)" }}
+                    />
+                    <span style={{ fontSize: "13px", color: "var(--text-primary)" }}>
+                      {t("recurrence_fixed_label")}
+                    </span>
+                  </label>
+                  <p
+                    className="text-xs mt-1"
+                    style={{
+                      color: "var(--text-muted)",
+                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                    }}
+                  >
+                    {formData.recurrenceFixed
+                      ? t("recurrence_fixed_hint")
+                      : t("recurrence_rolling_hint")}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
