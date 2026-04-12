@@ -23,10 +23,92 @@ import { createHash, randomBytes } from "crypto";
 import ical, {
   ICalCalendarMethod,
   ICalEventRepeatingFreq,
+  ICalWeekday,
+  type ICalRepeatingOptions,
 } from "ical-generator";
 import { db } from "@/lib/db";
 import { users, tasks, topics } from "@/lib/db/schema";
 import { and, eq, isNull, or, isNotNull } from "drizzle-orm";
+
+// ─── RRULE builder ────────────────────────────────────────────────────────────
+
+/** Maps 0=Mon…6=Sun weekday indices to ical-generator ICalWeekday enum values. */
+const WEEKDAY_CODES: ICalWeekday[] = [
+  ICalWeekday.MO,
+  ICalWeekday.TU,
+  ICalWeekday.WE,
+  ICalWeekday.TH,
+  ICalWeekday.FR,
+  ICalWeekday.SA,
+  ICalWeekday.SU,
+];
+
+/**
+ * Builds the ical-generator repeating options for a RECURRING task based on
+ * its recurrence rule. Returns null for tasks with no meaningful recurrence.
+ *
+ * @param recurrenceType  - Rule type (INTERVAL | WEEKDAY | MONTHLY | YEARLY)
+ * @param recurrenceInterval - Days for INTERVAL rules
+ * @param recurrenceWeekdays - JSON weekday array for WEEKDAY rules
+ * @param nextDueDate    - Task's current next due date (YYYY-MM-DD), used to
+ *                         extract the day-of-month / month for MONTHLY/YEARLY
+ */
+function buildRepeating(
+  recurrenceType: string | null,
+  recurrenceInterval: number | null,
+  recurrenceWeekdays: string | null,
+  nextDueDate: string | null
+): ICalRepeatingOptions | null {
+  const rType = recurrenceType ?? "INTERVAL";
+
+  if (rType === "WEEKDAY") {
+    let weekdayIndices: number[] = [];
+    try {
+      weekdayIndices = JSON.parse(recurrenceWeekdays ?? "[0]") as number[];
+    } catch {
+      weekdayIndices = [0];
+    }
+    const byDay = weekdayIndices
+      .filter((i) => i >= 0 && i <= 6)
+      .map((i) => WEEKDAY_CODES[i]);
+    if (byDay.length === 0) return null;
+    return {
+      freq: ICalEventRepeatingFreq.WEEKLY,
+      byDay,
+    };
+  }
+
+  if (rType === "MONTHLY") {
+    // The day-of-month is taken from the task's nextDueDate
+    const dayOfMonth = nextDueDate ? Number(nextDueDate.split("-")[2]) : 1;
+    return {
+      freq: ICalEventRepeatingFreq.MONTHLY,
+      byMonthDay: [dayOfMonth],
+    };
+  }
+
+  if (rType === "YEARLY") {
+    // Month and day are taken from the task's nextDueDate
+    const [, monthStr, dayStr] = (nextDueDate ?? "2000-01-01").split("-");
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+    return {
+      freq: ICalEventRepeatingFreq.YEARLY,
+      byMonth: [month],
+      byMonthDay: [day],
+    };
+  }
+
+  // INTERVAL (default / legacy)
+  if (recurrenceInterval && recurrenceInterval > 0) {
+    return {
+      freq: ICalEventRepeatingFreq.DAILY,
+      interval: recurrenceInterval,
+    };
+  }
+
+  return null;
+}
 
 // ─── Token helpers ────────────────────────────────────────────────────────────
 
@@ -203,6 +285,8 @@ export async function buildIcsForUser(
       dueDate: tasks.dueDate,
       nextDueDate: tasks.nextDueDate,
       recurrenceInterval: tasks.recurrenceInterval,
+      recurrenceType: tasks.recurrenceType,
+      recurrenceWeekdays: tasks.recurrenceWeekdays,
       topicName: topics.title,
     })
     .from(tasks)
@@ -254,15 +338,16 @@ export async function buildIcsForUser(
       event.createCategory({ name: row.topicName });
     }
 
-    if (
-      row.type === "RECURRING" &&
-      row.recurrenceInterval &&
-      row.recurrenceInterval > 0
-    ) {
-      event.repeating({
-        freq: ICalEventRepeatingFreq.DAILY,
-        interval: row.recurrenceInterval,
-      });
+    if (row.type === "RECURRING") {
+      const repeating = buildRepeating(
+        row.recurrenceType,
+        row.recurrenceInterval,
+        row.recurrenceWeekdays,
+        row.nextDueDate
+      );
+      if (repeating) {
+        event.repeating(repeating);
+      }
     }
   }
 
