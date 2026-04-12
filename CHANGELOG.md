@@ -7,6 +7,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Update-Checker** — das Admin-Panel zeigt jetzt einen Banner, wenn eine neuere Momo-Version auf GitHub verfügbar ist. Die Prüfung erfolgt einmal alle 24 Stunden via GitHub Releases API (In-Memory-Cache, kein Redis). Für Air-Gap-Installationen ohne Internet-Zugang kann die Prüfung per `DISABLE_UPDATE_CHECK=true` deaktiviert werden. Neue Env-Var in `.env.example` und `docs/environment-variables.md` dokumentiert.
+
 ## [0.1.0] - 2026-04-12
 
 ### Added

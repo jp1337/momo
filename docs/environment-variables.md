@@ -96,6 +96,7 @@ inspect captured emails at `http://localhost:8025`.
 | `NEXT_PUBLIC_APP_URL` | string (URL) | `http://localhost:3000` | Public URL of the application. Surfaces in the UI (legal pages, notification links), the PWA, and **SEO output** (`metadataBase`, `robots.txt`, `sitemap.xml`, Open Graph & Twitter Card URLs, JSON-LD `url`). Set this to the real HTTPS origin in production — otherwise search engines will index `localhost` and link previews break. See `docs/seo.md`. |
 | `NEXTAUTH_URL` | string (URL) | `http://localhost:3000` | Base URL used by Auth.js to construct OAuth callback URLs. Must match the **Homepage URL** / **Authorized redirect URI** set in each OAuth provider app. In production: `https://yourdomain.com` |
 | `NODE_ENV` | `development` \| `production` \| `test` | `development` | Runtime environment. **Set to `production` in production deployments** — this enables stricter CSP headers and disables the PWA service worker in dev. |
+| `DISABLE_UPDATE_CHECK` | `true` \| `false` | Optional | Default `false`. When `true`, Momo skips the periodic GitHub Releases API check and the Admin panel will show a "disabled" notice instead of a version banner. Useful for air-gap / offline installations where outbound connections to `api.github.com` are blocked or undesirable. The check is cached for 24 hours per process and respects the standard 60 req/h unauthenticated GitHub rate limit. |
 
 ## Two-Factor Authentication (TOTP + Passkeys)
 
