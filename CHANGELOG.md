@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Streak-Reminder feuerte bei jedem Container-Neustart** — der Idempotenz-Guard war nur in-memory und wurde bei jedem Watchtower-Deployment zurückgesetzt. Außerdem fehlte eine Uhrzeit-Prüfung, weshalb der Reminder beim UTC-Mitternachts-Reset (= 02:00 CEST) und nach jedem Neustart sofort feuerte. Fix: `sendStreakReminders` verwendet jetzt denselben SQL-Zeitfenster-Filter wie alle anderen Notification-Funktionen (`notificationTime` 5-Minuten-Bucket in der User-Zeitzone). Cron-Guard geändert von `daily` (in-memory) auf `5min-bucket` (SQL-gesteuert). Morning-Briefing-User werden jetzt korrekt ausgeschlossen (erhalten Streak-Info bereits im Digest).
 - **Push-Benachrichtigungen vollständig auf Deutsch** — Daily-Quest-Fallback, Fällig-heute-Body, Streak-Reminder und Streak-Schutzschild-Meldungen waren teilweise auf Englisch; alle Texte sind jetzt einheitlich auf Deutsch.
 
 ### Added
