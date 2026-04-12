@@ -30,11 +30,10 @@ export interface DailyCompletion {
 /**
  * Current and best streak for a single habit, expressed in *periods*.
  *
- * A period is a rolling window of `periodDays` days anchored on today's
- * local date. For a habit with `recurrenceInterval = 7`, periods are
- * `[today-6d … today]`, `[today-13d … today-7d]`, etc. The streak is the
- * number of consecutive successful periods (≥ 1 completion per period)
- * counted backwards from today.
+ * For INTERVAL habits a period is a rolling window of `periodDays` days.
+ * For WEEKDAY habits a period is a calendar week (Mon–Sun).
+ * For MONTHLY habits a period is a calendar month.
+ * For YEARLY habits a period is a calendar year.
  *
  * See {@link computeHabitStreak} for the full algorithm and edge cases.
  */
@@ -43,7 +42,7 @@ export interface HabitStreak {
   current: number;
   /** Longest streak this habit has ever reached (across all time, not just the requested year). */
   best: number;
-  /** Period length in days — `recurrenceInterval ?? 1`. Exposed so the UI can render units. */
+  /** Period length in days — `recurrenceInterval ?? 1` for INTERVAL; 7/30/365 for the others. */
   periodDays: number;
 }
 
@@ -53,6 +52,8 @@ export interface HabitWithHistory {
   title: string;
   /** Interval in days between occurrences (null = unspecified, treated as 1) */
   recurrenceInterval: number | null;
+  /** Recurrence rule type — determines streak period unit */
+  recurrenceType: "INTERVAL" | "WEEKDAY" | "MONTHLY" | "YEARLY";
   topicId: string | null;
   topicTitle: string | null;
   topicColor: string | null;
@@ -110,61 +111,146 @@ function dayIndexFromIsoDate(iso: string): number {
 }
 
 /**
+ * Converts a YYYY-MM-DD string to a calendar-week index relative to a
+ * reference date, counting ISO weeks (Mon–Sun). A higher index means a
+ * more recent week; the reference date's week is 0.
+ * Negative indices = weeks before the reference.
+ *
+ * @param iso - YYYY-MM-DD date string
+ * @param referenceIso - YYYY-MM-DD reference (today)
+ */
+function weekIndexFromIsoDate(iso: string, referenceIso: string): number {
+  // Day index delta, divided by 7, floored
+  const d = dayIndexFromIsoDate(iso);
+  const ref = dayIndexFromIsoDate(referenceIso);
+  // Align to week start (Mon): shift by JS weekday offset
+  const refDate = new Date(ref * 86_400_000);
+  const refDow = (refDate.getUTCDay() + 6) % 7; // 0=Mon…6=Sun
+  const refWeekStart = ref - refDow;
+  const dateWeekStart = d - ((new Date(d * 86_400_000).getUTCDay() + 6) % 7);
+  return Math.floor((refWeekStart - dateWeekStart) / 7);
+}
+
+/**
+ * Converts a YYYY-MM-DD string to a "months ago" index relative to a
+ * reference date. 0 = same month as reference, 1 = one month earlier, etc.
+ */
+function monthIndexFromIsoDate(iso: string, referenceIso: string): number {
+  const [ry, rm] = referenceIso.split("-").map(Number);
+  const [y, m] = iso.split("-").map(Number);
+  return (ry - y) * 12 + (rm - m);
+}
+
+/**
+ * Converts a YYYY-MM-DD string to a "years ago" index relative to a
+ * reference date. 0 = same year, 1 = one year earlier, etc.
+ */
+function yearIndexFromIsoDate(iso: string, referenceIso: string): number {
+  return Number(referenceIso.split("-")[0]) - Number(iso.split("-")[0]);
+}
+
+/**
  * Computes the current and best streak for one habit.
  *
- * A *period* is a rolling window of `N = recurrenceInterval ?? 1` days.
- * The zeroth period is `[today - (N-1), today]`; the k-th period is the
- * same window shifted back by `k * N` days. A period is "successful" if
- * at least one completion lands inside it.
+ * The period unit depends on `recurrenceType`:
+ *  - **INTERVAL** (default/legacy): rolling window of `recurrenceInterval ?? 1` days.
+ *  - **WEEKDAY**: calendar weeks (Mon–Sun). Streak = consecutive weeks with ≥ 1 completion.
+ *  - **MONTHLY**: calendar months. Streak = consecutive months with ≥ 1 completion.
+ *  - **YEARLY**: calendar years. Streak = consecutive years with ≥ 1 completion.
  *
- * **Current streak** — counted backwards from today:
- *  1. If the zeroth period is successful, start the counter at 1 and
- *     continue backwards.
- *  2. If the zeroth period is *empty but still open* (trivially true by
- *     definition — today is inside it), the streak is *not yet broken*:
- *     we simply skip period 0 and count from period 1 onward. This gives
- *     a "grace" effect so a weekly habit does not visually reset the
- *     instant the user logs in on the morning after a completion.
- *  3. The first empty period at `k ≥ 1` ends the count.
+ * **Grace rule** — period 0 (the current period) is never required to be
+ * complete yet. If it has no completion, we skip it and count from period 1
+ * backwards. This prevents a visual reset at the start of a new week/month.
  *
- * **Best streak** — a linear pass over all completion days grouped into
- * period indices. Consecutive indices extend the current run; a gap
- * resets it. The maximum run ever seen wins.
- *
- * **Edge cases:**
- *  - Multiple completions inside one period count as a single success.
- *  - Habits with no completions return `{ current: 0, best: 0 }`.
- *  - `recurrenceInterval <= 0` or `null` is normalized to 1.
- *  - Snoozed/future-dated tasks are not handled here — snooze shifts the
- *    `nextDueDate` but leaves `task_completions` untouched, so the streak
- *    is unaffected (intentional: snooze pauses the reminder, not the
- *    habit's record).
- *  - **Calendar drift at long intervals** — recurrence today is a rolling
- *    day count, not a calendar rule. A "monthly" habit with
- *    `recurrenceInterval = 30` completed on Jan 9 and Feb 9 (= 31 days
- *    later) places both completions in the same 30-day window from the
- *    user's perspective once enough drift accumulates, which can
- *    under-count long streaks. The roadmap's "Erweiterte
- *    Wiederholungsregeln" item (WEEKDAY/MONTHLY/YEARLY recurrence rules)
- *    will fix this at the source; until then, 1-day and 7-day intervals
- *    are the reliable cases.
- *
- * @param completionDates - Distinct YYYY-MM-DD completion days in the
- *   user's local timezone, in *any* order. Duplicate dates are tolerated.
- * @param recurrenceInterval - Period length in days, `null` → 1.
+ * @param completionDates - YYYY-MM-DD completion days in any order. Duplicates tolerated.
+ * @param recurrenceInterval - Days for INTERVAL type, `null` → 1.
  * @param today - Today's YYYY-MM-DD in the user's local timezone.
- * @param pausedRanges - Optional array of `{ from, to }` date ranges
- *   (YYYY-MM-DD, inclusive) during which the habit was paused (vacation mode).
- *   Periods that fall entirely within a paused range are treated as
- *   "successful" — they do not break the streak.
+ * @param pausedRanges - Optional paused ranges (vacation mode). Paused periods count as
+ *   successful and do not break the streak.
+ * @param recurrenceType - Rule type; defaults to "INTERVAL" for backward compat.
  * @returns The current and best streak counted in periods.
  */
 export function computeHabitStreak(
   completionDates: string[],
   recurrenceInterval: number | null,
   today: string,
-  pausedRanges?: Array<{ from: string; to: string }>
+  pausedRanges?: Array<{ from: string; to: string }>,
+  recurrenceType: "INTERVAL" | "WEEKDAY" | "MONTHLY" | "YEARLY" = "INTERVAL"
 ): HabitStreak {
+  // ── Calendar-aware branch (WEEKDAY / MONTHLY / YEARLY) ───────────────
+  if (recurrenceType === "WEEKDAY" || recurrenceType === "MONTHLY" || recurrenceType === "YEARLY") {
+    const periodDays = recurrenceType === "WEEKDAY" ? 7 : recurrenceType === "MONTHLY" ? 30 : 365;
+
+    // Map each completion to a period index (0 = current, larger = older)
+    const periodSet = new Set<number>();
+    for (const iso of completionDates) {
+      let pIdx: number;
+      if (recurrenceType === "WEEKDAY") {
+        pIdx = weekIndexFromIsoDate(iso, today);
+      } else if (recurrenceType === "MONTHLY") {
+        pIdx = monthIndexFromIsoDate(iso, today);
+      } else {
+        pIdx = yearIndexFromIsoDate(iso, today);
+      }
+      if (pIdx >= 0) periodSet.add(pIdx);
+    }
+
+    // Mark paused periods as ok (simple approximation: check if paused range
+    // overlaps the period's approximate date window)
+    const pausedPeriods = new Set<number>();
+    if (pausedRanges && pausedRanges.length > 0) {
+      for (const range of pausedRanges) {
+        // Find which period indices are covered by the paused range
+        const fromPIdx = (() => {
+          if (recurrenceType === "WEEKDAY") return weekIndexFromIsoDate(range.from, today);
+          if (recurrenceType === "MONTHLY") return monthIndexFromIsoDate(range.from, today);
+          return yearIndexFromIsoDate(range.from, today);
+        })();
+        const toPIdx = (() => {
+          if (recurrenceType === "WEEKDAY") return weekIndexFromIsoDate(range.to, today);
+          if (recurrenceType === "MONTHLY") return monthIndexFromIsoDate(range.to, today);
+          return yearIndexFromIsoDate(range.to, today);
+        })();
+        const lo = Math.min(fromPIdx, toPIdx);
+        const hi = Math.max(fromPIdx, toPIdx);
+        for (let k = lo; k <= hi; k++) {
+          if (k >= 0) pausedPeriods.add(k);
+        }
+      }
+    }
+
+    const periodOk = (k: number): boolean => periodSet.has(k) || pausedPeriods.has(k);
+
+    if (periodSet.size === 0 && pausedPeriods.size === 0) {
+      return { current: 0, best: 0, periodDays };
+    }
+
+    // Current streak — grace: skip period 0 if empty
+    let current = 0;
+    if (periodOk(0)) {
+      current = 1;
+      let k = 1;
+      while (periodOk(k)) { current += 1; k += 1; }
+    } else {
+      let k = 1;
+      while (periodOk(k)) { current += 1; k += 1; }
+    }
+
+    // Best streak — max consecutive run
+    const allOkPeriods = new Set([...periodSet, ...pausedPeriods]);
+    const sorted = Array.from(allOkPeriods).sort((a, b) => a - b);
+    let best = sorted.length > 0 ? 1 : 0;
+    let run = 1;
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] === sorted[i - 1] + 1) { run += 1; if (run > best) best = run; }
+      else { run = 1; }
+    }
+    if (current > best) best = current;
+
+    return { current, best, periodDays };
+  }
+
+  // ── Rolling interval branch (INTERVAL) ───────────────────────────────
   const periodDays =
     recurrenceInterval && recurrenceInterval > 0 ? recurrenceInterval : 1;
 
@@ -176,10 +262,6 @@ export function computeHabitStreak(
     for (const range of pausedRanges) {
       const fromIdx = dayIndexFromIsoDate(range.from);
       const toIdx = dayIndexFromIsoDate(range.to);
-      // For each period k, the window covers days
-      // [todayIdx - (k+1)*periodDays + 1, todayIdx - k*periodDays].
-      // A period is "paused" if its entire window is within [fromIdx, toIdx].
-      // We iterate only over the periods that could overlap the range.
       const maxK = Math.floor((todayIdx - fromIdx) / periodDays);
       const minK = Math.max(0, Math.floor((todayIdx - toIdx) / periodDays));
       for (let k = minK; k <= maxK; k++) {
@@ -202,12 +284,6 @@ export function computeHabitStreak(
 
   const todayIdx = dayIndexFromIsoDate(today);
 
-  // Convert each completion to its period index relative to "today".
-  // Period 0 is [today - (N-1), today]; period k is that window shifted
-  // back by k * N. For a completion at day index `d`, its period index
-  // is `floor((todayIdx - d) / periodDays)`. Negative indices mean the
-  // completion happened *after* today (clock skew, test seeds); we drop
-  // those rather than misattributing them.
   const periodSet = new Set<number>();
   for (const iso of completionDates) {
     const d = dayIndexFromIsoDate(iso);
@@ -219,31 +295,20 @@ export function computeHabitStreak(
     return { current: 0, best: 0, periodDays };
   }
 
-  // ── Current streak (backwards from period 0) ─────────────────────────
+  // Current streak
   let current = 0;
   if (periodOk(0, periodSet)) {
-    // Period 0 is successful (completed or paused) — count it and walk backwards.
     current = 1;
     let k = 1;
-    while (periodOk(k, periodSet)) {
-      current += 1;
-      k += 1;
-    }
+    while (periodOk(k, periodSet)) { current += 1; k += 1; }
   } else {
-    // Period 0 has no completion yet — still "grace" because today is
-    // inside it. Skip period 0 and count from period 1 backwards.
     let k = 1;
-    while (periodOk(k, periodSet)) {
-      current += 1;
-      k += 1;
-    }
+    while (periodOk(k, periodSet)) { current += 1; k += 1; }
   }
 
-  // ── Best streak (max consecutive run over all periods ever) ──────────
-  // Merge completion periods and paused periods into one sorted array
+  // Best streak
   const allOkPeriods = new Set([...periodSet, ...pausedPeriods]);
   const sortedPeriods = Array.from(allOkPeriods).sort((a, b) => a - b);
-
   let best = sortedPeriods.length > 0 ? 1 : 0;
   let run = 1;
   for (let i = 1; i < sortedPeriods.length; i++) {
@@ -254,7 +319,6 @@ export function computeHabitStreak(
       run = 1;
     }
   }
-  // The running streak is itself a candidate for "best".
   if (current > best) best = current;
 
   return { current, best, periodDays };
@@ -304,6 +368,7 @@ export async function getHabitsWithHistory(
       id: tasks.id,
       title: tasks.title,
       recurrenceInterval: tasks.recurrenceInterval,
+      recurrenceType: tasks.recurrenceType,
       topicId: tasks.topicId,
       topicTitle: topics.title,
       topicColor: topics.color,
@@ -440,11 +505,13 @@ export async function getHabitsWithHistory(
     if (h.pausedAt && h.pausedUntil) {
       pausedRanges.push({ from: h.pausedAt, to: h.pausedUntil });
     }
-    const streak = computeHabitStreak(allDates, h.recurrenceInterval, todayStr, pausedRanges);
+    const recType = (h.recurrenceType ?? "INTERVAL") as "INTERVAL" | "WEEKDAY" | "MONTHLY" | "YEARLY";
+    const streak = computeHabitStreak(allDates, h.recurrenceInterval, todayStr, pausedRanges, recType);
     return {
       id: h.id,
       title: h.title,
       recurrenceInterval: h.recurrenceInterval,
+      recurrenceType: recType,
       topicId: h.topicId,
       topicTitle: h.topicTitle ?? null,
       topicColor: h.topicColor ?? null,
