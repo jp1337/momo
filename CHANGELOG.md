@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-12
+
 ### Added
 
 - **Update-Checker** — das Admin-Panel zeigt jetzt einen Banner, wenn eine neuere Momo-Version auf GitHub verfügbar ist. Die Prüfung erfolgt einmal alle 24 Stunden via GitHub Releases API (In-Memory-Cache, kein Redis). Für Air-Gap-Installationen ohne Internet-Zugang kann die Prüfung per `DISABLE_UPDATE_CHECK=true` deaktiviert werden. Neue Env-Var in `.env.example` und `docs/environment-variables.md` dokumentiert.
@@ -450,5 +452,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Bought items shown with green left border and "Bought" badge
 - Discarded items shown with 50% opacity and strikethrough title
 
-[Unreleased]: https://github.com/jp1337/momo/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/jp1337/momo/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/jp1337/momo/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/jp1337/momo/releases/tag/v0.1.0
