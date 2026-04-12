@@ -337,7 +337,7 @@ Your daily reminder notification includes the quest title — e.g. "Today's miss
 After completing the daily quest, Momo shows a gentle quote or affirmation — a small moment of warmth before the celebration fades. The quotes alternate between passages from Michael Ende's novel *Momo* and encouraging affirmations that match the app's philosophy.
 
 - The quote changes **once per day** (the same quote shows all day, a new one tomorrow)
-- Available in **German, English, and French**
+- Available in **German, English, French, Spanish, and Dutch**
 - Toggle the feature on or off in **Settings → Emotional Closure**
 
 > **Why quotes from Momo?** The novel is about reclaiming your time from the "Grey Gentlemen" — a perfect metaphor for the small victory of completing your daily quest.
@@ -788,6 +788,8 @@ Go to **Settings** and choose from:
 - **German (de)**
 - **English (en)**
 - **French (fr)**
+- **Spanish (es)**
+- **Dutch (nl)**
 
 The selected language applies to all UI elements, labels, and system messages.
 
@@ -879,7 +881,7 @@ Visit **/stats** from the navigation to see your personal numbers:
 - **Achievements** — all achievements with earned/locked status and unlock dates
 - **Wishlist** — bought, spent, open, and discarded counts
 
-Stats are fully localized — they follow your chosen language (German, English, or French).
+Stats are fully localized — they follow your chosen language (German, English, French, Spanish, or Dutch).
 
 ### Habit Tracker
 

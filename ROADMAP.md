@@ -82,7 +82,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 ### Internationalisierung
 
 - ✅ **Zeitzone in den Settings** — User kann seine Zeitzone explizit in den Settings setzen statt sie implizit aus dem Browser zu ziehen; relevant für alle server-seitigen Cron-Jobs (Morning-Briefing, Due-Today, Weekly Review) wenn der User per VPN unterwegs ist oder auf Reisen. DB: vorhandene Spalte `timezone` auf `users` wird zum editierbaren Feld; Settings-UI mit IANA-Timezone-Picker (Dropdown mit häufigen Zonen + freie Eingabe).
-- **i18n: Spanisch (es) und Niederländisch (nl)** — zwei neue Sprachdateien `messages/es.json` und `messages/nl.json`; LOCALES-Array in `i18n/locales.ts` erweitern; alle bestehenden i18n-Keys (tasks, topics, habits, auth, settings, …) übersetzen. Framework steht komplett — reine Übersetzungsarbeit + Sprachauswahl in den Settings ergänzen.
+- ✅ **i18n: Spanisch (es) und Niederländisch (nl)** — zwei neue Sprachdateien `messages/es.json` und `messages/nl.json`; LOCALES-Array in `i18n/locales.ts` erweitert; alle 21 i18n-Namespaces (tasks, topics, habits, auth, settings, achievements, onboarding, …) vollständig übersetzt; `language-switcher.tsx` um 🇪🇸/🇳🇱 Flaggen-Einträge ergänzt; Sprachnamen in allen 5 Locale-Dateien eingetragen.
 
 ### Selfhoster
 
@@ -129,7 +129,4 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ## Ideen-Backlog (noch nicht bewertet)
 
-- Pomodoro-Timer Integration
 - AI-gestützte Aufgaben-Priorisierung
-- Markdown in Task-Notes
-- Aufgaben-Kommentare / Tagebucheintrag pro Abschluss

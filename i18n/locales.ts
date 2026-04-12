@@ -10,6 +10,6 @@
  *  3. Add a flag entry in components/settings/language-switcher.tsx
  */
 
-export const LOCALES = ["de", "en", "fr"] as const;
+export const LOCALES = ["de", "en", "fr", "es", "nl"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "de";
