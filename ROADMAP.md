@@ -111,7 +111,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 - ✅ **ntfy.sh** — Self-hosted Push via ntfy.sh-Topic-URL; kein App-Account nötig; ideal für Power-User & Selfhosters
 - ✅ **Pushover** — Push-Benachrichtigungen via Pushover API; User Key + App Token pro User in Settings
 - ✅ **Telegram-Bot** — Bot Token + Chat ID pro User in Settings; HTML-Parse-Mode mit "Open Momo"-Link. Task-Eingabe via `/addtask` ist ein Folge-Ticket.
-- **Webhook / Custom HTTP** — generischer Outbound-Webhook bei konfigurierbaren Events (Quest bereit, Streak-Warnung, etc.)
+- ✅ **Webhook / Custom HTTP** — generischer Outbound-Webhook: HTTP POST mit JSON-Payload (`event`, `title`, `body`, `url`, `tag`, `timestamp`) an beliebige URL; optionale HMAC-SHA256-Signierung via `X-Momo-Signature`-Header; `WebhookChannel`-Klasse in `lib/notifications.ts`, `WebhookConfigSchema` in `lib/validators`, `WebhookForm` in Settings-UI; kein Schema-Migration (JSONB `config`)
 
 > **Implementierungsansatz:** Alle Kanäle via nativem `fetch` — kein zusätzlicher Container, keine externe Abstraktion.
 > Einheitliches Interface in `lib/notifications.ts`: `interface NotificationChannel { send(payload: { title, body, url? }): Promise<void> }`
