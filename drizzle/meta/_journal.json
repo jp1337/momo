@@ -204,6 +204,13 @@
       "when": 1775998276537,
       "tag": "0027_violet_wrecking_crew",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1776001162215,
+      "tag": "0029_login_notification_new_device",
+      "breakpoints": true
     }
   ]
 }

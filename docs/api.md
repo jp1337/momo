@@ -808,6 +808,7 @@ Sets item status to `DISCARDED`. Response: `{ "item": WishlistItem }`
 | `PATCH` | `/api/settings/quest` | Yes | Update quest settings (postpone limit, emotional closure) |
 | `GET` | `/api/settings/timezone` | Yes | Get user's stored IANA timezone |
 | `PATCH` | `/api/settings/timezone` | Yes (rw) | Update user's IANA timezone (10/min) |
+| `PATCH` | `/api/settings/login-notification` | Yes (rw) | Toggle new-device login notification (10/min) |
 
 ### GET /api/settings/budget
 
@@ -871,6 +872,27 @@ Updates the user's IANA timezone. Affects all server-side cron jobs (Morning Bri
 |---|---|---|
 | 422 | Validation | Invalid or empty IANA timezone identifier |
 | 429 | Rate limit | More than 10 requests per minute |
+
+---
+
+### PATCH /api/settings/login-notification
+
+Enables or disables the new-device login notification. When enabled, the user receives a notification on all configured channels whenever a login is detected from a previously unseen device fingerprint (UA + IP). Rate-limited to 10 requests per minute. Read-only API keys receive 403.
+
+**Request body:**
+
+```json
+{ "enabled": true }
+```
+
+**Response:** `{ "enabled": true }`
+
+**Error codes:**
+
+| Status | Reason |
+|---|---|
+| 422 | `enabled` is missing or not a boolean |
+| 429 | More than 10 requests per minute |
 
 ---
 

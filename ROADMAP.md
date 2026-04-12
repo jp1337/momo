@@ -97,7 +97,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 ### Sicherheit
 
 - ✅ **Session-Übersicht ("Aktive Geräte")** — User sieht alle aktiven Sessions (Browser, IP-Region, letzter Zugriff) in den Settings und kann einzelne oder alle anderen auf einmal invalidieren. Die `sessions`-Tabelle existiert bereits in der DB — Aufwand liegt in einem neuen `GET /api/auth/sessions`-Endpoint + `DELETE /api/auth/sessions/[id]` + einer Settings-Sektion. Bekanntes UX-Pattern aus GitHub/Google.
-- **Login-Benachrichtigung bei neuem Gerät** — opt-in Push/Email wenn sich jemand von einem bisher unbekannten Browser oder Gerät einloggt. Implementierung im Auth.js-Callback: Session-Fingerprint (User-Agent + IP-Hash) gegen bekannte Sessions prüfen; bei Neugerät sofort über alle konfigurierten Kanäle benachrichtigen.
+- ✅ **Login-Benachrichtigung bei neuem Gerät** — opt-in Toggle in den Settings (unter „Aktive Sitzungen"). SHA-256-Fingerprint aus User-Agent + IP gegen bekannte Sessions geprüft; bei Neugerät sofort über alle konfigurierten Kanäle benachrichtigt. First-Touch-Mechanismus in `touchSessionMetadata` — feuert genau einmal pro neuer Session. First-Ever-Login ausgenommen (kein Vergleichsmaterial). DB: `users.login_notification_new_device` (boolean, default false, Migration `0029`).
 
 ### Authentifizierung erweitern
 

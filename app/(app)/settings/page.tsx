@@ -33,6 +33,7 @@ import { CalendarFeedSection } from "@/components/settings/calendar-feed-section
 import { MorningBriefingSettings } from "@/components/settings/morning-briefing-settings";
 import { VacationModeSettings } from "@/components/settings/vacation-mode-settings";
 import { ActiveSessions } from "@/components/settings/active-sessions";
+import { LoginNotificationSettings } from "@/components/settings/login-notification-settings";
 import { getCalendarFeedStatus } from "@/lib/calendar";
 import { getUserTotpStatus, readSessionTokenFromCookieStore } from "@/lib/totp";
 import { listUserPasskeys } from "@/lib/webauthn";
@@ -82,6 +83,7 @@ export default async function SettingsPage() {
         morningBriefingTime: users.morningBriefingTime,
         vacationEndDate: users.vacationEndDate,
         timezone: users.timezone,
+        loginNotificationNewDevice: users.loginNotificationNewDevice,
       })
       .from(users)
       .where(eq(users.id, session.user.id))
@@ -393,7 +395,7 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      {/* Active Sessions section */}
+      {/* Active Sessions + Login Notification section */}
       <section
         className="rounded-xl p-6 flex flex-col gap-4"
         style={{
@@ -402,6 +404,21 @@ export default async function SettingsPage() {
         }}
       >
         <ActiveSessions initialSessions={activeSessions} />
+
+        <div className="border-t pt-4" style={{ borderColor: "var(--border)" }}>
+          <h3
+            className="text-sm font-semibold mb-3"
+            style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("login_notification_section_title")}
+          </h3>
+          <LoginNotificationSettings
+            initialEnabled={user.loginNotificationNewDevice}
+          />
+        </div>
       </section>
 
       {/* Quest Settings section */}

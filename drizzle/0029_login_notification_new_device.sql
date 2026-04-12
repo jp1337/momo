@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "login_notification_new_device" boolean DEFAULT false NOT NULL;

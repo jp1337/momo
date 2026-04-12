@@ -83,6 +83,7 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `vacation_end_date` | date | End date of vacation mode (YYYY-MM-DD, inclusive). Null = no active vacation. When set, all RECURRING tasks have `paused_at`/`paused_until` populated. A daily cron job (`vacation-mode-auto-end`) auto-ends vacation once this date has passed |
 | `quest_streak_current` | integer | Consecutive days with at least one daily quest completed. Incremented by `updateQuestStreak()` when a daily quest is completed. Reset to 1 on gaps (no shield mechanism). Used for `quest_streak_7` and `quest_streak_30` achievements |
 | `quest_streak_last_date` | date | Date (YYYY-MM-DD, user's timezone) of the last daily quest completion. Used to determine streak continuation in `updateQuestStreak()` |
+| `login_notification_new_device` | boolean | Opt-in: send a notification on all configured channels when a login from a previously unseen device is detected (based on SHA-256 fingerprint of User-Agent + IP). Default `false`. Fires at most once per new session (on first touch). Added in Migration `0029` |
 
 ### `sessions` (extended columns)
 

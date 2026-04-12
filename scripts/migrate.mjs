@@ -14,15 +14,25 @@
  *   Additionally, when a DB was set up by other means (manual psql, earlier
  *   drizzle-kit run), some migrations may be applied but not tracked.
  *
+ *   Drizzle's migrate() uses a timestamp watermark: it only applies migrations
+ *   whose folderMillis > MAX(created_at) in the tracking table. Migrations
+ *   inserted into the middle of an existing sequence (e.g. a journal entry
+ *   that was missing and later added) will be silently skipped by migrate()
+ *   because their timestamp is below the watermark.
+ *
  * Solution:
- *   Before calling migrate(), scan ALL migrations in the journal:
+ *   Before calling migrate(), query the current watermark and scan ALL
+ *   migrations in the journal:
  *   - "tracked but objects missing" (stale) → delete tracking entry so
  *     migrate() will re-apply it. Do not stop early — multiple stale entries
  *     can exist and must all be cleared before migrate() runs.
  *   - "not tracked but objects present" → seed as applied so migrate() won't
  *     re-run DDL that already exists.
- *   - "not tracked and objects missing" → first genuinely pending migration;
- *     no need to inspect further, migrate() handles everything from here.
+ *   - "not tracked, objects missing, timestamp ≤ watermark" (out-of-order) →
+ *     migrate() would silently skip this; apply the SQL directly here, with
+ *     tolerance for "already exists" errors in case of partial prior runs.
+ *   - "not tracked, objects missing, timestamp > watermark" (in-order pending)
+ *     → migrate() will apply this normally.
  *   After migrate() completes, a post-migration sanity check verifies that
  *   every table declared across all migration files actually exists in the DB.
  *
@@ -245,6 +255,34 @@ try {
     readFileSync(join(migrationsFolder, "meta", "_journal.json"), "utf8")
   );
 
+  // Drizzle's migrate() uses a timestamp watermark: it only applies migrations
+  // whose folderMillis > MAX(created_at) in the tracking table. Any migration
+  // with a timestamp ≤ the watermark is silently skipped, even if it was never
+  // actually applied to the DB (e.g. a journal entry that was missing and later
+  // re-added). We must detect and apply those out-of-order migrations ourselves.
+  let watermark = 0;
+  try {
+    const schemaEx = await client.query(
+      `SELECT 1 FROM information_schema.schemata WHERE schema_name = 'drizzle'`
+    );
+    if (schemaEx.rowCount > 0) {
+      const tableEx = await client.query(
+        `SELECT 1 FROM information_schema.tables
+         WHERE table_schema = 'drizzle' AND table_name = '__drizzle_migrations'`
+      );
+      if (tableEx.rowCount > 0) {
+        const r = await client.query(
+          `SELECT MAX(created_at) AS wm FROM drizzle."__drizzle_migrations"`
+        );
+        if (r.rows[0].wm !== null) {
+          watermark = Number(r.rows[0].wm);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[migrate] Could not read migration watermark:", err.message);
+  }
+
   let seededAny = false;
   let removedStale = 0;
 
@@ -277,11 +315,48 @@ try {
       }
 
       if (!tracked && !appliedInDb) {
-        // Pending migration — migrate() will apply this.
-        // Do NOT break here: later migrations may already be applied in the DB
-        // out-of-order (e.g. via a manual ALTER or a partial previous run).
-        // Those must be seeded before migrate() runs, otherwise migrate() would
-        // attempt to re-apply them and fail with "column/table already exists".
+        if (entry.when > watermark) {
+          // In-order pending migration — migrate() will apply this normally.
+          continue;
+        }
+
+        // Out-of-order pending migration: this migration's timestamp is at or
+        // below the current watermark, so Drizzle's migrate() will silently
+        // skip it. Apply the SQL directly here instead.
+        //
+        // Individual statements may fail with "already exists" if a partial
+        // previous run applied some but not all DDL — tolerate those errors.
+        console.log(
+          `[migrate] Out-of-order pending migration — applying directly: ${entry.tag}`
+        );
+        const statements = sqlContent
+          .split("--> statement-breakpoint")
+          .map((s) => s.trim())
+          .filter((s) => s !== "");
+
+        for (const stmt of statements) {
+          try {
+            await client.query(stmt);
+          } catch (err) {
+            // 42701 duplicate_column  42P07 duplicate_table
+            // 42P06 duplicate_schema  42710 duplicate_object (enum/type)
+            const alreadyExists = ["42701", "42P07", "42P06", "42710"].includes(
+              err.code
+            );
+            if (alreadyExists) {
+              console.log(
+                `[migrate] DDL already present, skipping: ${stmt
+                  .substring(0, 100)
+                  .replace(/\s+/g, " ")}`
+              );
+            } else {
+              throw err;
+            }
+          }
+        }
+
+        await seedOneMigration(client, entry, sqlContent);
+        seededAny = true;
         continue;
       }
 
