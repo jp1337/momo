@@ -25,6 +25,7 @@ import {
   faFolderOpen,
   faStar,
   faSeedling,
+  faTrophy,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
@@ -50,6 +51,7 @@ export function Sidebar() {
     { href: "/tasks", label: t("tasks"), icon: faListCheck },
     { href: "/topics", label: t("topics"), icon: faFolderOpen },
     { href: "/habits", label: t("habits"), icon: faSeedling },
+    { href: "/achievements", label: t("achievements"), icon: faTrophy },
     { href: "/wishlist", label: t("wishlist"), icon: faStar },
   ];
 

@@ -21,7 +21,8 @@
     "quick_mode": "5 Min",
     "review": "Bilan",
     "focus_mode": "Focus",
-    "habits": "Habitudes"
+    "habits": "Habitudes",
+    "achievements": "Succès"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -849,7 +850,6 @@
     "finish": "Commencer avec Momo",
     "sign_out": "Se déconnecter",
     "progress_step": "Étape {current} sur {total}",
-
     "welcome_title": "Bienvenue, {name} !",
     "welcome_title_anonymous": "Bienvenue !",
     "welcome_subtitle": "Découvrez comment Momo vous aide à avancer — une tâche à la fois.",
@@ -861,7 +861,6 @@
     "concept_coins_desc": "Gagnez des pièces en complétant des tâches. Dépensez-les pour des souhaits de votre liste.",
     "concept_streaks_title": "Séries",
     "concept_streaks_desc": "Complétez votre quête chaque jour pour maintenir votre série. Un bouclier vous protège une fois par mois.",
-
     "topic_title": "Créez votre premier sujet",
     "topic_subtitle": "Les sujets regroupent vos tâches — comme « Déménagement », « Santé » ou « Projet perso ».",
     "topic_name_label": "Nom du sujet",
@@ -870,7 +869,6 @@
     "topic_color_label": "Couleur",
     "topic_created": "Sujet créé !",
     "topic_error": "Impossible de créer le sujet. Veuillez réessayer.",
-
     "tasks_title": "Ajoutez des tâches",
     "tasks_subtitle": "Ajoutez quelques tâches à « {topicName} » pour commencer.",
     "tasks_skipped_title": "Pas encore de sujet",
@@ -880,7 +878,6 @@
     "tasks_hint": "Appuyez sur Entrée pour ajouter",
     "tasks_added_count": "{count, plural, =0 {Aucune tâche} one {1 tâche ajoutée} other {{count} tâches ajoutées}}",
     "tasks_error": "Impossible d'ajouter la tâche. Veuillez réessayer.",
-
     "notifications_title": "Restez motivé",
     "notifications_subtitle": "Recevez un rappel quotidien pour votre quête. Modifiable à tout moment dans les Paramètres.",
     "notifications_timezone_label": "Votre fuseau horaire",
@@ -890,8 +887,27 @@
     "notifications_push_denied": "Les notifications sont bloquées par votre navigateur. Activez-les dans les paramètres du navigateur.",
     "notifications_push_unsupported": "Les notifications push ne sont pas supportées dans ce navigateur.",
     "notifications_push_enabled": "Notifications activées !",
-
     "complete_title": "Tout est prêt !",
     "complete_subtitle": "Votre première quête vous attend sur le tableau de bord. Bonne chance !"
+  },
+  "achievements": {
+    "page_title": "Succès",
+    "page_subtitle": "{earned} sur {total} débloqués",
+    "rarity_common": "Commun",
+    "rarity_rare": "Rare",
+    "rarity_epic": "Épique",
+    "rarity_legendary": "Légendaire",
+    "secret_title": "???",
+    "secret_description": "Ce succès est secret — explorez Momo pour le débloquer",
+    "locked": "Verrouillé",
+    "earned_at": "Obtenu le {date}",
+    "coin_reward": "+{coins} pièces",
+    "progress": "{current} / {total}",
+    "section_legendary": "Légendaire",
+    "section_epic": "Épique",
+    "section_rare": "Rare",
+    "section_common": "Commun",
+    "section_secret": "Secret",
+    "no_achievements": "Pas encore de succès — accomplissez des tâches pour les débloquer !"
   }
 }

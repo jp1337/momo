@@ -7,17 +7,19 @@
  */
 
 import { db } from "@/lib/db";
-import { tasks, taskCompletions, users, topics } from "@/lib/db/schema";
-import { eq, and, isNull, desc, max, count, sql, inArray } from "drizzle-orm";
+import { tasks, taskCompletions, users, topics, wishlistItems } from "@/lib/db/schema";
+import { eq, and, isNull, desc, max, count, sql, inArray, gte } from "drizzle-orm";
 import type { CreateTaskInput, UpdateTaskInput, BulkTaskActionInput } from "@/lib/validators";
 import {
   updateStreak,
+  updateQuestStreak,
   checkAndUnlockAchievements,
   getLevelForCoins,
   type Level,
   type UnlockedAchievement,
 } from "@/lib/gamification";
 import { getLocalDateString } from "@/lib/date-utils";
+import { getEnergyCheckinStreak } from "@/lib/energy";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,6 +48,8 @@ export interface PromoteTaskResult {
 export interface CompleteTaskResult {
   task: Task;
   coinsEarned: number;
+  /** Coins earned from achievement unlocks (on top of task coins) */
+  achievementCoinsEarned: number;
   /** Non-null if the user leveled up as a result of this completion */
   newLevel: Level | null;
   /** Achievements newly unlocked by this completion */
@@ -396,35 +400,137 @@ export async function completeTask(
     );
   }
 
-  // Count total completions and check achievements after streak is known
-  const completionCountRows = await db
-    .select({ count: count() })
-    .from(taskCompletions)
-    .where(eq(taskCompletions.userId, userId));
+  // Update quest streak when a daily quest is completed
+  let questStreakCurrent = 0;
+  if (task.isDailyQuest) {
+    try {
+      const questStreakResult = await updateQuestStreak(userId, timezone);
+      questStreakCurrent = questStreakResult.questStreakCurrent;
+    } catch (err) {
+      console.error("[completeTask] quest streak update failed (non-fatal):", err);
+    }
+  }
+
+  // Count total completions and check achievements after streak is known.
+  // Gather all context needed for the expanded achievement set — all queries
+  // run in parallel to minimise latency.
+  const today = getLocalDateString(timezone);
+  const todayStart = new Date(today + "T00:00:00Z");
+
+  const [
+    completionCountRows,
+    highPriorityRows,
+    topicCountRows,
+    sequentialTopicRows,
+    wishlistBoughtRows,
+    dailyQuestTodayRows,
+    energyStreak,
+  ] = await Promise.all([
+    db.select({ count: count() }).from(taskCompletions).where(eq(taskCompletions.userId, userId)),
+    db
+      .select({ count: count() })
+      .from(taskCompletions)
+      .innerJoin(tasks, eq(taskCompletions.taskId, tasks.id))
+      .where(and(eq(taskCompletions.userId, userId), eq(tasks.priority, "HIGH"))),
+    db
+      .select({ count: count() })
+      .from(topics)
+      .where(eq(topics.userId, userId)),
+    db
+      .select({ id: topics.id })
+      .from(topics)
+      .where(and(eq(topics.userId, userId), eq(topics.sequential, true)))
+      .limit(1),
+    db
+      .select({ count: count() })
+      .from(wishlistItems)
+      .where(and(eq(wishlistItems.userId, userId), eq(wishlistItems.status, "BOUGHT"))),
+    db
+      .select({ count: count() })
+      .from(taskCompletions)
+      .innerJoin(tasks, eq(taskCompletions.taskId, tasks.id))
+      .where(
+        and(
+          eq(taskCompletions.userId, userId),
+          eq(tasks.isDailyQuest, true),
+          gte(taskCompletions.completedAt, todayStart)
+        )
+      ),
+    getEnergyCheckinStreak(userId, timezone),
+  ]);
+
   const totalCompleted = Number(completionCountRows[0]?.count ?? 0);
+  const totalHighPriorityCompleted = Number(highPriorityRows[0]?.count ?? 0);
+  const topicsCreated = Number(topicCountRows[0]?.count ?? 0);
+  const hasSequentialTopic = sequentialTopicRows.length > 0;
+  const totalWishlistBought = Number(wishlistBoughtRows[0]?.count ?? 0);
+  const dailyQuestCompletionsToday = Number(dailyQuestTodayRows[0]?.count ?? 0);
+
+  // Determine the local completion hour for secret time-based achievements
+  const completionHour = (() => {
+    try {
+      const tz = timezone ?? "UTC";
+      const formatter = new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: tz });
+      return Number(formatter.format(new Date()));
+    } catch {
+      return new Date().getHours();
+    }
+  })();
 
   // Check achievements outside the transaction — a transient failure should
   // not roll back the task completion or coin award.
   let unlockedAchievements: UnlockedAchievement[] = [];
+  let achievementCoinsEarned = 0;
   try {
-    unlockedAchievements = await checkAndUnlockAchievements(
+    const achievementResult = await checkAndUnlockAchievements(
       userId,
       {
         totalCompleted,
         streakCurrent,
         coins: newCoins,
         level: levelAfter.level,
-        isDailyQuestComplete: task.isDailyQuest,
-      },
-      undefined
+        isDailyQuestComplete: task.isDailyQuest ?? false,
+        questStreakCurrent,
+        completionHour,
+        dailyQuestCompletionsToday,
+        topicsCreated,
+        hasSequentialTopic,
+        totalHighPriorityCompleted,
+        totalWishlistBought,
+        energyCheckinStreak: energyStreak,
+      }
     );
+    unlockedAchievements = achievementResult.unlocked;
+    achievementCoinsEarned = achievementResult.coinsAwarded;
   } catch (err) {
     console.error("[completeTask] achievement check failed (non-fatal):", err);
+  }
+
+  // Book achievement coins into the user's balance (atomic SQL expression)
+  if (achievementCoinsEarned > 0) {
+    try {
+      await db
+        .update(users)
+        .set({ coins: sql`${users.coins} + ${achievementCoinsEarned}` })
+        .where(eq(users.id, userId));
+    } catch (err) {
+      console.error("[completeTask] achievement coin booking failed (non-fatal):", err);
+    }
+  }
+
+  // Fire-and-forget push notifications for newly unlocked achievements
+  if (unlockedAchievements.length > 0) {
+    import("@/lib/push").then(({ sendAchievementNotifications }) =>
+      sendAchievementNotifications(userId, unlockedAchievements).catch((err) =>
+        console.error("[completeTask] achievement notification failed (non-fatal):", err)
+      )
+    );
   }
 
   return {
     task: updatedTask,
     coinsEarned,
+    achievementCoinsEarned,
     newLevel,
     unlockedAchievements,
     streakCurrent,

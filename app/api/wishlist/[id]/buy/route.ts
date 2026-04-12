@@ -15,6 +15,10 @@
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { markAsBought, unmarkAsBought } from "@/lib/wishlist";
+import { db } from "@/lib/db";
+import { wishlistItems, users } from "@/lib/db/schema";
+import { eq, and, sql } from "drizzle-orm";
+import { checkAndUnlockAchievements } from "@/lib/gamification";
 
 /**
  * POST /api/wishlist/:id/buy
@@ -32,6 +36,34 @@ export async function POST(
 
   try {
     const { item, coinsSpent } = await markAsBought(id, user.userId);
+
+    // Fire-and-forget achievement check for wishlist milestones
+    (async () => {
+      try {
+        const boughtRows = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(wishlistItems)
+          .where(and(eq(wishlistItems.userId, user.userId), eq(wishlistItems.status, "BOUGHT")));
+        const totalWishlistBought = Number(boughtRows[0]?.count ?? 0);
+        const result = await checkAndUnlockAchievements(user.userId, {
+          totalCompleted: 0,
+          streakCurrent: 0,
+          coins: 0,
+          level: 1,
+          totalWishlistBought,
+        });
+        if (result.coinsAwarded > 0) {
+          await db.update(users).set({ coins: sql`${users.coins} + ${result.coinsAwarded}` }).where(eq(users.id, user.userId));
+        }
+        if (result.unlocked.length > 0) {
+          const { sendAchievementNotifications } = await import("@/lib/push");
+          await sendAchievementNotifications(user.userId, result.unlocked);
+        }
+      } catch (err) {
+        console.error("[POST /api/wishlist/:id/buy] achievement check failed (non-fatal):", err);
+      }
+    })();
+
     return Response.json({ item, coinsSpent });
   } catch (error) {
     console.error("[POST /api/wishlist/:id/buy]", error);

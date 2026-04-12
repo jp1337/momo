@@ -183,6 +183,13 @@
       "when": 1775936287961,
       "tag": "0026_active_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1775996682071,
+      "tag": "0026_magical_havok",
+      "breakpoints": true
     }
   ]
 }

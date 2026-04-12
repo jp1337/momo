@@ -17,8 +17,8 @@ The full schema is defined in `lib/db/schema.ts`.
 | `tasks` | All tasks: one-time, recurring, and daily-quest-eligible |
 | `task_completions` | Log of every task completion event |
 | `wishlist_items` | Things the user wants to buy, with optional coin-gating |
-| `achievements` | Master list of available achievements (seeded once) |
-| `user_achievements` | Junction table: which achievements each user has earned |
+| `achievements` | Master list of 31 achievements with rarity (common/rare/epic/legendary), coin_reward, and secret flag. Seeded via `seedAchievements()` with upsert |
+| `user_achievements` | Junction table: which achievements each user has earned (earnedAt timestamp) |
 | `api_keys` | Personal Access Tokens for programmatic API access |
 | `linking_requests` | Short-lived tokens for OAuth account linking |
 | `cron_runs` | Log of push-notification cron job executions (30-day retention) |
@@ -81,6 +81,8 @@ All foreign keys referencing `users.id` use `ON DELETE CASCADE` — deleting a u
 | `calendar_feed_token_created_at` | timestamptz | Timestamp when the current feed token was generated. Displayed in the settings UI ("active since …") |
 | `onboarding_completed` | boolean | Whether the user has completed the onboarding wizard. Default `false` for new users. The `(app)` layout gate redirects to `/onboarding` when `false`. Backfill migration sets all pre-existing users to `true` |
 | `vacation_end_date` | date | End date of vacation mode (YYYY-MM-DD, inclusive). Null = no active vacation. When set, all RECURRING tasks have `paused_at`/`paused_until` populated. A daily cron job (`vacation-mode-auto-end`) auto-ends vacation once this date has passed |
+| `quest_streak_current` | integer | Consecutive days with at least one daily quest completed. Incremented by `updateQuestStreak()` when a daily quest is completed. Reset to 1 on gaps (no shield mechanism). Used for `quest_streak_7` and `quest_streak_30` achievements |
+| `quest_streak_last_date` | date | Date (YYYY-MM-DD, user's timezone) of the last daily quest completion. Used to determine streak continuation in `updateQuestStreak()` |
 
 ### `sessions` (extended columns)
 

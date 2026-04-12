@@ -33,6 +33,7 @@ import {
   sql,
   avg,
 } from "drizzle-orm";
+import { getEnergyCheckinStreak } from "@/lib/energy";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -759,5 +760,143 @@ export async function getRecentCronRuns(): Promise<CronStatus> {
       : null;
 
   return { rows, minutesSinceLastRun };
+}
+
+// ─── Achievement Gallery ───────────────────────────────────────────────────────
+
+/** An achievement enriched with earned status, progress data, and rarity. */
+export interface AchievementWithProgress {
+  id: string;
+  key: string;
+  title: string;
+  description: string;
+  icon: string;
+  rarity: string;
+  coinReward: number;
+  secret: boolean;
+  earnedAt: Date | null;
+  /** Progress towards the unlock threshold, only provided for countable achievements. */
+  progress?: { current: number; total: number };
+}
+
+/**
+ * Returns all achievements enriched with:
+ *  - Rarity, coinReward, and secret flag from the DB
+ *  - The user's earned status (earnedAt timestamp or null)
+ *  - Countable progress towards locked achievements
+ *
+ * Progress thresholds mirror the unlock conditions in getEarnedAchievementKeys().
+ *
+ * @param userId   - Authenticated user UUID
+ * @param timezone - IANA timezone for energy streak computation
+ */
+export async function getAchievementsWithProgress(
+  userId: string,
+  timezone?: string | null
+): Promise<AchievementWithProgress[]> {
+  // Fetch all achievements + earned status in parallel with user counters
+  const [achievementRows, userRow, completionCount, highPriorityCount, topicCount, wishlistBoughtCount, energyStreak] =
+    await Promise.all([
+      db
+        .select({
+          id: achievements.id,
+          key: achievements.key,
+          title: achievements.title,
+          description: achievements.description,
+          icon: achievements.icon,
+          rarity: achievements.rarity,
+          coinReward: achievements.coinReward,
+          secret: achievements.secret,
+          earnedAt: userAchievements.earnedAt,
+        })
+        .from(achievements)
+        .leftJoin(
+          userAchievements,
+          and(
+            eq(userAchievements.achievementId, achievements.id),
+            eq(userAchievements.userId, userId)
+          )
+        )
+        .orderBy(achievements.key),
+
+      db.select({
+        coins: users.coins,
+        level: users.level,
+        streakCurrent: users.streakCurrent,
+        questStreakCurrent: users.questStreakCurrent,
+      }).from(users).where(eq(users.id, userId)).limit(1),
+
+      db.select({ count: count() }).from(taskCompletions).where(eq(taskCompletions.userId, userId)),
+
+      db.select({ count: count() })
+        .from(taskCompletions)
+        .innerJoin(tasks, eq(taskCompletions.taskId, tasks.id))
+        .where(and(eq(taskCompletions.userId, userId), eq(tasks.priority, "HIGH"))),
+
+      db.select({ count: count() }).from(topics).where(eq(topics.userId, userId)),
+
+      db.select({ count: count() })
+        .from(wishlistItems)
+        .where(and(eq(wishlistItems.userId, userId), eq(wishlistItems.status, "BOUGHT"))),
+
+      getEnergyCheckinStreak(userId, timezone),
+    ]);
+
+  const user = userRow[0];
+  const totalCompleted = Number(completionCount[0]?.count ?? 0);
+  const highPriority = Number(highPriorityCount[0]?.count ?? 0);
+  const topicsCreated = Number(topicCount[0]?.count ?? 0);
+  const wishlistBought = Number(wishlistBoughtCount[0]?.count ?? 0);
+  const coins = user?.coins ?? 0;
+  const level = user?.level ?? 1;
+  const streak = user?.streakCurrent ?? 0;
+  const questStreak = user?.questStreakCurrent ?? 0;
+
+  /** Map from achievement key to progress object */
+  const progressMap: Record<string, { current: number; total: number }> = {
+    first_task:            { current: Math.min(totalCompleted, 1), total: 1 },
+    tasks_10:              { current: Math.min(totalCompleted, 10), total: 10 },
+    tasks_50:              { current: Math.min(totalCompleted, 50), total: 50 },
+    tasks_100:             { current: Math.min(totalCompleted, 100), total: 100 },
+    tasks_200:             { current: Math.min(totalCompleted, 200), total: 200 },
+    tasks_500:             { current: Math.min(totalCompleted, 500), total: 500 },
+    tasks_1000:            { current: Math.min(totalCompleted, 1000), total: 1000 },
+    streak_3:              { current: Math.min(streak, 3), total: 3 },
+    streak_7:              { current: Math.min(streak, 7), total: 7 },
+    streak_14:             { current: Math.min(streak, 14), total: 14 },
+    streak_30:             { current: Math.min(streak, 30), total: 30 },
+    streak_60:             { current: Math.min(streak, 60), total: 60 },
+    streak_100:            { current: Math.min(streak, 100), total: 100 },
+    streak_365:            { current: Math.min(streak, 365), total: 365 },
+    coins_100:             { current: Math.min(coins, 100), total: 100 },
+    coins_500:             { current: Math.min(coins, 500), total: 500 },
+    level_5:               { current: Math.min(level, 5), total: 5 },
+    level_10:              { current: Math.min(level, 10), total: 10 },
+    quest_streak_7:        { current: Math.min(questStreak, 7), total: 7 },
+    quest_streak_30:       { current: Math.min(questStreak, 30), total: 30 },
+    first_topic:           { current: Math.min(topicsCreated, 1), total: 1 },
+    topics_5:              { current: Math.min(topicsCreated, 5), total: 5 },
+    first_high_priority:   { current: Math.min(highPriority, 1), total: 1 },
+    first_wishlist_buy:    { current: Math.min(wishlistBought, 1), total: 1 },
+    wishlist_10_bought:    { current: Math.min(wishlistBought, 10), total: 10 },
+    energy_checkin_7:      { current: Math.min(energyStreak, 7), total: 7 },
+  };
+
+  return achievementRows.map((row) => {
+    const earned = row.earnedAt != null;
+    return {
+      id: row.id,
+      key: row.key,
+      title: row.title,
+      description: row.description,
+      icon: row.icon,
+      rarity: row.rarity ?? "common",
+      coinReward: row.coinReward ?? 10,
+      secret: row.secret ?? false,
+      earnedAt: row.earnedAt ?? null,
+      // Only show progress for non-earned, non-secret achievements with countable thresholds
+      progress: (!earned && !row.secret && progressMap[row.key]) ? progressMap[row.key] : undefined,
+    };
+  });
 }
 

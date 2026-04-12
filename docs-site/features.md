@@ -368,12 +368,20 @@ The shield only covers a single missed day. If you miss two or more days in a ro
 
 ### Achievements
 
-Achievements are one-time badges unlocked by reaching milestones. Examples include:
+Achievements are one-time badges unlocked by reaching milestones. Momo has 31 achievements across four rarity tiers:
 
-- Completing your very first task
-- Reaching a 7-day streak
-- Completing 100 tasks in total
-- Purchasing your first wishlist item
+| Rarity | Coin Reward | Example |
+|--------|-------------|---------|
+| Common | +10 | Complete your first task |
+| Rare | +25 | Reach a 7-day streak |
+| Epic | +50 | Complete 100 tasks |
+| Legendary | +100 | Maintain a 365-day streak |
+
+Three **secret achievements** exist and are shown as `???` until earned — exploring Momo is the way to find them.
+
+Every achievement awards coins when first unlocked. You also receive a push notification via all your configured channels.
+
+**Achievement Gallery** — visit `/achievements` to see all achievements grouped by rarity. Locked achievements show a progress bar so you know how close you are. Earned achievements show the unlock date.
 
 Once unlocked, achievements live in your profile permanently.
 

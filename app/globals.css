@@ -40,6 +40,7 @@
   --accent-green: #5ec47e; /* heller/lebendiger für bessere Sichtbarkeit im Dark Mode */
   --accent-red: #d06460;   /* minimal heller für besseren Kontrast auf dunklen Flächen */
   --coin-gold: #ffd060;
+  --rarity-legendary: #c084fc; /* Violett für Legendary-Achievements */
 
   /* Semantic tokens */
   --color-background: var(--bg-primary);
@@ -78,6 +79,7 @@
   --accent-green: #2e7048;
   --accent-red: #9e3b38;
   --coin-gold: #b8960a;
+  --rarity-legendary: #9333ea; /* Violett für Legendary-Achievements */
 
   /* Shadow tokens — lighter in light mode */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);

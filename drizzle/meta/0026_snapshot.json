@@ -1,6 +1,6 @@
 {
-  "id": "1c4a62d5-ee70-4281-ae48-7ed7c014c4d5",
-  "prevId": "27926a78-f6a4-4ee0-84b6-8c8b2fbee9d0",
+  "id": "a6ff7700-89a4-4984-8308-103d51d80cf3",
+  "prevId": "1c4a62d5-ee70-4281-ae48-7ed7c014c4d5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -140,6 +140,27 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "rarity": {
+          "name": "rarity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'common'"
+        },
+        "coin_reward": {
+          "name": "coin_reward",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 10
+        },
+        "secret": {
+          "name": "secret",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},
@@ -1667,6 +1688,19 @@
         },
         "vacation_end_date": {
           "name": "vacation_end_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quest_streak_current": {
+          "name": "quest_streak_current",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "quest_streak_last_date": {
+          "name": "quest_streak_last_date",
           "type": "date",
           "primaryKey": false,
           "notNull": false
