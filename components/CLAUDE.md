@@ -33,7 +33,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `wishlist/wishlist-form.tsx` — Create/edit wishlist item modal
 - `wishlist/wishlist-view.tsx` — Full wishlist page with budget bar + item grid
 - `wishlist/budget-bar.tsx` — Progress bar showing coins spent vs. monthly budget
-- `settings/notification-settings.tsx` — Push notification enable/disable/test; receives `vapidPublicKey` as prop from Server Component (not from clientEnv — NEXT_PUBLIC vars are build-time only)
+- `settings/notification-settings.tsx` — Push notification enable/disable/test + daily reminder time + due-today / overdue / recurring-due toggles (all with optimistic save + rollback); receives `vapidPublicKey` as prop from Server Component (not from clientEnv — NEXT_PUBLIC vars are build-time only)
 - `settings/linked-accounts.tsx` — Connected OAuth providers list; uses `signIn()` from next-auth/react (not window.location) to trigger linking flow
 - `settings/language-switcher.tsx` — UI language switcher (de/en/fr); POSTs to /api/locale
 - `settings/delete-account.tsx` — Danger zone: account deletion with confirmation dialog
