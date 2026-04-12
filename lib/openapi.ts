@@ -1074,6 +1074,25 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           "For RECURRING tasks, the task is automatically reset with an updated `nextDueDate`.",
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [{ $ref: "#/components/parameters/taskId" }],
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  timezone: {
+                    type: "string",
+                    maxLength: 64,
+                    description:
+                      "IANA timezone identifier (e.g. Europe/Berlin). Used for timezone-aware streak calculation. Defaults to UTC if omitted.",
+                  },
+                },
+              },
+              example: { timezone: "Europe/Berlin" },
+            },
+          },
+        },
         responses: {
           "200": {
             description: "Task completed. Returns the updated task and new coin balance.",
@@ -1755,6 +1774,30 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           "Deselects the current daily quest and selects a new one from the remaining pool. " +
           "Use this when the user wants to skip today's quest and get a different one.",
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["taskId"],
+                properties: {
+                  taskId: {
+                    type: "string",
+                    format: "uuid",
+                    description: "ID of the current daily quest task to postpone.",
+                  },
+                  timezone: {
+                    type: "string",
+                    maxLength: 64,
+                    description: "IANA timezone identifier (e.g. Europe/Berlin). Optional, defaults to UTC.",
+                  },
+                },
+              },
+              example: { taskId: "550e8400-e29b-41d4-a716-446655440000", timezone: "Europe/Berlin" },
+            },
+          },
+        },
         responses: {
           "200": {
             description: "New daily quest selected after postponement.",
@@ -2646,11 +2689,11 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
             "application/json": {
               schema: {
                 type: "object" as const,
-                required: ["enabled"],
+                required: ["active"],
                 properties: {
-                  enabled: { type: "boolean" as const },
-                  endDate: { type: "string" as const, format: "date", description: "Required when enabled = true" },
-                  timezone: { type: "string" as const, description: "IANA timezone" },
+                  active: { type: "boolean" as const, description: "true to activate vacation mode, false to deactivate. Matches the `active` field returned by GET." },
+                  endDate: { type: "string" as const, format: "date", description: "Required when active = true. Last day of vacation (YYYY-MM-DD)." },
+                  timezone: { type: "string" as const, description: "IANA timezone identifier (e.g. Europe/Berlin). Used to shift nextDueDate correctly on deactivation." },
                 },
               },
             },

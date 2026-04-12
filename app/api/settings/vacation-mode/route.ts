@@ -7,7 +7,7 @@
  * PATCH /api/settings/vacation-mode
  * Activates or deactivates vacation mode.
  * Requires: authentication (read-write)
- * Body: { enabled: boolean, endDate?: string, timezone?: string }
+ * Body: { active: boolean, endDate?: string, timezone?: string }
  * Returns: { success: true }
  */
 
@@ -75,7 +75,7 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    if (parsed.data.enabled) {
+    if (parsed.data.active) {
       await activateVacationMode(
         user.userId,
         parsed.data.endDate!,
