@@ -68,7 +68,7 @@ api/
   wishlist/[id]/buy/route.ts         → POST (mark purchased, deduct coins)
   wishlist/[id]/discard/route.ts     → POST (discard item)
   settings/budget/route.ts           → GET/PATCH (monthly coin budget)
-  push/subscribe/route.ts            → POST (register/upsert Web Push subscription), PATCH (update reminder preferences: notificationTime, timezone, dueTodayReminderEnabled, overdueReminderEnabled, recurringDueReminderEnabled, morningBriefingEnabled, morningBriefingTime), DELETE (remove subscription by endpoint)
+  push/subscribe/route.ts            → POST (register/upsert Web Push subscription), PATCH (update reminder preferences: notificationTime, timezone, dueTodayReminderEnabled, overdueReminderEnabled, recurringDueReminderEnabled, morningBriefingEnabled, morningBriefingTime, dueTodayReminderTime, recurringDueReminderTime, overdueReminderTime, weeklyReviewTime), DELETE (remove subscription by endpoint)
   push/test/route.ts                 → POST (send test push notification)
   cron/route.ts                      → POST (unified cron dispatcher — runs all jobs from lib/cron.ts, protected by CRON_SECRET)
   health/route.ts                    → GET (liveness probe, returns 200 OK)
