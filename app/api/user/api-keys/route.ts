@@ -2,11 +2,11 @@
  * GET  /api/user/api-keys  — Lists all active API keys for the current user
  * POST /api/user/api-keys  — Creates a new API key; returns the plaintext ONCE
  *
- * Authentication: session cookie or Bearer token (read-only keys may also list keys)
+ * Authentication: session cookie or Bearer token (read-only keys may list keys but not create)
  * Rate limit: POST 10/hour per user
  */
 
-import { resolveApiUser } from "@/lib/api-auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { listApiKeys, createApiKey } from "@/lib/api-keys";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { z } from "zod";
@@ -70,8 +70,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
-  // Even read-only keys can be used to create new keys (user is authenticated)
-  // But we rate-limit key creation to prevent abuse
+  if (user.readonly) return readonlyKeyResponse();
   const { limited, resetAt } = checkRateLimit(
     `api-keys-create:${user.userId}`,
     10,

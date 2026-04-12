@@ -17,6 +17,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const QuestSettingsSchema = z.object({
   postponeLimit: z
@@ -67,6 +68,10 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
     { error: "Forbidden", message: "This API key is read-only." },
     { status: 403 }
   );
+
+  // Rate limit: 10 requests per minute
+  const rl = checkRateLimit(`settings-quest:${user.userId}`, 10, 60_000);
+  if (rl.limited) return rateLimitResponse(rl.resetAt);
 
   let body: unknown;
   try {

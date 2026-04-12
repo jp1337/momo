@@ -16,6 +16,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Push-Benachrichtigungen vollständig auf Deutsch** — Daily-Quest-Fallback, Fällig-heute-Body, Streak-Reminder und Streak-Schutzschild-Meldungen waren teilweise auf Englisch; alle Texte sind jetzt einheitlich auf Deutsch.
 - **SSRF-Lücke im Webhook-Kanal geschlossen** — Der Webhook-Validator akzeptierte bisher auch `http://`-URLs (inkl. `http://localhost`, `http://192.168.x.x`), was Server-Side Request Forgery ermöglichte. Validator-Schema (`WebhookConfigSchema`) und Runtime-Check (`WebhookChannel.send()`) erzwingen jetzt HTTPS als einziges erlaubtes Protokoll.
 - **422-Fehlerformat vereinheitlicht** — Alle öffentlichen API-Routen liefern bei Validierungsfehlern jetzt konsistent `{ error: "Validation failed", details: { field: [...] } }` statt dem vollständigen Zod-Flatten-Objekt mit `formErrors`-Anteil. API-Clients können damit direkt auf die relevanten Feldnamen zugreifen.
+- **Privilege Escalation: Read-only API-Keys konnten neue Keys anlegen** — `POST /api/user/api-keys` fehlte der `readonly`-Check. Ein read-only Key konnte sich damit selbst zu einem vollwertigen Key eskalieren. Fix: Readonly-Keys erhalten jetzt 403 auf diesem Endpoint.
+- **Rate Limit auf `PATCH /api/settings/quest` ergänzt** — alle anderen Settings-Mutationen waren bereits limitiert (10/min), quest-Settings fehlte. Nun einheitlich.
+- **OpenAPI Spec: Response-Schemas korrigiert** — mehrere Endpunkte hatten falsche oder unvollständige Response-Definitionen:
+  - `DailyQuest`-Schema: Feld `task` → `quest` (entspricht tatsächlicher API-Antwort)
+  - `POST /api/tasks/{id}/complete`: `coinsAwarded`/`newBalance` → `coinsEarned`/`newLevel`/`unlockedAchievements`/`streakCurrent` + fehlender 409-Status dokumentiert
+  - `POST /api/daily-quest/postpone`: Spec zeigte fälschlicherweise `DailyQuest`; korrektes Schema `{ ok, postponesToday, postponeLimit }` + fehlende 404/422-Statuscodes ergänzt
+  - `POST /api/energy-checkin`: Spec zeigte `DailyQuest`; korrektes Schema `{ quest, swapped, previousQuestId?, previousQuestTitle? }` dokumentiert
+  - `POST /api/daily-quest` (Force-Reselect): Endpoint war komplett undokumentiert — nachgetragen
 
 ### Added
 
