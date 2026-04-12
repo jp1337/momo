@@ -88,6 +88,12 @@ enforce a second factor for every account by setting `REQUIRE_2FA=true`.
 See [Two-Factor Auth Guide](docs/two-factor-auth.md) for the technical
 details and [OAuth Setup Guide](docs/oauth-setup.md) for provider setup.
 
+**Active session management + login alerts** — view all active sessions
+(browser, OS, IP, timestamps) in Settings and revoke any you don't recognise.
+Enable opt-in **new-device login notifications** to receive an alert on all
+your configured channels the moment an unfamiliar device signs in to your
+account.
+
 ---
 
 ## 🛠️ Tech Stack

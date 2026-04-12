@@ -188,6 +188,8 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 **Active Sessions** — see every device that is currently signed in to your account under **Settings → Active Sessions**. Each entry shows browser, OS, IP address, and timestamps. Revoke individual sessions or sign out all other devices with one click. [See Features →](/momo/features#active-sessions)
 
+**Login notifications for new devices** — opt-in security alert that fires on all your configured channels the moment a login from an unknown device is detected. Uses a fingerprint of the browser's User-Agent and IP — no external service required. Enable the **"Notify on new devices"** toggle under **Settings → Active Sessions**. [See Features →](/momo/features#login-notifications-for-new-devices)
+
 **Microsoft Sign In** — log in with your personal Microsoft account (Outlook.com, Hotmail, Live, Xbox). Work / school / Microsoft 365 accounts are intentionally not supported — Momo pins the tenant to `consumers`. [Setup guide →](/momo/oauth-setup#microsoft-private-accounts-only)
 
 **Alexa Skill** — "Alexa, open Momo. Add dentist appointment." Add tasks, hear your Daily Quest, manage your wishlist by voice. Account linking is automatic — tap "Link Account" in the Alexa app and an API key is created for you. Lambda code lives in `alexa-skill/`. [Read the guide →](/momo/alexa-skill)
