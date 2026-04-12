@@ -638,13 +638,16 @@ export async function postponeDailyQuest(
 
   const newPostponesToday = postponesToday + 1;
 
-  // Update task (clear quest flag, push due date, increment postpone_count) and user counters atomically
+  // Update task (clear quest flag, push due date, snooze until tomorrow, increment postpone_count) and user counters atomically.
+  // Setting snoozedUntil = tomorrow is critical: every tier in pickBestTask has a `notSnoozed` guard,
+  // so without this the same HIGH-priority task would be re-selected as the new quest immediately.
   await db.transaction(async (tx) => {
     await tx
       .update(tasks)
       .set({
         isDailyQuest: false,
         dueDate: tomorrowStr,
+        snoozedUntil: tomorrowStr,
         postponeCount: sql`${tasks.postponeCount} + 1`,
       })
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
