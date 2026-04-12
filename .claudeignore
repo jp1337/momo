@@ -90,3 +90,11 @@ LICENSE
 # Full OpenAPI 3.1.0 spec object — ~83KB, mostly route schemas.
 # Read explicitly when changing API endpoints. Purpose is documented in lib/CLAUDE.md.
 lib/openapi.ts
+
+# Technical API docs — 1500+ lines of route schemas and examples.
+# app/CLAUDE.md already has a compact reference for all 62 routes (sufficient for coding).
+# Read docs/api.md explicitly when editing API documentation itself.
+docs/api.md
+
+# Session-specific plan files — never relevant after the session that produced them.
+.claude/plans/
