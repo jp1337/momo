@@ -63,6 +63,27 @@ export const CreateTaskInputSchema = z
       .max(365, "Recurrence interval cannot exceed 365 days")
       .nullable()
       .optional(),
+    /**
+     * Recurrence rule type (INTERVAL / WEEKDAY / MONTHLY / YEARLY).
+     * Defaults to INTERVAL for backward compatibility.
+     */
+    recurrenceType: z
+      .enum(["INTERVAL", "WEEKDAY", "MONTHLY", "YEARLY"])
+      .optional(),
+    /**
+     * Weekday indices for WEEKDAY recurrence (0=Mon … 6=Sun).
+     * Required when recurrenceType is WEEKDAY.
+     */
+    recurrenceWeekdays: z
+      .array(z.number().int().min(0).max(6))
+      .max(7)
+      .nullable()
+      .optional(),
+    /**
+     * Whether to advance from the scheduled date (true) or from the
+     * completion date (false). Only affects MONTHLY and YEARLY.
+     */
+    recurrenceFixed: z.boolean().optional(),
     dueDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Due date must be in YYYY-MM-DD format")
@@ -89,13 +110,16 @@ export const CreateTaskInputSchema = z
   })
   .refine(
     (data) => {
-      if (data.type === "RECURRING" && !data.recurrenceInterval) {
-        return false;
-      }
+      if (data.type !== "RECURRING") return true;
+      const recType = data.recurrenceType ?? "INTERVAL";
+      // INTERVAL requires recurrenceInterval
+      if (recType === "INTERVAL" && !data.recurrenceInterval) return false;
+      // WEEKDAY requires at least one weekday
+      if (recType === "WEEKDAY" && (!data.recurrenceWeekdays || data.recurrenceWeekdays.length === 0)) return false;
       return true;
     },
     {
-      message: "Recurring tasks must have a recurrence interval",
+      message: "Recurring tasks must have a valid recurrence configuration",
       path: ["recurrenceInterval"],
     }
   );
@@ -124,6 +148,18 @@ export const UpdateTaskInputSchema = z
       .max(365)
       .nullable()
       .optional(),
+    /** Recurrence rule type (INTERVAL / WEEKDAY / MONTHLY / YEARLY). */
+    recurrenceType: z
+      .enum(["INTERVAL", "WEEKDAY", "MONTHLY", "YEARLY"])
+      .optional(),
+    /** Weekday indices for WEEKDAY recurrence (0=Mon … 6=Sun). */
+    recurrenceWeekdays: z
+      .array(z.number().int().min(0).max(6))
+      .max(7)
+      .nullable()
+      .optional(),
+    /** Whether to advance from the scheduled date (true) or completion date (false). */
+    recurrenceFixed: z.boolean().optional(),
     dueDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Due date must be in YYYY-MM-DD format")
@@ -144,13 +180,16 @@ export const UpdateTaskInputSchema = z
   })
   .refine(
     (data) => {
-      if (data.type === "RECURRING" && data.recurrenceInterval === null) {
-        return false;
-      }
+      // Only validate if type is explicitly being changed to RECURRING
+      if (data.type !== "RECURRING") return true;
+      const recType = data.recurrenceType ?? "INTERVAL";
+      if (recType === "INTERVAL" && data.recurrenceInterval === null) return false;
+      if (recType === "WEEKDAY" && data.recurrenceWeekdays !== undefined &&
+          (!data.recurrenceWeekdays || data.recurrenceWeekdays.length === 0)) return false;
       return true;
     },
     {
-      message: "Recurring tasks must have a recurrence interval",
+      message: "Recurring tasks must have a valid recurrence configuration",
       path: ["recurrenceInterval"],
     }
   );
