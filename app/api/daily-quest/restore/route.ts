@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   const result = RestoreInputSchema.safeParse(body);
   if (!result.success) {
     return Response.json(
-      { error: "Validation failed", details: result.error.flatten() },
+      { error: "Validation failed", details: result.error.flatten().fieldErrors },
       { status: 422 }
     );
   }

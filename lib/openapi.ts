@@ -415,7 +415,7 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       DailyQuest: {
         type: "object",
         properties: {
-          task: {
+          quest: {
             oneOf: [
               { $ref: "#/components/schemas/Task" },
               { type: "null" },
@@ -1095,21 +1095,48 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
         },
         responses: {
           "200": {
-            description: "Task completed. Returns the updated task and new coin balance.",
+            description: "Task completed. Returns the updated task and gamification results.",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
-                  required: ["task", "coinsAwarded", "newBalance", "shieldUsed"],
+                  required: ["task", "coinsEarned", "shieldUsed"],
                   properties: {
                     task: { $ref: "#/components/schemas/Task" },
-                    coinsAwarded: {
+                    coinsEarned: {
                       type: "integer",
                       description: "Coins awarded for this completion.",
                     },
-                    newBalance: {
+                    newLevel: {
+                      oneOf: [
+                        {
+                          type: "object",
+                          required: ["level", "title"],
+                          properties: {
+                            level: { type: "integer" },
+                            title: { type: "string" },
+                          },
+                        },
+                        { type: "null" },
+                      ],
+                      description: "New level reached, or null if no level-up occurred.",
+                    },
+                    unlockedAchievements: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        required: ["key", "title", "icon"],
+                        properties: {
+                          key: { type: "string" },
+                          title: { type: "string" },
+                          icon: { type: "string" },
+                        },
+                      },
+                      description: "Achievements newly unlocked by this completion.",
+                    },
+                    streakCurrent: {
                       type: "integer",
-                      description: "User's updated coin balance.",
+                      description: "User's current daily completion streak after this action.",
                     },
                     shieldUsed: {
                       type: "boolean",
@@ -1125,6 +1152,14 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           "401": { $ref: "#/components/responses/Unauthorized" },
           "403": { $ref: "#/components/responses/Forbidden" },
           "404": { $ref: "#/components/responses/NotFound" },
+          "409": {
+            description: "Task already completed.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
           "429": { $ref: "#/components/responses/TooManyRequests" },
           "500": { $ref: "#/components/responses/InternalServerError" },
         },
@@ -1763,6 +1798,51 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           "500": { $ref: "#/components/responses/InternalServerError" },
         },
       },
+      post: {
+        operationId: "forceSelectDailyQuest",
+        tags: ["Daily Quest"],
+        summary: "Force new quest selection",
+        description:
+          "Clears any existing quest (completed or active) and runs the priority algorithm " +
+          "to select a fresh quest. Useful for manual resets during development or when " +
+          "the user explicitly wants a completely new quest.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  timezone: {
+                    type: "string",
+                    maxLength: 64,
+                    description: "IANA timezone (e.g. Europe/Berlin). Optional, defaults to UTC.",
+                  },
+                  energyLevel: {
+                    type: "string",
+                    enum: ["HIGH", "MEDIUM", "LOW"],
+                    description: "Preferred energy level to influence quest selection.",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "New daily quest task (or null if no eligible tasks).",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DailyQuest" },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
     },
 
     "/api/daily-quest/postpone": {
@@ -1800,15 +1880,38 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
         },
         responses: {
           "200": {
-            description: "New daily quest selected after postponement.",
+            description: "Quest postponed. Returns postponement counters.",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/DailyQuest" },
+                schema: {
+                  type: "object",
+                  required: ["ok", "postponesToday", "postponeLimit"],
+                  properties: {
+                    ok: { type: "boolean", enum: [true] },
+                    postponesToday: {
+                      type: "integer",
+                      description: "Number of postponements used today.",
+                    },
+                    postponeLimit: {
+                      type: "integer",
+                      description: "Maximum allowed postponements per day.",
+                    },
+                  },
+                },
               },
             },
           },
           "401": { $ref: "#/components/responses/Unauthorized" },
           "403": { $ref: "#/components/responses/Forbidden" },
+          "404": {
+            description: "The specified daily quest task was not found.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "422": { $ref: "#/components/responses/ValidationError" },
           "429": { $ref: "#/components/responses/TooManyRequests" },
           "500": { $ref: "#/components/responses/InternalServerError" },
         },
@@ -1899,10 +2002,32 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
         },
         responses: {
           "200": {
-            description: "Energy level saved and quest selected.",
+            description: "Energy level saved. Returns the current (possibly re-rolled) quest.",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/DailyQuest" },
+                schema: {
+                  type: "object",
+                  required: ["quest", "swapped"],
+                  properties: {
+                    quest: {
+                      oneOf: [{ $ref: "#/components/schemas/Task" }, { type: "null" }],
+                      description: "The current daily quest after potential re-roll.",
+                    },
+                    swapped: {
+                      type: "boolean",
+                      description: "True when the quest was automatically replaced to match the new energy level.",
+                    },
+                    previousQuestId: {
+                      type: "string",
+                      format: "uuid",
+                      description: "ID of the quest that was replaced (only present when swapped is true).",
+                    },
+                    previousQuestTitle: {
+                      type: "string",
+                      description: "Title of the quest that was replaced (only present when swapped is true).",
+                    },
+                  },
+                },
               },
             },
           },
@@ -2336,6 +2461,7 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           "401": { $ref: "#/components/responses/Unauthorized" },
           "403": { $ref: "#/components/responses/Forbidden" },
           "422": { $ref: "#/components/responses/ValidationError" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
           "500": { $ref: "#/components/responses/InternalServerError" },
         },
       },
