@@ -124,6 +124,16 @@ const serverEnvSchema = z.object({
       "Display name shown in the OS / browser passkey prompt. Defaults to 'Momo'."
     ),
 
+  // Update-Checker
+  DISABLE_UPDATE_CHECK: z
+    .preprocess(
+      (val) => (val === "true" ? true : val === "false" ? false : undefined),
+      z.boolean().optional().default(false)
+    )
+    .describe(
+      "Set to true to disable the GitHub Releases update check. Useful for air-gap / offline installations where outbound internet access is restricted."
+    ),
+
   // Runtime
   NODE_ENV: z
     .enum(["development", "production", "test"])

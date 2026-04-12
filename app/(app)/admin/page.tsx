@@ -5,6 +5,7 @@
  * ADMIN_USER_IDS Umgebungsvariable (kommagetrennt) steht.
  *
  * Zeigt:
+ *  0. Version / Update-Status (GitHub Releases API, gecacht 24h)
  *  1. System-Übersicht (Nutzer, Aufgaben, Abschlüsse, Topics)
  *  2. Nutzerwachstum und Durchschnittswerte
  *  3. OAuth-Provider-Verteilung
@@ -28,7 +29,11 @@ import {
   faFolderOpen,
   faClock,
   faCircleExclamation,
+  faArrowUpRightFromSquare,
+  faCircleInfo,
+  faCodeBranch,
 } from "@fortawesome/free-solid-svg-icons";
+import { checkForUpdates } from "@/lib/update-checker";
 
 export const metadata: Metadata = {
   title: "Admin — Momo",
@@ -109,9 +114,10 @@ export default async function AdminPage() {
     );
   }
 
-  const [stats, cronStatus] = await Promise.all([
+  const [stats, cronStatus, updateCheck] = await Promise.all([
     getAdminStatistics(),
     getRecentCronRuns(),
+    checkForUpdates(),
   ]);
   const totalUsers = stats.totalUsers;
 
@@ -151,6 +157,231 @@ export default async function AdminPage() {
           Systemweite Statistiken und Plattformübersicht.
         </p>
       </div>
+
+      {/* ── Section 0: Version / Update-Status ──────────────────────────────── */}
+      <section>
+        <h2
+          className="text-xs font-semibold uppercase tracking-widest mb-3"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            color: "var(--text-muted)",
+          }}
+        >
+          Version
+        </h2>
+        <div
+          className="rounded-xl p-5 flex flex-col gap-4"
+          style={{
+            backgroundColor: "var(--bg-surface)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {/* Current version row */}
+          <div className="flex items-center gap-3">
+            <FontAwesomeIcon
+              icon={faCodeBranch}
+              className="w-4 h-4 flex-shrink-0"
+              style={{ color: "var(--text-muted)" }}
+              aria-hidden="true"
+            />
+            <span
+              className="text-sm"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+              }}
+            >
+              Installierte Version:
+            </span>
+            <code
+              className="text-sm px-2 py-0.5 rounded"
+              style={{
+                fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+                backgroundColor: "var(--bg-elevated)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              v{updateCheck.currentVersion}
+            </code>
+          </div>
+
+          {/* Update disabled */}
+          {updateCheck.disabled && (
+            <div
+              className="flex items-center gap-2 rounded-lg px-4 py-3"
+              style={{
+                backgroundColor: "rgba(var(--text-muted-rgb, 128,128,128), 0.08)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <FontAwesomeIcon
+                icon={faCircleInfo}
+                className="w-4 h-4 flex-shrink-0"
+                style={{ color: "var(--text-muted)" }}
+                aria-hidden="true"
+              />
+              <span
+                className="text-sm"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--text-muted)",
+                }}
+              >
+                Update-Prüfung deaktiviert{" "}
+                <code
+                  style={{
+                    fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+                    fontSize: "0.75rem",
+                  }}
+                >
+                  (DISABLE_UPDATE_CHECK=true)
+                </code>
+              </span>
+            </div>
+          )}
+
+          {/* Check failed */}
+          {!updateCheck.disabled && updateCheck.error && (
+            <div
+              className="flex items-center gap-2 rounded-lg px-4 py-3"
+              style={{
+                backgroundColor: "rgba(184,84,80,0.08)",
+                border: "1px solid rgba(184,84,80,0.25)",
+              }}
+            >
+              <FontAwesomeIcon
+                icon={faCircleExclamation}
+                className="w-4 h-4 flex-shrink-0"
+                style={{ color: "var(--accent-red)" }}
+                aria-hidden="true"
+              />
+              <span
+                className="text-sm"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--accent-red)",
+                }}
+              >
+                Versionsprüfung fehlgeschlagen: {updateCheck.error}
+              </span>
+            </div>
+          )}
+
+          {/* Up to date */}
+          {!updateCheck.disabled &&
+            !updateCheck.error &&
+            !updateCheck.updateAvailable && (
+              <div
+                className="flex items-center gap-2 rounded-lg px-4 py-3"
+                style={{
+                  backgroundColor: "rgba(74,222,128,0.08)",
+                  border: "1px solid rgba(74,222,128,0.25)",
+                }}
+              >
+                <FontAwesomeIcon
+                  icon={faCircleCheck}
+                  className="w-4 h-4 flex-shrink-0"
+                  style={{ color: "var(--accent-green)" }}
+                  aria-hidden="true"
+                />
+                <span
+                  className="text-sm"
+                  style={{
+                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                    color: "var(--accent-green)",
+                  }}
+                >
+                  Momo ist aktuell — du verwendest die neueste Version.
+                </span>
+                {updateCheck.checkedAt && (
+                  <span
+                    className="text-xs ml-auto"
+                    style={{
+                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Geprüft:{" "}
+                    {updateCheck.checkedAt.toLocaleTimeString("de-DE", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                )}
+              </div>
+            )}
+
+          {/* Update available */}
+          {!updateCheck.disabled && updateCheck.updateAvailable && (
+            <div
+              className="flex items-start gap-3 rounded-lg px-4 py-4"
+              style={{
+                backgroundColor: "rgba(240,165,0,0.08)",
+                border: "1px solid rgba(240,165,0,0.3)",
+              }}
+            >
+              <FontAwesomeIcon
+                icon={faCircleInfo}
+                className="w-4 h-4 flex-shrink-0 mt-0.5"
+                style={{ color: "var(--accent-amber)" }}
+                aria-hidden="true"
+              />
+              <div className="flex-1 flex flex-col gap-1">
+                <p
+                  className="text-sm font-semibold"
+                  style={{
+                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                    color: "var(--accent-amber)",
+                  }}
+                >
+                  Version {updateCheck.latestVersion} ist verfügbar
+                </p>
+                <p
+                  className="text-xs"
+                  style={{
+                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  Installiert: v{updateCheck.currentVersion}
+                  {updateCheck.checkedAt && (
+                    <>
+                      {" · "}Geprüft:{" "}
+                      {updateCheck.checkedAt.toLocaleTimeString("de-DE", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </>
+                  )}
+                </p>
+              </div>
+              {updateCheck.releaseUrl && (
+                <a
+                  href={updateCheck.releaseUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg flex-shrink-0"
+                  style={{
+                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                    backgroundColor: "rgba(240,165,0,0.15)",
+                    color: "var(--accent-amber)",
+                    border: "1px solid rgba(240,165,0,0.3)",
+                    textDecoration: "none",
+                  }}
+                >
+                  Changelog ansehen
+                  <FontAwesomeIcon
+                    icon={faArrowUpRightFromSquare}
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                  />
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ── Section 1: System-Übersicht ──────────────────────────────────────── */}
       <section>

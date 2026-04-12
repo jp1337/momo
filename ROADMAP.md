@@ -86,7 +86,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ### Selfhoster
 
-- **Update-Checker** — Admin-Panel zeigt ein Banner wenn eine neuere Version auf GitHub verfügbar ist ("Version 1.2.0 verfügbar — Changelog ansehen"). Prüfung via GitHub Releases API, gecacht für 24h um kein Rate-Limit zu treffen. Opt-out via `DISABLE_UPDATE_CHECK=true` für Air-Gap-Installationen.
+- ✅ **Update-Checker** — Admin-Panel zeigt ein Banner wenn eine neuere Version auf GitHub verfügbar ist ("Version 1.2.0 verfügbar — Changelog ansehen"). Prüfung via GitHub Releases API, gecacht für 24h um kein Rate-Limit zu treffen. Opt-out via `DISABLE_UPDATE_CHECK=true` für Air-Gap-Installationen.
 
 ### Stabilität
 
