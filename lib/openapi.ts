@@ -1235,6 +1235,108 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       },
     },
 
+    "/api/tasks/{id}/breakdown": {
+      post: {
+        operationId: "breakdownTask",
+        tags: ["Tasks"],
+        summary: "Break down task into subtasks",
+        description:
+          "Breaks a task into multiple subtasks inside a new topic. " +
+          "The original task is deleted; a new topic is created using the task's title, " +
+          "and each subtask title becomes an individual task within that topic. " +
+          "Requires 2–10 subtask titles.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/taskId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["subtaskTitles"],
+                properties: {
+                  subtaskTitles: {
+                    type: "array",
+                    items: { type: "string", minLength: 1, maxLength: 255 },
+                    minItems: 2,
+                    maxItems: 10,
+                    description: "Titles for the subtasks to create (2–10 required).",
+                  },
+                },
+              },
+              example: { subtaskTitles: ["Research options", "Book appointment", "Confirm details"] },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Task broken down. Returns the new topic ID and its tasks.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["topicId", "tasks"],
+                  properties: {
+                    topicId: { type: "string", format: "uuid" },
+                    tasks: { type: "array", items: { $ref: "#/components/schemas/Task" } },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/tasks/{id}/promote-to-topic": {
+      post: {
+        operationId: "promoteTaskToTopic",
+        tags: ["Tasks"],
+        summary: "Promote standalone task to topic",
+        description:
+          "Promotes a standalone task (not yet in a topic) to a new topic. " +
+          "The task's title and priority are carried over to the new topic, " +
+          "and the task is re-associated as the first item within it. " +
+          "Returns 409 if the task already belongs to a topic.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/taskId" }],
+        responses: {
+          "201": {
+            description: "Task promoted. Returns the newly created topic.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["topic"],
+                  properties: {
+                    topic: { $ref: "#/components/schemas/Topic" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": {
+            description: "Task already belongs to a topic.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
     "/api/tasks/bulk": {
       patch: {
         operationId: "bulkUpdateTasks",
@@ -1670,6 +1772,54 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       },
     },
 
+    "/api/daily-quest/restore": {
+      post: {
+        operationId: "restoreDailyQuest",
+        tags: ["Daily Quest"],
+        summary: "Restore (pin) a specific quest",
+        description:
+          "Pins a specific task as today's daily quest, replacing whatever is currently active. " +
+          "Used as the Undo action after an energy-check-in auto-reroll swaps the quest. " +
+          "Returns null if the target task is invalid (not owned, completed, or snoozed past today).",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["taskId"],
+                properties: {
+                  taskId: { type: "string", format: "uuid", description: "ID of the task to pin as today's quest." },
+                  timezone: { type: "string", maxLength: 64, description: "IANA timezone (e.g. Europe/Berlin). Optional, defaults to UTC." },
+                },
+              },
+              example: { taskId: "550e8400-e29b-41d4-a716-446655440000", timezone: "Europe/Berlin" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Quest pinned. Returns the new quest, or null if the task was invalid.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    quest: { oneOf: [{ $ref: "#/components/schemas/Task" }, { type: "null" }] },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
     "/api/energy-checkin": {
       post: {
         operationId: "energyCheckin",
@@ -2069,6 +2219,32 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
     },
 
     "/api/settings/quest": {
+      get: {
+        operationId: "getQuestSettings",
+        tags: ["Settings"],
+        summary: "Get quest settings",
+        description: "Returns the authenticated user's current quest-related settings.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "Quest settings.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["postponeLimit", "emotionalClosureEnabled"],
+                  properties: {
+                    postponeLimit: { type: "integer", minimum: 1, maximum: 5, description: "Max daily quest postponements." },
+                    emotionalClosureEnabled: { type: "boolean", description: "Whether to show affirmation after quest completion." },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
       patch: {
         operationId: "updateQuestSettings",
         tags: ["Settings"],
@@ -2117,6 +2293,77 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           "401": { $ref: "#/components/responses/Unauthorized" },
           "403": { $ref: "#/components/responses/Forbidden" },
           "422": { $ref: "#/components/responses/ValidationError" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/settings/login-notification": {
+      get: {
+        operationId: "getLoginNotificationSetting",
+        tags: ["Settings"],
+        summary: "Get login notification setting",
+        description: "Returns whether new-device login notifications are enabled for the authenticated user.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "Current setting.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["enabled"],
+                  properties: {
+                    enabled: { type: "boolean", description: "Whether login notifications for new devices are enabled." },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+      patch: {
+        operationId: "updateLoginNotificationSetting",
+        tags: ["Settings"],
+        summary: "Update login notification setting",
+        description: "Enables or disables new-device login notifications for the authenticated user.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["enabled"],
+                properties: {
+                  enabled: { type: "boolean", description: "Whether to receive a notification when a new device logs in." },
+                },
+              },
+              example: { enabled: true },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Setting updated.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["enabled"],
+                  properties: {
+                    enabled: { type: "boolean" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
           "500": { $ref: "#/components/responses/InternalServerError" },
         },
       },
@@ -2589,6 +2836,35 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
     },
 
     "/api/user": {
+      get: {
+        operationId: "getUserStats",
+        tags: ["User"],
+        summary: "Get user stats",
+        description:
+          "Returns the authenticated user's gamification stats: coins, level, current streak, and streak shield availability.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "User stats.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["coins", "level", "streakCurrent", "streakShieldAvailable"],
+                  properties: {
+                    coins: { type: "integer", description: "Total coins earned." },
+                    level: { type: "integer", description: "Current user level." },
+                    streakCurrent: { type: "integer", description: "Current daily completion streak." },
+                    streakShieldAvailable: { type: "boolean", description: "Whether a streak shield is available this month." },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
       delete: {
         operationId: "deleteAccount",
         tags: ["User"],
@@ -2622,6 +2898,32 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
     },
 
     "/api/user/profile": {
+      get: {
+        operationId: "getProfile",
+        tags: ["User"],
+        summary: "Get profile",
+        description: "Returns the authenticated user's profile fields (name, email, avatar image URL).",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "User profile.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string", nullable: true, description: "Display name." },
+                    email: { type: "string", format: "email", nullable: true, description: "Email address." },
+                    image: { type: "string", nullable: true, description: "Avatar image data URL." },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
       patch: {
         operationId: "updateProfile",
         tags: ["User"],
@@ -2828,6 +3130,182 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           "401": { $ref: "#/components/responses/Unauthorized" },
           "403": { $ref: "#/components/responses/Forbidden" },
           "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    // ─── Web Push ─────────────────────────────────────────────────────────────
+
+    "/api/push/subscribe": {
+      post: {
+        operationId: "subscribePush",
+        tags: ["Push Notifications"],
+        summary: "Register push subscription",
+        description:
+          "Registers or updates the Web Push subscription for the current device. " +
+          "Upserts by endpoint — calling from the same browser twice is safe. " +
+          "Only HTTPS endpoints from known push services (Google FCM, Mozilla, Apple, Windows) are accepted.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["subscription"],
+                properties: {
+                  subscription: {
+                    type: "object",
+                    required: ["endpoint", "keys"],
+                    properties: {
+                      endpoint: { type: "string", format: "uri", description: "Push service endpoint URL." },
+                      keys: {
+                        type: "object",
+                        required: ["p256dh", "auth"],
+                        properties: {
+                          p256dh: { type: "string", description: "P-256 public key (base64url)." },
+                          auth: { type: "string", description: "Auth secret (base64url)." },
+                        },
+                      },
+                    },
+                  },
+                  notificationTime: { type: "string", pattern: "^\\d{2}:\\d{2}$", description: "Preferred notification time (HH:MM, 24h).", example: "08:00" },
+                  timezone: { type: "string", maxLength: 64, description: "IANA timezone identifier.", example: "Europe/Berlin" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Subscription saved.",
+            content: {
+              "application/json": {
+                schema: { type: "object", properties: { success: { type: "boolean" } } },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+      patch: {
+        operationId: "updatePushPreferences",
+        tags: ["Push Notifications"],
+        summary: "Update notification preferences",
+        description:
+          "Updates the user's push notification preferences without modifying device subscriptions. " +
+          "At least one field must be provided.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  notificationTime: { type: "string", pattern: "^\\d{2}:\\d{2}$", description: "Preferred notification time (HH:MM, 24h)." },
+                  timezone: { type: "string", maxLength: 64, description: "IANA timezone identifier." },
+                  dueTodayReminderEnabled: { type: "boolean", description: "Whether to send due-today reminders." },
+                  recurringDueReminderEnabled: { type: "boolean", description: "Whether to send recurring-task due reminders." },
+                  morningBriefingEnabled: { type: "boolean", description: "Whether to send a daily morning briefing." },
+                  morningBriefingTime: { type: "string", pattern: "^\\d{2}:\\d{2}$", description: "Time for the morning briefing (HH:MM, 24h)." },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Preferences updated.",
+            content: {
+              "application/json": {
+                schema: { type: "object", properties: { success: { type: "boolean" } } },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+      delete: {
+        operationId: "unsubscribePush",
+        tags: ["Push Notifications"],
+        summary: "Remove push subscription",
+        description: "Removes the Web Push subscription for a specific device endpoint. Other devices belonging to the same user are not affected.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["endpoint"],
+                properties: {
+                  endpoint: { type: "string", format: "uri", description: "The push subscription endpoint to remove." },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Subscription removed.",
+            content: {
+              "application/json": {
+                schema: { type: "object", properties: { success: { type: "boolean" } } },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/push/test": {
+      post: {
+        operationId: "sendTestPushNotification",
+        tags: ["Push Notifications"],
+        summary: "Send test push notification",
+        description:
+          "Sends a test push notification to all registered devices of the authenticated user. " +
+          "Requires at least one active push subscription. Rate-limited to 3 per minute.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "Test notification sent.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success", "sent"],
+                  properties: {
+                    success: { type: "boolean" },
+                    sent: { type: "integer", description: "Number of devices notified." },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "No push subscription registered.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
           "429": { $ref: "#/components/responses/TooManyRequests" },
           "500": { $ref: "#/components/responses/InternalServerError" },
         },

@@ -1,4 +1,9 @@
 /**
+ * GET /api/user/profile
+ * Returns the authenticated user's public profile fields.
+ * Requires: authentication
+ * Returns: { name: string | null, email: string | null, image: string | null }
+ *
  * PATCH /api/user/profile
  * Updates the authenticated user's profile (name, email, profile picture).
  * Requires: authentication
@@ -10,10 +15,36 @@
  */
 
 import { resolveApiUser } from "@/lib/api-auth";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { updateUserProfile } from "@/lib/users";
 import { UpdateProfileInputSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
+
+/**
+ * GET — Fetch the authenticated user's profile.
+ */
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const apiUser = await resolveApiUser(req);
+  if (!apiUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const rows = await db
+      .select({ name: users.name, email: users.email, image: users.image })
+      .from(users)
+      .where(eq(users.id, apiUser.userId))
+      .limit(1);
+
+    if (!rows[0]) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+    return NextResponse.json(rows[0]);
+  } catch (err) {
+    console.error("[GET /api/user/profile]", err);
+    return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 });
+  }
+}
 
 /**
  * PATCH — Update the authenticated user's profile.

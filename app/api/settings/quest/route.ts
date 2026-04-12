@@ -1,4 +1,9 @@
 /**
+ * GET /api/settings/quest
+ * Returns the user's current quest-related settings.
+ * Requires: authentication
+ * Returns: { postponeLimit: number, emotionalClosureEnabled: boolean }
+ *
  * PATCH /api/settings/quest
  * Updates the user's quest-related settings (postpone limit, emotional closure toggle).
  * Requires: authentication
@@ -25,6 +30,32 @@ const QuestSettingsSchema = z.object({
   (data) => data.postponeLimit !== undefined || data.emotionalClosureEnabled !== undefined,
   { message: "At least one field must be provided" }
 );
+
+/**
+ * GET — Fetch the user's current quest-related settings.
+ */
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const user = await resolveApiUser(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const rows = await db
+      .select({
+        postponeLimit: users.questPostponeLimit,
+        emotionalClosureEnabled: users.emotionalClosureEnabled,
+      })
+      .from(users)
+      .where(eq(users.id, user.userId))
+      .limit(1);
+
+    if (!rows[0]) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+    return NextResponse.json(rows[0]);
+  } catch (err) {
+    console.error("[GET /api/settings/quest]", err);
+    return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 });
+  }
+}
 
 /**
  * PATCH — Update the user's quest-related settings.
