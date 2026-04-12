@@ -71,7 +71,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse | Response> 
   const parsed = UpdateProfileInputSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid request body", details: parsed.error.flatten() },
+      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
       { status: 422 }
     );
   }

@@ -94,7 +94,7 @@ export async function PATCH(request: Request) {
   const parsed = TimezoneInputSchema.safeParse(body);
   if (!parsed.success) {
     return Response.json(
-      { error: "Invalid request body", details: parsed.error.flatten() },
+      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
       { status: 422 }
     );
   }

@@ -89,7 +89,7 @@ export async function POST(request: Request) {
   const parsed = CreateApiKeySchema.safeParse(body);
   if (!parsed.success) {
     return Response.json(
-      { error: "Validation failed", details: parsed.error.flatten() },
+      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
       { status: 422 }
     );
   }
