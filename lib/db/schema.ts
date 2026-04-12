@@ -56,6 +56,20 @@ export const taskTypeEnum = pgEnum("task_type", [
 /** Task/user energy level — how much effort a task requires or the user has today */
 export const energyLevelEnum = pgEnum("energy_level", ["HIGH", "MEDIUM", "LOW"]);
 
+/**
+ * Recurrence rule type for RECURRING tasks.
+ *  - INTERVAL: every N days from last completion (legacy default)
+ *  - WEEKDAY:  specific weekdays (e.g. every Mon + Wed) — recurrence_weekdays array
+ *  - MONTHLY:  once per calendar month (same day of month)
+ *  - YEARLY:   once per calendar year (same day and month)
+ */
+export const recurrenceTypeEnum = pgEnum("recurrence_type", [
+  "INTERVAL",
+  "WEEKDAY",
+  "MONTHLY",
+  "YEARLY",
+]);
+
 /** Wishlist item priority */
 export const wishlistPriorityEnum = pgEnum("wishlist_priority", [
   "WANT",
@@ -409,8 +423,37 @@ export const tasks = pgTable("tasks", {
 
   priority: priorityEnum("priority").notNull().default("NORMAL"),
 
-  /** For RECURRING tasks: number of days between occurrences */
+  /** For RECURRING tasks: number of days between occurrences (used by INTERVAL type) */
   recurrenceInterval: integer("recurrence_interval"),
+
+  /**
+   * Recurrence rule type. Defaults to INTERVAL for backward compatibility.
+   * Only meaningful when type = RECURRING.
+   *  - INTERVAL: advance nextDueDate by recurrenceInterval days (legacy)
+   *  - WEEKDAY:  advance to the next occurrence of any weekday in recurrenceWeekdays
+   *  - MONTHLY:  advance to the same day of the next calendar month
+   *  - YEARLY:   advance to the same day+month of the next calendar year
+   */
+  recurrenceType: recurrenceTypeEnum("recurrence_type").notNull().default("INTERVAL"),
+
+  /**
+   * JSON array of weekday integers (0 = Mon … 6 = Sun) for WEEKDAY recurrence.
+   * Example: "[0,2]" = every Monday and Wednesday.
+   * Null for INTERVAL / MONTHLY / YEARLY tasks.
+   */
+  recurrenceWeekdays: text("recurrence_weekdays"),
+
+  /**
+   * Whether the recurrence is calendar-fixed (true) or rolling from the
+   * completion date (false). Only affects MONTHLY and YEARLY:
+   *  - false (rolling): nextDueDate = completion date + 1 month/year
+   *  - true  (fixed):   nextDueDate = current nextDueDate + 1 month/year
+   *    (always falls on the same day of the month/year, regardless of
+   *     when the user actually completed the task)
+   * For INTERVAL and WEEKDAY the flag is ignored (they are inherently rolling
+   * and calendar-aligned respectively).
+   */
+  recurrenceFixed: boolean("recurrence_fixed").notNull().default(false),
 
   /** Original due date (user-set) */
   dueDate: date("due_date"),
