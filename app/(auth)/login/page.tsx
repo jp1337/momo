@@ -77,8 +77,26 @@ const PROVIDERS: ProviderConfig[] = [
  * Login page server component.
  * Checks for an existing session and redirects authenticated users to /dashboard.
  * Renders sign-in buttons for all configured OAuth providers.
+ * Reads the optional `?error` query param from Auth.js and displays a
+ * user-friendly error banner (e.g. for SessionTokenError, AccessDenied).
  */
-export default async function LoginPage() {
+
+/** Maps Auth.js error codes to i18n translation keys */
+function resolveAuthErrorKey(
+  error: string | undefined
+): "error_session" | "error_access_denied" | "error_configuration" | "error_default" | null {
+  if (!error) return null;
+  if (error === "SessionTokenError") return "error_session";
+  if (error === "AccessDenied") return "error_access_denied";
+  if (error === "Configuration") return "error_configuration";
+  return "error_default";
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   // If already authenticated, redirect to dashboard
   const session = await auth();
   if (session?.user) {
@@ -86,6 +104,8 @@ export default async function LoginPage() {
   }
 
   const t = await getTranslations("auth");
+  const { error } = await searchParams;
+  const errorKey = resolveAuthErrorKey(error);
 
   // Determine which providers are configured
   const enabledProviders = PROVIDERS.filter(
@@ -104,6 +124,24 @@ export default async function LoginPage() {
       <div className="flex justify-end">
         <ThemeToggle />
       </div>
+
+      {/* Auth error banner — shown when Auth.js redirects back with ?error= */}
+      {errorKey && (
+        <div
+          role="alert"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            fontSize: "0.875rem",
+            padding: "0.75rem 1rem",
+            borderRadius: "0.75rem",
+            backgroundColor: "color-mix(in srgb, var(--accent-red, #ef4444) 12%, var(--bg-surface))",
+            border: "1px solid color-mix(in srgb, var(--accent-red, #ef4444) 35%, transparent)",
+            color: "var(--accent-red, #ef4444)",
+          }}
+        >
+          {t(errorKey)}
+        </div>
+      )}
 
       {/* Header */}
       <div className="text-center flex flex-col items-center">

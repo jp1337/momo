@@ -57,7 +57,11 @@
     "passkey_verifying": "Prüfe…",
     "passkey_err_generic": "Passkey-Anmeldung fehlgeschlagen — bitte erneut versuchen.",
     "passkey_err_cancelled": "Der Passkey-Dialog wurde abgebrochen.",
-    "passkey_err_network": "Netzwerkfehler — bitte erneut versuchen."
+    "passkey_err_network": "Netzwerkfehler — bitte erneut versuchen.",
+    "error_session": "Deine Sitzung konnte nicht geladen werden. Bitte melde dich erneut an.",
+    "error_access_denied": "Zugriff verweigert. Du bist nicht berechtigt, dich anzumelden.",
+    "error_configuration": "Konfigurationsfehler. Bitte wende dich an den Administrator.",
+    "error_default": "Bei der Anmeldung ist ein Fehler aufgetreten. Bitte erneut versuchen."
   },
   "dashboard": {
     "greeting_night": "Noch wach?",

@@ -57,7 +57,11 @@
     "passkey_verifying": "Vérification…",
     "passkey_err_generic": "Connexion par clé d'accès échouée — réessaye.",
     "passkey_err_cancelled": "La demande de clé d'accès a été annulée.",
-    "passkey_err_network": "Erreur réseau — réessaye."
+    "passkey_err_network": "Erreur réseau — réessaye.",
+    "error_session": "Impossible de charger ta session. Reconnecte-toi.",
+    "error_access_denied": "Accès refusé. Tu n'es pas autorisé à te connecter.",
+    "error_configuration": "Erreur de configuration. Contacte l'administrateur.",
+    "error_default": "Une erreur s'est produite lors de la connexion. Réessaye."
   },
   "dashboard": {
     "greeting_night": "Encore debout ?",

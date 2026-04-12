@@ -57,7 +57,11 @@
     "passkey_verifying": "Verifying…",
     "passkey_err_generic": "Passkey sign-in failed — please try again.",
     "passkey_err_cancelled": "The passkey prompt was cancelled.",
-    "passkey_err_network": "Network error — please try again."
+    "passkey_err_network": "Network error — please try again.",
+    "error_session": "Your session could not be loaded. Please sign in again.",
+    "error_access_denied": "Access denied. You are not authorised to sign in.",
+    "error_configuration": "Configuration error. Please contact the administrator.",
+    "error_default": "An error occurred during sign-in. Please try again."
   },
   "dashboard": {
     "greeting_night": "Still up?",
