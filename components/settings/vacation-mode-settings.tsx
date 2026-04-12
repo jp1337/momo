@@ -56,7 +56,7 @@ export function VacationModeSettings({
       setMessage(null);
       try {
         const body: Record<string, unknown> = {
-          enabled,
+          active: enabled,
           timezone: getTimezone(),
         };
         if (enabled && date) {
