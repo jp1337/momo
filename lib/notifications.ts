@@ -11,6 +11,8 @@
  *  - telegram: Push via Telegram Bot API (bot token + chat ID)
  *  - email:    SMTP email via nodemailer (instance-wide SMTP_* env vars
  *              + per-user destination address)
+ *  - webhook:  Generic outbound HTTP POST (JSON payload, optional HMAC-SHA256
+ *              signing via X-Momo-Signature header)
  *
  * Most channels use native `fetch` — only the email channel adds nodemailer
  * (the SMTP protocol is unavoidable).
@@ -311,6 +313,76 @@ class EmailChannel implements NotificationChannel {
   }
 }
 
+// ─── Channel: Webhook ────────────────────────────────────────────────────────
+
+/** JSONB config shape for the Webhook channel. */
+export interface WebhookConfig {
+  url: string;
+  secret?: string;
+}
+
+/**
+ * Generic outbound Webhook notification channel.
+ *
+ * Sends a JSON POST request to a user-configured URL. Useful for
+ * integrating Momo notifications with Home Assistant, Zapier, n8n,
+ * or any custom HTTP endpoint.
+ *
+ * Payload shape:
+ * ```json
+ * {
+ *   "event": "momo.notification",
+ *   "title": "…",
+ *   "body": "…",
+ *   "url": "…" | null,
+ *   "tag": "…" | null,
+ *   "timestamp": "ISO 8601"
+ * }
+ * ```
+ *
+ * If a `secret` is configured, an `X-Momo-Signature: sha256=<hex>` header is
+ * added so the receiving server can verify the request authenticity via
+ * HMAC-SHA256 over the raw JSON body.
+ */
+class WebhookChannel implements NotificationChannel {
+  constructor(private readonly config: WebhookConfig) {}
+
+  async send(payload: NotificationPayload): Promise<void> {
+    const body = JSON.stringify({
+      event: "momo.notification",
+      title: payload.title,
+      body: payload.body,
+      url: payload.url ?? null,
+      tag: payload.tag ?? null,
+      timestamp: new Date().toISOString(),
+    });
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (this.config.secret) {
+      const { createHmac } = await import("crypto");
+      const sig = createHmac("sha256", this.config.secret)
+        .update(body)
+        .digest("hex");
+      headers["X-Momo-Signature"] = `sha256=${sig}`;
+    }
+
+    const response = await fetch(this.config.url, {
+      method: "POST",
+      headers,
+      body,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Webhook responded with ${response.status}: ${await response.text().catch(() => "no body")}`
+      );
+    }
+  }
+}
+
 // ─── Channel Registry ────────────────────────────────────────────────────────
 
 /**
@@ -334,8 +406,8 @@ export function createChannel(
       return new TelegramChannel(config as unknown as TelegramConfig);
     case "email":
       return new EmailChannel(config as unknown as EmailConfig);
-    // Future channels:
-    // case "webhook": return new WebhookChannel(config as unknown as WebhookConfig);
+    case "webhook":
+      return new WebhookChannel(config as unknown as WebhookConfig);
     default:
       console.warn(`[notifications] Unknown channel type: ${type}`);
       return null;

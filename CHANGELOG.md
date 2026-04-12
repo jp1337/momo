@@ -17,6 +17,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Webhook-Benachrichtigungskanal** — neuer generischer Outbound-Webhook-Kanal in den Notification-Settings. Sendet einen HTTP-POST mit JSON-Payload (`event`, `title`, `body`, `url`, `tag`, `timestamp`) an eine beliebige URL. Optionale HMAC-SHA256-Signierung via `X-Momo-Signature`-Header. Nützlich für Integrationen mit Home Assistant, n8n, Zapier, Make oder eigenen Servern. Kein Schema-Migration nötig — `config` ist bereits JSONB.
 - **GET /api/user** — liefert jetzt Gamification-Stats (`coins`, `level`, `streakCurrent`, `streakShieldAvailable`); bisher war nur DELETE dokumentiert.
 - **GET /api/user/profile** — liefert `name`, `email`, `image`; bisher fehlte der lesende Endpunkt.
 - **GET /api/settings/quest** — liefert aktuelle Quest-Einstellungen (`postponeLimit`, `emotionalClosureEnabled`); bisher nur PATCH vorhanden.

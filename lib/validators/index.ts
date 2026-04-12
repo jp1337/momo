@@ -542,6 +542,28 @@ export const EmailConfigSchema = z.object({
 export type EmailConfig = z.infer<typeof EmailConfigSchema>;
 
 /**
+ * Config schema for the generic Webhook notification channel.
+ *
+ * url:    HTTP(S) endpoint that receives POST requests with a JSON payload.
+ * secret: Optional HMAC-SHA256 signing key. When set, an
+ *         `X-Momo-Signature: sha256=<hex>` header is added to every request
+ *         so the receiving server can verify authenticity.
+ */
+export const WebhookConfigSchema = z.object({
+  url: z
+    .string()
+    .min(1, "URL is required")
+    .max(2000, "URL must be 2000 characters or less")
+    .url("Must be a valid URL (https://…)"),
+  secret: z
+    .string()
+    .max(200, "Secret must be 200 characters or less")
+    .optional(),
+});
+
+export type WebhookConfig = z.infer<typeof WebhookConfigSchema>;
+
+/**
  * Discriminated union for upserting a notification channel.
  * Each channel type has its own config schema. New types are added here
  * as they are implemented (webhook is the remaining future channel).
@@ -565,6 +587,11 @@ export const UpsertNotificationChannelSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("email"),
     config: EmailConfigSchema,
+    enabled: z.boolean().optional().default(true),
+  }),
+  z.object({
+    type: z.literal("webhook"),
+    config: WebhookConfigSchema,
     enabled: z.boolean().optional().default(true),
   }),
 ]);

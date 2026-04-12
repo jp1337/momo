@@ -37,6 +37,7 @@ const AVAILABLE_CHANNEL_TYPES = [
   { type: "pushover", labelKey: "channel_pushover_label" as const },
   { type: "telegram", labelKey: "channel_telegram_label" as const },
   { type: "email", labelKey: "channel_email_label" as const },
+  { type: "webhook", labelKey: "channel_webhook_label" as const },
 ] as const;
 
 /**
@@ -225,6 +226,9 @@ export function NotificationChannels({
           {channel.type === "email" && (
             <EmailConfigSummary config={channel.config} />
           )}
+          {channel.type === "webhook" && (
+            <WebhookConfigSummary config={channel.config} />
+          )}
 
           {/* Actions */}
           <div className="flex gap-2">
@@ -279,6 +283,12 @@ export function NotificationChannels({
         <EmailForm
           defaultAddress={defaultEmailAddress}
           onSave={(config) => handleSaved("email", config)}
+          onCancel={() => setAddingType(null)}
+        />
+      )}
+      {addingType === "webhook" && (
+        <WebhookForm
+          onSave={(config) => handleSaved("webhook", config)}
           onCancel={() => setAddingType(null)}
         />
       )}
@@ -1062,6 +1072,226 @@ function EmailForm({
         <button
           type="submit"
           disabled={saving || !address.trim()}
+          className="text-sm px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+          style={{
+            fontFamily: "var(--font-ui)",
+            backgroundColor: "var(--color-accent, #f0a500)",
+            color: "var(--bg-primary)",
+          }}
+        >
+          {saving ? "..." : tCommon("save")}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-sm px-4 py-2 rounded-lg transition-colors"
+          style={{
+            fontFamily: "var(--font-ui)",
+            backgroundColor: "var(--bg-surface)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {tCommon("cancel")}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// ─── Webhook Config Summary ─────────────────────────────────────────────────
+
+function WebhookConfigSummary({ config }: { config: Record<string, unknown> }) {
+  const url = String(config.url ?? "");
+  const display = url.length > 60 ? `${url.slice(0, 57)}…` : url;
+  return (
+    <p
+      className="text-xs break-all"
+      style={{
+        fontFamily: "var(--font-body)",
+        color: "var(--text-muted)",
+      }}
+    >
+      {display || "—"}
+    </p>
+  );
+}
+
+// ─── Webhook Configuration Form ─────────────────────────────────────────────
+
+function WebhookForm({
+  onSave,
+  onCancel,
+}: {
+  onSave: (config: Record<string, unknown>) => void;
+  onCancel: () => void;
+}) {
+  const t = useTranslations("settings");
+  const tCommon = useTranslations("common");
+  const [url, setUrl] = useState("");
+  const [signRequests, setSignRequests] = useState(false);
+  const [secret, setSecret] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl) return;
+
+    // Client-side URL shape check — server Zod is the source of truth
+    try {
+      new URL(trimmedUrl);
+    } catch {
+      setError("Please enter a valid URL (https://…).");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const config: Record<string, unknown> = { url: trimmedUrl };
+      if (signRequests && secret.trim()) {
+        config.secret = secret.trim();
+      }
+
+      const res = await fetch("/api/settings/notification-channels", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "webhook", config, enabled: true }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save");
+      }
+
+      onSave(config);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("channel_err_save"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const inputStyle = {
+    fontFamily: "var(--font-body)",
+    backgroundColor: "var(--bg-primary)",
+    color: "var(--text-primary)",
+    border: "1px solid var(--border)",
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-lg p-4 flex flex-col gap-3"
+      style={{
+        backgroundColor: "var(--bg-elevated)",
+        border: "1px solid var(--border)",
+      }}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span
+          className="text-sm font-medium"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
+        >
+          {t("channel_webhook_label")}
+        </span>
+      </div>
+      <p
+        className="text-xs -mt-2"
+        style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
+      >
+        {t("channel_webhook_hint")}
+      </p>
+
+      {/* URL input */}
+      <div className="flex flex-col gap-1">
+        <label
+          className="text-xs font-medium"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-secondary)" }}
+        >
+          {t("webhook_url_label")}
+        </label>
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder={t("webhook_url_placeholder")}
+          className="w-full px-3 py-2 rounded-md text-sm"
+          style={inputStyle}
+          maxLength={2000}
+          required
+        />
+        <p
+          className="text-xs"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
+        >
+          {t("webhook_payload_note")}
+        </p>
+      </div>
+
+      {/* HMAC signing toggle */}
+      <label
+        className="flex items-center gap-2 cursor-pointer select-none"
+        style={{ fontFamily: "var(--font-ui)" }}
+      >
+        <input
+          type="checkbox"
+          checked={signRequests}
+          onChange={(e) => setSignRequests(e.target.checked)}
+          className="rounded"
+          style={{ accentColor: "var(--color-accent, #f0a500)" }}
+        />
+        <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+          {t("webhook_sign_label")}
+        </span>
+      </label>
+
+      {/* Secret input (shown only when signing is enabled) */}
+      {signRequests && (
+        <div className="flex flex-col gap-1">
+          <label
+            className="text-xs font-medium"
+            style={{ fontFamily: "var(--font-ui)", color: "var(--text-secondary)" }}
+          >
+            {t("webhook_secret_label")}
+          </label>
+          <input
+            type="password"
+            value={secret}
+            onChange={(e) => setSecret(e.target.value)}
+            placeholder={t("webhook_secret_placeholder")}
+            className="w-full px-3 py-2 rounded-md text-sm"
+            style={inputStyle}
+            maxLength={200}
+            autoComplete="new-password"
+          />
+          <p
+            className="text-xs"
+            style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
+          >
+            {t("webhook_secret_hint")}
+          </p>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <p
+          className="text-xs"
+          style={{ fontFamily: "var(--font-ui)", color: "var(--color-error, #ef4444)" }}
+        >
+          {error}
+        </p>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={saving || !url.trim()}
           className="text-sm px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
           style={{
             fontFamily: "var(--font-ui)",

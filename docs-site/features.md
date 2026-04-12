@@ -537,7 +537,27 @@ Setup:
 
 Self-hosters: see the [Email Notifications (SMTP) section of the Environment Variables guide](/momo/environment-variables#email-notifications-smtp) for the `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` and `SMTP_SECURE` variables. Mailpit is the easiest local-dev option.
 
-A generic outbound webhook channel is still planned — see the [Roadmap](https://github.com/jp1337/momo/blob/main/ROADMAP.md).
+**Webhook** — Send every Momo notification to any HTTP endpoint as a JSON POST. Perfect for integrations with Home Assistant, n8n, Zapier, Make, or custom apps.
+
+Setup:
+1. In Momo: go to **Settings → Additional Notification Channels** and click **+ Webhook**
+2. Enter the URL of your endpoint (must start with `https://`)
+3. Optionally enable **Sign requests (HMAC-SHA256)** and enter a signing secret. Momo will add an `X-Momo-Signature: sha256=<hex>` header to every request so your server can verify the origin.
+4. Click **Save**, then **Send test** to verify the endpoint receives the notification
+
+Each request sends a JSON body like this:
+```json
+{
+  "event": "momo.notification",
+  "title": "Daily Quest ready",
+  "body": "Your task for today: Write morning pages",
+  "url": "https://app.momotask.app/",
+  "tag": "daily-quest",
+  "timestamp": "2026-04-12T08:00:00.000Z"
+}
+```
+
+To verify the HMAC signature on your server, compute `HMAC-SHA256(secret, rawBody)` and compare it (constant-time) to the hex value after `sha256=` in the `X-Momo-Signature` header.
 
 ### Notification history
 
