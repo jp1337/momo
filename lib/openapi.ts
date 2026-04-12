@@ -3408,15 +3408,22 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
                 type: "object",
                 required: ["type", "config"],
                 properties: {
-                  type: { type: "string", enum: ["ntfy"], description: "Channel type" },
+                  type: {
+                    type: "string",
+                    enum: ["ntfy", "pushover", "telegram", "email", "webhook"],
+                    description: "Channel type",
+                  },
                   config: {
                     type: "object",
-                    description: "Channel-specific config. For ntfy: { topic: string, server?: string }",
-                    properties: {
-                      topic: { type: "string", example: "my-momo-channel" },
-                      server: { type: "string", example: "https://ntfy.sh" },
-                    },
-                    required: ["topic"],
+                    description: [
+                      "Channel-specific config (JSONB). Shape per type:",
+                      "ntfy: { topic: string, server?: string }",
+                      "pushover: { userKey: string, appToken: string }",
+                      "telegram: { botToken: string, chatId: string }",
+                      "email: { address: string }",
+                      "webhook: { url: string, secret?: string }",
+                    ].join(" | "),
+                    example: { url: "https://your-server.example.com/hooks/momo" },
                   },
                   enabled: { type: "boolean", default: true },
                 },
@@ -3554,7 +3561,7 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
                           id: { type: "string", format: "uuid" },
                           channel: {
                             type: "string",
-                            enum: ["web-push", "ntfy", "pushover", "telegram", "email"],
+                            enum: ["web-push", "ntfy", "pushover", "telegram", "email", "webhook"],
                           },
                           title: { type: "string" },
                           body: { type: "string", nullable: true },

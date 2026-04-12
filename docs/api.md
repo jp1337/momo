@@ -935,7 +935,7 @@ Request body:
 }
 ```
 
-Supported types: `ntfy`, `pushover`, `telegram`, `email` (more coming: `webhook`).
+Supported types: `ntfy`, `pushover`, `telegram`, `email`, `webhook`.
 
 **ntfy config:**
 
@@ -983,6 +983,34 @@ Example:
 {
   "type": "email",
   "config": { "address": "you@example.com" },
+  "enabled": true
+}
+```
+
+**webhook config:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `url` | string (URL) | Yes | HTTP(S) endpoint that receives POST requests (max 2000 chars) |
+| `secret` | string | No | HMAC-SHA256 signing key (max 200 chars). When set, every request includes an `X-Momo-Signature: sha256=<hex>` header |
+
+The webhook sends a JSON POST with the following body:
+```json
+{
+  "event": "momo.notification",
+  "title": "Daily Quest ready",
+  "body": "Your task for today: …",
+  "url": "https://app.momotask.app/",
+  "tag": "daily-quest",
+  "timestamp": "2026-04-12T08:00:00.000Z"
+}
+```
+
+Example:
+```json
+{
+  "type": "webhook",
+  "config": { "url": "https://your-server.example.com/hooks/momo", "secret": "my-signing-secret" },
   "enabled": true
 }
 ```
@@ -1037,7 +1065,7 @@ Response:
 }
 ```
 
-Channel values: `web-push`, `ntfy`, `pushover`, `telegram`, `email`.
+Channel values: `web-push`, `ntfy`, `pushover`, `telegram`, `email`, `webhook`.
 Status values: `sent`, `failed`. When `status` is `failed`, the `error` field contains the reason.
 
 Entries are automatically deleted after 30 days by the `notification-log-cleanup` cron job.
