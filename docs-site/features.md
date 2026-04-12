@@ -871,6 +871,14 @@ Why a year view? Because habits are long-term. A single missed day feels catastr
 
 If your account is listed in the `ADMIN_USER_IDS` environment variable, you can access **/admin** to see aggregate statistics for all users on the instance. This is useful for self-hosters who share Momo with family or a small team.
 
+The Admin panel also shows a **Version** section at the top. Momo checks the [GitHub Releases page](https://github.com/jp1337/momo/releases) once per 24 hours and displays:
+
+- A green confirmation if you are already on the latest version.
+- An amber banner with a "View changelog" link when a newer version is available.
+- A warning if the check failed (for example due to a network issue).
+
+If your server cannot reach `api.github.com`, set `DISABLE_UPDATE_CHECK=true` in your environment to turn the check off entirely.
+
 ---
 
 ## What to Try First
