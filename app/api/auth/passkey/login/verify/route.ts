@@ -79,10 +79,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // Create a fresh Auth.js database session row for the resolved user.
   const sessionToken = await createPasskeyLoginSession(verified.userId, {
-    userAgent: request.headers.get("user-agent"),
+    userAgent: req.headers.get("user-agent"),
     ipAddress:
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
       "unknown",
   });
 
