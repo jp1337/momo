@@ -127,10 +127,13 @@ const CRON_JOBS: CronJob[] = [
     logToDb: true,
   },
   {
+    // Uses a notificationTime time-bucket SQL filter (like daily-quest, due-today).
+    // The SQL returns 0 rows outside the user's notification window, so the
+    // 5min-bucket guard is sufficient — no daily in-memory guard needed.
     name: "streak-reminder",
     handler: sendStreakReminders,
-    guard: "daily",
-    logToDb: false,
+    guard: "5min-bucket",
+    logToDb: true,
   },
   {
     name: "weekly-review",

@@ -735,14 +735,27 @@ export async function sendStreakReminders(): Promise<{
   let sent = 0;
   let failed = 0;
 
-  // Start of today in UTC
+  // Start of today in UTC (for completion check)
   const todayStart = new Date();
   todayStart.setUTCHours(0, 0, 0, 0);
+
+  // Time-bucket WHERE clause — only fire for users whose notificationTime
+  // matches the current 5-minute window in their local timezone.
+  // This mirrors the pattern used by sendDailyQuestNotifications,
+  // sendDueTodayNotifications, etc. It makes the function self-limiting:
+  // the SQL returns 0 rows outside the user's notification window, so the
+  // cron can run every 5 minutes and no in-memory / per-day guard is needed.
+  const timeBucketCondition = and(
+    sql`EXTRACT(HOUR FROM ${users.notificationTime})
+        = EXTRACT(HOUR FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC')))`,
+    sql`FLOOR(EXTRACT(MINUTE FROM ${users.notificationTime}) / 5)
+        = FLOOR(EXTRACT(MINUTE FROM (NOW() AT TIME ZONE COALESCE(${users.timezone}, 'UTC'))) / 5)`
+  );
 
   // Cache: has user completed a task today? (avoid re-querying for multi-device + channels)
   const completionCache = new Map<string, boolean>();
 
-  /** Check if a user completed a task today, with caching. */
+  /** Check if a user completed a task today (in UTC), with caching. */
   async function hasCompletedToday(userId: string): Promise<boolean> {
     if (completionCache.has(userId)) return completionCache.get(userId)!;
     const rows = await db
@@ -784,7 +797,9 @@ export async function sendStreakReminders(): Promise<{
       .where(
         and(
           eq(users.notificationEnabled, true),
-          gt(users.streakCurrent, 0)
+          eq(users.morningBriefingEnabled, false), // digest users get streak via morning briefing
+          gt(users.streakCurrent, 0),
+          timeBucketCondition
         )
       );
 
@@ -815,7 +830,9 @@ export async function sendStreakReminders(): Promise<{
     .where(
       and(
         eq(notificationChannels.enabled, true),
-        gt(users.streakCurrent, 0)
+        eq(users.morningBriefingEnabled, false), // digest users get streak via morning briefing
+        gt(users.streakCurrent, 0),
+        timeBucketCondition
       )
     );
 
