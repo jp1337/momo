@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **i18n: Spanish (es) and Dutch (nl)** — Two new UI languages added. Spanish and Dutch translations cover all 21 namespaces (tasks, topics, habits, achievements, settings, auth, onboarding, …). Language switcher in Settings now shows 🇪🇸 Español and 🇳🇱 Nederlands alongside the existing German, English, and French options.
+
 - **Per-Reminder-Type Notification Times** — Each opt-in reminder now has its own configurable notification time, independent of the global `notificationTime`. New time pickers appear in Settings under each enabled toggle:
   - "Due today" reminder: `dueTodayReminderTime` (default `08:00`)
   - Recurring-due reminder: `recurringDueReminderTime` (default `08:00`)
