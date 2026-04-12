@@ -344,14 +344,14 @@ All fields optional. Same shape as POST body. Response: `{ "task": Task }`
 
 ### POST /api/tasks/:id/complete
 
-Awards `coinValue` coins to the user, updates the daily streak, checks achievements.
+Awards `coinValue` coins to the user, updates the daily streak, checks and unlocks achievements (awarding their coin rewards), and — if the completed task is the daily quest — updates the quest streak.
 For `RECURRING` tasks: advances `nextDueDate` by `recurrenceInterval` days and resets `completedAt`.
 
 Optional request body (JSON):
 ```json
 { "timezone": "Europe/Berlin" }
 ```
-The `timezone` field (IANA timezone string) is used for timezone-aware streak calculation.
+The `timezone` field (IANA timezone string) is used for timezone-aware streak and quest-streak calculation.
 If omitted, the server falls back to UTC.
 
 Response:
@@ -359,14 +359,27 @@ Response:
 {
   "task": Task,
   "coinsEarned": 2,
+  "achievementCoinsEarned": 25,
   "newLevel": { "level": 3, "title": "Alltagsmeister" } | null,
-  "unlockedAchievements": [{ "key": "first_task", "title": "Erster Schritt", "icon": "🌱" }],
+  "unlockedAchievements": [
+    {
+      "key": "streak_7",
+      "title": "Eine Woche",
+      "icon": "⚡",
+      "rarity": "rare",
+      "coinReward": 25
+    }
+  ],
   "streakCurrent": 5,
+  "questStreakCurrent": 3,
   "shieldUsed": false
 }
 ```
 
-`shieldUsed` is `true` when the user's monthly Streak Shield was consumed to preserve the streak (exactly one day missed, shield not yet used this calendar month). When the shield fires, a notification is sent via all configured channels.
+- `achievementCoinsEarned` — sum of `coinReward` values for all achievements unlocked in this call (already added to the user's balance; `coinsEarned` covers only the task's own coin value).
+- `unlockedAchievements` — each entry now includes `rarity` (`"common"` | `"rare"` | `"epic"` | `"legendary"`) and `coinReward`.
+- `questStreakCurrent` — consecutive days the daily quest was completed (only incremented when `task.isDailyQuest === true`).
+- `shieldUsed` is `true` when the user's monthly Streak Shield was consumed to preserve the streak (exactly one day missed, shield not yet used this calendar month). When the shield fires, a notification is sent via all configured channels.
 
 ### DELETE /api/tasks/:id/complete
 
@@ -1143,6 +1156,57 @@ Adding a new cron job only requires adding an entry to the `CRON_JOBS` array in 
 
 ---
 
+## Achievement Routes
+
+| Method | Path | Auth | Rate Limit | Description |
+|---|---|---|---|---|
+| `GET` | `/api/achievements` | Yes | — | List all achievements with unlock status and progress |
+
+### GET /api/achievements
+
+Returns all achievement definitions enriched with the user's unlock status, earned date, and progress toward countable goals.
+
+Response:
+```json
+[
+  {
+    "id": "uuid",
+    "key": "streak_7",
+    "title": "Eine Woche",
+    "description": "7 Tage in Folge aktiv gewesen",
+    "icon": "⚡",
+    "rarity": "rare",
+    "coinReward": 25,
+    "secret": false,
+    "earnedAt": "2026-04-10T14:23:00.000Z",
+    "progress": { "current": 7, "total": 7 }
+  },
+  {
+    "id": "uuid",
+    "key": "streak_30",
+    "title": "???",
+    "description": "Dieses Achievement ist geheim — erforsche Momo um es freizuschalten",
+    "icon": "🔒",
+    "rarity": "epic",
+    "coinReward": 50,
+    "secret": true,
+    "earnedAt": null,
+    "progress": null
+  }
+]
+```
+
+**Notes:**
+- `earnedAt` is `null` for locked achievements.
+- `progress` is present for countable achievements (task counts, streak lengths, coin totals, etc.) and `null` for event-based ones (e.g. `first_wishlist_buy`).
+- Secret achievements that have **not** been earned are returned with `title: "???"` and a generic description — the real title/description is revealed only after unlock.
+- Achievements are not directly unlockable via API — they are awarded automatically as side-effects of task completion, topic creation, wishlist purchases, and energy check-ins.
+- Rarity tiers: `"common"` (10 coins) · `"rare"` (25 coins) · `"epic"` (50 coins) · `"legendary"` (100 coins).
+
+The `/achievements` UI page (`app/(app)/achievements/page.tsx`) uses this data to render the gallery, grouped Legendary → Epic → Rare → Common with earned items first.
+
+---
+
 ## User Routes
 
 | Method | Path | Auth | Rate Limit | Description |
@@ -1177,7 +1241,7 @@ Response: JSON file attachment — `momo-export-YYYY-MM-DD.json`
   "tasks": [...],
   "taskCompletions": [...],
   "wishlistItems": [...],
-  "achievements": [{ "key": "first_task_completed", "title": "...", "earnedAt": "..." }]
+  "achievements": [{ "key": "first_task", "title": "Erster Schritt", "icon": "🌱", "rarity": "common", "coinReward": 10, "earnedAt": "..." }]
 }
 ```
 
