@@ -471,7 +471,7 @@ On top of the daily-quest ping, Momo can send a separate reminder listing the ta
 - **One task due** → Title shows the task name, e.g. *"Heute fällig: Steuererklärung einreichen"*.
 - **Several tasks due** → Title shows the count, body lists the first three, rest as "… and N more".
 - **Snoozed tasks** are excluded. A task you snoozed until tomorrow will not trigger the reminder today, even if its original `due date` is today.
-- **Delivery time.** Uses the same time you picked for your daily reminder. Both pings arrive within a few seconds of each other.
+- **Delivery time.** Set your own time for this reminder — a time picker appears under the toggle once you enable it. Defaults to 08:00. Independent of the daily-quest reminder time.
 - **Channels.** Works with every channel you have configured — browser push, ntfy.sh, Pushover, Telegram, Email. Enable any one of them and the toggle becomes available.
 
 ### Overdue task reminder
@@ -484,7 +484,7 @@ Sometimes tasks slip through the cracks — a due date passes, life happens, and
 - **Silent on empty.** No notification fires when you have nothing overdue — only when there is actually something to act on.
 - **Paused and snoozed tasks** are excluded. Tasks paused by Vacation Mode or snoozed to a future date won't trigger the reminder.
 - **Morning briefing users** are automatically excluded — enable the briefing if you want a single consolidated morning push instead.
-- **Delivery time.** Uses the same notification time you configured for your daily reminder.
+- **Delivery time.** Set your own time for this reminder — a time picker appears under the toggle once you enable it. Defaults to 08:00. Great for an evening nudge (e.g. 20:00) while keeping your morning free.
 - **Channels.** Works with every delivery method you have set up — browser push, ntfy.sh, Pushover, Telegram, Email, Webhook.
 
 ### Individual recurring-task reminders
@@ -495,8 +495,13 @@ Want each recurring task to stand out on its own? Toggle **Send individual remin
 - **4+ recurring tasks due** → Bundled into a single summary to avoid flooding your notification shade.
 - **Paused and snoozed tasks** are excluded, just like the due-today reminder.
 - **Morning briefing users** don't get these — the briefing already covers due tasks.
+- **Delivery time.** Set your own time — time picker appears under the toggle. Defaults to 08:00. Independent of the daily-quest and overdue reminder times.
 
 This is ideal if you have a handful of weekly habits and want each one to pop up as a distinct, actionable reminder rather than being buried in a list.
+
+### Weekly review time
+
+The [weekly review](#weekly-review) notification fires every **Sunday**. You can now choose the exact time in **Settings → Notifications → Weekly review time**. The default is 18:00 — a good moment to reflect on the week before the evening winds down. Set it to any time that works for your Sunday routine.
 
 ### Requirements
 
