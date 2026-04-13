@@ -16,6 +16,8 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
+import { NextResponse } from "next/server";
+
 /** In-memory store keyed by arbitrary string (e.g. "tasks-create:<userId>") */
 const store = new Map<string, RateLimitEntry>();
 
@@ -68,11 +70,11 @@ export function checkRateLimit(
  * Includes a `Retry-After` header with the number of seconds until the window resets.
  *
  * @param resetAt - Unix timestamp (ms) when the rate limit window resets
- * @returns A `Response` with status 429 and appropriate headers
+ * @returns A `NextResponse` with status 429 and appropriate headers
  */
-export function rateLimitResponse(resetAt: number): Response {
+export function rateLimitResponse(resetAt: number): NextResponse {
   const retryAfterSeconds = Math.ceil((resetAt - Date.now()) / 1000);
-  return Response.json(
+  return NextResponse.json(
     { error: "Too many requests", code: "RATE_LIMITED" },
     {
       status: 429,
