@@ -179,6 +179,18 @@ npm run dev
 
 The app runs at `http://localhost:3000`.
 
+### Running Tests
+
+Integration tests run against a separate `momo_test` database (dev data is never touched):
+
+```bash
+docker compose up db -d   # database must be running
+npm test                  # creates momo_test, migrates, runs 29 tests
+npm run test:watch        # re-run on file changes
+```
+
+See [docs/testing.md](docs/testing.md) for the full test catalogue and setup details.
+
 ---
 
 ## 📦 Container Images
