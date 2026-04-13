@@ -19,7 +19,7 @@ Client components for the `/settings` page. Each file is one section of the sett
 - `backup-codes-display.tsx` — Read-only backup code grid with copy + download
 - `calendar-feed-section.tsx` — iCal feed: create/rotate/revoke token; one-time URL display
 - `timezone-settings.tsx` — IANA timezone picker with grouped dropdown; auto-saves via PATCH /api/settings/timezone; shows browser-detected timezone + mismatch hint
-- `language-switcher.tsx` — UI language switcher (de/en/fr); POSTs to /api/locale
+- `language-switcher.tsx` — UI language switcher (de/en/fr/es/nl); POSTs to /api/locale; flags via `LOCALE_FLAGS` map
 - `linked-accounts.tsx` — Connected OAuth providers list; uses next-auth signIn() for linking
 - `delete-account.tsx` — Danger zone: account deletion with confirmation dialog
 
