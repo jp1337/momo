@@ -90,7 +90,7 @@ Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Do
 
 ### Stabilität
 
-- **Automatisierte Tests** — Integrationstests für `completeTask`, `selectDailyQuest`, `updateStreak` mit echter Test-DB
+- ✅ **Automatisierte Tests** — Integrationstests für `completeTask`, `selectDailyQuest`, `updateStreak` mit echter Test-DB (`momo_test`). 29 Tests in `__tests__/`, Vitest-Framework, globaler Setup mit Auto-Migration, per-Test DB-Reset. `npm test` startet alles.
 - **Error-Tracking & Observability** — Sentry, Axiom oder GlitchTip in Prod für Fehler-Visibility; alternativ oder ergänzend **OpenTelemetry** (Traces, Metrics, Logs) mit Grafana/Jaeger/Loki-Backend; Next.js hat experimentelles OTel-Instrumentation (`instrumentation.ts`); ideal für Selfhoster mit bestehendem Monitoring-Stack
 - **Database Backups** — automatisches `pg_dump` mit Retention in Docker Compose / K8s
 

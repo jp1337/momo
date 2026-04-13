@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Automatisierte Integrationstests (Vitest)** — 29 Integrationstests für die drei kritischsten Business-Logic-Funktionen `completeTask`, `selectDailyQuest` und `updateStreak`. Tests laufen gegen eine echte PostgreSQL-Test-Datenbank (`momo_test`) ohne Mocks. Setup: `docker compose up db -d && npm test`. Dokumentation in `docs/testing.md`. Test-Infrastruktur: globaler Setup mit Auto-Migration, per-Test DB-Reset, Fixture-Helpers für User/Topic/Task.
+
 - **i18n: Spanish (es) and Dutch (nl)** — Two new UI languages added. Spanish and Dutch translations cover all 21 namespaces (tasks, topics, habits, achievements, settings, auth, onboarding, …). Language switcher in Settings now shows 🇪🇸 Español and 🇳🇱 Nederlands alongside the existing German, English, and French options.
 
 - **Per-Reminder-Type Notification Times** — Each opt-in reminder now has its own configurable notification time, independent of the global `notificationTime`. New time pickers appear in Settings under each enabled toggle:
