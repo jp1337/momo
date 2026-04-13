@@ -22,6 +22,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Build-Fix: `rateLimitResponse` TypeScript-Fehler behoben** — `rateLimitResponse()` in `lib/rate-limit.ts` gab `Response` zurück, obwohl alle 82 API-Routen `NextResponse` erwarten (`TS2739`). Das brach den Docker-Build. Fix: Rückgabetyp auf `NextResponse` geändert, zentral für alle Call-Sites.
+
 - **Vacation Mode: `enabled` → `active` umbenannt** — `PATCH /api/settings/vacation-mode` akzeptiert jetzt `active` statt `enabled` im Request-Body, passend zum `active`-Feld in der GET-Antwort. Frontend-Komponente und Validator aktualisiert.
 - **OpenAPI Spec: fehlender `requestBody` bei Postpone** — `POST /api/daily-quest/postpone` erfordert `{ taskId: UUID, timezone?: string }`, was bisher nicht dokumentiert war. API-Konsumenten bekamen 422 ohne Erklärung.
 - **OpenAPI Spec: `requestBody` für Task Complete dokumentiert** — `POST /api/tasks/{id}/complete` akzeptiert optionalen `{ timezone?: string }` Body für korrekte Streak-Berechnung, jetzt im Spec erfasst.
