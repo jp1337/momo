@@ -37,6 +37,14 @@ export default defineConfig({
 
     /** Only pick up files inside __tests__/ */
     include: ["__tests__/**/*.test.ts"],
+
+    /**
+     * Run test files sequentially (not in parallel).
+     * All three test suites share the same momo_test database — parallel
+     * execution causes beforeEach resets from one file to delete fixtures
+     * created by another, producing spurious FK violations and undefined rows.
+     */
+    fileParallelism: false,
   },
 
   resolve: {
