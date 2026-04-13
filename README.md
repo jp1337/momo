@@ -2,11 +2,15 @@
 
 [![Build & Publish](https://github.com/jp1337/momo/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/jp1337/momo/actions/workflows/build-and-publish.yml)
 [![Tests](https://img.shields.io/badge/tests-31%20passing-brightgreen?logo=vitest&logoColor=white)](https://github.com/jp1337/momo/tree/main/__tests__)
+[![Version](https://img.shields.io/github/package-json/v/jp1337/momo?label=version&color=7c3aed)](https://github.com/jp1337/momo/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?logo=opensourceinitiative&logoColor=white)](https://github.com/jp1337/momo/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/node-22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/Docker-ghcr.io-2496ed?logo=docker&logoColor=white)](https://github.com/jp1337/momo/pkgs/container/momo)
+[![GitHub Sponsors](https://img.shields.io/badge/sponsor-GitHub-ea4aaa?logo=github-sponsors&logoColor=white)](https://github.com/sponsors/jp1337)
+[![Ko-fi](https://img.shields.io/badge/support-Ko--fi-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/jpylypiw)
+[![PayPal](https://img.shields.io/badge/donate-PayPal-003087?logo=paypal&logoColor=white)](https://paypal.me/JPylypiw)
 
 > *"You must do one more thing, and you'll get to rest."*
 
