@@ -1,5 +1,13 @@
 # 🪶 Momo
 
+[![Build & Publish](https://github.com/jp1337/momo/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/jp1337/momo/actions/workflows/build-and-publish.yml)
+[![Tests](https://img.shields.io/badge/tests-31%20passing-brightgreen?logo=vitest&logoColor=white)](https://github.com/jp1337/momo/tree/main/__tests__)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green?logo=opensourceinitiative&logoColor=white)](https://github.com/jp1337/momo/blob/main/LICENSE)
+[![Node.js](https://img.shields.io/badge/node-22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-ghcr.io-2496ed?logo=docker&logoColor=white)](https://github.com/jp1337/momo/pkgs/container/momo)
+
 > *"You must do one more thing, and you'll get to rest."*
 
 **Steal your time back.**
