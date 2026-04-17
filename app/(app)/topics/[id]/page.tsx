@@ -45,12 +45,6 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
     notFound();
   }
 
-  const completedCount = topic.tasks.filter((t) => t.completedAt !== null).length;
-  const progressPercent =
-    topic.tasks.length > 0
-      ? Math.round((completedCount / topic.tasks.length) * 100)
-      : 0;
-
   const serializedTasks = topic.tasks.map((t) => ({
     id: t.id,
     title: t.title,
@@ -70,7 +64,6 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
   }));
 
   const accentColor = topic.color ?? "var(--accent-amber)";
-
   return (
     <div className="max-w-4xl mx-auto">
       {/* Back link */}
@@ -95,7 +88,7 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
         }}
       >
         {/* Title row */}
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
             style={{
@@ -144,48 +137,6 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
               priority: topic.priority,
             }}
           />
-        </div>
-
-        {/* Progress bar */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span
-              className="text-sm"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-              }}
-            >
-              {t("tasks_completed", { completed: completedCount, total: topic.tasks.length })}
-            </span>
-            <span
-              className="text-sm font-semibold"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color:
-                  progressPercent === 100
-                    ? "var(--accent-green)"
-                    : accentColor,
-              }}
-            >
-              {progressPercent}%
-            </span>
-          </div>
-          <div
-            className="h-2 rounded-full overflow-hidden"
-            style={{ backgroundColor: "var(--bg-elevated)" }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${progressPercent}%`,
-                backgroundColor:
-                  progressPercent === 100
-                    ? "var(--accent-green)"
-                    : accentColor,
-              }}
-            />
-          </div>
         </div>
       </div>
 
