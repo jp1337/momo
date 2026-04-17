@@ -108,6 +108,26 @@ export interface GetUserTasksFilters {
 /** A task row as returned from the database */
 export type Task = typeof tasks.$inferSelect;
 
+/**
+ * Converts a DB task row to the stable webhook payload shape.
+ * Only includes fields that are part of the public outbound webhook contract.
+ *
+ * @param task - The full task row from the database
+ * @returns Webhook-safe task payload
+ */
+function taskToWebhookPayload(task: Task) {
+  return {
+    id: task.id,
+    title: task.title,
+    type: task.type,
+    priority: task.priority,
+    topicId: task.topicId ?? null,
+    dueDate: task.dueDate ?? null,
+    completedAt: task.completedAt ? task.completedAt.toISOString() : null,
+    createdAt: task.createdAt.toISOString(),
+  };
+}
+
 /** A topic row as returned from the database */
 export type Topic = typeof topics.$inferSelect;
 
@@ -212,7 +232,7 @@ export async function createTask(
   input: CreateTaskInput,
   timezone?: string | null
 ): Promise<Task> {
-  return db.transaction(async (tx) => {
+  const task = await db.transaction(async (tx) => {
     // When adding a task to a topic, place it at the end of the sort order
     // and inherit the topic's default energy level if the user did not
     // override it explicitly. The user's value (including an explicit `null`
@@ -281,6 +301,15 @@ export async function createTask(
 
     return rows[0];
   });
+
+  // Fire-and-forget outbound webhook — dynamic import avoids circular dependency
+  import("@/lib/webhooks").then(({ fireWebhookEvent }) =>
+    fireWebhookEvent(userId, "task.created", taskToWebhookPayload(task)).catch(
+      (err) => console.error("[createTask] webhook failed (non-fatal):", err)
+    )
+  );
+
+  return task;
 }
 
 /**
@@ -342,7 +371,16 @@ export async function updateTask(
     throw new Error("Task not found or access denied");
   }
 
-  return rows[0];
+  const updatedTask = rows[0];
+
+  // Fire-and-forget outbound webhook — dynamic import avoids circular dependency
+  import("@/lib/webhooks").then(({ fireWebhookEvent }) =>
+    fireWebhookEvent(userId, "task.updated", taskToWebhookPayload(updatedTask)).catch(
+      (err) => console.error("[updateTask] webhook failed (non-fatal):", err)
+    )
+  );
+
+  return updatedTask;
 }
 
 /**
@@ -357,6 +395,9 @@ export async function deleteTask(
   taskId: string,
   userId: string
 ): Promise<void> {
+  // Fetch task before deletion so we can include it in the webhook payload
+  const taskSnapshot = await getTaskById(taskId, userId);
+
   const rows = await db
     .delete(tasks)
     .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
@@ -364,6 +405,15 @@ export async function deleteTask(
 
   if (!rows[0]) {
     throw new Error("Task not found or access denied");
+  }
+
+  // Fire-and-forget outbound webhook — dynamic import avoids circular dependency
+  if (taskSnapshot) {
+    import("@/lib/webhooks").then(({ fireWebhookEvent }) =>
+      fireWebhookEvent(userId, "task.deleted", taskToWebhookPayload(taskSnapshot)).catch(
+        (err) => console.error("[deleteTask] webhook failed (non-fatal):", err)
+      )
+    );
   }
 }
 
@@ -648,6 +698,13 @@ export async function completeTask(
       )
     );
   }
+
+  // Fire-and-forget outbound webhook — dynamic import avoids circular dependency
+  import("@/lib/webhooks").then(({ fireWebhookEvent }) =>
+    fireWebhookEvent(userId, "task.completed", taskToWebhookPayload(updatedTask)).catch(
+      (err) => console.error("[completeTask] webhook failed (non-fatal):", err)
+    )
+  );
 
   return {
     task: updatedTask,

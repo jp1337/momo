@@ -1505,6 +1505,213 @@ Includes `Retry-After` header with seconds until reset.
 
 ---
 
+## Outbound Webhook Routes
+
+User-configurable HTTPS endpoints that receive HTTP POST events when tasks change. This is the automation/integration surface — suitable for connecting Momo to Zapier, Make, n8n, Home Assistant, or custom backends.
+
+> **Distinct from the Notification Webhook Channel** (`settings → Notification Channels → Webhook`), which delivers personal push-style alerts. Outbound webhooks deliver machine-readable task lifecycle events.
+
+### Events
+
+| Event | Trigger |
+|---|---|
+| `task.created` | A new task is created |
+| `task.completed` | A task is marked complete |
+| `task.deleted` | A task is permanently deleted |
+| `task.updated` | A task's title, priority, due date, or other fields are changed |
+
+### Payload Shape
+
+Every delivery is an HTTP POST with `Content-Type: application/json`:
+
+```json
+{
+  "event": "task.created",
+  "timestamp": "2026-04-17T10:00:00.000Z",
+  "task": {
+    "id": "uuid",
+    "title": "Buy groceries",
+    "type": "ONE_TIME",
+    "priority": "NORMAL",
+    "topicId": null,
+    "dueDate": "2026-04-18",
+    "completedAt": null,
+    "createdAt": "2026-04-17T10:00:00.000Z"
+  }
+}
+```
+
+### Request Headers
+
+```
+Content-Type: application/json
+X-Momo-Event: task.created
+X-Momo-Signature: sha256=<hex>   (only when a signing secret is configured)
+```
+
+### Signature Verification
+
+If a signing secret is configured, the `X-Momo-Signature` header contains an HMAC-SHA256 signature over the raw JSON body using the secret as the key.
+
+**Node.js verification:**
+```js
+const crypto = require("crypto");
+const sig = "sha256=" + crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+const valid = crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(req.headers["x-momo-signature"]));
+```
+
+**Python verification:**
+```python
+import hmac, hashlib
+sig = "sha256=" + hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+valid = hmac.compare_digest(sig, request.headers.get("X-Momo-Signature", ""))
+```
+
+### Limits
+
+- Maximum **10 endpoints** per user
+- Delivery **timeout**: 5 seconds
+- Delivery history retained for **30 days** (pruned by daily cron job)
+- Events per endpoint: any subset of the 4 event types, or all if none selected
+
+---
+
+### GET /api/settings/webhooks
+
+List all outbound webhook endpoints for the authenticated user.
+
+**Response:**
+```json
+{
+  "endpoints": [
+    {
+      "id": "uuid",
+      "name": "My Zapier hook",
+      "url": "https://hooks.zapier.com/hooks/catch/...",
+      "hasSecret": true,
+      "events": ["task.created", "task.completed"],
+      "enabled": true,
+      "createdAt": "2026-04-17T10:00:00.000Z",
+      "updatedAt": "2026-04-17T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+Note: the signing secret is never returned. `hasSecret: true` indicates one is configured.
+
+---
+
+### POST /api/settings/webhooks
+
+Create a new outbound webhook endpoint.
+
+**Rate limit:** 20/min
+
+**Request body:**
+```json
+{
+  "name": "My Zapier hook",
+  "url": "https://hooks.zapier.com/hooks/catch/...",
+  "secret": "optional-signing-secret",
+  "events": ["task.created", "task.completed"],
+  "enabled": true
+}
+```
+
+- `url` must use HTTPS
+- `secret` is optional; encrypted at rest (AES-256-GCM)
+- `events`: empty array or omitted = subscribe to all events
+- `enabled`: defaults to `true`
+
+**Response (201):**
+```json
+{ "endpoint": { ... } }
+```
+
+**Error (409) — limit exceeded:**
+```json
+{ "error": "Maximum 10 webhook endpoints per user", "code": "limit_exceeded" }
+```
+
+---
+
+### PATCH /api/settings/webhooks/:id
+
+Partially update a webhook endpoint. All fields are optional.
+
+**Rate limit:** 20/min
+
+**Request body:**
+```json
+{
+  "name": "Updated name",
+  "url": "https://...",
+  "secret": "new-secret",
+  "events": [],
+  "enabled": false
+}
+```
+
+Secret update rules:
+- `"secret": "new-value"` → replace signing secret
+- `"secret": null` → remove signing secret (no signature header sent)
+- Omit `secret` entirely → keep existing secret unchanged
+
+**Response (200):**
+```json
+{ "endpoint": { ... } }
+```
+
+---
+
+### DELETE /api/settings/webhooks/:id
+
+Delete a webhook endpoint and all its delivery history.
+
+**Response (200):**
+```json
+{ "success": true }
+```
+
+---
+
+### GET /api/settings/webhooks/:id
+
+Get the last 50 delivery attempts for a specific endpoint.
+
+**Response:**
+```json
+{
+  "deliveries": [
+    {
+      "id": "uuid",
+      "event": "task.created",
+      "httpStatus": 200,
+      "status": "success",
+      "errorMessage": null,
+      "durationMs": 142,
+      "deliveredAt": "2026-04-17T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/settings/webhooks/:id/test
+
+Send a synthetic `task.test` event to verify the endpoint is reachable and correctly configured. The delivery is logged to the endpoint's delivery history.
+
+**Rate limit:** 5/min (strict — prevents DDoS abuse)
+
+**Response (200):**
+```json
+{ "success": true }
+```
+
+---
+
 ## Authentication
 
 All application API routes (except `/api/health`, `/api/locale`, and `/api/auth/*`) require a valid session cookie. The session is validated using Auth.js `auth()` at the start of every handler.
