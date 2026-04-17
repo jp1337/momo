@@ -1135,3 +1135,119 @@ export const totpBackupCodesRelations = relations(totpBackupCodes, ({ one }) => 
 export const authenticatorsRelations = relations(authenticators, ({ one }) => ({
   user: one(users, { fields: [authenticators.userId], references: [users.id] }),
 }));
+
+// ─── Outbound Webhook System ──────────────────────────────────────────────────
+
+/**
+ * User-configured HTTPS endpoints that receive HTTP POST events when tasks
+ * are created, completed, deleted, or updated.
+ *
+ * This is separate from `notification_channels` (which delivers personal alerts
+ * like push/email/ntfy). Outbound webhooks are for automation integrations
+ * (Zapier, Make, n8n, custom backends).
+ *
+ * Secrets are stored AES-256-GCM encrypted via `encryptSecret` from
+ * `lib/utils/crypto.ts` (reuses TOTP_ENCRYPTION_KEY). The plain secret is
+ * never returned by any API or lib function — callers only see `hasSecret: boolean`.
+ */
+export const webhookEndpoints = pgTable(
+  "webhook_endpoints",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    /** Owner of this webhook endpoint */
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+
+    /** Human-readable label, e.g. "Zapier automation" */
+    name: text("name").notNull(),
+
+    /** HTTPS URL receiving POST events */
+    url: text("url").notNull(),
+
+    /**
+     * AES-256-GCM encrypted signing secret.
+     * Format: base64(iv):base64(tag):base64(ct) — produced by encryptSecret().
+     * NULL = no X-Momo-Signature header is sent.
+     */
+    secretEncrypted: text("secret_encrypted"),
+
+    /**
+     * Event names this endpoint subscribes to.
+     * NULL or empty array = subscribe to ALL events.
+     * Values: "task.created" | "task.completed" | "task.deleted" | "task.updated"
+     */
+    events: text("events").array(),
+
+    /** When false, no deliveries are sent to this endpoint */
+    enabled: boolean("enabled").notNull().default(true),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("webhook_endpoints_user_id_idx").on(table.userId),
+  ]
+);
+
+/**
+ * Per-delivery log for outbound webhook events.
+ *
+ * Separate from `notification_log` because webhook deliveries have a different
+ * shape (structured event payloads vs. title/body alerts). Rows older than 30
+ * days are pruned by the `webhook-delivery-cleanup` cron job.
+ */
+export const webhookDeliveries = pgTable(
+  "webhook_deliveries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    /** The endpoint that received this delivery */
+    endpointId: uuid("endpoint_id")
+      .notNull()
+      .references(() => webhookEndpoints.id, { onDelete: "cascade" }),
+
+    /** The user (denormalised for efficient user-scoped queries) */
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+
+    /** Event type that triggered this delivery, e.g. "task.created" */
+    event: text("event").notNull(),
+
+    /** Full JSON payload sent to the endpoint */
+    payload: jsonb("payload").notNull(),
+
+    /** HTTP status code returned by the endpoint (null on network error/timeout) */
+    httpStatus: integer("http_status"),
+
+    /** "success" when HTTP 2xx was received, "failure" otherwise */
+    status: text("status").notNull(),
+
+    /** First 500 chars of error message or non-2xx response body */
+    errorMessage: text("error_message"),
+
+    /** Request round-trip time in milliseconds */
+    durationMs: integer("duration_ms"),
+
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("webhook_deliveries_endpoint_id_idx").on(table.endpointId),
+    index("webhook_deliveries_user_delivered_idx").on(table.userId, table.deliveredAt),
+  ]
+);
+
+export const webhookEndpointsRelations = relations(webhookEndpoints, ({ one, many }) => ({
+  user: one(users, { fields: [webhookEndpoints.userId], references: [users.id] }),
+  deliveries: many(webhookDeliveries),
+}));
+
+export const webhookDeliveriesRelations = relations(webhookDeliveries, ({ one }) => ({
+  endpoint: one(webhookEndpoints, {
+    fields: [webhookDeliveries.endpointId],
+    references: [webhookEndpoints.id],
+  }),
+  user: one(users, { fields: [webhookDeliveries.userId], references: [users.id] }),
+}));

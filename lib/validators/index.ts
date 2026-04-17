@@ -661,3 +661,6 @@ export const VacationModeInputSchema = z
   });
 
 export type VacationModeInput = z.infer<typeof VacationModeInputSchema>;
+
+// Re-export outbound webhook validators
+export * from "./webhooks";

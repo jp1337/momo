@@ -20,6 +20,7 @@ import { lt, eq, and } from "drizzle-orm";
 import { sendDailyQuestNotifications, sendStreakReminders, sendWeeklyReviewNotifications, sendDueTodayNotifications, sendRecurringDueNotifications, sendMorningBriefingNotifications, sendOverdueNotifications } from "@/lib/push";
 import { cleanupNotificationLog } from "@/lib/notification-log";
 import { autoEndVacations } from "@/lib/vacation";
+import { cleanupWebhookDeliveries } from "@/lib/webhooks";
 
 /** Retain cron run history for this many days — older rows are pruned after each run. */
 const CRON_RETENTION_DAYS = 30;
@@ -159,6 +160,12 @@ const CRON_JOBS: CronJob[] = [
     handler: autoEndVacations,
     guard: "daily",
     logToDb: true,
+  },
+  {
+    name: "webhook-delivery-cleanup",
+    handler: cleanupWebhookDeliveries,
+    guard: "daily",
+    logToDb: false,
   },
 ];
 

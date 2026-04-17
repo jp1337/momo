@@ -38,6 +38,8 @@ import { getCalendarFeedStatus } from "@/lib/calendar";
 import { getUserTotpStatus, readSessionTokenFromCookieStore } from "@/lib/totp";
 import { listUserPasskeys } from "@/lib/webauthn";
 import { listUserSessions } from "@/lib/sessions";
+import { listWebhookEndpoints } from "@/lib/webhooks";
+import { OutboundWebhooks } from "@/components/settings/webhooks";
 import { cookies } from "next/headers";
 import { serverEnv } from "@/lib/env";
 import { getTranslations, getLocale } from "next-intl/server";
@@ -65,8 +67,8 @@ export default async function SettingsPage() {
   const cookieStore = await cookies();
   const currentSessionToken = readSessionTokenFromCookieStore(cookieStore) ?? "";
 
-  // Fetch user preferences, linked accounts, push subscriptions, notification channels, 2FA status, passkeys, and active sessions from DB
-  const [userRows, linkedAccountRows, activeSubs, channelRows, totpStatus, passkeys, calendarFeed, activeSessions] = await Promise.all([
+  // Fetch user preferences, linked accounts, push subscriptions, notification channels, 2FA status, passkeys, active sessions, and webhook endpoints from DB
+  const [userRows, linkedAccountRows, activeSubs, channelRows, totpStatus, passkeys, calendarFeed, activeSessions, webhookEndpoints] = await Promise.all([
     db
       .select({
         name: users.name,
@@ -114,6 +116,7 @@ export default async function SettingsPage() {
     listUserPasskeys(session.user.id),
     getCalendarFeedStatus(session.user.id),
     listUserSessions(session.user.id, currentSessionToken),
+    listWebhookEndpoints(session.user.id),
   ]);
 
   const user = userRows[0];
@@ -619,6 +622,44 @@ export default async function SettingsPage() {
           initialCreatedAt={
             calendarFeed.createdAt ? calendarFeed.createdAt.toISOString() : null
           }
+        />
+      </section>
+
+      {/* Outbound Webhooks section */}
+      <section
+        className="rounded-xl p-6 flex flex-col gap-4"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          <h2
+            className="text-base font-semibold"
+            style={{
+              fontFamily: "var(--font-ui)",
+              color: "var(--text-primary)",
+            }}
+          >
+            {t("section_outbound_webhooks")}
+          </h2>
+          <p
+            className="text-sm"
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-ui)",
+            }}
+          >
+            {t("outbound_webhooks_hint")}
+          </p>
+        </div>
+
+        <OutboundWebhooks
+          initialEndpoints={webhookEndpoints.map((ep) => ({
+            ...ep,
+            createdAt: ep.createdAt.toISOString(),
+            updatedAt: ep.updatedAt.toISOString(),
+          }))}
         />
       </section>
 

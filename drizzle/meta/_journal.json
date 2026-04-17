@@ -218,6 +218,13 @@
       "when": 1776020127623,
       "tag": "0030_broken_xorn",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1776456715935,
+      "tag": "0031_bumpy_star_brand",
+      "breakpoints": true
     }
   ]
 }
