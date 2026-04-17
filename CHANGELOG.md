@@ -22,6 +22,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Daily Quest: Verschobene Quest wurde sofort wieder ausgewählt** — Beim Klick auf „Nicht heute" wurde die Quest zwar abgewählt, aber nicht als gesperrt markiert. Die Auswahllogik (`pickBestTask`) wählte dieselbe HIGH-Priority-Aufgabe sofort wieder als neue Quest aus, weil Priority-2 keinen Fälligkeits-Filter hat. Fix: `postponeDailyQuest` setzt jetzt zusätzlich `snoozedUntil = morgen`, sodass alle vier Prioritätsstufen die Aufgabe für den Rest des Tages ignorieren. Die Aufgabe erscheint morgen automatisch wieder.
+
+- **Topic-Fortschrittsbalken aktualisiert sich jetzt live** — Der Fortschrittsbalken im Topic-Detail wurde nur beim Seiten-Laden berechnet und zeigte nach dem Erledigen von Aufgaben veraltete Werte bis zum Reload. Balken und Zähler (X/Y) werden jetzt im Client-State gepflegt und aktualisieren sich beim Erledigen oder Rückgängigmachen sofort ohne Neuladen.
+
 - **Build-Fix: `rateLimitResponse` TypeScript-Fehler behoben** — `rateLimitResponse()` in `lib/rate-limit.ts` gab `Response` zurück, obwohl alle 82 API-Routen `NextResponse` erwarten (`TS2739`). Das brach den Docker-Build. Fix: Rückgabetyp auf `NextResponse` geändert, zentral für alle Call-Sites.
 
 - **Vacation Mode: `enabled` → `active` umbenannt** — `PATCH /api/settings/vacation-mode` akzeptiert jetzt `active` statt `enabled` im Request-Body, passend zum `active`-Feld in der GET-Antwort. Frontend-Komponente und Validator aktualisiert.
