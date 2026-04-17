@@ -14,7 +14,7 @@
     "ncu:update": "ncu -u && npm install"
   },
   "dependencies": {
-    "@auth/drizzle-adapter": "^1.11.1",
+    "@auth/drizzle-adapter": "^1.11.2",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
@@ -30,8 +30,8 @@
     "canvas-confetti": "^1.9.4",
     "drizzle-orm": "^0.45.2",
     "framer-motion": "^12.38.0",
-    "ical-generator": "^10.1.0",
-    "next": "16.2.3",
+    "ical-generator": "^10.2.0",
+    "next": "16.2.4",
     "next-auth": "^5.0.0-beta.30",
     "next-intl": "^4.9.1",
     "next-themes": "^0.4.6",
@@ -43,7 +43,7 @@
     "react": "19.2.5",
     "react-dom": "19.2.5",
     "sharp": "^0.34.5",
-    "swagger-ui-react": "^5.32.2",
+    "swagger-ui-react": "^5.32.4",
     "web-push": "^3.6.7",
     "zod": "^4.3.6"
   },
@@ -75,7 +75,7 @@
     "@vitest/ui": "^4.1.4",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
-    "eslint-config-next": "16.2.3",
+    "eslint-config-next": "16.2.4",
     "npm-check-updates": "^20.0.1",
     "tailwindcss": "^4",
     "typescript": "^6",
