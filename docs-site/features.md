@@ -202,6 +202,8 @@ Each topic shows its title, icon, and a count of **open** and **completed** task
 
 Click any topic card to open its detail view. You will see all subtasks grouped under the topic, with the same complete / edit / delete controls as the main task list. You can add new subtasks directly from this view.
 
+The **progress bar** at the top (e.g. "3 of 7 tasks completed — 42%") updates live as you complete or undo tasks — no page reload needed.
+
 ### Reordering tasks (drag & drop)
 
 Inside any topic, active tasks can be reordered by dragging them. A small **grip handle** (six dots) appears to the left of each task — grab it and drag the task to a new position. The new order is saved automatically.
@@ -320,7 +322,7 @@ To make the most of this feature, **tag your tasks with an energy level** when c
 
 ### Postponing the quest
 
-If today is genuinely not the right day for that task, click **Postpone**. The quest is pushed to tomorrow and Momo picks a different task for today. You can postpone up to **3 times per day** by default (configurable in Settings).
+If today is genuinely not the right day for that task, click **Postpone**. The quest is pushed to tomorrow and Momo immediately picks a **different** task for today — the postponed task is hidden for the rest of today so it cannot be re-selected until tomorrow. You can postpone up to **3 times per day** by default (configurable in Settings).
 
 > **Tip:** Use postpone sparingly. The quest system works best when you trust the algorithm — often the task it picks is the one you have been avoiding.
 
