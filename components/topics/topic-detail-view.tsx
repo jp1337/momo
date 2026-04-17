@@ -219,6 +219,12 @@ export function TopicDetailView({
     await refreshTasks();
   }, [refreshTasks]);
 
+  const completedCount = tasks.filter((t) => t.completedAt !== null).length;
+  const totalCount = tasks.length;
+  const progressPercent =
+    totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const accentColor = topicColor ?? "var(--accent-amber)";
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const snoozedTasks = tasks.filter((task) => {
@@ -233,6 +239,50 @@ export function TopicDetailView({
 
   return (
     <div>
+      {/* Progress bar — driven by live tasks state so it updates without a reload */}
+      <div
+        className="rounded-2xl px-6 py-4 mb-6"
+        style={{
+          backgroundColor: "var(--bg-surface)",
+          border: "1px solid var(--border)",
+          borderLeft: `4px solid ${accentColor}`,
+        }}
+      >
+        <div className="flex justify-between items-center mb-2">
+          <span
+            className="text-sm"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+            }}
+          >
+            {t("tasks_completed", { completed: completedCount, total: totalCount })}
+          </span>
+          <span
+            className="text-sm font-semibold"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: progressPercent === 100 ? "var(--accent-green)" : accentColor,
+            }}
+          >
+            {progressPercent}%
+          </span>
+        </div>
+        <div
+          className="h-2 rounded-full overflow-hidden"
+          style={{ backgroundColor: "var(--bg-elevated)" }}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${progressPercent}%`,
+              backgroundColor:
+                progressPercent === 100 ? "var(--accent-green)" : accentColor,
+            }}
+          />
+        </div>
+      </div>
+
       {/* Level-up overlay */}
       {levelUp && (
         <LevelUpOverlay
