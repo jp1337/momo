@@ -241,7 +241,7 @@ One row is inserted each time the user postpones their daily quest. Used by the 
 - `pushover`: `{ "userKey": "...", "appToken": "..." }`
 - `telegram`: `{ "botToken": "<bot_id>:<secret>", "chatId": "987654321" }`
 - `email`: `{ "address": "you@example.com" }` (SMTP credentials live in `SMTP_*` env vars on the instance)
-- `webhook`: `{ "url": "...", "secret": "..." }` (future)
+- `webhook`: `{ "url": "https://...", "secret": "..." }` — personal alert notifications (distinct from the outbound webhook automation system; see `webhook_endpoints`)
 
 Adding new channel types requires no schema migration — only new code in `lib/notifications.ts` and `lib/validators/index.ts`.
 
@@ -263,6 +263,55 @@ Adding new channel types requires no schema migration — only new code in `lib/
 **Retention:** The `notification-log-cleanup` daily cron job deletes rows older than 30 days.
 
 **Logging is fire-and-forget:** a failed DB insert never blocks or fails the actual notification delivery.
+
+### `webhook_endpoints`
+
+User-configured outbound HTTPS endpoints that receive task lifecycle events for automation (Zapier, Make, n8n, custom backends). Distinct from `notification_channels` (personal alerts) — this table is for machine-readable automation events.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | FK → users (cascade) |
+| `name` | text | Human-readable label for the endpoint (max 100 chars) |
+| `url` | text | HTTPS endpoint URL (enforced at delivery time; max 2000 chars) |
+| `secret_encrypted` | text | Optional AES-256-GCM encrypted signing secret (null = no signing). Decrypted at delivery to produce `X-Momo-Signature: sha256=<hex>` |
+| `events` | text[] | Subscribed event types. Empty array or null = subscribe to all events |
+| `enabled` | boolean | Whether deliveries are attempted for this endpoint |
+| `created_at` | timestamp (tz) | When the endpoint was created |
+| `updated_at` | timestamp (tz) | When the endpoint was last modified |
+
+**Index:** `user_id` — for the per-user endpoint list query.
+
+**Limit:** Max 10 endpoints per user (enforced in `lib/webhooks.ts::createWebhookEndpoint`).
+
+**Secret handling:** The plain-text secret is never stored. It is encrypted with AES-256-GCM via `encryptSecret` (same `TOTP_ENCRYPTION_KEY` as TOTP secrets), decrypted at delivery time, and never returned to the client. The API only exposes `hasSecret: boolean`.
+
+**Supported events:** `task.created`, `task.completed`, `task.deleted`, `task.updated`
+
+### `webhook_deliveries`
+
+Delivery log for the outbound webhook system. Each row records one HTTP POST attempt to a `webhook_endpoints` endpoint.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `endpoint_id` | uuid | FK → webhook_endpoints (cascade) |
+| `user_id` | uuid | FK → users (cascade) |
+| `event` | text | Event type that triggered the delivery (e.g. `task.created`, `task.test`) |
+| `payload` | jsonb | Full JSON payload that was sent to the endpoint |
+| `http_status` | integer | HTTP response status code; null if the request failed before a response |
+| `status` | text | Delivery outcome: `"success"` (2xx response) or `"failure"` |
+| `error_message` | text | Error detail on failure (response body excerpt or exception message; max 500 chars); null on success |
+| `duration_ms` | integer | End-to-end delivery time in milliseconds |
+| `delivered_at` | timestamp (tz) | When the delivery attempt was made |
+
+**Indexes:**
+- `endpoint_id` — covers the per-endpoint delivery history query
+- `(user_id, delivered_at)` — covers the cleanup DELETE
+
+**Retention:** The `webhook-delivery-cleanup` daily cron job deletes rows older than 30 days.
+
+**Logging is fire-and-forget:** a failed DB insert to this table never blocks or fails the actual webhook delivery.
 
 ---
 
