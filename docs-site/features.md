@@ -579,6 +579,95 @@ Each request sends a JSON body like this:
 
 To verify the HMAC signature on your server, compute `HMAC-SHA256(secret, rawBody)` and compare it (constant-time) to the hex value after `sha256=` in the `X-Momo-Signature` header.
 
+## Outbound webhooks (task automation)
+
+**Settings → Outbound Webhooks** lets you connect Momo to any automation platform — Zapier, Make, n8n, Home Assistant, or your own backend. Every time a task changes, Momo fires an HTTP POST to your configured endpoints.
+
+This is separate from the notification webhook channel above. Notification webhooks deliver personal alerts ("Daily Quest ready"). Outbound webhooks deliver structured task lifecycle events for automation.
+
+### Events
+
+| Event | When it fires |
+|---|---|
+| `task.created` | A new task is added |
+| `task.completed` | A task is marked done |
+| `task.deleted` | A task is deleted |
+| `task.updated` | A task's title, priority, due date, or other fields change |
+
+### Setting up an endpoint
+
+1. Go to **Settings → Outbound Webhooks** and click **+ Add endpoint**
+2. Give the endpoint a name (e.g. "n8n automation")
+3. Enter your HTTPS URL — Momo only sends to `https://` addresses
+4. Optionally add a **signing secret** — Momo will sign every request with HMAC-SHA256 so your server can verify it came from Momo (see below)
+5. Choose which events to subscribe to — leave all unchecked to receive every event
+6. Click **Save**, then **Send test** to check your endpoint receives the request
+
+You can configure up to 10 endpoints per account.
+
+### Payload shape
+
+Every request is a JSON POST with these headers:
+
+```
+Content-Type: application/json
+X-Momo-Event: task.created
+X-Momo-Signature: sha256=<hex>   (only when a signing secret is configured)
+```
+
+The body looks like this:
+
+```json
+{
+  "event": "task.created",
+  "timestamp": "2026-04-18T10:23:00.000Z",
+  "task": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Write weekly report",
+    "type": "ONE_TIME",
+    "priority": "HIGH",
+    "topicId": "a1b2c3d4-...",
+    "dueDate": "2026-04-20",
+    "completedAt": null,
+    "createdAt": "2026-04-18T10:23:00.000Z"
+  }
+}
+```
+
+### Verifying signatures
+
+If you set a signing secret, verify the signature in your server before trusting the payload:
+
+**Node.js**
+```js
+const crypto = require("crypto");
+
+function isValidSignature(secret, rawBody, signatureHeader) {
+  const expected = "sha256=" + crypto
+    .createHmac("sha256", secret)
+    .update(rawBody)
+    .digest("hex");
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signatureHeader));
+}
+```
+
+**Python**
+```python
+import hmac, hashlib
+
+def is_valid_signature(secret: str, raw_body: bytes, signature_header: str) -> bool:
+    expected = "sha256=" + hmac.new(
+        secret.encode(), raw_body, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature_header)
+```
+
+### Delivery history
+
+Expand any endpoint in the list to see its last 50 delivery attempts — timestamp, event type, HTTP status, and response time. Use this to debug failed deliveries or confirm your automation received the event.
+
+Delivery logs are automatically deleted after 30 days.
+
 ### Notification history
 
 Not sure if your notifications are being delivered? Go to **Settings → Notification History** to see the last 50 delivery attempts across all channels. Each entry shows:

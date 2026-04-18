@@ -192,6 +192,8 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 **Microsoft Sign In** — log in with your personal Microsoft account (Outlook.com, Hotmail, Live, Xbox). Work / school / Microsoft 365 accounts are intentionally not supported — Momo pins the tenant to `consumers`. [Setup guide →](/momo/oauth-setup#microsoft-private-accounts-only)
 
+**Outbound Webhooks** — connect Momo to Zapier, Make, n8n, Home Assistant, or any custom backend. Configure up to 10 HTTPS endpoints and receive task lifecycle events (`task.created`, `task.completed`, `task.deleted`, `task.updated`) as signed JSON POSTs. Each endpoint can subscribe to specific events and optionally verify requests with HMAC-SHA256 signatures. [See Features →](/momo/features#outbound-webhooks-task-automation)
+
 **Alexa Skill** — "Alexa, open Momo. Add dentist appointment." Add tasks, hear your Daily Quest, manage your wishlist by voice. Account linking is automatic — tap "Link Account" in the Alexa app and an API key is created for you. Lambda code lives in `alexa-skill/`. [Read the guide →](/momo/alexa-skill)
 
 **Telegram & Email notification channels** — Push notifications via a personal Telegram bot (Bot Token + Chat ID, free) or by email (instance-wide SMTP). Both join ntfy.sh and Pushover under **Settings → Additional Notification Channels**. The email channel uses a stylised newsletter template with a tappable "Open Momo" button. [See Features →](/momo/features#additional-notification-channels)
