@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-18
+
 ### Added
 
 - **Outbound Webhook System** — User-configurable HTTP POST endpoints for automation integrations (Zapier, Make, n8n, custom backends). Four task lifecycle events: `task.created`, `task.completed`, `task.deleted`, `task.updated`. Payload includes full task metadata as a stable JSON envelope. Optional HMAC-SHA256 request signing (`X-Momo-Signature` header). Secrets stored encrypted at rest (AES-256-GCM, reusing `TOTP_ENCRYPTION_KEY`). Up to 10 endpoints per user, per-endpoint event subscriptions (or subscribe to all). Delivery is fire-and-forget with a 5-second timeout. Delivery history (last 50 attempts per endpoint) with HTTP status, duration, and error messages. 30-day log retention via daily cron job. New DB tables: `webhook_endpoints` and `webhook_deliveries` (migration `0031_bumpy_star_brand.sql`). New API routes: `GET/POST /api/settings/webhooks`, `PATCH/DELETE/GET /api/settings/webhooks/:id`, `POST /api/settings/webhooks/:id/test`. New Settings section with full UI. All translation keys added to de/en/fr/es/nl.
