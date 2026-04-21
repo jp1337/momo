@@ -8,7 +8,7 @@
 
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
-import { taskCompletions } from "@/lib/db/schema";
+import { taskCompletions, questPostponements } from "@/lib/db/schema";
 import { getWeeklyReview } from "@/lib/weekly-review";
 import { createTestUser, createTestTopic, createTestTask } from "./helpers/fixtures";
 
@@ -84,6 +84,36 @@ describe("getWeeklyReview", () => {
     expect(review.topTopics.length).toBeGreaterThan(0);
     expect(review.topTopics[0].title).toBe("Work");
     expect(review.topTopics[0].completions).toBe(2);
+  });
+
+  it("counts postponements in the current week", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, { title: "Postponable" });
+
+    // Insert two postponement records within the current week
+    const now = new Date();
+    await db.insert(questPostponements).values([
+      { userId: user.id, taskId: task.id, postponedAt: now },
+      { userId: user.id, taskId: task.id, postponedAt: now },
+    ]);
+
+    const review = await getWeeklyReview(user.id, TZ);
+    expect(review.postponementsThisWeek).toBe(2);
+  });
+
+  it("does not count postponements from outside the current week", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, { title: "Old Quest" });
+
+    const eightDaysAgo = new Date(Date.now() - 8 * 86_400_000);
+    await db.insert(questPostponements).values({
+      userId: user.id,
+      taskId: task.id,
+      postponedAt: eightDaysAgo,
+    });
+
+    const review = await getWeeklyReview(user.id, TZ);
+    expect(review.postponementsThisWeek).toBe(0);
   });
 
   it("isolates data by user", async () => {

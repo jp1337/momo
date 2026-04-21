@@ -202,6 +202,49 @@ describe("getUserStatistics", () => {
     expect(stats.completionsByWeekday).toHaveLength(7);
   });
 
+  it("coinsEarnedAllTime sums coinValues from task_completions", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    // Create two tasks with known coinValues
+    const task1 = await createTestTask(user.id, { coinValue: 5 });
+    const task2 = await createTestTask(user.id, { coinValue: 3 });
+
+    // Insert completions referencing those tasks
+    await db.insert(taskCompletions).values([
+      { taskId: task1.id, userId: user.id, completedAt: new Date() },
+      { taskId: task2.id, userId: user.id, completedAt: new Date() },
+    ]);
+
+    const stats = await getUserStatistics(user.id);
+    // The sum must reflect the joined coinValues: 5 + 3 = 8
+    expect(stats.coinsEarnedAllTime).toBe(8);
+  });
+
+  it("completionsByWeekday[dow] increments for the correct weekday slot", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, { coinValue: 1 });
+
+    // Pick a fixed Monday (ISODOW 1 → index 0) that is safely in the past
+    // 2024-01-08 is a known Monday
+    const monday = new Date("2024-01-08T12:00:00Z");
+    await db.insert(taskCompletions).values({
+      taskId: task.id,
+      userId: user.id,
+      completedAt: monday,
+    });
+
+    // Also insert a Wednesday (ISODOW 3 → index 2)
+    const wednesday = new Date("2024-01-10T12:00:00Z");
+    await db.insert(taskCompletions).values({
+      taskId: task.id,
+      userId: user.id,
+      completedAt: wednesday,
+    });
+
+    const stats = await getUserStatistics(user.id);
+    expect(stats.completionsByWeekday[0]).toBeGreaterThanOrEqual(1); // Monday
+    expect(stats.completionsByWeekday[2]).toBeGreaterThanOrEqual(1); // Wednesday
+  });
+
   it("returns achievements array (may be empty without seeding)", async () => {
     const user = await createTestUser({ timezone: TZ });
 

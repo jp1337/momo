@@ -74,9 +74,11 @@ __tests__/
 ├── calendar.test.ts                 # 15 tests: token CRUD, ICS format, UID, RRULE
 ├── complete-task.test.ts            # 10 tests: completion, coins, achievements
 ├── daily-quest-mutations.test.ts    # 22 tests: postpone, force-select, energy reselect, pin
+├── date-utils.test.ts               # 17 tests: getLocalDateString, getLocalTomorrowString, getLocalYesterdayString, getLocalDayBeforeYesterdayString
 ├── energy.test.ts                   # 13 tests: recordEnergyCheckin, history, counts, streak
 ├── gamification-extras.test.ts      # 21 tests: levels, getUserStats, achievements
 ├── habit-streak.test.ts             # 25 tests: computeHabitStreak (pure function, no DB)
+├── notification-log.test.ts         # 4 tests: cleanupNotificationLog — deletes old, keeps recent, user isolation
 ├── select-daily-quest.test.ts       # 13 tests: priority tiers, exclusions, energy
 ├── sessions.test.ts                 # 13 tests: extractIp, parseUserAgent, listUserSessions, revokeSession
 ├── task-crud.test.ts                # 20 tests: getUserTasks, getTaskById, createTask, updateTask, deleteTask
@@ -90,16 +92,18 @@ __tests__/
 ├── habits-db.test.ts                # 18 tests: getHabitsWithHistory, getEarliestCompletion, buildYearOptions, computeHabitStreak
 ├── onboarding.test.ts               # 6 tests: markOnboardingCompleted, isOnboardingCompleted
 ├── rate-limit.test.ts               # 8 tests: checkRateLimit — fixed window, key isolation, window expiry
-├── statistics.test.ts               # 18 tests: computeStreakHistory (pure), getUserStatistics, getAdminStatistics
+├── statistics.test.ts               # 20 tests: computeStreakHistory (pure), getUserStatistics (coinsEarnedAllTime value, completionsByWeekday index), getAdminStatistics
 ├── templates.test.ts                # 18 tests: getTemplate (pure), importTopicFromTemplate
 ├── totp.test.ts                     # 35 tests: generateTotpSetup, verifyTotpCode, enableTotpForUser, disableTotpForUser,
 │                                    #           regenerateBackupCodes, consumeBackupCode (single-use), getUserTotpStatus,
 │                                    #           userHasSecondFactor, signSetupToken/verifySetupToken, readSessionTokenFromCookieStore
-├── weekly-review.test.ts            # 6 tests: completions, coins, streak, top topics
+├── webhooks.test.ts                 # 22 tests: listWebhookEndpoints, createWebhookEndpoint (limit), updateWebhookEndpoint (secret semantics),
+│                                    #           deleteWebhookEndpoint, listWebhookDeliveries, cleanupWebhookDeliveries
+├── weekly-review.test.ts            # 8 tests: completions, coins, streak, postponementsThisWeek, top topics, user isolation
 └── wishlist.test.ts                 # 18 tests: CRUD, markAsBought, unmarkAsBought, getBudgetSummary
 ```
 
-**Total: 437 tests across 25 files.**
+**Total: 491 tests across 28 files.**
 
 ---
 
