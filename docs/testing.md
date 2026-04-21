@@ -85,11 +85,15 @@ __tests__/
 ├── update-streak.test.ts            # 7 tests: streak logic, Cassiopeia, idempotency
 ├── users.test.ts                    # 8 tests: deleteUser (cascade), updateUserProfile (EMAIL_TAKEN)
 ├── vacation-mode.test.ts            # 15 tests: activate, deactivate, auto-end
+├── habits-db.test.ts                # 18 tests: getHabitsWithHistory, getEarliestCompletion, buildYearOptions, computeHabitStreak
+├── onboarding.test.ts               # 6 tests: markOnboardingCompleted, isOnboardingCompleted
+├── statistics.test.ts               # 18 tests: computeStreakHistory (pure), getUserStatistics, getAdminStatistics
+├── templates.test.ts                # 18 tests: getTemplate (pure), importTopicFromTemplate
 ├── weekly-review.test.ts            # 6 tests: completions, coins, streak, top topics
 └── wishlist.test.ts                 # 18 tests: CRUD, markAsBought, unmarkAsBought, getBudgetSummary
 ```
 
-**Total: 294 tests across 17 files.**
+**Total: 366 tests across 21 files.**
 
 ---
 
