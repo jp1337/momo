@@ -59,8 +59,8 @@ describe("getUserTopics", () => {
     const result = await getUserTopics(user.id);
     const found = result.find((t) => t.id === topic.id);
     expect(found).toBeDefined();
-    // TopicWithCounts includes taskCount (open tasks)
-    expect((found as Record<string, unknown>).taskCount).toBeGreaterThanOrEqual(2);
+    // TopicWithCounts includes taskCount
+    expect(found!.taskCount).toBeGreaterThanOrEqual(2);
   });
 });
 
@@ -105,6 +105,8 @@ describe("createTopic", () => {
       title: "New Project",
       icon: "faFolder",
       color: "#4a7c59",
+      priority: "NORMAL",
+      sequential: false,
     });
 
     expect(topic.id).toBeDefined();
@@ -119,6 +121,7 @@ describe("createTopic", () => {
       title: "Sequential",
       icon: "faLink",
       color: "#4a7c59",
+      priority: "NORMAL",
       sequential: true,
     });
 
@@ -132,6 +135,8 @@ describe("createTopic", () => {
       title: "Sport",
       icon: "faDumbbell",
       color: "#ff6b6b",
+      priority: "NORMAL",
+      sequential: false,
       defaultEnergyLevel: "HIGH",
     });
 
