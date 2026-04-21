@@ -7,15 +7,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-04-22
+
 ### Added
 
-- **Cassiopeia** — Das "Streak Shield" Feature wurde vollständig zu **Cassiopeia** umbenannt (Idee der Schwester). Alle UI-Labels, Onboarding-Texte, Push-Notifications und Übersetzungen (DE/EN/FR/ES/NL) verwenden jetzt den Namen "Cassiopeia". Das Sternzeichen-Emoji ✨ ersetzt 🛡️ in der Dashboard-Streak-Anzeige. Interne Code- und DB-Namen bleiben unverändert (`streakShieldAvailable`, `streakShieldUsedMonth`).
+- **Cassiopeia** — Das "Streak Shield" Feature wurde vollständig zu **Cassiopeia** umbenannt (Idee der Schwester). Alle UI-Labels, Onboarding-Texte, Push-Notifications und Übersetzungen (DE/EN/FR/ES/NL) verwenden jetzt den Namen "Cassiopeia" mit dem Emoji ✨. Interne Code- und DB-Namen bleiben unverändert (`streakShieldAvailable`, `streakShieldUsedMonth`).
 
-- **Integrationstests vollständig: 29 → 491 Tests** — Die Test-Suite deckt jetzt die gesamte `lib/`-Schicht ab. Phase 1 (144 Tests): Daily Quest Mutations, Task Mutations, Habit Streaks, Vacation Mode, Gamification. Phase 2 (294 Tests): Task CRUD, Topics CRUD, Wishlist, Energy Check-ins, Sessions, API Keys, Calendar Feeds, Weekly Review, User Account Management. Phase 3 (366 Tests): statistics, habits, templates, onboarding. Phase 4 (437 Tests): TOTP (35 Tests: Setup, Code-Verifikation, enable/disable, Backup-Code Single-Use-Garantie, signed Setup-Token-Cookie), DSGVO-Export, Email-Templates (XSS-Escaping), Rate-Limiter. Phase 5 (491 Tests): `date-utils.ts` (17 Tests: reine Timezone-Arithmetik), `webhooks.ts` (22 Tests: Endpoint-CRUD, Secret-Verschlüsselung, Cleanup-Cron), `notification-log.ts` (4 Tests: Cleanup-Cron), plus Verbesserungen an bestehenden Tests (`coinsEarnedAllTime`-Werttest, `completionsByWeekday`-Indextest, `postponementsThisWeek`-Wochentest, stärkerer TOTP-Verifikationstest). 28 Test-Dateien, vollständige `lib/`-Abdeckung.
+- **Integrationstests vollständig: 29 → 491 Tests** — Die Test-Suite deckt jetzt die gesamte `lib/`-Schicht ab (28 Test-Dateien). Phase 1–5 abgeschlossen: Daily Quest Lifecycle, Task CRUD/Mutations, Habit Streaks, Vacation Mode, Gamification, TOTP/2FA (inkl. Backup-Code Single-Use-Garantie), DSGVO-Export, Email-Templates, Rate-Limiter, Outbound Webhooks, Notification-Log-Cleanup, reine Timezone-Arithmetik. Laufzeit ~25 Sekunden, vollständige Isolation zwischen Test-Dateien, Fixtures für User/Topic/Task/WishlistItem/ApiKey.
 
 ### Fixed
 
-- **Daily Quest: Briefing und App zeigen unterschiedliche Quest** — Das Morning Briefing übergab die User-Timezone korrekt an `selectDailyQuest`, das Dashboard jedoch nicht (UTC-Fallback). Dadurch konnte das Dashboard die Quest des Briefings als "gestern" einstufen und eine neue Quest auswählen — besonders für User in nicht-UTC-Zeitzonen nach Mitternacht UTC. Fix: Das Dashboard liest die gespeicherte User-Timezone (`users.timezone`) vor der Quest-Auswahl und übergibt sie an `selectDailyQuest`.
+- **Daily Quest: Briefing und App zeigen unterschiedliche Quest** — Das Morning Briefing übergab die User-Timezone korrekt an `selectDailyQuest`, das Dashboard jedoch nicht (UTC-Fallback). Fix: Das Dashboard liest die gespeicherte User-Timezone vor der Quest-Auswahl und übergibt sie an `selectDailyQuest`.
 
 ## [0.3.0] - 2026-04-18
 
