@@ -86,15 +86,14 @@ describe("uncompleteTask", () => {
   });
 
   it("never sets coins below zero", async () => {
-    // User with 0 coins tries to uncomplete — GREATEST clamp prevents negative
+    // User with 0 coins tries to uncomplete — GREATEST clamp prevents negative.
+    // taskCompletions has no coinsEarned column, so just insert the row.
     const user = await createTestUser({ timezone: TZ, coins: 0 });
     const task = await createTestTask(user.id, { completedAt: new Date(), coinValue: 100 });
 
-    // Manually insert a completion record to make uncompleteTask think it was completed
     await db.insert(taskCompletions).values({
       taskId: task.id,
       userId: user.id,
-      coinsEarned: 100,
     });
 
     await uncompleteTask(task.id, user.id);
