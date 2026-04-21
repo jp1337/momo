@@ -73,10 +73,20 @@ export default async function DashboardPage() {
 
   const todayStr = new Date().toISOString().split("T")[0];
 
+  // Fetch timezone first — selectDailyQuest uses it to compute "today" correctly.
+  // Without this, the UTC-based fallback can clear the quest set by the briefing
+  // for users in non-UTC timezones who open the app after midnight UTC.
+  const tzRow = await db
+    .select({ timezone: users.timezone })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const userTimezone = tzRow[0]?.timezone ?? null;
+
   // Fetch quest, stats, completion count, postpone data, and quick wins in parallel
   const [rawQuest, stats, completionCountRows, userPostponeData, quickWinTasks, fiveMinCountRows] = await Promise.all([
-    // Try to get (or select) the daily quest
-    selectDailyQuest(userId).catch(() => getDailyQuestIncludingCompleted(userId)),
+    // Try to get (or select) the daily quest — pass timezone for consistent date handling
+    selectDailyQuest(userId, userTimezone).catch(() => getDailyQuestIncludingCompleted(userId)),
     getUserStats(userId),
     db
       .select({ count: count() })
@@ -482,7 +492,7 @@ export default async function DashboardPage() {
                 value: `${stats.streakCurrent}d`,
                 sub: (() => {
                   const fire = stats.streakCurrent >= 7 ? "🔥" : stats.streakCurrent >= 3 ? "↑" : "·";
-                  return stats.streakShieldAvailable ? `${fire} 🛡️` : fire;
+                  return stats.streakShieldAvailable ? `${fire} ✨` : fire;
                 })(),
                 icon: faFire as IconDefinition,
                 accent: stats.streakCurrent >= 3 ? "var(--accent-amber)" : "var(--text-muted)",
