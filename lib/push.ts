@@ -1388,8 +1388,8 @@ export async function sendStreakShieldNotification(
   streakCurrent: number
 ): Promise<void> {
   const payload: NotificationPayload & ChannelPayload = {
-    title: `Dein Streak-Schutzschild hat deinen ${streakCurrent}-Tage-Streak gerettet! 🛡️`,
-    body: "Du hast einen Tag ausgelassen, aber dein monatlicher Streak-Schutzschild hat ihn bewahrt.",
+    title: `Deine Cassiopeia hat deinen ${streakCurrent}-Tage-Streak gerettet! ✨`,
+    body: "Du hast einen Tag ausgelassen, aber deine monatliche Cassiopeia hat ihn bewahrt.",
     icon: "/icon-192.png",
     url: "/dashboard",
     tag: "streak-shield",

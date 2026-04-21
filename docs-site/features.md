@@ -373,13 +373,13 @@ When you reach a new level, a celebration animation plays. You cannot level down
 
 Momo tracks how many consecutive days you completed at least one task. Your streak is shown on the dashboard. Miss a day and the streak resets to zero.
 
-#### Streak Shield
+#### Cassiopeia
 
-Once per calendar month, a **Streak Shield** automatically protects your streak when you miss exactly one day. Instead of resetting to zero, your streak stays intact and you receive a notification telling you the shield saved your progress. When a new month begins, the shield recharges.
+Once per calendar month, **Cassiopeia** automatically protects your streak when you miss exactly one day. Instead of resetting to zero, your streak stays intact and you receive a notification telling you Cassiopeia saved your progress. When a new month begins, Cassiopeia recharges.
 
-The dashboard shows a 🛡️ icon next to your streak when the shield is still available this month. After it fires, the icon disappears until next month.
+The dashboard shows a ✨ icon next to your streak when Cassiopeia is still available this month. After it fires, the icon disappears until next month.
 
-The shield only covers a single missed day. If you miss two or more days in a row, the streak resets normally.
+Cassiopeia only covers a single missed day. If you miss two or more days in a row, the streak resets normally.
 
 > **Tip:** Even completing one tiny task keeps the streak alive. On hard days, pick the smallest task on your list.
 

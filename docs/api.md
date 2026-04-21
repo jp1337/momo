@@ -381,7 +381,7 @@ Response:
 - `achievementCoinsEarned` — sum of `coinReward` values for all achievements unlocked in this call (already added to the user's balance; `coinsEarned` covers only the task's own coin value).
 - `unlockedAchievements` — each entry now includes `rarity` (`"common"` | `"rare"` | `"epic"` | `"legendary"`) and `coinReward`.
 - `questStreakCurrent` — consecutive days the daily quest was completed (only incremented when `task.isDailyQuest === true`).
-- `shieldUsed` is `true` when the user's monthly Streak Shield was consumed to preserve the streak (exactly one day missed, shield not yet used this calendar month). When the shield fires, a notification is sent via all configured channels.
+- `shieldUsed` is `true` when the user's monthly **Cassiopeia** (formerly "Streak Shield") was consumed to preserve the streak (exactly one day missed, shield not yet used this calendar month). When it fires, a notification is sent via all configured channels.
 
 ### DELETE /api/tasks/:id/complete
 

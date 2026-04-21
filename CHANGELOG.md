@@ -7,6 +7,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Cassiopeia** — Das "Streak Shield" Feature wurde vollständig zu **Cassiopeia** umbenannt (Idee der Schwester). Alle UI-Labels, Onboarding-Texte, Push-Notifications und Übersetzungen (DE/EN/FR/ES/NL) verwenden jetzt den Namen "Cassiopeia". Das Sternzeichen-Emoji ✨ ersetzt 🛡️ in der Dashboard-Streak-Anzeige. Interne Code- und DB-Namen bleiben unverändert (`streakShieldAvailable`, `streakShieldUsedMonth`).
+
+### Fixed
+
+- **Daily Quest: Briefing und App zeigen unterschiedliche Quest** — Das Morning Briefing übergab die User-Timezone korrekt an `selectDailyQuest`, das Dashboard jedoch nicht (UTC-Fallback). Dadurch konnte das Dashboard die Quest des Briefings als "gestern" einstufen und eine neue Quest auswählen — besonders für User in nicht-UTC-Zeitzonen nach Mitternacht UTC. Fix: Das Dashboard liest die gespeicherte User-Timezone (`users.timezone`) vor der Quest-Auswahl und übergibt sie an `selectDailyQuest`.
+
 ## [0.3.0] - 2026-04-18
 
 ### Added
