@@ -229,13 +229,13 @@ describe("selectDailyQuest", () => {
   it("energy preference: prefers a task matching the user's energy level", async () => {
     const user = await createTestUser({ timezone: TZ, energyLevel: "HIGH" });
 
-    // Untagged task (no energy level)
+    // LOW energy task — does NOT match HIGH preference, falls to fallback pool
     await createTestTask(user.id, {
-      title: "Untagged Task",
+      title: "Low Energy Task",
       type: "ONE_TIME",
-      energyLevel: null,
+      energyLevel: "LOW",
     });
-    // HIGH energy task — should be preferred
+    // HIGH energy task — strictly matches, so the preferred subset is deterministic
     const highEnergy = await createTestTask(user.id, {
       title: "High Energy Task",
       type: "ONE_TIME",
