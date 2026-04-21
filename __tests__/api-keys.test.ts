@@ -52,6 +52,7 @@ describe("createApiKey", () => {
     const { plaintext, record } = await createApiKey(user.id, {
       name: "Test Key",
       readonly: false,
+      expiresAt: null,
     });
 
     expect(plaintext).toMatch(/^momo_live_/);
@@ -67,6 +68,7 @@ describe("createApiKey", () => {
     const { record } = await createApiKey(user.id, {
       name: "Read Key",
       readonly: true,
+      expiresAt: null,
     });
 
     expect(record.readonly).toBe(true);
@@ -91,7 +93,7 @@ describe("createApiKey", () => {
 describe("listApiKeys", () => {
   it("returns non-revoked keys for the user", async () => {
     const user = await createTestUser({ timezone: TZ });
-    await createApiKey(user.id, { name: "Active Key", readonly: false });
+    await createApiKey(user.id, { name: "Active Key", readonly: false, expiresAt: null });
 
     const keys = await listApiKeys(user.id);
     expect(keys.find((k) => k.name === "Active Key")).toBeDefined();
@@ -99,7 +101,7 @@ describe("listApiKeys", () => {
 
   it("excludes revoked keys", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const { record } = await createApiKey(user.id, { name: "Will Revoke", readonly: false });
+    const { record } = await createApiKey(user.id, { name: "Will Revoke", readonly: false, expiresAt: null });
     await revokeApiKey(user.id, record.id);
 
     const keys = await listApiKeys(user.id);
@@ -109,7 +111,7 @@ describe("listApiKeys", () => {
   it("isolates keys by user", async () => {
     const userA = await createTestUser({ timezone: TZ });
     const userB = await createTestUser({ timezone: TZ });
-    await createApiKey(userA.id, { name: "A's Key", readonly: false });
+    await createApiKey(userA.id, { name: "A's Key", readonly: false, expiresAt: null });
 
     const keys = await listApiKeys(userB.id);
     expect(keys).toHaveLength(0);
@@ -127,7 +129,7 @@ describe("listApiKeys", () => {
 describe("revokeApiKey", () => {
   it("sets revokedAt on the key record", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const { record } = await createApiKey(user.id, { name: "Revokable", readonly: false });
+    const { record } = await createApiKey(user.id, { name: "Revokable", readonly: false, expiresAt: null });
 
     await revokeApiKey(user.id, record.id);
 
@@ -138,7 +140,7 @@ describe("revokeApiKey", () => {
   it("throws when key belongs to another user", async () => {
     const userA = await createTestUser({ timezone: TZ });
     const userB = await createTestUser({ timezone: TZ });
-    const { record } = await createApiKey(userA.id, { name: "A Key", readonly: false });
+    const { record } = await createApiKey(userA.id, { name: "A Key", readonly: false, expiresAt: null });
 
     await expect(revokeApiKey(userB.id, record.id)).rejects.toThrow();
   });
@@ -152,6 +154,7 @@ describe("resolveApiKeyUser", () => {
     const { plaintext, record } = await createApiKey(user.id, {
       name: "Valid Key",
       readonly: false,
+      expiresAt: null,
     });
 
     const resolved = await resolveApiKeyUser(plaintext);
@@ -165,6 +168,7 @@ describe("resolveApiKeyUser", () => {
     const { plaintext } = await createApiKey(user.id, {
       name: "Read Only",
       readonly: true,
+      expiresAt: null,
     });
 
     const resolved = await resolveApiKeyUser(plaintext);
@@ -176,6 +180,7 @@ describe("resolveApiKeyUser", () => {
     const { plaintext, record } = await createApiKey(user.id, {
       name: "Revoked",
       readonly: false,
+      expiresAt: null,
     });
     await revokeApiKey(user.id, record.id);
 
