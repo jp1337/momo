@@ -1,8 +1,8 @@
 # Automated Tests
 
 Momo uses **Vitest** for integration tests against a real PostgreSQL database.
-The tests cover the three most critical business-logic functions:
-`completeTask`, `selectDailyQuest`, and `updateStreak`.
+The suite covers the critical business-logic functions across daily quest selection,
+task mutations, gamification, habit streaks, and vacation mode.
 
 ---
 
@@ -64,14 +64,21 @@ TEST_DATABASE_URL="postgresql://user:pass@host:5432/mytest" npm test
 ```
 __tests__/
 ├── helpers/
-│   ├── global-setup.ts   # runs once: DB creation + migrations
-│   ├── setup.ts          # runs per-file: seed achievements + reset user data
-│   ├── db.ts             # resetUserData() helper
-│   └── fixtures.ts       # createTestUser / createTestTopic / createTestTask
-├── update-streak.test.ts       # 7 tests: streak logic, shield, idempotency
-├── select-daily-quest.test.ts  # 12 tests: priority tiers, exclusions, energy
-└── complete-task.test.ts       # 10 tests: completion, coins, achievements
+│   ├── global-setup.ts              # runs once: DB creation + migrations
+│   ├── setup.ts                     # runs per-file: seed achievements + reset user data
+│   ├── db.ts                        # resetUserData() helper
+│   └── fixtures.ts                  # createTestUser / createTestTopic / createTestTask
+├── complete-task.test.ts            # 10 tests: completion, coins, achievements
+├── daily-quest-mutations.test.ts    # 22 tests: postpone, force-select, energy reselect, pin
+├── gamification-extras.test.ts      # 21 tests: levels, getUserStats, achievements
+├── habit-streak.test.ts             # 25 tests: computeHabitStreak (pure function, no DB)
+├── select-daily-quest.test.ts       # 13 tests: priority tiers, exclusions, energy
+├── task-mutations.test.ts           # 31 tests: uncomplete, snooze, bulk, reorder, breakdown
+├── update-streak.test.ts            # 7 tests: streak logic, Cassiopeia, idempotency
+└── vacation-mode.test.ts            # 15 tests: activate, deactivate, auto-end
 ```
+
+**Total: 144 tests across 8 files.**
 
 ---
 
@@ -81,12 +88,12 @@ __tests__/
 - Idempotent when streak already updated today
 - Starts at 1 for a fresh user
 - Increments when last completion was yesterday
-- Resets when gap is 2+ days and no shield
-- Shield saves streak when exactly one day was missed
-- Shield not activated when already used this month
+- Resets when gap is 2+ days and no Cassiopeia available
+- Cassiopeia saves streak when exactly one day was missed
+- Cassiopeia not activated when already used this month
 - `streakMax` grows when current exceeds previous maximum
 
-### `selectDailyQuest` (12 tests)
+### `selectDailyQuest` (13 tests)
 - Priority 1: oldest overdue task wins
 - Priority 2: HIGH-priority topic subtask beats pool
 - Priority 3: due recurring task beats random pool
@@ -97,8 +104,8 @@ __tests__/
 - Completed tasks excluded
 - Idempotent: existing quest returned without re-selection
 - Sequential topic: only first open task is eligible
-- Energy preference: matching task preferred
-- Energy fallback: returns any task when no match
+- Energy preference: explicitly-tagged matching task preferred
+- Energy fallback: returns any task when no exact match
 - Returns null when no eligible tasks
 
 ### `completeTask` (10 tests)
@@ -107,9 +114,73 @@ __tests__/
 - Coins awarded correctly
 - Double coins for tasks postponed 3+ times
 - Streak incremented when last completion was yesterday
-- Shield activated on one-day gap
+- Cassiopeia activated on one-day gap
 - `first_task` achievement unlocked on first completion
 - Error on double-completing a ONE_TIME task
 - Error when task belongs to a different user
 - Quest streak incremented when `isDailyQuest = true`
 - Error on completing a paused (vacation mode) task
+
+### `postponeDailyQuest`, `forceSelectDailyQuest`, `reselectQuestForEnergy`, `pinTaskAsDailyQuest` (22 tests)
+- Postpone: clears `isDailyQuest`, sets `snoozedUntil = tomorrow`, increments counter
+- Postpone: inserts `questPostponements` analytics row
+- Postpone: daily counter resets on a new day
+- Postpone: throws `LIMIT_REACHED` when limit exhausted
+- Force-select: returns null when no eligible tasks
+- Force-select: clears old quest before selecting new one
+- Force-select: HIGH-priority topic subtask preferred via tier 2
+- Force-select: prefers energy-matching tasks when energy provided
+- Energy reselect: no-op when quest is completed / untagged / already matching
+- Energy reselect: swaps quest when energy mismatches and better candidate exists
+- Energy reselect: keeps current quest when no better candidate
+- Pin: sets new quest, clears old one
+- Pin: returns null for wrong user / completed / snoozed-past-today tasks
+
+### `uncompleteTask`, `snoozeTask`, `unsnoozeTask`, `bulkUpdateTasks`, `reorderTasks`, `promoteTaskToTopic`, `breakdownTask` (31 tests)
+- Uncomplete: clears `completedAt`, deletes most recent completion record
+- Uncomplete: deducts coins (GREATEST clamp — never goes negative)
+- Uncomplete: throws for RECURRING tasks / non-completed tasks
+- Snooze: sets `snoozedUntil`, clears `isDailyQuest` if active quest
+- Snooze: throws for completed tasks / wrong user
+- Unsnooze: clears `snoozedUntil`, throws for wrong user
+- Bulk delete: removes specified tasks, ignores other users' tasks
+- Bulk complete: marks ONE_TIME tasks done, skips RECURRING and already-completed
+- Bulk changeTopic: moves tasks to topic (or null to remove), validates topic ownership
+- Bulk setPriority: updates priority on all specified tasks
+- Reorder: updates `sortOrder` to match array index
+- Reorder: throws when a task id doesn't belong to the topic
+- PromoteToTopic: creates topic from task, throws if already in a topic
+- Breakdown: creates topic + N subtasks, deletes original, increments `totalTasksCreated`
+- Recurrence (WEEKDAY/MONTHLY/YEARLY): correct `nextDueDate` computation + Feb-28 clamping
+
+### `computeHabitStreak` (25 tests, pure function — no DB)
+- INTERVAL: consecutive periods build streak, gap resets it
+- INTERVAL: multiple completions in one period collapse to single hit
+- INTERVAL: paused period counts as ok (no break)
+- WEEKDAY: grace rule — period 0 empty starts counting from period 1
+- WEEKDAY: 2-week streak, missed week resets, best streak across runs
+- MONTHLY: grace rule, 2-month and 6-month streaks, missed month resets
+- YEARLY: grace rule, 3-year streak
+- Paused ranges: covered period marked ok in all three calendar types
+- Edge cases: empty completions → 0, empty/undefined paused ranges
+
+### `getVacationStatus`, `activateVacationMode`, `deactivateVacationMode`, `autoEndVacations` (15 tests)
+- Status: returns `active: false` with no vacation, `active: true` with end date
+- Activate: sets `vacationEndDate` on user
+- Activate: pauses RECURRING tasks (`pausedAt`, `pausedUntil`), skips ONE_TIME / completed
+- Activate: clears `isDailyQuest` on the paused quest task
+- Deactivate: clears `vacationEndDate`, clears `pausedAt/pausedUntil`
+- Deactivate: shifts `nextDueDate` forward by actual pause days
+- Deactivate: never sets `nextDueDate` to a past date
+- AutoEnd: deactivates users whose `vacationEndDate < today` (in their TZ)
+- AutoEnd: leaves users whose end date is today or in the future untouched
+
+### `getLevelForCoins`, `getNextLevel`, `getUserStats`, `checkAndUnlockAchievements` (21 tests)
+- Level boundaries for all 10 levels (0→1, 50→2, …, 3000→10)
+- Level titles match definitions; `getNextLevel` returns null at max
+- `getUserStats`: correct coins, streak, level, `streakShieldAvailable` logic
+  (null → true, current month → false, past month → true)
+- Achievements: `first_task` + `streak_3` unlocked at correct thresholds
+- Duplicate-unlock guard: already-earned achievements not re-inserted
+- `coinsAwarded` matches sum of newly unlocked achievement rewards
+- No-op when no thresholds are met
