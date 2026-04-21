@@ -138,6 +138,8 @@ describe("createTask", () => {
     const task = await createTask(user.id, {
       title: "Buy milk",
       type: "ONE_TIME",
+      priority: "NORMAL",
+      coinValue: 1,
     });
 
     expect(task.id).toBeDefined();
@@ -149,8 +151,8 @@ describe("createTask", () => {
   it("increments totalTasksCreated on the user", async () => {
     const user = await createTestUser({ timezone: TZ });
 
-    await createTask(user.id, { title: "Task 1", type: "ONE_TIME" });
-    await createTask(user.id, { title: "Task 2", type: "ONE_TIME" });
+    await createTask(user.id, { title: "Task 1", type: "ONE_TIME", priority: "NORMAL", coinValue: 1 });
+    await createTask(user.id, { title: "Task 2", type: "ONE_TIME", priority: "NORMAL", coinValue: 1 });
 
     const [row] = await db
       .select({ totalTasksCreated: users.totalTasksCreated })
@@ -166,11 +168,15 @@ describe("createTask", () => {
     const t1 = await createTask(user.id, {
       title: "First",
       type: "ONE_TIME",
+      priority: "NORMAL",
+      coinValue: 1,
       topicId: topic.id,
     });
     const t2 = await createTask(user.id, {
       title: "Second",
       type: "ONE_TIME",
+      priority: "NORMAL",
+      coinValue: 1,
       topicId: topic.id,
     });
 
@@ -185,6 +191,8 @@ describe("createTask", () => {
     const task = await createTask(user.id, {
       title: "Energy Inherit",
       type: "ONE_TIME",
+      priority: "NORMAL",
+      coinValue: 1,
       topicId: topic.id,
     });
 
@@ -198,6 +206,8 @@ describe("createTask", () => {
     const task = await createTask(user.id, {
       title: "Override Energy",
       type: "ONE_TIME",
+      priority: "NORMAL",
+      coinValue: 1,
       topicId: topic.id,
       energyLevel: "LOW",
     });
@@ -214,6 +224,8 @@ describe("createTask", () => {
       createTask(userB.id, {
         title: "Stolen topic",
         type: "ONE_TIME",
+        priority: "NORMAL",
+        coinValue: 1,
         topicId: topic.id,
       })
     ).rejects.toThrow("Topic not found or access denied");
@@ -225,6 +237,8 @@ describe("createTask", () => {
     const task = await createTask(user.id, {
       title: "Daily habit",
       type: "RECURRING",
+      priority: "NORMAL",
+      coinValue: 1,
       recurrenceInterval: 1,
     });
 
