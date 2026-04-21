@@ -7,6 +7,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-04-22
+
+### Security
+
+- **DOMPurify 3.3.3 → 3.4.0** — Behebt eine moderate Sicherheitslücke in der Client-seitigen HTML-Sanitisierung.
+- **CI: Explizite Workflow-Permissions** — Der `cleanup-registries`-Job hat jetzt `permissions: {}` statt implizit ererbter Rechte. Behebt CodeQL Code-Scanning-Alerts #1 und #2 (excessive workflow token permissions).
+
+### Changed
+
+- Abhängigkeiten aktualisiert: `tailwindcss`, `@types/node`, `typescript`, `actions/upload-pages-artifact` (4 → 5).
+
 ## [0.3.1] - 2026-04-22
 
 ### Added
