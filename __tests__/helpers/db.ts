@@ -20,6 +20,10 @@ import {
   topics,
   accounts,
   sessions,
+  apiKeys,
+  linkingRequests,
+  webhookEndpoints,
+  webhookDeliveries,
   users,
 } from "@/lib/db/schema";
 
@@ -43,5 +47,9 @@ export async function resetUserData(): Promise<void> {
   await db.delete(topics);
   await db.delete(accounts);
   await db.delete(sessions);
+  await db.delete(apiKeys);
+  await db.delete(linkingRequests);
+  await db.delete(webhookDeliveries);
+  await db.delete(webhookEndpoints);
   await db.delete(users);
 }
