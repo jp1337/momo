@@ -92,16 +92,19 @@ describe("verifyTotpCode", () => {
   it("returns false for a wrong code", async () => {
     const secret = generateSecret();
     const result = await verifyTotpCode(secret, "000000");
-    // Extremely unlikely to be valid
+    // ~1/1000000 chance of collision — acceptable for a security test
     expect(result).toBe(false);
   });
 
-  it("returns false for an all-zero code that is almost certainly wrong", async () => {
-    const secret = generateSecret();
-    // "000000" has a ~1/1000 chance of being the current token — acceptable for a test
-    const result = await verifyTotpCode(secret, "000000");
-    // We can't guarantee it's false (clock could produce 000000), so just check the type
-    expect(typeof result).toBe("boolean");
+  it("returns false for a code generated from a different secret", async () => {
+    const secretA = generateSecret();
+    const secretB = generateSecret();
+    // Generate the current valid code for secretA, then verify against secretB
+    const codeForA = currentCode(secretA);
+    const result = await verifyTotpCode(secretB, codeForA);
+    // Different secrets → the code is almost certainly invalid for secretB
+    // (1/1000000 chance of false-positive — acceptable)
+    expect(result).toBe(false);
   });
 });
 
