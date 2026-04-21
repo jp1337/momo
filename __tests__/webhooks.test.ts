@@ -12,6 +12,7 @@ import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
 import { webhookDeliveries, webhookEndpoints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import type { CreateWebhookEndpointInput } from "@/lib/validators/webhooks";
 import {
   listWebhookEndpoints,
   createWebhookEndpoint,
@@ -26,6 +27,11 @@ import { createTestUser } from "./helpers/fixtures";
 const TZ = "Europe/Berlin";
 const HTTPS_URL = "https://example.com/webhook";
 
+/** Minimal valid input for createWebhookEndpoint. */
+function ep(overrides: Partial<CreateWebhookEndpointInput> = {}): CreateWebhookEndpointInput {
+  return { name: "Test EP", url: HTTPS_URL, events: [], enabled: true, ...overrides };
+}
+
 // ─── listWebhookEndpoints ─────────────────────────────────────────────────────
 
 describe("listWebhookEndpoints", () => {
@@ -37,8 +43,8 @@ describe("listWebhookEndpoints", () => {
 
   it("returns created endpoints in creation order", async () => {
     const user = await createTestUser({ timezone: TZ });
-    await createWebhookEndpoint(user.id, { name: "First", url: HTTPS_URL, events: [] });
-    await createWebhookEndpoint(user.id, { name: "Second", url: HTTPS_URL, events: [] });
+    await createWebhookEndpoint(user.id, ep({ name: "First" }));
+    await createWebhookEndpoint(user.id, ep({ name: "Second" }));
 
     const result = await listWebhookEndpoints(user.id);
     expect(result).toHaveLength(2);
@@ -48,31 +54,26 @@ describe("listWebhookEndpoints", () => {
 
   it("never exposes the raw secret — hasSecret is true when a secret was set", async () => {
     const user = await createTestUser({ timezone: TZ });
-    await createWebhookEndpoint(user.id, {
-      name: "Signed",
-      url: HTTPS_URL,
-      secret: "my-super-secret",
-      events: [],
-    });
+    await createWebhookEndpoint(user.id, ep({ name: "Signed", secret: "my-super-secret" }));
 
-    const [ep] = await listWebhookEndpoints(user.id);
-    expect(ep.hasSecret).toBe(true);
+    const [result] = await listWebhookEndpoints(user.id);
+    expect(result.hasSecret).toBe(true);
     // The summary type has no `secret` field — the raw value must not leak
-    expect("secret" in ep).toBe(false);
+    expect("secret" in result).toBe(false);
   });
 
   it("hasSecret is false when no secret was provided", async () => {
     const user = await createTestUser({ timezone: TZ });
-    await createWebhookEndpoint(user.id, { name: "Unsigned", url: HTTPS_URL, events: [] });
+    await createWebhookEndpoint(user.id, ep({ name: "Unsigned" }));
 
-    const [ep] = await listWebhookEndpoints(user.id);
-    expect(ep.hasSecret).toBe(false);
+    const [result] = await listWebhookEndpoints(user.id);
+    expect(result.hasSecret).toBe(false);
   });
 
   it("isolates endpoints by user", async () => {
     const userA = await createTestUser({ timezone: TZ });
     const userB = await createTestUser({ timezone: TZ });
-    await createWebhookEndpoint(userA.id, { name: "A's endpoint", url: HTTPS_URL, events: [] });
+    await createWebhookEndpoint(userA.id, ep({ name: "A's endpoint" }));
 
     const result = await listWebhookEndpoints(userB.id);
     expect(result).toHaveLength(0);
@@ -84,46 +85,35 @@ describe("listWebhookEndpoints", () => {
 describe("createWebhookEndpoint", () => {
   it("returns the created endpoint summary", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, {
-      name: "My Webhook",
-      url: HTTPS_URL,
-      events: ["task.created"],
-    });
+    const created = await createWebhookEndpoint(
+      user.id,
+      ep({ name: "My Webhook", events: ["task.created"] })
+    );
 
-    expect(ep.name).toBe("My Webhook");
-    expect(ep.url).toBe(HTTPS_URL);
-    expect(ep.events).toEqual(["task.created"]);
-    expect(ep.enabled).toBe(true);
-    expect(ep.hasSecret).toBe(false);
-    expect(ep.id).toBeTruthy();
+    expect(created.name).toBe("My Webhook");
+    expect(created.url).toBe(HTTPS_URL);
+    expect(created.events).toEqual(["task.created"]);
+    expect(created.enabled).toBe(true);
+    expect(created.hasSecret).toBe(false);
+    expect(created.id).toBeTruthy();
   });
 
   it("stores endpoint as disabled when enabled=false is passed", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, {
-      name: "Disabled",
-      url: HTTPS_URL,
-      events: [],
-      enabled: false,
-    });
+    const created = await createWebhookEndpoint(user.id, ep({ name: "Disabled", enabled: false }));
 
-    expect(ep.enabled).toBe(false);
+    expect(created.enabled).toBe(false);
   });
 
   it("throws 'limit_exceeded' when user already has MAX_WEBHOOK_ENDPOINTS endpoints", async () => {
     const user = await createTestUser({ timezone: TZ });
 
-    // Create MAX_WEBHOOK_ENDPOINTS endpoints
     for (let i = 0; i < MAX_WEBHOOK_ENDPOINTS; i++) {
-      await createWebhookEndpoint(user.id, {
-        name: `Endpoint ${i}`,
-        url: HTTPS_URL,
-        events: [],
-      });
+      await createWebhookEndpoint(user.id, ep({ name: `Endpoint ${i}` }));
     }
 
     await expect(
-      createWebhookEndpoint(user.id, { name: "Over limit", url: HTTPS_URL, events: [] })
+      createWebhookEndpoint(user.id, ep({ name: "Over limit" }))
     ).rejects.toThrow("limit_exceeded");
   });
 
@@ -132,16 +122,11 @@ describe("createWebhookEndpoint", () => {
     const userB = await createTestUser({ timezone: TZ });
 
     for (let i = 0; i < MAX_WEBHOOK_ENDPOINTS; i++) {
-      await createWebhookEndpoint(userA.id, {
-        name: `Endpoint ${i}`,
-        url: HTTPS_URL,
-        events: [],
-      });
+      await createWebhookEndpoint(userA.id, ep({ name: `Endpoint ${i}` }));
     }
 
-    // userB should still be able to create endpoints
-    const ep = await createWebhookEndpoint(userB.id, { name: "B's endpoint", url: HTTPS_URL, events: [] });
-    expect(ep.id).toBeTruthy();
+    const created = await createWebhookEndpoint(userB.id, ep({ name: "B's endpoint" }));
+    expect(created.id).toBeTruthy();
   });
 });
 
@@ -150,29 +135,25 @@ describe("createWebhookEndpoint", () => {
 describe("updateWebhookEndpoint", () => {
   it("updates the name", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, { name: "Old Name", url: HTTPS_URL, events: [] });
+    const created = await createWebhookEndpoint(user.id, ep({ name: "Old Name" }));
 
-    const updated = await updateWebhookEndpoint(ep.id, user.id, { name: "New Name" });
+    const updated = await updateWebhookEndpoint(created.id, user.id, { name: "New Name" });
     expect(updated.name).toBe("New Name");
   });
 
   it("updates enabled to false", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, { name: "Active", url: HTTPS_URL, events: [] });
+    const created = await createWebhookEndpoint(user.id, ep({ name: "Active" }));
 
-    const updated = await updateWebhookEndpoint(ep.id, user.id, { enabled: false });
+    const updated = await updateWebhookEndpoint(created.id, user.id, { enabled: false });
     expect(updated.enabled).toBe(false);
   });
 
   it("updates events list", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, {
-      name: "EP",
-      url: HTTPS_URL,
-      events: ["task.created"],
-    });
+    const created = await createWebhookEndpoint(user.id, ep({ events: ["task.created"] }));
 
-    const updated = await updateWebhookEndpoint(ep.id, user.id, {
+    const updated = await updateWebhookEndpoint(created.id, user.id, {
       events: ["task.completed", "task.deleted"],
     });
     expect(updated.events).toEqual(["task.completed", "task.deleted"]);
@@ -180,48 +161,38 @@ describe("updateWebhookEndpoint", () => {
 
   it("sets hasSecret=true when a new secret string is provided", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, { name: "EP", url: HTTPS_URL, events: [] });
-    expect(ep.hasSecret).toBe(false);
+    const created = await createWebhookEndpoint(user.id, ep());
+    expect(created.hasSecret).toBe(false);
 
-    const updated = await updateWebhookEndpoint(ep.id, user.id, { secret: "new-secret" });
+    const updated = await updateWebhookEndpoint(created.id, user.id, { secret: "new-secret" });
     expect(updated.hasSecret).toBe(true);
   });
 
   it("sets hasSecret=false when secret=null is passed (removes secret)", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, {
-      name: "Signed EP",
-      url: HTTPS_URL,
-      secret: "initial-secret",
-      events: [],
-    });
-    expect(ep.hasSecret).toBe(true);
+    const created = await createWebhookEndpoint(user.id, ep({ secret: "initial-secret" }));
+    expect(created.hasSecret).toBe(true);
 
-    const updated = await updateWebhookEndpoint(ep.id, user.id, { secret: null });
+    const updated = await updateWebhookEndpoint(created.id, user.id, { secret: null });
     expect(updated.hasSecret).toBe(false);
   });
 
   it("leaves secret unchanged when secret is omitted (undefined)", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, {
-      name: "Signed",
-      url: HTTPS_URL,
-      secret: "keep-me",
-      events: [],
-    });
+    const created = await createWebhookEndpoint(user.id, ep({ secret: "keep-me" }));
 
     // Update only the name — secret must stay
-    const updated = await updateWebhookEndpoint(ep.id, user.id, { name: "New Name" });
+    const updated = await updateWebhookEndpoint(created.id, user.id, { name: "New Name" });
     expect(updated.hasSecret).toBe(true);
   });
 
   it("throws 'not_found' when endpoint belongs to a different user", async () => {
     const userA = await createTestUser({ timezone: TZ });
     const userB = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(userA.id, { name: "A's EP", url: HTTPS_URL, events: [] });
+    const created = await createWebhookEndpoint(userA.id, ep({ name: "A's EP" }));
 
     await expect(
-      updateWebhookEndpoint(ep.id, userB.id, { name: "Stolen" })
+      updateWebhookEndpoint(created.id, userB.id, { name: "Stolen" })
     ).rejects.toThrow("not_found");
   });
 });
@@ -231,23 +202,23 @@ describe("updateWebhookEndpoint", () => {
 describe("deleteWebhookEndpoint", () => {
   it("removes the endpoint from the DB", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, { name: "To Delete", url: HTTPS_URL, events: [] });
+    const created = await createWebhookEndpoint(user.id, ep({ name: "To Delete" }));
 
-    await deleteWebhookEndpoint(ep.id, user.id);
+    await deleteWebhookEndpoint(created.id, user.id);
 
     const remaining = await db
       .select({ id: webhookEndpoints.id })
       .from(webhookEndpoints)
-      .where(eq(webhookEndpoints.id, ep.id));
+      .where(eq(webhookEndpoints.id, created.id));
     expect(remaining).toHaveLength(0);
   });
 
   it("throws 'not_found' when endpoint belongs to a different user", async () => {
     const userA = await createTestUser({ timezone: TZ });
     const userB = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(userA.id, { name: "A's EP", url: HTTPS_URL, events: [] });
+    const created = await createWebhookEndpoint(userA.id, ep({ name: "A's EP" }));
 
-    await expect(deleteWebhookEndpoint(ep.id, userB.id)).rejects.toThrow("not_found");
+    await expect(deleteWebhookEndpoint(created.id, userB.id)).rejects.toThrow("not_found");
   });
 
   it("throws 'not_found' for a completely unknown ID", async () => {
@@ -262,18 +233,18 @@ describe("deleteWebhookEndpoint", () => {
 describe("listWebhookDeliveries", () => {
   it("returns an empty array for an endpoint with no deliveries", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, { name: "Clean EP", url: HTTPS_URL, events: [] });
+    const created = await createWebhookEndpoint(user.id, ep({ name: "Clean EP" }));
 
-    const deliveries = await listWebhookDeliveries(ep.id, user.id);
+    const deliveries = await listWebhookDeliveries(created.id, user.id);
     expect(deliveries).toHaveLength(0);
   });
 
   it("throws 'not_found' when endpoint belongs to a different user", async () => {
     const userA = await createTestUser({ timezone: TZ });
     const userB = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(userA.id, { name: "A's EP", url: HTTPS_URL, events: [] });
+    const created = await createWebhookEndpoint(userA.id, ep({ name: "A's EP" }));
 
-    await expect(listWebhookDeliveries(ep.id, userB.id)).rejects.toThrow("not_found");
+    await expect(listWebhookDeliveries(created.id, userB.id)).rejects.toThrow("not_found");
   });
 
   it("throws 'not_found' for a completely unknown endpoint ID", async () => {
@@ -293,12 +264,11 @@ describe("cleanupWebhookDeliveries", () => {
 
   it("deletes delivery rows older than 30 days", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, { name: "EP", url: HTTPS_URL, events: [] });
+    const created = await createWebhookEndpoint(user.id, ep({ name: "EP" }));
 
-    // Insert a delivery row with a deliveredAt 31 days ago
     const oldDate = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
     await db.insert(webhookDeliveries).values({
-      endpointId: ep.id,
+      endpointId: created.id,
       userId: user.id,
       event: "task.created",
       payload: { event: "task.created", timestamp: oldDate.toISOString(), task: {} },
@@ -312,7 +282,7 @@ describe("cleanupWebhookDeliveries", () => {
     const before = await db
       .select({ id: webhookDeliveries.id })
       .from(webhookDeliveries)
-      .where(eq(webhookDeliveries.endpointId, ep.id));
+      .where(eq(webhookDeliveries.endpointId, created.id));
     expect(before).toHaveLength(1);
 
     await cleanupWebhookDeliveries();
@@ -320,18 +290,17 @@ describe("cleanupWebhookDeliveries", () => {
     const after = await db
       .select({ id: webhookDeliveries.id })
       .from(webhookDeliveries)
-      .where(eq(webhookDeliveries.endpointId, ep.id));
+      .where(eq(webhookDeliveries.endpointId, created.id));
     expect(after).toHaveLength(0);
   });
 
   it("keeps delivery rows newer than 30 days", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const ep = await createWebhookEndpoint(user.id, { name: "EP2", url: HTTPS_URL, events: [] });
+    const created = await createWebhookEndpoint(user.id, ep({ name: "EP2" }));
 
-    // Insert a delivery row with a deliveredAt 1 day ago (well within retention)
     const recentDate = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
     await db.insert(webhookDeliveries).values({
-      endpointId: ep.id,
+      endpointId: created.id,
       userId: user.id,
       event: "task.completed",
       payload: { event: "task.completed", timestamp: recentDate.toISOString(), task: {} },
@@ -347,7 +316,7 @@ describe("cleanupWebhookDeliveries", () => {
     const after = await db
       .select({ id: webhookDeliveries.id })
       .from(webhookDeliveries)
-      .where(eq(webhookDeliveries.endpointId, ep.id));
+      .where(eq(webhookDeliveries.endpointId, created.id));
     expect(after).toHaveLength(1);
   });
 });
