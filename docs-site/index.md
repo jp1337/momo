@@ -170,6 +170,10 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 
 ## What's New
 
+**Cassiopeia** — The "Streak Shield" has been renamed to **Cassiopeia** ✨. Same protection, new name: once per calendar month, Cassiopeia automatically saves your streak when you miss exactly one day. The dashboard shows ✨ next to your streak when Cassiopeia is still available this month. [See Features →](/momo/features#cassiopeia)
+
+**Daily Quest consistency fix** — The morning briefing and the app dashboard now always show the same Daily Quest. Previously, users in non-UTC timezones could see a different quest in their notification than in the app after UTC midnight. Fixed by passing the user's stored timezone to the quest selection algorithm on every call.
+
 **Individual Recurring-Task Reminders** — each recurring task that is due today gets its own notification instead of being bundled into a single "due today" list. If three or fewer recurring tasks are due, each one pops up separately so you can act on them individually. More than three? They're bundled into a summary to keep your notification shade clean. Opt in under **Settings → Notifications**. [See Features →](/momo/features#individual-recurring-task-reminders)
 
 **Onboarding Wizard** — new users are greeted by a short 4-step guided setup: learn the core concepts (Quest, Energy, Coins, Streaks), create a first topic, add a few tasks, and optionally enable push notifications. Every step can be skipped, and the wizard never appears again once completed. Existing accounts are not affected. [See Features →](/momo/features#onboarding)
