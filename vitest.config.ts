@@ -22,6 +22,7 @@ export default defineConfig({
     env: {
       DATABASE_URL: TEST_DATABASE_URL,
       AUTH_SECRET: "vitest-auth-secret-at-least-32-characters-long!!",
+      TOTP_ENCRYPTION_KEY: "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
       NODE_ENV: "test",
     },
 
