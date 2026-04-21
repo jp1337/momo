@@ -85,15 +85,21 @@ __tests__/
 ├── update-streak.test.ts            # 7 tests: streak logic, Cassiopeia, idempotency
 ├── users.test.ts                    # 8 tests: deleteUser (cascade), updateUserProfile (EMAIL_TAKEN)
 ├── vacation-mode.test.ts            # 15 tests: activate, deactivate, auto-end
+├── email-template.test.ts           # 14 tests: renderEmailTemplate — HTML structure, XSS escaping, CTA link, footer
+├── export.test.ts                   # 10 tests: exportUserData — shape, user isolation, not-found error
 ├── habits-db.test.ts                # 18 tests: getHabitsWithHistory, getEarliestCompletion, buildYearOptions, computeHabitStreak
 ├── onboarding.test.ts               # 6 tests: markOnboardingCompleted, isOnboardingCompleted
+├── rate-limit.test.ts               # 8 tests: checkRateLimit — fixed window, key isolation, window expiry
 ├── statistics.test.ts               # 18 tests: computeStreakHistory (pure), getUserStatistics, getAdminStatistics
 ├── templates.test.ts                # 18 tests: getTemplate (pure), importTopicFromTemplate
+├── totp.test.ts                     # 35 tests: generateTotpSetup, verifyTotpCode, enableTotpForUser, disableTotpForUser,
+│                                    #           regenerateBackupCodes, consumeBackupCode (single-use), getUserTotpStatus,
+│                                    #           userHasSecondFactor, signSetupToken/verifySetupToken, readSessionTokenFromCookieStore
 ├── weekly-review.test.ts            # 6 tests: completions, coins, streak, top topics
 └── wishlist.test.ts                 # 18 tests: CRUD, markAsBought, unmarkAsBought, getBudgetSummary
 ```
 
-**Total: 366 tests across 21 files.**
+**Total: 437 tests across 25 files.**
 
 ---
 
