@@ -279,7 +279,7 @@ describe("getBudgetSummary", () => {
     const item = await createWishlistItem(user.id, {
       title: "Coffee Maker",
       priority: "WANT",
-      price: "49.99",
+      price: 49.99,
     });
     await markAsBought(item.id, user.id);
 
