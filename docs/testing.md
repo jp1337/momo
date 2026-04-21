@@ -1,8 +1,10 @@
 # Automated Tests
 
 Momo uses **Vitest** for integration tests against a real PostgreSQL database.
-The suite covers the critical business-logic functions across daily quest selection,
-task mutations, gamification, habit streaks, and vacation mode.
+The suite covers the complete `lib/` layer: daily quest selection, task CRUD,
+mutations, topics, wishlist, energy check-ins, sessions, API keys, calendar
+feeds, weekly review, gamification, habit streaks, vacation mode, and user
+account management.
 
 ---
 
@@ -67,18 +69,27 @@ __tests__/
 │   ├── global-setup.ts              # runs once: DB creation + migrations
 │   ├── setup.ts                     # runs per-file: seed achievements + reset user data
 │   ├── db.ts                        # resetUserData() helper
-│   └── fixtures.ts                  # createTestUser / createTestTopic / createTestTask
+│   └── fixtures.ts                  # createTestUser / createTestTopic / createTestTask / createTestWishlistItem / createTestApiKey
+├── api-keys.test.ts                 # 13 tests: generateApiKey, createApiKey, listApiKeys, revokeApiKey, resolveApiKeyUser
+├── calendar.test.ts                 # 15 tests: token CRUD, ICS format, UID, RRULE
 ├── complete-task.test.ts            # 10 tests: completion, coins, achievements
 ├── daily-quest-mutations.test.ts    # 22 tests: postpone, force-select, energy reselect, pin
+├── energy.test.ts                   # 13 tests: recordEnergyCheckin, history, counts, streak
 ├── gamification-extras.test.ts      # 21 tests: levels, getUserStats, achievements
 ├── habit-streak.test.ts             # 25 tests: computeHabitStreak (pure function, no DB)
 ├── select-daily-quest.test.ts       # 13 tests: priority tiers, exclusions, energy
+├── sessions.test.ts                 # 13 tests: extractIp, parseUserAgent, listUserSessions, revokeSession
+├── task-crud.test.ts                # 20 tests: getUserTasks, getTaskById, createTask, updateTask, deleteTask
 ├── task-mutations.test.ts           # 31 tests: uncomplete, snooze, bulk, reorder, breakdown
+├── topics.test.ts                   # 14 tests: getUserTopics, getTopicById, createTopic, updateTopic, deleteTopic
 ├── update-streak.test.ts            # 7 tests: streak logic, Cassiopeia, idempotency
-└── vacation-mode.test.ts            # 15 tests: activate, deactivate, auto-end
+├── users.test.ts                    # 8 tests: deleteUser (cascade), updateUserProfile (EMAIL_TAKEN)
+├── vacation-mode.test.ts            # 15 tests: activate, deactivate, auto-end
+├── weekly-review.test.ts            # 6 tests: completions, coins, streak, top topics
+└── wishlist.test.ts                 # 18 tests: CRUD, markAsBought, unmarkAsBought, getBudgetSummary
 ```
 
-**Total: 144 tests across 8 files.**
+**Total: 294 tests across 17 files.**
 
 ---
 

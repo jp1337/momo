@@ -6,8 +6,9 @@
  */
 
 import { db } from "@/lib/db";
-import { users, topics, tasks } from "@/lib/db/schema";
+import { users, topics, tasks, wishlistItems, apiKeys } from "@/lib/db/schema";
 import { getLocalDateString } from "@/lib/date-utils";
+import { createHash, randomBytes } from "crypto";
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 
@@ -149,16 +150,91 @@ export async function createTestTask(
 
 /**
  * Inserts a RECURRING test task with nextDueDate defaulting to today.
+ * @param userId - The user this task belongs to
+ * @param overrides - Field overrides; pass `timezone` to set the local "today"
  */
 export async function createTestRecurringTask(
   userId: string,
-  overrides: TestTaskOverrides = {}
+  overrides: TestTaskOverrides & { timezone?: string } = {}
 ): Promise<typeof tasks.$inferSelect> {
-  const today = getLocalDateString("Europe/Berlin");
+  const { timezone, ...taskOverrides } = overrides;
+  const today = getLocalDateString(timezone ?? "Europe/Berlin");
   return createTestTask(userId, {
     type: "RECURRING",
     nextDueDate: today,
     recurrenceInterval: 1,
-    ...overrides,
+    ...taskOverrides,
   });
+}
+
+// ─── Wishlist Items ───────────────────────────────────────────────────────────
+
+export interface TestWishlistItemOverrides {
+  title?: string;
+  price?: string | null;
+  url?: string | null;
+  priority?: "WANT" | "NICE_TO_HAVE" | "SOMEDAY";
+  status?: "OPEN" | "BOUGHT" | "DISCARDED";
+  coinUnlockThreshold?: number | null;
+}
+
+/**
+ * Inserts a test wishlist item belonging to the given user.
+ */
+export async function createTestWishlistItem(
+  userId: string,
+  overrides: TestWishlistItemOverrides = {}
+): Promise<typeof wishlistItems.$inferSelect> {
+  const [item] = await db
+    .insert(wishlistItems)
+    .values({
+      userId,
+      title: overrides.title ?? "Test Item",
+      price: overrides.price ?? null,
+      url: overrides.url ?? null,
+      priority: overrides.priority ?? "WANT",
+      status: overrides.status ?? "OPEN",
+      coinUnlockThreshold: overrides.coinUnlockThreshold ?? null,
+    })
+    .returning();
+  return item;
+}
+
+// ─── API Keys ─────────────────────────────────────────────────────────────────
+
+export interface TestApiKeyOverrides {
+  name?: string;
+  readonly?: boolean;
+  expiresAt?: Date | null;
+  revokedAt?: Date | null;
+}
+
+/**
+ * Inserts a test API key directly into the DB and returns the plaintext key
+ * alongside the DB record. Use when you need a key without going through
+ * createApiKey() (e.g. for testing resolveApiKeyUser edge cases).
+ */
+export async function createTestApiKey(
+  userId: string,
+  overrides: TestApiKeyOverrides = {}
+): Promise<{ plaintext: string; record: typeof apiKeys.$inferSelect }> {
+  const raw = randomBytes(32);
+  const plaintext = `momo_live_${raw.toString("base64url")}`;
+  const keyHash = createHash("sha256").update(plaintext).digest("hex");
+  const keyPrefix = plaintext.slice(0, 16) + "...";
+
+  const [record] = await db
+    .insert(apiKeys)
+    .values({
+      userId,
+      name: overrides.name ?? "Test Key",
+      keyHash,
+      keyPrefix,
+      readonly: overrides.readonly ?? false,
+      expiresAt: overrides.expiresAt ?? null,
+      revokedAt: overrides.revokedAt ?? null,
+    })
+    .returning();
+
+  return { plaintext, record };
 }
