@@ -1,7 +1,10 @@
 ---
 layout: default
-title: Home
-description: Task management for people who struggle with procrastination. Open source and self-hostable.
+title: Momo – Kostenlose Aufgaben-App für Prokrastination & ADHS
+description: >-
+  Momo ist eine kostenlose, selbst-hostbare Aufgaben-App für Menschen mit Prokrastination,
+  ADHS und Vermeidungstendenzen. Daily Quest, Gamification, Habit Tracker, Streaks,
+  Fokus-Modus, Push-Benachrichtigungen. Open Source (Next.js, Docker, TypeScript).
 ---
 
 <div class="hero">

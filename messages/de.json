@@ -409,7 +409,7 @@
     "webhook_secret_label": "Signatur-Geheimnis",
     "webhook_secret_placeholder": "optional",
     "webhook_secret_hint": "Wenn gesetzt, wird jede Anfrage mit einem X-Momo-Signature-Header signiert.",
-    "webhook_payload_note": "Payload: JSON mit event, title, body, url, tag, timestamp",
+    "webhook_payload_note": "Payload: { event, timestamp, task: { id, title, type, priority, topicId, dueDate, completedAt, createdAt } }",
     "channel_active": "Aktiv",
     "channel_not_configured": "Nicht konfiguriert",
     "section_notification_history": "Benachrichtigungshistorie",
@@ -551,7 +551,6 @@
     "webhook_delivery_status_success": "Erfolgreich",
     "webhook_delivery_status_failure": "Fehlgeschlagen",
     "webhook_endpoint_has_secret": "Signiert (HMAC-SHA256)",
-    "webhook_payload_note": "Payload: { event, timestamp, task: { id, title, type, priority, topicId, dueDate, completedAt, createdAt } }",
     "section_data": "Deine Daten",
     "data_hint": "Lade eine Kopie all deiner persönlichen Daten herunter (DSGVO Art. 15/20).",
     "export_download_btn": "Daten exportieren (JSON)",
@@ -729,7 +728,14 @@
     "footer_privacy": "Datenschutz",
     "footer_tagline": "Momo — ein kleiner Schritt, täglich.",
     "meta_title": "Momo — Steal your time back",
-    "meta_description": "Ein Aufgaben-Manager für Menschen, die zu Prokrastination neigen. Jeden Tag eine Quest."
+    "meta_description": "Ein Aufgaben-Manager für Menschen, die zu Prokrastination neigen. Jeden Tag eine Quest.",
+    "feature_habits_title": "Habit Tracker",
+    "feature_habits_desc": "GitHub-Stil Jahresgrid für jede wiederkehrende Aufgabe. Streaks in Tagen, Wochen oder Monaten.",
+    "feature_focus_title": "Fokus-Modus",
+    "feature_focus_desc": "Ablenkungsfreie Ansicht: nur deine Quest und kurze Aufgaben. Kein Rauschen drum herum.",
+    "feature_selfhost_title": "Open Source & selbst-hostbar",
+    "feature_selfhost_desc": "Docker Compose oder Kubernetes. Deine Daten, dein Server. Kostenlos auf GitHub.",
+    "seo_text": "Momo ist eine kostenlose, open-source Aufgaben-App für Menschen mit Prokrastination, ADHS oder Vermeidungstendenzen. Statt endlosen Listen gibt es jeden Tag genau eine Quest — energiebewusst ausgewählt, mit Gamification-Belohnungen, Habit Tracking und sanften Erinnerungen über Push, Telegram, E-Mail oder ntfy.sh. Selbst-hostbar mit Docker, mehrsprachig und vollständig DSGVO-konform."
   },
   "closure": {
     "setting_label": "Emotionaler Abschluss",

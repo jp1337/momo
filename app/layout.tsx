@@ -52,14 +52,45 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL(clientEnv.NEXT_PUBLIC_APP_URL),
   title: {
-    default: "Momo",
+    default: "Momo – Aufgabenverwaltung für Menschen mit Prokrastination",
     template: "%s | Momo",
   },
   description:
-    "Steal your time back. A task management app for people with avoidance tendencies and procrastination.",
-  keywords: ["task management", "productivity", "procrastination", "daily quest"],
-  authors: [{ name: "jp1337" }],
+    "Momo ist eine kostenlose, selbst-hostbare Aufgaben-App für Menschen mit Prokrastination, ADHS und Vermeidungstendenzen. Eine Quest pro Tag, Gamification, Habit Tracker, Streaks und Erinnerungen – open source.",
+  keywords: [
+    // German primary
+    "Aufgabenverwaltung",
+    "Prokrastination App",
+    "ADHS Aufgaben",
+    "To-Do App kostenlos",
+    "Habit Tracker",
+    "Streak Tracker",
+    "Selbst hosten",
+    "Open Source Aufgaben",
+    "Gamification Produktivität",
+    "Daily Quest",
+    "Tägliche Quest",
+    "Fokus Modus",
+    "Wiederkehrende Aufgaben",
+    // English secondary
+    "task management",
+    "procrastination app",
+    "ADHD task manager",
+    "self-hosted todo",
+    "open source productivity",
+    "habit tracker",
+    "gamification",
+    "daily quest",
+    "focus mode",
+    "self-hostable",
+    "docker task manager",
+    "next.js productivity app",
+  ],
+  authors: [{ name: "jp1337", url: "https://github.com/jp1337" }],
+  creator: "jp1337",
+  publisher: "jp1337",
   applicationName: "Momo",
+  category: "productivity",
   alternates: {
     canonical: "/",
   },
@@ -75,25 +106,28 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Momo — Steal your time back",
-    description: "Steal your time back. One small task, today.",
+    title: "Momo – Aufgabenverwaltung für Menschen mit Prokrastination",
+    description:
+      "Kostenlose, selbst-hostbare To-Do-App mit Daily Quest, Gamification, Habit Tracker und Streaks – für Menschen mit ADHS und Prokrastination. Open Source.",
     type: "website",
     siteName: "Momo",
     locale: "de_DE",
+    alternateLocale: ["en_US", "fr_FR"],
     url: "/",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Momo — Steal your time back",
+        alt: "Momo – Aufgabenverwaltung für Menschen mit Prokrastination",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Momo — Steal your time back",
-    description: "Steal your time back. One small task, today.",
+    title: "Momo – Aufgabenverwaltung für Prokrastinierenden",
+    description:
+      "Kostenlose To-Do-App mit Daily Quest, Gamification & Habit Tracker. Open Source, selbst-hostbar.",
     images: ["/og-image.png"],
   },
 };

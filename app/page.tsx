@@ -15,9 +15,9 @@ import type { Metadata } from "next";
 import { clientEnv } from "@/lib/env";
 
 export const metadata: Metadata = {
-  title: "Momo — Steal your time back",
+  title: "Momo – Aufgabenverwaltung für Menschen mit Prokrastination",
   description:
-    "A task manager for people with procrastination tendencies. One quest a day — no pressure, no overwhelm.",
+    "Kostenlose To-Do-App für Menschen mit ADHS und Prokrastination. Eine tägliche Quest, Gamification, Habit Tracker, Streaks und Erinnerungen. Open Source, selbst-hostbar.",
   alternates: {
     canonical: "/",
   },
@@ -32,34 +32,64 @@ export const metadata: Metadata = {
  * category, OS, and a free `Offer` — and avoids fields that would require
  * runtime aggregation (e.g. `aggregateRating`).
  */
-function buildSoftwareAppJsonLd(): Record<string, unknown> {
-  const url = clientEnv.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
-  return {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: "Momo",
-    description:
-      "A task manager for people with procrastination tendencies. One quest a day — no pressure, no overwhelm.",
-    url,
-    // Absolute URLs are required by schema.org — relative paths work in the
-    // Open Graph / Twitter meta tags (via metadataBase) but crawlers that
-    // consume JSON-LD expect fully-qualified URIs.
-    logo: `${url}/icon.svg`,
-    image: `${url}/og-image.png`,
-    applicationCategory: "ProductivityApplication",
-    operatingSystem: "Web",
-    inLanguage: ["de", "en", "fr"],
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "EUR",
+function buildJsonLd(url: string): Record<string, unknown>[] {
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: "Momo",
+      description:
+        "Kostenlose Aufgaben-App für Menschen mit Prokrastination und ADHS. Eine tägliche Quest, Gamification, Habit Tracker, Streaks, Fokus-Modus und Erinnerungen. Open Source, selbst-hostbar mit Docker.",
+      url,
+      logo: `${url}/icon.svg`,
+      image: `${url}/og-image.png`,
+      applicationCategory: "ProductivityApplication",
+      operatingSystem: "Web",
+      inLanguage: ["de", "en", "fr", "es", "nl"],
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "EUR",
+      },
+      featureList: [
+        "Daily Quest – eine Aufgabe pro Tag, energiebewusst ausgewählt",
+        "Gamification – Münzen, Streaks, Level und 31 Erfolge",
+        "Habit Tracker – GitHub-Stil Jahresgrid mit Streak-Zähler",
+        "Fokus-Modus – ablenkungsfreie Ansicht für die tägliche Quest",
+        "Wiederkehrende Aufgaben – wöchentlich, monatlich, jährlich",
+        "Kalender-Abo – iCal-Feed für Google, Apple und Outlook",
+        "Push-Benachrichtigungen – Browser, ntfy.sh, Pushover, Telegram, E-Mail",
+        "REST API mit OpenAPI 3.1 Dokumentation",
+        "Mehrsprachig – Deutsch, Englisch, Französisch, Spanisch, Niederländisch",
+        "Selbst-hostbar – Docker Compose oder Kubernetes",
+        "Zwei-Faktor-Authentifizierung – TOTP und Passkeys (WebAuthn)",
+        "DSGVO-konformer Datenexport und Kontolöschung",
+      ],
+      author: {
+        "@type": "Person",
+        name: "jp1337",
+        url: "https://github.com/jp1337",
+      },
+      isAccessibleForFree: true,
+      license: "https://github.com/jp1337/momo/blob/main/LICENSE",
     },
-    author: {
-      "@type": "Person",
-      name: "jp1337",
-      url: "https://github.com/jp1337",
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "Momo",
+      url,
+      description:
+        "Aufgabenverwaltung für Menschen mit Prokrastination und ADHS",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${url}/tasks?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
     },
-  };
+  ];
 }
 
 /**
@@ -117,7 +147,8 @@ export default async function LandingPage() {
 
   const t = await getTranslations("landing");
 
-  const jsonLd = buildSoftwareAppJsonLd();
+  const appUrl = clientEnv.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
+  const jsonLd = buildJsonLd(appUrl);
 
   return (
     <div
@@ -128,13 +159,16 @@ export default async function LandingPage() {
         fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
       }}
     >
-      {/* SEO: SoftwareApplication structured data for rich snippets.
+      {/* SEO: SoftwareApplication + WebSite structured data for rich snippets.
           dangerouslySetInnerHTML is safe here — the payload comes from
           JSON.stringify on a static object built in this file, no user input. */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      {jsonLd.map((schema, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
 
       {/* Floating feather animation CSS */}
       <style>{`
@@ -339,25 +373,59 @@ export default async function LandingPage() {
             gap: "1.25rem",
           }}
         >
-          {/* Daily Quest */}
           <FeatureCard
             icon="✦"
             title={t("feature_quest_title")}
             description={t("feature_quest_desc")}
           />
-          {/* Gamification */}
           <FeatureCard
             icon="◈"
             title={t("feature_gamification_title")}
             description={t("feature_gamification_desc")}
           />
-          {/* Reminders */}
           <FeatureCard
             icon="◉"
             title={t("feature_reminders_title")}
             description={t("feature_reminders_desc")}
           />
+          <FeatureCard
+            icon="⬡"
+            title={t("feature_habits_title")}
+            description={t("feature_habits_desc")}
+          />
+          <FeatureCard
+            icon="◎"
+            title={t("feature_focus_title")}
+            description={t("feature_focus_desc")}
+          />
+          <FeatureCard
+            icon="⟁"
+            title={t("feature_selfhost_title")}
+            description={t("feature_selfhost_desc")}
+          />
         </div>
+      </section>
+
+      {/* ── SEO Text Block ──────────────────────────────────────────────────── */}
+      <section
+        style={{
+          padding: "2rem 1.5rem 5rem",
+          maxWidth: "720px",
+          margin: "0 auto",
+          textAlign: "center",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            fontSize: "0.9rem",
+            color: "#4a5e4c",
+            lineHeight: 1.8,
+            margin: "0 auto",
+          }}
+        >
+          {t("seo_text")}
+        </p>
       </section>
 
       {/* ── Footer ────────────────────────────────────────────────────────── */}
