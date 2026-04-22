@@ -153,17 +153,34 @@ rm secret.yaml
 
 ### Step 4 — Update the ingress domain
 
-Edit `deploy/examples/ingress.yaml` and replace `momo.example.com` with your actual domain:
+Edit `deploy/examples/ingress.yaml` and replace every occurrence of `momo.example.com` with your actual domain. The file contains two Ingress resources:
+
+1. **`momo-app`** — serves the application on your main domain
+2. **`momo-www-redirect`** — issues a permanent 301 redirect from `www.<your-domain>` to `<your-domain>`
+
+The www redirect is important for SEO: without it, search engines may index `www.your-domain.com` and `your-domain.com` as separate sites, splitting your ranking signals. The redirect tells Google unambiguously which URL is canonical.
 
 ```yaml
+# Main app ingress
 spec:
   tls:
     - hosts:
         - momo.example.com  # change this
-      secretName: momo-tls
   rules:
     - host: momo.example.com  # change this
+
+---
+# www redirect ingress
+  annotations:
+    nginx.ingress.kubernetes.io/permanent-redirect: "https://momo.example.com$request_uri"
+  tls:
+    - hosts:
+        - www.momo.example.com  # change this
+  rules:
+    - host: www.momo.example.com  # change this
 ```
+
+cert-manager automatically provisions TLS certificates for both hostnames. Make sure your DNS has an A or CNAME record pointing `www.<your-domain>` at your cluster's ingress IP as well.
 
 ### Step 5 — Deploy the application
 
@@ -215,8 +232,9 @@ The `deployment.yaml` includes:
 ### Ingress
 
 - Requires ingress-nginx and cert-manager
-- cert-manager automatically provisions a Let's Encrypt certificate
+- cert-manager automatically provisions Let's Encrypt certificates for both the main domain and the `www` subdomain
 - All HTTP traffic is redirected to HTTPS
+- `www.<your-domain>` issues a 301 permanent redirect to the canonical non-www URL (required for correct Google indexing)
 
 ---
 

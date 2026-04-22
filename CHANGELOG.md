@@ -7,6 +7,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Kubernetes Ingress: www → non-www 301 Redirect** — `deploy/examples/ingress.yaml` enthält jetzt eine zweite `Ingress`-Ressource (`momo-www-redirect`), die `www.<domain>` dauerhaft auf die Nicht-www-Canonical-URL umleitet. Verhindert, dass Google `www.` und Non-www als separate Seiten indexiert. cert-manager stellt automatisch ein TLS-Zertifikat für den www-Hostname aus.
+
 ## [0.3.2] - 2026-04-22
 
 ### Security
