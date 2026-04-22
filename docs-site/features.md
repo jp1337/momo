@@ -438,7 +438,7 @@ Both actions are reversible. Click **Undo** to revert a bought or discarded item
 
 ### Monthly budget
 
-Set a monthly spending limit in **Settings → Budget**. The wishlist header shows how much of the budget remains this month. This is purely informational — Momo will not block purchases if you exceed it.
+Set a monthly spending limit directly on the **Wishlist page** — click the budget display in the header to enter your limit. The wishlist header shows how much of the budget remains this month. This is purely informational — Momo will not block purchases if you exceed it.
 
 ### Swipe gestures on mobile
 
