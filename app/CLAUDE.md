@@ -13,7 +13,15 @@ Next.js 15 App Router pages and API routes. Thin layer — validates input, call
   tasks/        → Task list and management
   topics/       → Topics + subtasks
   wishlist/     → Wishlist + budget tracker
-  settings/     → Notification, budget, language, account deletion settings
+  settings/     → Sub-navigated settings shell (layout.tsx with SettingsNav sidebar)
+    layout.tsx  → SettingsNav + two-column wrapper (sidebar on desktop, tab strip on mobile)
+    page.tsx    → Redirect to /settings/account
+    account/    → Profile (name, email, avatar), Language, Timezone, Linked Accounts
+    notifications/ → Push Notifications, Notification Channels, Morning Briefing, History
+    quest/      → Quest postpone limit, Vacation Mode, Emotional Closure
+    security/   → 2FA (TOTP + Passkeys), Active Sessions, Login Notifications
+    integrations/ → Calendar Feed, Outbound Webhooks, API Keys link
+    data/       → GDPR Data Export, Delete Account (Danger Zone)
   api-keys/     → API key management UI
   stats/        → User statistics page
   admin/        → Admin statistics (requires ADMIN_USER_IDS env var)

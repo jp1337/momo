@@ -125,7 +125,7 @@ description: >-
   <div class="feature-card">
     <div class="icon">🌍</div>
     <h3>Multilingual</h3>
-    <p>German, English, and French UI. Drop in a JSON file to add any language.</p>
+    <p>German, English, French, Spanish, and Dutch UI. Drop in a JSON file to add any language.</p>
   </div>
   <div class="feature-card">
     <div class="icon">🏠</div>
@@ -168,10 +168,12 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 | Notifications | Web Push (VAPID), ntfy.sh, Pushover, Telegram Bot API, SMTP via nodemailer |
 | API | OpenAPI 3.1.0, Personal Access Tokens, Swagger UI at `/api-docs` |
 | Voice | Alexa Skill (AWS Lambda) with automatic Account Linking |
-| i18n | next-intl (German, English, French) |
+| i18n | next-intl (German, English, French, Spanish, Dutch) |
 | Container | Docker + Kubernetes (manifests included) |
 
 ## What's New
+
+**Settings reorganised into sub-pages** — The settings area is now divided into six clearly labelled tabs: **Account**, **Notifications**, **Quest & Tasks**, **Security**, **Integrations**, and **Data & Privacy**. On desktop a persistent sidebar shows your current section; on mobile it collapses to a horizontal scrollable tab strip. Each tab loads only the data it needs, and `/settings` now redirects to `/settings/account` automatically. [See Features →](/momo/features#settings-navigation)
 
 **Cassiopeia** — The "Streak Shield" has been renamed to **Cassiopeia** ✨. Same protection, new name: once per calendar month, Cassiopeia automatically saves your streak when you miss exactly one day. The dashboard shows ✨ next to your streak when Cassiopeia is still available this month. [See Features →](/momo/features#cassiopeia)
 

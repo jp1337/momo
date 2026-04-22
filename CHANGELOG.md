@@ -7,6 +7,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Settings: strukturierte Unter-Seiten** — Die monolithische Settings-Seite (750+ Zeilen) wurde in 6 thematische Unter-Seiten mit persistenter Sub-Navigation aufgeteilt: **Account** (Profil, Sprache, Zeitzone, Verknüpfte Accounts), **Benachrichtigungen** (Push, Channels, Morning Briefing, Verlauf), **Quest & Aufgaben** (Quest-Limit, Urlaubsmodus, Emotional Closure), **Sicherheit** (2FA, Passkeys, Aktive Sessions, Login-Alerts), **Integrationen** (Kalender-Feed, Webhooks, API-Key-Link), **Daten & Datenschutz** (Export, Account löschen). Desktop: vertikale Sidebar-Nav mit Amber-Akzent; Mobile: horizontale scrollbare Tab-Leiste.
+
 ## [0.3.3] - 2026-04-22
 
 ### Added

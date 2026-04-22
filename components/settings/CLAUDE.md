@@ -1,9 +1,20 @@
 # components/settings/
 
 ## Purpose
-Client components for the `/settings` page. Each file is one section of the settings UI. All are "use client" components that receive initial data from the Server Component in `app/(app)/settings/page.tsx` and handle optimistic saves.
+Client components for the settings area. The settings UI is split across six sub-pages, each backed by its own Server Component in `app/(app)/settings/*/page.tsx`. All components listed here are `"use client"` and receive initial data as props from their respective Server Component, handling optimistic saves with rollback.
+
+The shared navigation lives in `settings-nav.tsx`. The two-column shell (nav sidebar + content) is in `app/(app)/settings/layout.tsx`.
+
+Sub-page mapping:
+- **account/** → `profile-settings.tsx`, `language-switcher.tsx`, `timezone-settings.tsx`, `linked-accounts.tsx`
+- **notifications/** → `notification-settings.tsx`, `notification-channels.tsx`, `morning-briefing-settings.tsx`, `notification-history.tsx`
+- **quest/** → `quest-settings.tsx`, `vacation-mode-settings.tsx`, `emotional-closure-settings.tsx`
+- **security/** → `security-section.tsx`, `passkeys-section.tsx`, `active-sessions.tsx`, `login-notification-settings.tsx`
+- **integrations/** → `calendar-feed-section.tsx`, `webhooks.tsx` (OutboundWebhooks)
+- **data/** → `delete-account.tsx` (export is a plain `<a download>` link in the Server Component)
 
 ## Contents
+- `settings-nav.tsx` — Persistent sub-navigation: desktop vertical sidebar + mobile horizontal tab strip; `usePathname()` for active state; amber left-border (desktop) / amber bottom-border (mobile) on active; 6 entries with FontAwesome icons; `nav_*` i18n keys
 - `profile-settings.tsx` — Name, email, avatar upload; PATCHes /api/user/profile
 - `notification-settings.tsx` — Web Push enable/disable/test + daily reminder time + due-today / overdue / recurring-due toggles; each toggle reveals its own per-type time picker when enabled (dueTodayReminderTime, overdueReminderTime, recurringDueReminderTime); weekly review time always visible as a standalone row; receives `vapidPublicKey` as prop
 - `notification-channels.tsx` — Multi-channel setup: ntfy.sh, Pushover, Telegram, Email, **Webhook**; inline forms per channel (WebhookForm: URL + HMAC-SHA256 signing checkbox + secret field); `emailAvailable` + `defaultEmailAddress` props from server

@@ -33,9 +33,10 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `wishlist/wishlist-form.tsx` — Create/edit wishlist item modal
 - `wishlist/wishlist-view.tsx` — Full wishlist page with budget bar + item grid
 - `wishlist/budget-bar.tsx` — Progress bar showing coins spent vs. monthly budget
+- `settings/settings-nav.tsx` — Settings sub-navigation: "use client", uses `usePathname()` for active-state; 6 entries (Account, Notifications, Quest & Tasks, Security, Integrations, Data & Privacy) with FontAwesome icons; desktop: vertical `flex-col` with amber border-left on active; mobile: horizontal scrollable tab strip with amber border-bottom; uses `nav_*` i18n keys from `settings` namespace
 - `settings/notification-settings.tsx` — Push notification enable/disable/test + daily reminder time + due-today / overdue / recurring-due toggles (all with optimistic save + rollback); each enabled toggle shows its own per-type time picker (dueTodayReminderTime, recurringDueReminderTime, overdueReminderTime); weekly review time always shown as a standalone time input; receives `vapidPublicKey` as prop from Server Component (not from clientEnv — NEXT_PUBLIC vars are build-time only)
 - `settings/linked-accounts.tsx` — Connected OAuth providers list; uses `signIn()` from next-auth/react (not window.location) to trigger linking flow
-- `settings/language-switcher.tsx` — UI language switcher (de/en/fr); POSTs to /api/locale
+- `settings/language-switcher.tsx` — UI language switcher (de/en/fr/es/nl); POSTs to /api/locale; flags via `LOCALE_FLAGS` map
 - `settings/delete-account.tsx` — Danger zone: account deletion with confirmation dialog
 - `settings/profile-settings.tsx` — Inline profile editor: name, email, avatar upload with preview; PATCHes /api/user/profile; uses next/image for remote URLs, plain img for data URLs (CSP-safe)
 - `settings/morning-briefing-settings.tsx` — Morning briefing (daily digest) toggle + time picker; visible when user has ≥1 delivery method; PATCHes /api/push/subscribe with morningBriefingEnabled/morningBriefingTime
