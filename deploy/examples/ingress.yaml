@@ -2,6 +2,8 @@
 # cert-manager with a ClusterIssuer named "letsencrypt-prod".
 #
 # Replace "momo.example.com" with your actual domain before applying.
+# If you also own "www.momo.example.com", apply the www-redirect Ingress below
+# so Google always indexes the canonical (non-www) URL.
 #
 # Apply:
 #   kubectl apply -f namespace.yaml
@@ -31,6 +33,42 @@ spec:
       secretName: momo-tls  # cert-manager will create this Secret automatically
   rules:
     - host: momo.example.com  # CHANGE THIS to your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: momo-app
+                port:
+                  name: http
+---
+# www → non-www 301 redirect (SEO canonical fix)
+# Prevents Google from indexing www.momo.example.com as a separate URL.
+# cert-manager provisions a separate TLS certificate for the www hostname.
+# CHANGE both occurrences of "momo.example.com" below to match your domain.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: momo-www-redirect
+  namespace: momo
+  labels:
+    app.kubernetes.io/name: momo
+    app.kubernetes.io/component: ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Permanent redirect — preserves path and query string
+    nginx.ingress.kubernetes.io/permanent-redirect: "https://momo.example.com$request_uri"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - www.momo.example.com  # CHANGE THIS to www.<your-domain>
+      secretName: momo-www-tls
+  rules:
+    - host: www.momo.example.com  # CHANGE THIS to www.<your-domain>
       http:
         paths:
           - path: /
