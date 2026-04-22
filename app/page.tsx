@@ -189,6 +189,8 @@ export default async function LandingPage() {
         }
       `}</style>
 
+      <main>
+
       {/* ── Hero Section ─────────────────────────────────────────────────── */}
       <section
         style={{
@@ -313,7 +315,7 @@ export default async function LandingPage() {
           style={{
             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             fontSize: "0.85rem",
-            color: "#6b7c6d",
+            color: "#8a9e8b",
             display: "block",
             marginBottom: "2.5rem",
             fontStyle: "normal",
@@ -421,7 +423,7 @@ export default async function LandingPage() {
           style={{
             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             fontSize: "0.9rem",
-            color: "#4a5e4c",
+            color: "#7a9a7e",
             lineHeight: 1.8,
             margin: "0 auto",
           }}
@@ -429,6 +431,8 @@ export default async function LandingPage() {
           {t("seo_text")}
         </p>
       </section>
+
+      </main>
 
       {/* ── Footer ────────────────────────────────────────────────────────── */}
       <footer
@@ -456,7 +460,7 @@ export default async function LandingPage() {
             style={{
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
               fontSize: "0.85rem",
-              color: "#6b7c6d",
+              color: "#8aaa8c",
               textDecoration: "none",
             }}
           >
@@ -467,7 +471,7 @@ export default async function LandingPage() {
             style={{
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
               fontSize: "0.85rem",
-              color: "#6b7c6d",
+              color: "#8aaa8c",
               textDecoration: "none",
             }}
           >
@@ -478,7 +482,7 @@ export default async function LandingPage() {
             style={{
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
               fontSize: "0.85rem",
-              color: "#6b7c6d",
+              color: "#8aaa8c",
               textDecoration: "none",
             }}
           >
@@ -489,7 +493,7 @@ export default async function LandingPage() {
           style={{
             fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
             fontSize: "0.75rem",
-            color: "#3d4f3e",
+            color: "#5a706a",
             margin: 0,
           }}
         >
