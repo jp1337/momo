@@ -409,7 +409,7 @@
     "webhook_secret_label": "Secret de signature",
     "webhook_secret_placeholder": "optionnel",
     "webhook_secret_hint": "Si renseigné, chaque requête inclut un en-tête X-Momo-Signature pour vérifier l'authenticité.",
-    "webhook_payload_note": "Charge utile : JSON avec event, title, body, url, tag, timestamp",
+    "webhook_payload_note": "Payload : { event, timestamp, task: { id, title, type, priority, topicId, dueDate, completedAt, createdAt } }",
     "channel_active": "Actif",
     "channel_not_configured": "Non configuré",
     "section_notification_history": "Historique des notifications",
@@ -551,7 +551,6 @@
     "webhook_delivery_status_success": "Succès",
     "webhook_delivery_status_failure": "Échec",
     "webhook_endpoint_has_secret": "Signé (HMAC-SHA256)",
-    "webhook_payload_note": "Payload : { event, timestamp, task: { id, title, type, priority, topicId, dueDate, completedAt, createdAt } }",
     "section_data": "Vos données",
     "data_hint": "Téléchargez une copie de toutes vos données personnelles (RGPD Art. 15/20).",
     "export_download_btn": "Exporter les données (JSON)",
@@ -729,7 +728,14 @@
     "footer_privacy": "Confidentialité",
     "footer_tagline": "Momo — un petit pas, chaque jour.",
     "meta_title": "Momo — Reprenez votre temps",
-    "meta_description": "Un gestionnaire de tâches pour les personnes sujettes à la procrastination. Une quête par jour."
+    "meta_description": "Un gestionnaire de tâches pour les personnes sujettes à la procrastination. Une quête par jour.",
+    "feature_habits_title": "Suivi des habitudes",
+    "feature_habits_desc": "Grille annuelle style GitHub pour chaque tâche récurrente. Compteur de séries en jours, semaines ou mois.",
+    "feature_focus_title": "Mode Concentration",
+    "feature_focus_desc": "Vue sans distraction : seulement votre quête et les tâches courtes. Rien d'autre.",
+    "feature_selfhost_title": "Open Source & Auto-hébergeable",
+    "feature_selfhost_desc": "Docker Compose ou Kubernetes. Vos données, votre serveur. Gratuit sur GitHub.",
+    "seo_text": "Momo est une application de gestion de tâches gratuite et open-source pour les personnes souffrant de procrastination, de TDAH ou de tendances à l'évitement. Au lieu de listes interminables, vous obtenez une quête par jour — consciente de votre énergie, avec des récompenses de gamification et un suivi des habitudes."
   },
   "closure": {
     "setting_label": "Clôture émotionnelle",

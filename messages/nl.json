@@ -409,7 +409,7 @@
     "webhook_secret_label": "Ondertekeningsgeheim",
     "webhook_secret_placeholder": "optioneel",
     "webhook_secret_hint": "Wanneer ingesteld, bevat elk verzoek een X-Momo-Signature-header voor echtheidsverificatie.",
-    "webhook_payload_note": "Payload: JSON met event, title, body, url, tag, timestamp",
+    "webhook_payload_note": "Payload: { event, timestamp, task: { id, title, type, priority, topicId, dueDate, completedAt, createdAt } }",
     "channel_active": "Actief",
     "channel_not_configured": "Niet geconfigureerd",
     "section_notification_history": "Meldingsgeschiedenis",
@@ -551,7 +551,6 @@
     "webhook_delivery_status_success": "Geslaagd",
     "webhook_delivery_status_failure": "Mislukt",
     "webhook_endpoint_has_secret": "Ondertekend (HMAC-SHA256)",
-    "webhook_payload_note": "Payload: { event, timestamp, task: { id, title, type, priority, topicId, dueDate, completedAt, createdAt } }",
     "section_data": "Jouw gegevens",
     "data_hint": "Download een kopie van al je persoonlijke gegevens (AVG art. 15/20).",
     "export_download_btn": "Gegevens exporteren (JSON)",
@@ -729,7 +728,14 @@
     "footer_privacy": "Privacy",
     "footer_tagline": "Momo — één kleine stap, elke dag.",
     "meta_title": "Momo — Neem je tijd terug",
-    "meta_description": "Een taakbeheerder voor mensen met de neiging tot uitstelgedrag. Één opdracht per dag."
+    "meta_description": "Een taakbeheerder voor mensen met de neiging tot uitstelgedrag. Één opdracht per dag.",
+    "feature_habits_title": "Gewoonte Tracker",
+    "feature_habits_desc": "GitHub-stijl jaarrooster voor elke terugkerende taak. Streak-teller in dagen, weken of maanden.",
+    "feature_focus_title": "Focusmodus",
+    "feature_focus_desc": "Afleidingsvrije weergave: alleen je quest en korte taken. Niets anders.",
+    "feature_selfhost_title": "Open Source & Zelf te hosten",
+    "feature_selfhost_desc": "Docker Compose of Kubernetes. Jouw data, jouw server. Gratis op GitHub.",
+    "seo_text": "Momo is een gratis, open-source taakbeheersapp voor mensen met uitstelgedrag, ADHD of vermijdingstendensen. In plaats van eindeloze lijsten krijg je elke dag één quest — energie-bewust, met gamification-beloningen, gewoonte-tracking en zachte herinneringen via push, Telegram, e-mail of ntfy.sh."
   },
   "closure": {
     "setting_label": "Emotionele afsluiting",

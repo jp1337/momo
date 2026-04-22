@@ -409,7 +409,7 @@
     "webhook_secret_label": "Signing secret",
     "webhook_secret_placeholder": "optional",
     "webhook_secret_hint": "When set, every request includes an X-Momo-Signature header for authenticity verification.",
-    "webhook_payload_note": "Payload: JSON with event, title, body, url, tag, timestamp",
+    "webhook_payload_note": "Payload: { event, timestamp, task: { id, title, type, priority, topicId, dueDate, completedAt, createdAt } }",
     "channel_active": "Active",
     "channel_not_configured": "Not configured",
     "section_notification_history": "Notification History",
@@ -551,7 +551,6 @@
     "webhook_delivery_status_success": "Success",
     "webhook_delivery_status_failure": "Failed",
     "webhook_endpoint_has_secret": "Signed (HMAC-SHA256)",
-    "webhook_payload_note": "Payload: { event, timestamp, task: { id, title, type, priority, topicId, dueDate, completedAt, createdAt } }",
     "section_data": "Your Data",
     "data_hint": "Download a copy of all your personal data (GDPR Art. 15/20).",
     "export_download_btn": "Export data (JSON)",
@@ -729,7 +728,14 @@
     "footer_privacy": "Privacy",
     "footer_tagline": "Momo — one small step, daily.",
     "meta_title": "Momo — Steal your time back",
-    "meta_description": "A task manager for people with procrastination tendencies. One quest a day."
+    "meta_description": "A task manager for people with procrastination tendencies. One quest a day.",
+    "feature_habits_title": "Habit Tracker",
+    "feature_habits_desc": "GitHub-style year grid for every recurring task. Streak counters in days, weeks, or months.",
+    "feature_focus_title": "Focus Mode",
+    "feature_focus_desc": "Distraction-free view: only your quest and short tasks. Nothing else.",
+    "feature_selfhost_title": "Open Source & Self-Hostable",
+    "feature_selfhost_desc": "Docker Compose or Kubernetes. Your data, your server. Free on GitHub.",
+    "seo_text": "Momo is a free, open-source task management app for people with procrastination, ADHD, or avoidance tendencies. Instead of endless lists, you get one quest per day — energy-aware, with gamification rewards, habit tracking, and gentle reminders via push, Telegram, email, or ntfy.sh. Self-hostable with Docker, multilingual, and fully GDPR-compliant."
   },
   "closure": {
     "setting_label": "Emotional Closure",
