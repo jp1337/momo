@@ -251,7 +251,7 @@ Request body:
 { "locale": "de" }
 ```
 
-Valid values: `"de"`, `"en"`, `"fr"`. Response: `{ "success": true }`
+Valid values: `"de"`, `"en"`, `"fr"`, `"es"`, `"nl"`. Response: `{ "success": true }`
 
 ---
 
