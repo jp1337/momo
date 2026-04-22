@@ -30,7 +30,7 @@ Avoid SMS-based "2FA" codes — they are not the same thing and not supported by
 
 1. Sign in to Momo as usual.
 2. Click your avatar in the top-right corner and pick **Settings**.
-3. Scroll to the section **Two-factor authentication** and click **Enable 2FA**.
+3. Open the **Security** tab and click **Enable 2FA**.
 4. A wizard appears with a QR code. Open your authenticator app, tap "Add account" (or the equivalent), and scan the QR code. Your app will start showing a 6-digit code that changes every 30 seconds.
    - If you cannot scan the QR code (e.g. you set up Momo on the same phone that has the authenticator app), tap the manual entry key shown below the QR code and type it into your app instead.
 5. Type the current 6-digit code from your app into Momo and click **Activate**.
@@ -56,7 +56,7 @@ You get 10 codes the moment you enable 2FA. Each code only works once.
 
 You can download the codes as a `.txt` file from the wizard, or copy them all to your clipboard with one click.
 
-If you ever run out of codes (or want to refresh them), open **Settings → Two-factor authentication** and click **Regenerate backup codes**. The old codes stop working immediately.
+If you ever run out of codes (or want to refresh them), open **Settings → Security** and click **Regenerate backup codes**. The old codes stop working immediately.
 
 ---
 
@@ -77,7 +77,7 @@ If you do not have your phone with you, click **Use a backup code instead** belo
 
 If you want to remove 2FA from your account:
 
-1. Open **Settings → Two-factor authentication**.
+1. Open **Settings → Security**.
 2. Click **Disable 2FA**.
 3. Type a current 6-digit code from your authenticator app to confirm. (This stops a stranger who has briefly grabbed your laptop from disabling 2FA without knowing the code.)
 4. Momo deletes the secret and all your backup codes.

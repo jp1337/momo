@@ -125,7 +125,7 @@ Fields included:
 - `name`, `description`, `url`
 - `applicationCategory: "ProductivityApplication"`
 - `operatingSystem: "Web"`
-- `inLanguage: ["de", "en", "fr"]`
+- `inLanguage: ["de", "en", "fr", "es", "nl"]`
 - `offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" }`
 - `author` (jp1337 → GitHub profile)
 
