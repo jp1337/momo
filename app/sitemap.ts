@@ -29,24 +29,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const base = clientEnv.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
   const lastModified = new Date();
 
-  // Note: /impressum and /datenschutz are intentionally NOT listed.
-  // They carry the operator's real name and postal address — they must
-  // be reachable for § 5 DDG / DSGVO compliance, but neither search
-  // engines nor the Internet Archive should mirror them. They are also
-  // marked `noindex, nofollow, noarchive` on the page level and
-  // disallowed in robots.ts.
+  // Only the landing page is listed — it is the sole indexable public surface.
+  // /login is intentionally excluded: it has no SEO value (it's a form, not
+  // content), wastes crawl budget, and its inclusion signals to Google that
+  // the site has almost no content. /impressum and /datenschutz are excluded
+  // because they carry the operator's real name/address and are marked
+  // `noindex, nofollow, noarchive` on the page level.
   return [
     {
       url: `${base}/`,
       lastModified,
       changeFrequency: "weekly",
       priority: 1.0,
-    },
-    {
-      url: `${base}/login`,
-      lastModified,
-      changeFrequency: "yearly",
-      priority: 0.5,
     },
   ];
 }
