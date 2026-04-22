@@ -7,9 +7,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **SEO: JSON-LD Structured Data** — Zwei Schema.org-Schemas inline auf der Landing Page: `SoftwareApplication` (Name, Beschreibung, 12-Punkte-Feature-Liste, kostenlos, MIT-Lizenz) und `WebSite` mit `SearchAction` (Sitelinks Searchbox). Gibt Google maschinenlesbare Metadaten für Rich Results.
+- **SEO: Open Graph & Twitter Card vollständig** — `og:locale: de_DE` mit Alternates `en_US`, `fr_FR`. Twitter Card `summary_large_image`. OG-Image 1200×630 vorhanden und korrekt verlinkt.
+- **SEO: Erweiterte Keywords** — 22 Keywords (deutsch primär, englisch sekundär) in `app/layout.tsx`. Zielgruppe: "Prokrastination App", "ADHS Aufgaben", "self-hosted todo", "open source productivity".
+- **SEO: Keyword-reiche Hero-Subline** — Hero-Subtext von generischem Text auf `"> Aufgaben-App für Prokrastination & ADHS — kostenlos, open source"` umgestellt. Als `<h2>` gerendert (statt `<p>`) für stärkeres Crawl-Signal.
+- **SEO: 6 Feature-Cards** — Landing Page von 3 auf 6 Feature-Cards erweitert (+ Habit Tracker, Fokus-Modus, Self-Hostable), inkl. Übersetzungen in DE/EN/FR/ES/NL.
+- **SEO: SEO-Text-Block** — Keyword-reichter Absatz am Seitenende für Long-Tail-Suchbegriffe, in allen 5 Sprachen übersetzt.
+- **SEO: Google Search Console** — Domain `momotask.app` aktiviert, Sitemap eingereicht, Indexierung für `https://momotask.app/` beantragt.
+
 ### Changed
 
-- **Kubernetes Ingress: www → non-www 301 Redirect** — `deploy/examples/ingress.yaml` enthält jetzt eine zweite `Ingress`-Ressource (`momo-www-redirect`), die `www.<domain>` dauerhaft auf die Nicht-www-Canonical-URL umleitet. Verhindert, dass Google `www.` und Non-www als separate Seiten indexiert. cert-manager stellt automatisch ein TLS-Zertifikat für den www-Hostname aus.
+- **SEO: Sitemap bereinigt** — `/login` aus der Sitemap entfernt. Einziger Eintrag: `/` (Canonical, Priority 1.0, weekly). Verhindert Crawl-Budget-Verschwendung auf einer Seite ohne indexierbaren Inhalt.
+- **SEO: Meta Title & Description (DE)** — Title auf Deutsch umgestellt ("Momo – Aufgabenverwaltung für Menschen mit Prokrastination"), Description keyword-reich und auf die Zielgruppe ausgerichtet.
+- **Kubernetes Ingress: www → non-www 301 Redirect** — `deploy/examples/ingress.yaml` enthält jetzt eine zweite `Ingress`-Ressource (`momo-www-redirect`), die `www.<domain>` dauerhaft auf die Nicht-www-Canonical-URL umleitet.
+- **Nginx: www → non-www 301 Redirect (momotask.app)** — Der produktive nginx-vhost in `wdk-ansible` wurde aufgeteilt: `www.momotask.app` liefert jetzt einen permanenten 301-Redirect auf `https://momotask.app$request_uri`. Behebt den Google-Canonical-Konflikt, der die Indexierung blockiert hat (Google hatte `www.` als Canonical gewählt, obwohl die App `momotask.app` deklariert).
+- **Accessibility: `<main>`-Landmark** — Landing Page hat jetzt ein semantisches `<main>`-Element, das alle Content-Sektionen umschließt. Behebt den Lighthouse-Audit "Document does not have a main landmark".
+- **Accessibility: Kontrastverhältnisse verbessert** — Vier Farbwerte auf der Landing Page angehoben um WCAG AA zu erfüllen: SEO-Text (`#4a5e4c` → `#7a9a7e`), Footer-Links (`#6b7c6d` → `#8aaa8c`), Footer-Tagline (`#3d4f3e` → `#5a706a`), Zitat-Quellenangabe (`#6b7c6d` → `#8a9e8b`). `user-scalable=no` im Viewport bleibt bewusst gesetzt (PWA-Swipe-Gesten auf iOS erfordern dies).
 
 ## [0.3.2] - 2026-04-22
 
