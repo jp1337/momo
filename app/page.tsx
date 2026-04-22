@@ -225,11 +225,13 @@ export default async function LandingPage() {
           {t("hero_heading")}
         </h1>
 
-        {/* Subline in monospace */}
-        <p
+        {/* Subline — rendered as h2 for SEO signal; styled identically to the
+            previous <p> so the visual design is unchanged. */}
+        <h2
           style={{
             fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
             fontSize: "clamp(0.85rem, 2.5vw, 1.1rem)",
+            fontWeight: 400,
             color: "#f0a500",
             marginBottom: "3rem",
             letterSpacing: "0.02em",
@@ -237,7 +239,7 @@ export default async function LandingPage() {
           }}
         >
           {t("hero_sub")}
-        </p>
+        </h2>
 
         {/* CTA button */}
         <Link
