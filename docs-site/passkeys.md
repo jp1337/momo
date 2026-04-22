@@ -37,7 +37,7 @@ You do **not** need a password manager — the OS can handle it. But if you alre
 You need to be signed in to Momo before you can add a passkey. Sign in with your usual provider (GitHub, Google, Discord, …) first.
 
 1. Click your avatar in the top-right corner and pick **Settings**.
-2. Scroll to the section **Two-factor authentication**. Underneath the TOTP panel, there is a sub-section called **Passkeys**.
+2. Open the **Security** tab and scroll down to the **Passkeys** sub-section.
 3. Click **Register a passkey**.
 4. Momo asks you to give the passkey a name — for example *iPhone*, *Mac*, *Office YubiKey*. The default is a guess based on what you are using right now, but feel free to pick something memorable.
 5. Your browser takes over and shows the OS prompt: *Use Face ID / Touch ID / PIN / insert your key*. Follow it.
@@ -70,7 +70,7 @@ If you have **only** a passkey and no TOTP, the second-factor screen just shows 
 
 ## Managing your passkeys
 
-Open **Settings → Two-factor authentication → Passkeys**. For each registered passkey, you see:
+Open **Settings → Security** and scroll to the **Passkeys** sub-section. For each registered passkey, you see:
 
 - The **name** you gave it. Click **Rename** to change it.
 - A badge: **Synced across devices** (the passkey is backed up to your cloud keychain) or **Bound to this device** (it lives only on this physical device or security key).
@@ -87,9 +87,9 @@ Removing a passkey does not erase anything from your device — it just tells Mo
 
 This depends on your setup:
 
-- **Your passkey was synced** (Synced across devices badge) → sign in from another device you own that also has the synced passkey. Go to Settings → Passkeys and **Remove** the lost device's entry if you want.
+- **Your passkey was synced** (Synced across devices badge) → sign in from another device you own that also has the synced passkey. Go to **Settings → Security** and **Remove** the lost device's entry if you want.
 - **Your passkey was device-bound and you have other passkeys** → sign in with any of the others, then remove the lost one.
-- **Your passkey was device-bound and it was your only second factor** → sign in with your OAuth provider and, if the instance does not enforce 2FA, you will land on the dashboard. Head to Settings → Passkeys, remove the lost entry, and register a new one.
+- **Your passkey was device-bound and it was your only second factor** → sign in with your OAuth provider and, if the instance does not enforce 2FA, you will land on the dashboard. Head to **Settings → Security**, remove the lost entry, and register a new one.
 - **You lost the only second factor on an instance with `REQUIRE_2FA`** → ask the instance operator. They can delete your passkey rows from the database so you can enroll again. See [the operator guide](https://github.com/jp1337/momo/blob/main/docs/environment-variables.md#two-factor-authentication-totp--passkeys).
 
 ---
