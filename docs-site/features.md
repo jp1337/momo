@@ -158,7 +158,7 @@ To wake a task up early, expand the Snoozed section and click the amber clock ic
 
 Going on holiday or feeling under the weather? **Vacation mode** pauses every recurring task at once so your habit statistics stay clean and your streak is protected.
 
-Open **Settings > Vacation Mode**, pick an end date, and click **Start vacation mode**. While active:
+Open **Settings → Quest & Tasks**, pick an end date in the Vacation Mode section, and click **Start vacation mode**. While active:
 
 - All recurring tasks get a "paused" badge on the Habits page
 - Paused tasks won't appear as your Daily Quest
@@ -340,7 +340,7 @@ After completing the daily quest, Momo shows a gentle quote or affirmation — a
 
 - The quote changes **once per day** (the same quote shows all day, a new one tomorrow)
 - Available in **German, English, French, Spanish, and Dutch**
-- Toggle the feature on or off in **Settings → Emotional Closure**
+- Toggle the feature on or off in **Settings → Quest & Tasks**
 
 > **Why quotes from Momo?** The novel is about reclaiming your time from the "Grey Gentlemen" — a perfect metaphor for the small victory of completing your daily quest.
 
@@ -779,7 +779,7 @@ Momo has a full REST API. Personal access tokens let you integrate Momo with oth
 
 ### Creating an API key
 
-Go to **Settings → API Keys** (or click your avatar in the navbar and select **API Keys**). Click **Create Key** and configure:
+Go to the **API Keys** page — either click your avatar in the navbar and select **API Keys**, or navigate there from **Settings → Integrations**. Click **Create Key** and configure:
 
 - **Name** — a label so you know what the key is for (e.g. "Home automation", "Alexa skill")
 - **Type** — `Read-write` (full access) or `Read-only` (GET requests only)
@@ -852,7 +852,7 @@ Momo gives you full control over your data in compliance with GDPR Articles 15 a
 
 ### Exporting your data
 
-Go to **Settings → Export Data** and click **Download**. You will receive a JSON file containing:
+Go to **Settings → Data & Privacy** and click **Download your data**. You will receive a JSON file containing:
 
 - All your tasks (including completed and deleted)
 - All your topics
@@ -864,9 +864,26 @@ You can import this file into another system or keep it as a personal archive.
 
 ### Deleting your account
 
-Go to **Settings → Delete Account**. After confirming, all your data is permanently and irreversibly removed from the database — tasks, topics, completions, wishlist items, achievements, push subscriptions, and API keys.
+Go to **Settings → Data & Privacy** and scroll to the Danger Zone. After confirming, all your data is permanently and irreversibly removed from the database — tasks, topics, completions, wishlist items, achievements, push subscriptions, and API keys.
 
 > **Note:** Account deletion is immediate and cannot be undone. Export your data first if you want to keep a copy.
+
+---
+
+## Settings Navigation
+
+The Settings area is divided into six clearly labelled tabs. On desktop a persistent sidebar sits to the left of the content; on mobile it collapses into a horizontal scrollable tab strip at the top.
+
+| Tab | What you find there |
+|---|---|
+| **Account** | Display name, email, profile picture, UI language, timezone, linked OAuth providers |
+| **Notifications** | Web Push, notification channels (ntfy.sh, Pushover, Telegram, Email, Webhook), Morning Briefing, delivery history |
+| **Quest & Tasks** | Daily quest postpone limit, Vacation Mode, Emotional Closure |
+| **Security** | Two-factor authentication (TOTP + Passkeys), active sessions list, new-device login alerts |
+| **Integrations** | Calendar subscription (iCal feed), outbound webhooks, link to the API Keys page |
+| **Data & Privacy** | GDPR data export, account deletion (Danger Zone) |
+
+Opening `/settings` redirects to **Account** automatically.
 
 ---
 
@@ -874,7 +891,7 @@ Go to **Settings → Delete Account**. After confirming, all your data is perman
 
 ### Changing the language
 
-Go to **Settings** and choose from:
+Go to **Settings → Account** and choose from:
 
 - **German (de)**
 - **English (en)**
@@ -886,7 +903,7 @@ The selected language applies to all UI elements, labels, and system messages.
 
 ### Setting your timezone
 
-Go to **Settings → Timezone** to explicitly choose your IANA timezone (e.g. "Europe/Berlin", "America/New_York"). By default Momo detects your timezone from your browser, but you can override it if you are traveling, using a VPN, or if the browser detection is incorrect.
+Go to **Settings → Account** and scroll to the Timezone section to choose your IANA timezone (e.g. "Europe/Berlin", "America/New_York"). By default Momo detects your timezone from your browser, but you can override it if you are traveling, using a VPN, or if the browser detection is incorrect.
 
 Your timezone affects all scheduled actions:
 
@@ -917,7 +934,7 @@ OAuth providers often set your display name to a username or abbreviation, and y
 
 ### Editing your profile
 
-Go to **Settings → Account** and click **Edit**. You can change:
+Go to **Settings → Account**. You can change:
 
 - **Name** — your display name shown in the navbar and throughout the app
 - **Email** — your contact email address (must be unique across all users)
