@@ -61,6 +61,7 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
     estimatedMinutes: t.estimatedMinutes ?? null,
     snoozedUntil: t.snoozedUntil ?? null,
     sortOrder: t.sortOrder ?? 0,
+    taskGroup: t.taskGroup ?? null,
   }));
 
   const accentColor = topic.color ?? "var(--accent-amber)";
