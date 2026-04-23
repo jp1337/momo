@@ -709,16 +709,21 @@
     "confirm_delete": "¿Eliminar esta tarea?"
   },
   "focus": {
-    "page_title": "Modo enfoque",
-    "page_subtitle": "Solo lo que importa. Un paso a la vez.",
-    "section_quest": "Tu misión diaria",
-    "section_quick_wins": "Victorias rápidas",
-    "quick_wins_hint": "menos de 15 minutos",
-    "empty_title": "Todo tranquilo aquí",
-    "empty_subtitle": "No hay tareas abiertas. Disfruta la calma.",
-    "completed_all": "¡Todo listo! Tu enfoque dio sus frutos.",
-    "back_to_dashboard": "Volver al panel",
-    "confirm_delete": "¿Eliminar esta tarea?"
+    "page_title": "Modo Enfoque",
+    "select_title": "¿Qué harás hoy?",
+    "select_subtitle": "Elige 1–3 tareas en las que enfocarte.",
+    "select_start": "Iniciar enfoque",
+    "select_selected": "{selected} de {max} seleccionadas",
+    "work_exit": "Salir",
+    "work_done_btn": "Hecho",
+    "work_skip": "Saltar",
+    "done_title": "¡Bien hecho!",
+    "done_tasks": "{count} completadas",
+    "done_coins": "{coins} monedas ganadas",
+    "done_back": "Volver al panel",
+    "empty_title": "No hay tareas abiertas",
+    "empty_subtitle": "Nada que hacer – ¡disfruta del momento!",
+    "empty_back": "Ir al panel"
   },
   "landing": {
     "hero_heading": "Recupera el control de tu tiempo.",
