@@ -492,9 +492,17 @@ export async function completeTask(
           nextDueStr = nextDueInterval(baseDate, task.recurrenceInterval ?? 1);
         }
 
+        // When the task is the active daily quest, also set completedAt so the
+        // celebration guard in selectDailyQuest can detect "already done today"
+        // (recurring tasks normally never set completedAt — the daily quest
+        // path is the only exception, and the next-day cleanup resets it to null).
         const rows = await tx
           .update(tasks)
-          .set({ nextDueDate: nextDueStr })
+          .set(
+            task.isDailyQuest
+              ? { nextDueDate: nextDueStr, completedAt: now }
+              : { nextDueDate: nextDueStr }
+          )
           .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
           .returning();
 
