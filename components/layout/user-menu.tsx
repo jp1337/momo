@@ -23,7 +23,6 @@ import {
   faRightFromBracket,
   faChartBar,
   faCalendarWeek,
-  faBullseye,
   faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -203,33 +202,6 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
                 aria-hidden="true"
               />
               Wochenrückblick
-            </Link>
-
-            <Link
-              href="/focus"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100 no-underline"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-primary)",
-              }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "var(--bg-surface)")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "transparent")
-              }
-            >
-              <FontAwesomeIcon
-                icon={faBullseye}
-                className="w-4 h-4 flex-shrink-0"
-                style={{ color: "var(--text-muted)" }}
-                aria-hidden="true"
-              />
-              Fokus-Modus
             </Link>
 
             <Link

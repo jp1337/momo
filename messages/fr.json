@@ -709,16 +709,21 @@
     "confirm_delete": "Supprimer cette tâche ?"
   },
   "focus": {
-    "page_title": "Mode Focus",
-    "page_subtitle": "Seulement l'essentiel. Une chose à la fois.",
-    "section_quest": "Ta quête du jour",
-    "section_quick_wins": "Victoires rapides",
-    "quick_wins_hint": "moins de 15 minutes",
-    "empty_title": "Tout est calme",
-    "empty_subtitle": "Aucune tâche ouverte. Profite du calme.",
-    "completed_all": "Tout accompli ! Ton focus a payé.",
-    "back_to_dashboard": "Retour au tableau de bord",
-    "confirm_delete": "Supprimer cette tâche ?"
+    "page_title": "Mode Concentration",
+    "select_title": "Que feras-tu aujourd'hui ?",
+    "select_subtitle": "Choisis 1–3 tâches sur lesquelles te concentrer.",
+    "select_start": "Démarrer",
+    "select_selected": "{selected} sur {max} sélectionné(s)",
+    "work_exit": "Quitter",
+    "work_done_btn": "Terminé",
+    "work_skip": "Passer",
+    "done_title": "Bien joué !",
+    "done_tasks": "{count} terminée(s)",
+    "done_coins": "{coins} pièces gagnées",
+    "done_back": "Retour au tableau de bord",
+    "empty_title": "Aucune tâche ouverte",
+    "empty_subtitle": "Rien à faire – profite du moment !",
+    "empty_back": "Aller au tableau de bord"
   },
   "landing": {
     "hero_heading": "Reprenez votre temps.",
