@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Aufgaben-Gruppen (Task Groups)** — Aufgaben innerhalb eines Themas können jetzt einem optionalen **Gruppen-Namen** zugewiesen werden. Aufgaben derselben Gruppe werden automatisch sequenziell behandelt (nach Sortierreihenfolge): nur die erste offene Aufgabe pro Gruppe ist für die Daily Quest und im Topic-View freigeschalten — die nachfolgenden zeigen ein 🔒-Icon. Das Gruppen-Feld im Task-Formular schlägt automatisch den Titel-Präfix vor (alles vor „: " oder „ - ") und listet bestehende Gruppen im selben Thema zur Auswahl auf.
 - **Template: Artikel verkaufen** — Neues sequenzielles Template für den Verkauf von Gebrauchtartikeln: Marktpreis recherchieren → Zustand prüfen & fotografieren → Inserat erstellen → Anfragen beantworten → Versand. Für jeden zu verkaufenden Artikel einmal importieren.
 
+### Fixed
+
+- **Errungenschaften-Seite zeigte „0 von 0 freigeschaltet"** — Die `achievements`-Tabelle wurde nie automatisch befüllt. `scripts/migrate.mjs` seeded jetzt alle 31 Achievement-Definitionen nach jeder Migration (idempotent per `ON CONFLICT DO UPDATE`). Beim ersten Aufruf der Errungenschaften-Seite werden außerdem retroaktiv alle Achievements freigeschaltet, die der Nutzer bereits verdient hat (ohne Coin-Doppelzählung). Die Seite zeigt jetzt auch eine „Zuletzt freigeschaltet"-Sektion mit den neuesten 3 Errungenschaften.
+
 ### Changed
 
 - **Settings: strukturierte Unter-Seiten** — Die monolithische Settings-Seite (750+ Zeilen) wurde in 6 thematische Unter-Seiten mit persistenter Sub-Navigation aufgeteilt: **Account** (Profil, Sprache, Zeitzone, Verknüpfte Accounts), **Benachrichtigungen** (Push, Channels, Morning Briefing, Verlauf), **Quest & Aufgaben** (Quest-Limit, Urlaubsmodus, Emotional Closure), **Sicherheit** (2FA, Passkeys, Aktive Sessions, Login-Alerts), **Integrationen** (Kalender-Feed, Webhooks, API-Key-Link), **Daten & Datenschutz** (Export, Account löschen). Desktop: vertikale Sidebar-Nav mit Amber-Akzent; Mobile: horizontale scrollbare Tab-Leiste.
