@@ -40,6 +40,8 @@ export interface TemplateTask {
   type?: "ONE_TIME" | "RECURRING";
   /** Days between occurrences. Only meaningful when `type === "RECURRING"`. */
   recurrenceInterval?: number;
+  /** Optional group label — tasks sharing the same group within the topic are sequentially dependent. */
+  taskGroup?: string;
 }
 
 /** A topic template — produces a topic + ordered list of subtasks on import. */
@@ -64,7 +66,7 @@ export interface Template {
   tasks: TemplateTask[];
 }
 
-export type TemplateKey = "moving" | "taxes" | "fitness" | "household";
+export type TemplateKey = "moving" | "taxes" | "fitness" | "household" | "selling";
 
 /** All template keys in the order they should appear in the picker. */
 export const TEMPLATE_KEYS: readonly TemplateKey[] = [
@@ -72,6 +74,7 @@ export const TEMPLATE_KEYS: readonly TemplateKey[] = [
   "taxes",
   "fitness",
   "household",
+  "selling",
 ] as const;
 
 // ─── Template Definitions ─────────────────────────────────────────────────────
@@ -159,6 +162,23 @@ export const TEMPLATES: Record<TemplateKey, Template> = {
       { titleKey: "household.task_bathroom", type: "RECURRING", recurrenceInterval: 14, estimatedMinutes: 30, energyLevel: "MEDIUM" },
       { titleKey: "household.task_windows", type: "RECURRING", recurrenceInterval: 30, estimatedMinutes: 60, energyLevel: "HIGH" },
       { titleKey: "household.task_bedding", type: "RECURRING", recurrenceInterval: 14, estimatedMinutes: 15, energyLevel: "MEDIUM" },
+    ],
+  },
+  selling: {
+    key: "selling",
+    titleKey: "selling.title",
+    descriptionKey: "selling.description",
+    icon: "tag",
+    color: "#b87c3e",
+    priority: "NORMAL",
+    sequential: true,
+    defaultEnergyLevel: "MEDIUM",
+    tasks: [
+      { titleKey: "selling.task_research",  estimatedMinutes: 15, energyLevel: "LOW"    },
+      { titleKey: "selling.task_condition", estimatedMinutes: 15, energyLevel: "MEDIUM" },
+      { titleKey: "selling.task_listing",   estimatedMinutes: 30, energyLevel: "MEDIUM" },
+      { titleKey: "selling.task_negotiate", estimatedMinutes: 15, energyLevel: "MEDIUM" },
+      { titleKey: "selling.task_shipping",  estimatedMinutes: 15, energyLevel: "LOW"    },
     ],
   },
 };
@@ -264,6 +284,7 @@ export async function importTopicFromTemplate(
             recurrenceInterval: isRecurring ? (task.recurrenceInterval ?? null) : null,
             nextDueDate: isRecurring ? todayLocal : null,
             sortOrder: index,
+            taskGroup: task.taskGroup ?? null,
           };
         })
       )

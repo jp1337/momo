@@ -187,6 +187,39 @@ async function pickBestTask(
     }
   }
 
+  // Group-level sequential blocking: tasks sharing the same task_group within
+  // a topic are implicitly sequential (sorted by sort_order). Only the first
+  // open task per group is eligible — the rest are blocked regardless of whether
+  // the topic itself is sequential.
+  const groupedRows = await client
+    .select({ id: tasks.id, taskGroup: tasks.taskGroup, topicId: tasks.topicId })
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        isNotNull(tasks.taskGroup),
+        isNotNull(tasks.topicId),
+        isNull(tasks.completedAt),
+        notSnoozed,
+        notPaused
+      )
+    )
+    .orderBy(asc(tasks.sortOrder), asc(tasks.createdAt));
+
+  // Group rows by (topicId, taskGroup) and block everything after the first
+  const groupSeen = new Map<string, boolean>();
+  for (const row of groupedRows) {
+    const key = `${row.topicId}::${row.taskGroup}`;
+    if (groupSeen.has(key)) {
+      // A previous row in this group is still open — this one is blocked
+      if (!blockedTaskIds.includes(row.id)) {
+        blockedTaskIds.push(row.id);
+      }
+    } else {
+      groupSeen.set(key, true);
+    }
+  }
+
   const notBlocked =
     blockedTaskIds.length > 0 ? notInArray(tasks.id, blockedTaskIds) : undefined;
 

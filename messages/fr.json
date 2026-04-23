@@ -887,7 +887,23 @@
       "task_bathroom": "Nettoyer la salle de bain",
       "task_windows": "Laver les vitres",
       "task_bedding": "Changer les draps"
+    },
+    "selling": {
+      "title": "Vendre un article",
+      "description": "Workflow étape par étape pour vendre un article — de la recherche de prix à l'expédition. À importer une fois par article.",
+      "task_research": "Rechercher le prix du marché",
+      "task_condition": "Vérifier l'état & prendre des photos",
+      "task_listing": "Créer & publier l'annonce",
+      "task_negotiate": "Répondre aux questions & négocier le prix",
+      "task_shipping": "Emballer & expédier l'article"
     }
+  },
+  "task_group": {
+    "label": "Groupe",
+    "placeholder": "ex. vieux smartphone",
+    "hint": "Les tâches du même groupe sont débloquées l'une après l'autre.",
+    "auto_detect": "Détecter depuis le titre",
+    "blocked_hint": "En attente de la tâche précédente dans ce groupe"
   },
   "stats": {
     "page_title": "Statistiques",

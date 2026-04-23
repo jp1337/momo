@@ -107,6 +107,8 @@ export const CreateTaskInputSchema = z
       .optional(),
     /** Energy level required (HIGH / MEDIUM / LOW / null = any) */
     energyLevel: EnergyLevelSchema,
+    /** Optional group label — tasks sharing the same group within a topic are sequentially dependent */
+    taskGroup: z.string().max(100).nullable().optional(),
   })
   .refine(
     (data) => {
@@ -177,6 +179,8 @@ export const UpdateTaskInputSchema = z
       .optional(),
     /** Energy level required (HIGH / MEDIUM / LOW / null = any) */
     energyLevel: EnergyLevelSchema,
+    /** Optional group label — tasks sharing the same group within a topic are sequentially dependent */
+    taskGroup: z.string().max(100).nullable().optional(),
   })
   .refine(
     (data) => {

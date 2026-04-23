@@ -225,6 +225,13 @@
       "when": 1776456715935,
       "tag": "0031_bumpy_star_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1776924513919,
+      "tag": "0032_add_task_group",
+      "breakpoints": true
     }
   ]
 }

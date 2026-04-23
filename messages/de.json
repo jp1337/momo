@@ -887,7 +887,23 @@
       "task_bathroom": "Bad putzen",
       "task_windows": "Fenster putzen",
       "task_bedding": "Bettwäsche wechseln"
+    },
+    "selling": {
+      "title": "Artikel verkaufen",
+      "description": "Schritt für Schritt einen Artikel verkaufen — von der Preisrecherche bis zum Versand. Für jeden Artikel einmal importieren.",
+      "task_research": "Marktpreis recherchieren",
+      "task_condition": "Zustand prüfen & fotografieren",
+      "task_listing": "Inserat erstellen & veröffentlichen",
+      "task_negotiate": "Anfragen beantworten & Preis verhandeln",
+      "task_shipping": "Artikel verpacken & verschicken"
     }
+  },
+  "task_group": {
+    "label": "Gruppe",
+    "placeholder": "z. B. Altes Smartphone",
+    "hint": "Aufgaben mit gleichem Gruppenname werden nacheinander freigeschaltet.",
+    "auto_detect": "Aus Titel übernehmen",
+    "blocked_hint": "Wartet auf vorherige Aufgabe in dieser Gruppe"
   },
   "stats": {
     "page_title": "Statistiken",

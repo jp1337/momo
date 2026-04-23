@@ -887,7 +887,23 @@
       "task_bathroom": "Badkamer schoonmaken",
       "task_windows": "Ramen lappen",
       "task_bedding": "Beddengoed verschonen"
+    },
+    "selling": {
+      "title": "Artikel verkopen",
+      "description": "Stap-voor-stap werkstroom om een artikel te verkopen — van prijsonderzoek tot verzending. Eén keer importeren per artikel.",
+      "task_research": "Marktprijs onderzoeken",
+      "task_condition": "Staat controleren & foto's maken",
+      "task_listing": "Advertentie aanmaken & plaatsen",
+      "task_negotiate": "Vragen beantwoorden & prijs onderhandelen",
+      "task_shipping": "Artikel inpakken & verzenden"
     }
+  },
+  "task_group": {
+    "label": "Groep",
+    "placeholder": "bijv. oude smartphone",
+    "hint": "Taken met dezelfde groepsnaam worden één voor één vrijgegeven.",
+    "auto_detect": "Detecteren vanuit titel",
+    "blocked_hint": "Wacht op vorige taak in deze groep"
   },
   "stats": {
     "page_title": "Statistieken",
