@@ -1,8 +1,9 @@
 /**
  * Achievements Gallery — /achievements
  *
- * Displays all 31 achievements organised by rarity tier (Legendary → Common).
- * Each tier is collapsible-free but visually separated.
+ * Displays all achievements organised by rarity tier (Legendary → Common).
+ * On every load: seeds achievement definitions and retroactively grants any
+ * achievements the user has already earned (idempotent, no duplicate grants).
  *
  *  - Earned achievements: full colour, rarity border, coin badge, earned date
  *  - Locked normal: dimmed, progress bar for countable milestones
@@ -15,10 +16,9 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getAchievementsWithProgress } from "@/lib/statistics";
+import { retroactivelyGrantAchievements } from "@/lib/gamification";
 import { AchievementCard } from "@/components/achievements/achievement-card";
 import { getTranslations } from "next-intl/server";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrophy } from "@fortawesome/free-solid-svg-icons";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -36,6 +36,13 @@ const RARITY_ACCENT: Record<string, string> = {
   common: "var(--text-muted)",
 };
 
+const RARITY_LABEL_DE: Record<string, string> = {
+  legendary: "Legendär",
+  epic: "Episch",
+  rare: "Selten",
+  common: "Gewöhnlich",
+};
+
 /**
  * Achievement gallery page.
  * Groups achievements by rarity (Legendary first) and shows earned vs locked state.
@@ -48,7 +55,6 @@ export default async function AchievementsPage() {
 
   const t = await getTranslations("achievements");
 
-  // Fetch user's timezone for energy streak computation
   const userRow = await db
     .select({ timezone: users.timezone })
     .from(users)
@@ -56,130 +62,195 @@ export default async function AchievementsPage() {
     .limit(1);
   const timezone = userRow[0]?.timezone ?? null;
 
+  // Seed + retroactively grant achievements (idempotent — safe every page load)
+  await retroactivelyGrantAchievements(session.user.id, timezone);
+
   const allAchievements = await getAchievementsWithProgress(session.user.id, timezone);
 
   const earned = allAchievements.filter((a) => a.earnedAt != null);
   const total = allAchievements.length;
+  const pct = Math.round((earned.length / Math.max(total, 1)) * 100);
 
   // Group by rarity
   const byRarity = Object.fromEntries(
     RARITY_ORDER.map((r) => [r, allAchievements.filter((a) => a.rarity === r)])
   );
 
+  // Latest 3 earned achievements for the "recently unlocked" showcase
+  const recentlyEarned = [...earned]
+    .sort((a, b) => new Date(b.earnedAt!).getTime() - new Date(a.earnedAt!).getTime())
+    .slice(0, 3);
+
   return (
     <main
       style={{
-        maxWidth: "900px",
+        maxWidth: "960px",
         margin: "0 auto",
-        padding: "32px 20px 64px",
+        padding: "32px 20px 80px",
       }}
     >
-      {/* Page header */}
-      <div style={{ marginBottom: "32px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-          <FontAwesomeIcon
-            icon={faTrophy}
-            style={{ color: "var(--accent-amber)", fontSize: "1.5rem" }}
-          />
-          <h1
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "clamp(1.6rem, 4vw, 2.2rem)",
-              fontWeight: 700,
-              color: "var(--text-primary)",
-              margin: 0,
-            }}
-          >
-            {t("page_title")}
-          </h1>
-        </div>
-        <p
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "0.9rem",
-            color: "var(--text-muted)",
-            margin: 0,
-          }}
-        >
-          {t("page_subtitle", { earned: earned.length, total })}
-        </p>
-      </div>
-
-      {/* Progress overview bar */}
+      {/* ── Hero header ───────────────────────────────────────────────────────── */}
       <div
         style={{
-          backgroundColor: "var(--bg-surface)",
-          borderRadius: "12px",
-          padding: "20px",
-          marginBottom: "36px",
+          background: "linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%)",
           border: "1px solid var(--border)",
+          borderRadius: "16px",
+          padding: "28px 28px 24px",
+          marginBottom: "28px",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
+        {/* Decorative background glow */}
         <div
+          aria-hidden="true"
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "12px",
-            fontFamily: "var(--font-ui)",
+            position: "absolute",
+            top: "-40px",
+            right: "-40px",
+            width: "200px",
+            height: "200px",
+            borderRadius: "50%",
+            background: "radial-gradient(circle, var(--accent-amber) 0%, transparent 70%)",
+            opacity: 0.07,
+            pointerEvents: "none",
           }}
-        >
-          <span style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>
-            {earned.length} / {total}
-          </span>
-          <span style={{ color: "var(--accent-amber)", fontWeight: 700, fontSize: "0.9rem" }}>
-            {Math.round((earned.length / Math.max(total, 1)) * 100)}%
-          </span>
-        </div>
-        <div
-          style={{
-            height: "8px",
-            borderRadius: "4px",
-            backgroundColor: "var(--border)",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              borderRadius: "4px",
-              background: "linear-gradient(90deg, var(--accent-amber), var(--rarity-legendary))",
-              width: `${Math.round((earned.length / Math.max(total, 1)) * 100)}%`,
-              transition: "width 0.6s ease",
-            }}
-          />
-        </div>
+        />
 
-        {/* Per-rarity earned counts */}
-        <div
-          style={{
-            display: "flex",
-            gap: "16px",
-            marginTop: "14px",
-            flexWrap: "wrap",
-          }}
-        >
-          {RARITY_ORDER.map((rarity) => {
-            const tier = byRarity[rarity] ?? [];
-            const earnedInTier = tier.filter((a) => a.earnedAt != null).length;
-            return (
-              <span
-                key={rarity}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+              <span style={{ fontSize: "2rem", lineHeight: 1 }}>🏆</span>
+              <h1
                 style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "0.72rem",
-                  color: RARITY_ACCENT[rarity],
-                  fontWeight: 600,
+                  fontFamily: "var(--font-display)",
+                  fontSize: "clamp(1.5rem, 4vw, 2rem)",
+                  fontWeight: 700,
+                  color: "var(--text-primary)",
+                  margin: 0,
                 }}
               >
-                {earnedInTier}/{tier.length} {t(`rarity_${rarity}`)}
-              </span>
-            );
-          })}
+                {t("page_title")}
+              </h1>
+            </div>
+            <p
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "0.88rem",
+                color: "var(--text-muted)",
+                margin: "0 0 20px",
+              }}
+            >
+              {t("page_subtitle", { earned: earned.length, total })}
+            </p>
+
+            {/* Progress bar */}
+            <div style={{ width: "min(320px, 100%)" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "0.75rem",
+                  color: "var(--text-muted)",
+                  marginBottom: "6px",
+                }}
+              >
+                <span>{earned.length} / {total} freigeschaltet</span>
+                <span style={{ color: "var(--accent-amber)", fontWeight: 700 }}>{pct}%</span>
+              </div>
+              <div
+                style={{
+                  height: "6px",
+                  borderRadius: "3px",
+                  backgroundColor: "var(--border)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    borderRadius: "3px",
+                    background: "linear-gradient(90deg, var(--accent-amber), var(--rarity-legendary))",
+                    width: `${pct}%`,
+                    transition: "width 0.8s ease",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Per-rarity breakdown pills */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+              alignSelf: "center",
+            }}
+          >
+            {RARITY_ORDER.map((rarity) => {
+              const tier = byRarity[rarity] ?? [];
+              const earnedInTier = tier.filter((a) => a.earnedAt != null).length;
+              const color = RARITY_ACCENT[rarity];
+              return (
+                <div
+                  key={rarity}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontFamily: "var(--font-ui)",
+                    fontSize: "0.75rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: color,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ color: "var(--text-muted)", minWidth: "70px" }}>{RARITY_LABEL_DE[rarity]}</span>
+                  <span style={{ color, fontWeight: 700 }}>{earnedInTier}/{tier.length}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Rarity sections */}
+      {/* ── Recently unlocked showcase ─────────────────────────────────────────── */}
+      {recentlyEarned.length > 0 && (
+        <div style={{ marginBottom: "36px" }}>
+          <h2
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "1rem",
+              fontWeight: 700,
+              color: "var(--text-primary)",
+              margin: "0 0 12px",
+            }}
+          >
+            Zuletzt freigeschaltet
+          </h2>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gap: "10px",
+            }}
+          >
+            {recentlyEarned.map((a) => (
+              <AchievementCard key={a.key} achievement={a} highlighted />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Rarity sections ────────────────────────────────────────────────────── */}
       {RARITY_ORDER.map((rarity) => {
         const tier = byRarity[rarity] ?? [];
         if (tier.length === 0) return null;
@@ -187,34 +258,36 @@ export default async function AchievementsPage() {
         const accentColor = RARITY_ACCENT[rarity];
 
         return (
-          <section key={rarity} style={{ marginBottom: "40px" }}>
+          <section key={rarity} style={{ marginBottom: "44px" }}>
             {/* Section header */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "10px",
-                marginBottom: "16px",
-                paddingBottom: "10px",
+                marginBottom: "14px",
+                paddingBottom: "12px",
                 borderBottom: `1px solid var(--border)`,
               }}
             >
               <div
                 style={{
-                  width: "12px",
-                  height: "12px",
+                  width: "10px",
+                  height: "10px",
                   borderRadius: "50%",
                   backgroundColor: accentColor,
+                  boxShadow: `0 0 6px ${accentColor}`,
                   flexShrink: 0,
                 }}
               />
               <h2
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontSize: "1.1rem",
+                  fontSize: "1.05rem",
                   fontWeight: 700,
                   color: accentColor,
                   margin: 0,
+                  letterSpacing: "0.01em",
                 }}
               >
                 {t(`section_${rarity}`)}
@@ -222,9 +295,14 @@ export default async function AchievementsPage() {
               <span
                 style={{
                   fontFamily: "var(--font-ui)",
-                  fontSize: "0.75rem",
-                  color: "var(--text-muted)",
+                  fontSize: "0.72rem",
+                  fontWeight: 600,
+                  color: earnedInTier === tier.length ? accentColor : "var(--text-muted)",
                   marginLeft: "auto",
+                  background: earnedInTier === tier.length ? `${accentColor}18` : "var(--bg-elevated)",
+                  border: `1px solid ${earnedInTier === tier.length ? accentColor : "var(--border)"}`,
+                  borderRadius: "20px",
+                  padding: "2px 8px",
                 }}
               >
                 {earnedInTier}/{tier.length}
@@ -236,10 +314,10 @@ export default async function AchievementsPage() {
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                gap: "12px",
+                gap: "10px",
               }}
             >
-              {/* Earned achievements first, then locked */}
+              {/* Earned first, then locked */}
               {[
                 ...tier.filter((a) => a.earnedAt != null),
                 ...tier.filter((a) => a.earnedAt == null),

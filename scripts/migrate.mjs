@@ -430,3 +430,78 @@ async function postMigrationCheck() {
 }
 
 await postMigrationCheck();
+
+// Seed achievement definitions — idempotent via ON CONFLICT (key) DO UPDATE.
+// Runs after every startup so adding new achievements to the code automatically
+// populates them in the database without a manual migration.
+const ACHIEVEMENT_DEFINITIONS = [
+  // Common
+  { key: "first_task",          title: "Erster Schritt",         description: "Erste Aufgabe erledigt",                            icon: "🌱",  rarity: "common",    coin_reward: 10,  secret: false },
+  { key: "daily_quest_complete", title: "Tagessieger",            description: "Daily Quest erledigt",                              icon: "🌟",  rarity: "common",    coin_reward: 10,  secret: false },
+  { key: "first_topic",          title: "Themensetzer",           description: "Erstes Topic erstellt",                             icon: "📁",  rarity: "common",    coin_reward: 10,  secret: false },
+  { key: "first_high_priority",  title: "Volles Risiko",          description: "Erste Aufgabe mit hoher Priorität erledigt",        icon: "❗",  rarity: "common",    coin_reward: 10,  secret: false },
+  { key: "first_wishlist_buy",   title: "Erster Wunsch",          description: "Erstes Wunschlisten-Item gekauft",                  icon: "🛍️", rarity: "common",    coin_reward: 10,  secret: false },
+  // Rare
+  { key: "streak_3",             title: "Drei am Stück",          description: "3-Tage-Streak erreicht",                            icon: "🔥",  rarity: "rare",      coin_reward: 25,  secret: false },
+  { key: "streak_7",             title: "Eine Woche",             description: "7-Tage-Streak erreicht",                            icon: "⚡",  rarity: "rare",      coin_reward: 25,  secret: false },
+  { key: "streak_14",            title: "Zwei Wochen",            description: "14-Tage-Streak erreicht",                           icon: "🌙",  rarity: "rare",      coin_reward: 25,  secret: false },
+  { key: "tasks_10",             title: "Fleißige Hände",         description: "10 Aufgaben erledigt",                              icon: "✋",  rarity: "rare",      coin_reward: 25,  secret: false },
+  { key: "tasks_50",             title: "Unaufhaltsam",           description: "50 Aufgaben erledigt",                              icon: "🚀",  rarity: "rare",      coin_reward: 25,  secret: false },
+  { key: "coins_100",            title: "Hundert Münzen",         description: "100 Coins gesammelt",                               icon: "🪙",  rarity: "rare",      coin_reward: 25,  secret: false },
+  { key: "level_5",              title: "Zeitwächter",            description: "Level 5 erreicht",                                  icon: "⭐",  rarity: "rare",      coin_reward: 25,  secret: false },
+  { key: "quest_streak_7",       title: "Wochensieger",           description: "7 Tage Daily Quest in Folge erledigt",              icon: "🎯",  rarity: "rare",      coin_reward: 25,  secret: false },
+  { key: "energy_checkin_7",     title: "Im Gleichgewicht",       description: "7 Tage in Folge Energie eingecheckt",               icon: "🧘",  rarity: "rare",      coin_reward: 25,  secret: false },
+  { key: "night_owl",            title: "Nachtaktiv",             description: "Eine Aufgabe nach 23 Uhr erledigt",                 icon: "🦉",  rarity: "rare",      coin_reward: 25,  secret: true  },
+  { key: "early_bird",           title: "Frühaufsteher",          description: "Eine Aufgabe vor 7 Uhr erledigt",                   icon: "🐦",  rarity: "rare",      coin_reward: 25,  secret: true  },
+  // Epic
+  { key: "streak_30",            title: "Ein Monat",              description: "30-Tage-Streak erreicht",                           icon: "💎",  rarity: "epic",      coin_reward: 50,  secret: false },
+  { key: "streak_60",            title: "Zwei Monate",            description: "60-Tage-Streak erreicht",                           icon: "🌊",  rarity: "epic",      coin_reward: 50,  secret: false },
+  { key: "tasks_100",            title: "Zeitmeister",            description: "100 Aufgaben erledigt",                             icon: "🏆",  rarity: "epic",      coin_reward: 50,  secret: false },
+  { key: "tasks_200",            title: "Beständig",              description: "200 Aufgaben erledigt",                             icon: "🎖️", rarity: "epic",      coin_reward: 50,  secret: false },
+  { key: "coins_500",            title: "Halbtausend",            description: "500 Coins gesammelt",                               icon: "💰",  rarity: "epic",      coin_reward: 50,  secret: false },
+  { key: "level_10",             title: "Legendär",               description: "Level 10 erreicht",                                 icon: "👑",  rarity: "epic",      coin_reward: 50,  secret: false },
+  { key: "topics_5",             title: "Themenmeister",          description: "5 Topics erstellt",                                 icon: "📚",  rarity: "epic",      coin_reward: 50,  secret: false },
+  { key: "quest_streak_30",      title: "Monatssieger",           description: "30 Tage Daily Quest in Folge erledigt",             icon: "🏅",  rarity: "epic",      coin_reward: 50,  secret: false },
+  { key: "wishlist_10_bought",   title: "Wunscherfüller",         description: "10 Wunschlisten-Items gekauft",                     icon: "🎁",  rarity: "epic",      coin_reward: 50,  secret: false },
+  { key: "double_shift",         title: "Doppelschicht",          description: "Zwei Daily Quests an einem Tag erledigt",           icon: "⚡",  rarity: "epic",      coin_reward: 50,  secret: true  },
+  // Legendary
+  { key: "streak_100",           title: "Unbeugsamkeit",          description: "100-Tage-Streak erreicht",                          icon: "💪",  rarity: "legendary", coin_reward: 100, secret: false },
+  { key: "streak_365",           title: "Ein Jahr",               description: "365-Tage-Streak erreicht",                          icon: "🌠",  rarity: "legendary", coin_reward: 100, secret: false },
+  { key: "tasks_500",            title: "Ausdauerkämpfer",        description: "500 Aufgaben erledigt",                             icon: "⚔️", rarity: "legendary", coin_reward: 100, secret: false },
+  { key: "tasks_1000",           title: "Tausendster",            description: "1000 Aufgaben erledigt",                            icon: "👾",  rarity: "legendary", coin_reward: 100, secret: false },
+  { key: "first_sequential_topic", title: "Stratege",             description: "Erstes sequenzielles Topic erstellt",               icon: "🧭",  rarity: "legendary", coin_reward: 100, secret: false },
+];
+
+async function seedAchievements() {
+  const seedPool = new Pool({
+    connectionString,
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 5_000,
+  });
+  const seedClient = await seedPool.connect();
+  try {
+    for (const def of ACHIEVEMENT_DEFINITIONS) {
+      await seedClient.query(
+        `INSERT INTO achievements (id, key, title, description, icon, rarity, coin_reward, secret)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (key) DO UPDATE SET
+           title       = EXCLUDED.title,
+           description = EXCLUDED.description,
+           icon        = EXCLUDED.icon,
+           rarity      = EXCLUDED.rarity,
+           coin_reward = EXCLUDED.coin_reward,
+           secret      = EXCLUDED.secret`,
+        [def.key, def.title, def.description, def.icon, def.rarity, def.coin_reward, def.secret]
+      );
+    }
+    console.log(`[migrate] Achievement seed complete — ${ACHIEVEMENT_DEFINITIONS.length} definitions upserted.`);
+  } catch (err) {
+    console.error("[migrate] Achievement seed failed:", err.message ?? err);
+    process.exit(1);
+  } finally {
+    seedClient.release();
+    await seedPool.end();
+  }
+}
+
+await seedAchievements();

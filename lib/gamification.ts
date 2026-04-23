@@ -13,9 +13,10 @@
 
 import { db } from "@/lib/db";
 import type { Database } from "@/lib/db";
-import { users, achievements, userAchievements } from "@/lib/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { users, achievements, userAchievements, tasks, taskCompletions, topics, wishlistItems } from "@/lib/db/schema";
+import { eq, and, inArray, count, sql } from "drizzle-orm";
 import { getLocalDateString, getLocalYesterdayString, getLocalDayBeforeYesterdayString } from "@/lib/date-utils";
+import { getEnergyCheckinStreak } from "@/lib/energy";
 
 // ─── User Stats ───────────────────────────────────────────────────────────────
 
@@ -744,6 +745,80 @@ export async function checkAndUnlockAchievements(
   const coinsAwarded = unlocked.reduce((sum, a) => sum + a.coinReward, 0);
 
   return { unlocked, coinsAwarded };
+}
+
+// ─── Retroactive Achievement Grant ────────────────────────────────────────────
+
+/**
+ * Grants all achievements a user has already earned but never received
+ * (e.g. because they pre-dated the achievement system).
+ *
+ * Safe to call on every page load — only inserts rows that don't exist yet.
+ * Awards coins for any retroactively granted achievements.
+ * Secret/time-based achievements (night_owl, early_bird, double_shift) are
+ * intentionally excluded here — they require event-time context.
+ *
+ * @param userId   - The user's UUID
+ * @param timezone - IANA timezone (optional, for energy streak)
+ * @returns Number of achievements newly granted
+ */
+export async function retroactivelyGrantAchievements(
+  userId: string,
+  timezone?: string | null
+): Promise<number> {
+  await seedAchievements();
+
+  const [userRow, completionCount, highPriorityCount, topicCount, wishlistBoughtCount, energyStreak] =
+    await Promise.all([
+      db.select({
+        coins: users.coins,
+        level: users.level,
+        streakCurrent: users.streakCurrent,
+        questStreakCurrent: users.questStreakCurrent,
+      }).from(users).where(eq(users.id, userId)).limit(1),
+
+      db.select({ count: count() }).from(taskCompletions).where(eq(taskCompletions.userId, userId)),
+
+      db.select({ count: count() })
+        .from(taskCompletions)
+        .innerJoin(tasks, eq(taskCompletions.taskId, tasks.id))
+        .where(and(eq(taskCompletions.userId, userId), eq(tasks.priority, "HIGH"))),
+
+      db.select({ count: count() }).from(topics).where(eq(topics.userId, userId)),
+
+      db.select({ count: count() })
+        .from(wishlistItems)
+        .where(and(eq(wishlistItems.userId, userId), eq(wishlistItems.status, "BOUGHT"))),
+
+      getEnergyCheckinStreak(userId, timezone),
+    ]);
+
+  const user = userRow[0];
+  if (!user) return 0;
+
+  const context: AchievementContext = {
+    totalCompleted: Number(completionCount[0]?.count ?? 0),
+    streakCurrent: user.streakCurrent ?? 0,
+    coins: user.coins ?? 0,
+    level: user.level ?? 1,
+    questStreakCurrent: user.questStreakCurrent ?? 0,
+    topicsCreated: Number(topicCount[0]?.count ?? 0),
+    totalHighPriorityCompleted: Number(highPriorityCount[0]?.count ?? 0),
+    totalWishlistBought: Number(wishlistBoughtCount[0]?.count ?? 0),
+    energyCheckinStreak: energyStreak,
+    // Event-based / time-based fields intentionally omitted (secret achievements)
+  };
+
+  const result = await checkAndUnlockAchievements(userId, context);
+
+  if (result.coinsAwarded > 0) {
+    await db
+      .update(users)
+      .set({ coins: sql`${users.coins} + ${result.coinsAwarded}` })
+      .where(eq(users.id, userId));
+  }
+
+  return result.unlocked.length;
 }
 
 // ─── DB Seeding ───────────────────────────────────────────────────────────────

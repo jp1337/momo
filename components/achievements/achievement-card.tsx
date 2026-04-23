@@ -7,6 +7,7 @@
  *  - Earned: full color, icon, title, description, earned date, coin badge
  *  - Locked + normal: dimmed, lock icon, title, description, optional progress bar
  *  - Locked + secret: dimmed, question mark, "???" title and "secret" hint text
+ *  - highlighted: slightly elevated border-glow for "recently earned" showcase
  *
  * @module components/achievements/achievement-card
  */
@@ -18,7 +19,6 @@ import type { AchievementWithProgress } from "@/lib/statistics";
 
 type Rarity = "common" | "rare" | "epic" | "legendary";
 
-/** CSS color for each rarity tier */
 const RARITY_COLORS: Record<Rarity, string> = {
   common: "var(--text-muted)",
   rare: "var(--accent-green)",
@@ -26,24 +26,32 @@ const RARITY_COLORS: Record<Rarity, string> = {
   legendary: "var(--rarity-legendary)",
 };
 
-/** Border color for earned achievement cards */
-function rarityBorder(rarity: string): string {
+const RARITY_LABELS: Record<Rarity, string> = {
+  common: "Gewöhnlich",
+  rare: "Selten",
+  epic: "Episch",
+  legendary: "Legendär",
+};
+
+function rarityColor(rarity: string): string {
   return RARITY_COLORS[rarity as Rarity] ?? RARITY_COLORS.common;
 }
 
 interface AchievementCardProps {
   achievement: AchievementWithProgress;
+  /** When true, renders with a glow border for the "recently earned" showcase. */
+  highlighted?: boolean;
 }
 
 /**
  * Renders a single achievement card for the gallery page.
  */
-export function AchievementCard({ achievement }: AchievementCardProps) {
+export function AchievementCard({ achievement, highlighted = false }: AchievementCardProps) {
   const t = useTranslations("achievements");
   const earned = achievement.earnedAt != null;
   const isSecret = achievement.secret && !earned;
   const rarity = achievement.rarity as Rarity;
-  const color = rarityBorder(rarity);
+  const color = rarityColor(rarity);
 
   return (
     <div
@@ -54,16 +62,21 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
           : "1px solid var(--border)",
         borderRadius: "12px",
         padding: "16px",
-        opacity: earned ? 1 : 0.55,
-        transition: "opacity 0.2s, transform 0.2s",
+        opacity: earned ? 1 : 0.5,
         display: "flex",
         flexDirection: "column",
         gap: "10px",
         position: "relative",
         overflow: "hidden",
+        boxShadow: highlighted && earned
+          ? `0 0 16px ${color}40, 0 2px 8px rgba(0,0,0,0.1)`
+          : earned
+          ? `0 1px 4px rgba(0,0,0,0.06)`
+          : "none",
+        transition: "box-shadow 0.2s, opacity 0.2s",
       }}
     >
-      {/* Earned glow accent — subtle top strip */}
+      {/* Top accent strip for earned cards */}
       {earned && (
         <div
           style={{
@@ -72,26 +85,29 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
             left: 0,
             right: 0,
             height: "3px",
-            background: color,
+            background: highlighted
+              ? `linear-gradient(90deg, ${color}, var(--accent-amber))`
+              : color,
             borderRadius: "12px 12px 0 0",
           }}
         />
       )}
 
-      {/* Header row: icon + rarity badge + coin reward */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           {/* Icon */}
           <span
             style={{
-              fontSize: "2rem",
+              fontSize: "1.8rem",
               lineHeight: 1,
-              filter: earned ? "none" : "grayscale(1)",
+              filter: earned ? "none" : "grayscale(1) opacity(0.6)",
+              flexShrink: 0,
             }}
             aria-hidden="true"
           >
             {isSecret ? (
-              <FontAwesomeIcon icon={faLock} style={{ fontSize: "1.5rem", color: "var(--text-muted)" }} />
+              <FontAwesomeIcon icon={faLock} style={{ fontSize: "1.3rem", color: "var(--text-muted)" }} />
             ) : (
               achievement.icon
             )}
@@ -101,17 +117,18 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
           <span
             style={{
               fontFamily: "var(--font-ui)",
-              fontSize: "0.65rem",
+              fontSize: "0.62rem",
               fontWeight: 700,
-              letterSpacing: "0.08em",
+              letterSpacing: "0.07em",
               textTransform: "uppercase",
               color,
               border: `1px solid ${color}`,
               borderRadius: "4px",
-              padding: "2px 6px",
+              padding: "2px 5px",
+              whiteSpace: "nowrap",
             }}
           >
-            {t(`rarity_${rarity}`)}
+            {RARITY_LABELS[rarity] ?? rarity}
           </span>
         </div>
 
@@ -119,15 +136,17 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
         <span
           style={{
             fontFamily: "var(--font-ui)",
-            fontSize: "0.75rem",
+            fontSize: "0.72rem",
             fontWeight: 600,
             color: earned ? "var(--coin-gold)" : "var(--text-muted)",
             display: "flex",
             alignItems: "center",
             gap: "3px",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
           }}
         >
-          🪙 {t("coin_reward", { coins: achievement.coinReward })}
+          🪙 +{achievement.coinReward}
         </span>
       </div>
 
@@ -136,7 +155,7 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
         <div
           style={{
             fontFamily: "var(--font-display)",
-            fontSize: "0.95rem",
+            fontSize: "0.92rem",
             fontWeight: 700,
             color: earned ? "var(--text-primary)" : "var(--text-muted)",
             marginBottom: "3px",
@@ -147,9 +166,9 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
         <div
           style={{
             fontFamily: "var(--font-ui)",
-            fontSize: "0.78rem",
+            fontSize: "0.76rem",
             color: "var(--text-muted)",
-            lineHeight: 1.4,
+            lineHeight: 1.45,
           }}
         >
           {isSecret ? t("secret_description") : achievement.description}
@@ -161,40 +180,44 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
         <div
           style={{
             fontFamily: "var(--font-ui)",
-            fontSize: "0.7rem",
+            fontSize: "0.68rem",
             color: "var(--text-muted)",
             marginTop: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
           }}
         >
-          {t("earned_at", {
-            date: new Date(achievement.earnedAt).toLocaleDateString(undefined, {
+          <span>✓</span>
+          <span>
+            {new Date(achievement.earnedAt).toLocaleDateString(undefined, {
               day: "numeric",
               month: "short",
               year: "numeric",
-            }),
-          })}
+            })}
+          </span>
         </div>
       )}
 
-      {/* Progress bar for locked, non-secret achievements with countable progress */}
+      {/* Progress bar for locked, non-secret achievements */}
       {!earned && !isSecret && achievement.progress && (
-        <div style={{ marginTop: "4px" }}>
+        <div style={{ marginTop: "2px" }}>
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               fontFamily: "var(--font-ui)",
-              fontSize: "0.68rem",
+              fontSize: "0.66rem",
               color: "var(--text-muted)",
               marginBottom: "4px",
             }}
           >
-            <span>{t("progress", achievement.progress)}</span>
+            <span>{achievement.progress.current} / {achievement.progress.total}</span>
             <span>{Math.round((achievement.progress.current / achievement.progress.total) * 100)}%</span>
           </div>
           <div
             style={{
-              height: "4px",
+              height: "3px",
               borderRadius: "2px",
               backgroundColor: "var(--border)",
               overflow: "hidden",
@@ -206,7 +229,8 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
                 borderRadius: "2px",
                 backgroundColor: color,
                 width: `${Math.round((achievement.progress.current / achievement.progress.total) * 100)}%`,
-                transition: "width 0.4s ease",
+                transition: "width 0.5s ease",
+                opacity: 0.7,
               }}
             />
           </div>
