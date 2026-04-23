@@ -887,7 +887,23 @@
       "task_bathroom": "Clean the bathroom",
       "task_windows": "Clean the windows",
       "task_bedding": "Change the bedsheets"
+    },
+    "selling": {
+      "title": "Sell an item",
+      "description": "Step-by-step workflow to sell one item — from pricing research to shipping. Import once per item you want to sell.",
+      "task_research": "Research market price",
+      "task_condition": "Check condition & take photos",
+      "task_listing": "Create & publish listing",
+      "task_negotiate": "Answer enquiries & negotiate price",
+      "task_shipping": "Pack & ship the item"
     }
+  },
+  "task_group": {
+    "label": "Group",
+    "placeholder": "e.g. old smartphone",
+    "hint": "Tasks with the same group name are unlocked one after another.",
+    "auto_detect": "Detect from title",
+    "blocked_hint": "Waiting for previous task in this group"
   },
   "stats": {
     "page_title": "Statistics",

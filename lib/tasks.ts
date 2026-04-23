@@ -290,6 +290,7 @@ export async function createTask(
         estimatedMinutes: input.estimatedMinutes ?? null,
         energyLevel: effectiveEnergyLevel,
         sortOrder,
+        taskGroup: input.taskGroup ?? null,
       })
       .returning();
 
@@ -360,6 +361,7 @@ export async function updateTask(
   if (input.estimatedMinutes !== undefined) updateValues.estimatedMinutes = input.estimatedMinutes;
   if (input.snoozedUntil !== undefined) updateValues.snoozedUntil = input.snoozedUntil;
   if (input.energyLevel !== undefined) updateValues.energyLevel = input.energyLevel;
+  if (input.taskGroup !== undefined) updateValues.taskGroup = input.taskGroup ?? null;
 
   const rows = await db
     .update(tasks)

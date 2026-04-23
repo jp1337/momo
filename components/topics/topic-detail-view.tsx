@@ -7,7 +7,7 @@
  * Includes an "Add subtask" button that opens the TaskForm with the topic pre-selected.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { TaskItem } from "@/components/tasks/task-item";
@@ -35,6 +35,7 @@ interface Task {
   estimatedMinutes?: number | null;
   snoozedUntil?: string | null;
   sortOrder: number;
+  taskGroup?: string | null;
 }
 
 interface TopicDetailViewProps {
@@ -62,6 +63,7 @@ export function TopicDetailView({
   topicSequential = false,
 }: TopicDetailViewProps) {
   const t = useTranslations("topics");
+  const tg = useTranslations("task_group");
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -237,6 +239,29 @@ export function TopicDetailView({
     .sort((a, b) => a.sortOrder - b.sortOrder || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   const completedTasks = tasks.filter((task) => task.completedAt !== null);
 
+  // Compute which active tasks are blocked by group ordering.
+  // The first open task per group is unlocked; all others are blocked.
+  const blockedByGroup = useMemo(() => {
+    const seen = new Set<string>();
+    const blocked = new Set<string>();
+    for (const task of activeTasks) {
+      if (!task.taskGroup) continue;
+      const key = task.taskGroup;
+      if (seen.has(key)) {
+        blocked.add(task.id);
+      } else {
+        seen.add(key);
+      }
+    }
+    return blocked;
+  }, [activeTasks]);
+
+  // Unique group names across all non-completed tasks (for TaskForm autocomplete)
+  const existingGroups = useMemo(
+    () => [...new Set(tasks.map((t) => t.taskGroup).filter(Boolean) as string[])],
+    [tasks]
+  );
+
   return (
     <div>
       {/* Progress bar — driven by live tasks state so it updates without a reload */}
@@ -361,22 +386,126 @@ export function TopicDetailView({
         </div>
       )}
 
-      {/* Active tasks — drag-and-drop reorderable */}
+      {/* Active tasks — drag-and-drop reorderable, grouped by task_group */}
       {activeTasks.length > 0 && (
         <div className="mb-4">
-          <SortableTaskList
-            tasks={activeTasks}
-            topicTitle={topicTitle}
-            topicColor={topicColor}
-            onReorder={handleReorder}
-            onComplete={handleComplete}
-            onUncomplete={handleUncomplete}
-            onEdit={setEditingTaskId}
-            onDelete={handleDelete}
-            onBreakdown={handleBreakdown}
-            onSnooze={handleSnooze}
-            onUnsnooze={handleUnsnooze}
-          />
+          {existingGroups.length > 0 ? (
+            // Render tasks in named groups + ungrouped tasks at the end
+            (() => {
+              // Collect distinct groups in the order they first appear
+              const orderedGroups: string[] = [];
+              for (const task of activeTasks) {
+                if (task.taskGroup && !orderedGroups.includes(task.taskGroup)) {
+                  orderedGroups.push(task.taskGroup);
+                }
+              }
+              const ungrouped = activeTasks.filter((t) => !t.taskGroup);
+
+              return (
+                <div className="flex flex-col gap-4">
+                  {orderedGroups.map((group) => {
+                    const groupTasks = activeTasks.filter((t) => t.taskGroup === group);
+                    return (
+                      <div key={group}>
+                        <div
+                          className="flex items-center gap-2 mb-2 px-1"
+                        >
+                          <span
+                            className="text-xs font-semibold uppercase tracking-wider"
+                            style={{
+                              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                              color: accentColor,
+                            }}
+                          >
+                            {group}
+                          </span>
+                          <div
+                            className="flex-1 h-px"
+                            style={{ backgroundColor: `color-mix(in srgb, ${accentColor} 30%, transparent)` }}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {groupTasks.map((task) => {
+                            const isBlocked = blockedByGroup.has(task.id);
+                            return (
+                              <div key={task.id} style={{ position: "relative" }}>
+                                {isBlocked && (
+                                  <div
+                                    className="absolute inset-0 rounded-xl z-10 flex items-center justify-end pr-3 cursor-not-allowed"
+                                    style={{ backgroundColor: "color-mix(in srgb, var(--bg-primary) 50%, transparent)" }}
+                                  >
+                                    <span
+                                      className="text-xs flex items-center gap-1"
+                                      style={{
+                                        fontFamily: "var(--font-ui)",
+                                        color: "var(--text-muted)",
+                                      }}
+                                      title={tg("blocked_hint")}
+                                    >
+                                      🔒
+                                    </span>
+                                  </div>
+                                )}
+                                <TaskItem
+                                  id={task.id}
+                                  title={task.title}
+                                  type={task.type}
+                                  priority={task.priority}
+                                  completedAt={task.completedAt}
+                                  dueDate={task.dueDate}
+                                  nextDueDate={task.nextDueDate}
+                                  topicTitle={topicTitle}
+                                  topicColor={topicColor}
+                                  coinValue={task.coinValue}
+                                  onComplete={handleComplete}
+                                  onUncomplete={handleUncomplete}
+                                  onEdit={setEditingTaskId}
+                                  onDelete={handleDelete}
+                                  onBreakdown={handleBreakdown}
+                                  snoozedUntil={task.snoozedUntil}
+                                  onSnooze={handleSnooze}
+                                  onUnsnooze={handleUnsnooze}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {ungrouped.length > 0 && (
+                    <SortableTaskList
+                      tasks={ungrouped}
+                      topicTitle={topicTitle}
+                      topicColor={topicColor}
+                      onReorder={handleReorder}
+                      onComplete={handleComplete}
+                      onUncomplete={handleUncomplete}
+                      onEdit={setEditingTaskId}
+                      onDelete={handleDelete}
+                      onBreakdown={handleBreakdown}
+                      onSnooze={handleSnooze}
+                      onUnsnooze={handleUnsnooze}
+                    />
+                  )}
+                </div>
+              );
+            })()
+          ) : (
+            <SortableTaskList
+              tasks={activeTasks}
+              topicTitle={topicTitle}
+              topicColor={topicColor}
+              onReorder={handleReorder}
+              onComplete={handleComplete}
+              onUncomplete={handleUncomplete}
+              onEdit={setEditingTaskId}
+              onDelete={handleDelete}
+              onBreakdown={handleBreakdown}
+              onSnooze={handleSnooze}
+              onUnsnooze={handleUnsnooze}
+            />
+          )}
         </div>
       )}
 
@@ -477,11 +606,13 @@ export function TopicDetailView({
                   estimatedMinutes: ([5, 15, 30, 60] as const).includes(editingTask.estimatedMinutes as 5 | 15 | 30 | 60)
                     ? (editingTask.estimatedMinutes as 5 | 15 | 30 | 60)
                     : null,
+                  taskGroup: editingTask.taskGroup ?? "",
                 }
               : undefined
           }
           topics={[{ id: topicId, title: topicTitle, color: topicColor, defaultEnergyLevel: topicDefaultEnergyLevel }]}
           defaultTopicId={topicId}
+          existingGroups={existingGroups}
           onSuccess={handleFormSuccess}
           onCancel={() => {
             setShowCreateForm(false);

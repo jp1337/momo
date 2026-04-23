@@ -539,6 +539,15 @@ export const tasks = pgTable("tasks", {
   sortOrder: integer("sort_order").notNull().default(0),
 
   /**
+   * Optional group label for tasks within a topic.
+   * Tasks sharing the same task_group in the same topic are treated as
+   * sequentially dependent (sorted by sort_order): only the first open task
+   * in a group is eligible for the daily quest and shown as unlocked.
+   * Null = no group, the task is always independently accessible.
+   */
+  taskGroup: text("task_group"),
+
+  /**
    * Date when this task was paused (YYYY-MM-DD). Null = not paused.
    * Set by vacation mode activation; used to calculate the actual pause
    * duration when unpausing (nextDueDate shifts by `today - pausedAt` days).

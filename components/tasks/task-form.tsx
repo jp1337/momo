@@ -34,6 +34,7 @@ interface TaskFormData {
   coinValue: string;
   estimatedMinutes: 5 | 15 | 30 | 60 | null;
   energyLevel: "HIGH" | "MEDIUM" | "LOW" | null;
+  taskGroup: string;
 }
 
 interface TaskFormProps {
@@ -47,6 +48,8 @@ interface TaskFormProps {
   onSuccess: () => void;
   /** Called when the modal should be closed without saving */
   onCancel: () => void;
+  /** Existing group names in the current topic for autocomplete suggestions */
+  existingGroups?: string[];
 }
 
 /** Weekday indices 0=Mon…6=Sun with their translation key suffixes */
@@ -77,7 +80,17 @@ const DEFAULT_FORM: TaskFormData = {
   coinValue: "1",
   estimatedMinutes: null,
   energyLevel: null,
+  taskGroup: "",
 };
+
+/** Extracts the group prefix from a task title: "Unifi AP: Marktpreis" → "Unifi AP" */
+function detectGroupFromTitle(title: string): string {
+  const colonIdx = title.indexOf(": ");
+  if (colonIdx > 0 && colonIdx < 60) return title.slice(0, colonIdx).trim();
+  const dashIdx = title.indexOf(" - ");
+  if (dashIdx > 0 && dashIdx < 60) return title.slice(0, dashIdx).trim();
+  return "";
+}
 
 /**
  * Modal form for creating or editing a task.
@@ -89,9 +102,11 @@ export function TaskForm({
   defaultTopicId,
   onSuccess,
   onCancel,
+  existingGroups = [],
 }: TaskFormProps) {
   const t = useTranslations("tasks");
   const tc = useTranslations("common");
+  const tg = useTranslations("task_group");
 
   const isEditing = !!initialData?.id;
 
@@ -166,6 +181,7 @@ export function TaskForm({
       coinValue: parseInt(formData.coinValue, 10) || 1,
       estimatedMinutes: formData.estimatedMinutes,
       energyLevel: formData.energyLevel,
+      taskGroup: formData.taskGroup.trim() || null,
     };
 
     setIsSubmitting(true);
@@ -639,6 +655,60 @@ export function TaskForm({
               );
             })()}
           </div>
+
+          {/* Task Group — only shown when a topic is selected */}
+          {formData.topicId && (
+            <div>
+              <label htmlFor="task-group" style={labelStyle}>
+                {tg("label")}
+              </label>
+              <div style={{ position: "relative" }}>
+                <input
+                  id="task-group"
+                  name="taskGroup"
+                  type="text"
+                  list="task-group-suggestions"
+                  value={formData.taskGroup}
+                  onChange={handleChange}
+                  placeholder={tg("placeholder")}
+                  style={inputStyle}
+                  autoComplete="off"
+                />
+                <datalist id="task-group-suggestions">
+                  {existingGroups.map((g) => (
+                    <option key={g} value={g} />
+                  ))}
+                </datalist>
+              </div>
+              {/* Auto-detect from title */}
+              {!formData.taskGroup && detectGroupFromTitle(formData.title) && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      taskGroup: detectGroupFromTitle(prev.title),
+                    }))
+                  }
+                  style={{
+                    marginTop: "4px",
+                    fontSize: "12px",
+                    color: "var(--accent-amber)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  }}
+                >
+                  ↳ {tg("auto_detect")}: &bdquo;{detectGroupFromTitle(formData.title)}&ldquo;
+                </button>
+              )}
+              <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px", fontFamily: "var(--font-ui)" }}>
+                {tg("hint")}
+              </p>
+            </div>
+          )}
 
           {/* Notes */}
           <div>
