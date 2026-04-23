@@ -344,6 +344,7 @@ export async function selectDailyQuest(
 
   // Clear is_daily_quest on quests completed on PREVIOUS days — idempotent,
   // no need to serialise with the assignment below.
+  // Non-recurring tasks: keep completedAt (permanent done state).
   await db
     .update(tasks)
     .set({ isDailyQuest: false })
@@ -352,7 +353,23 @@ export async function selectDailyQuest(
         eq(tasks.userId, userId),
         eq(tasks.isDailyQuest, true),
         isNotNull(tasks.completedAt),
-        lt(tasks.completedAt, todayStart)
+        lt(tasks.completedAt, todayStart),
+        ne(tasks.type, "RECURRING")
+      )
+    );
+
+  // Recurring tasks: also reset completedAt to null — the completedAt was set
+  // only as a daily-quest marker; recurring tasks live on via nextDueDate.
+  await db
+    .update(tasks)
+    .set({ isDailyQuest: false, completedAt: null })
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        eq(tasks.isDailyQuest, true),
+        isNotNull(tasks.completedAt),
+        lt(tasks.completedAt, todayStart),
+        eq(tasks.type, "RECURRING")
       )
     );
 
