@@ -144,6 +144,19 @@
         if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
       });
     })();
+
+    // Wrap tables and pre blocks in scroll containers so they
+    // scroll horizontally on mobile without blowing the viewport.
+    (function () {
+      var body = document.querySelector('.content-body');
+      if (!body) return;
+      body.querySelectorAll('table, pre').forEach(function (el) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'scroll-wrapper';
+        el.parentNode.insertBefore(wrapper, el);
+        wrapper.appendChild(el);
+      });
+    })();
   </script>
 
 </body>
