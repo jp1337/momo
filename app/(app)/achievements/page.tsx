@@ -24,7 +24,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export const metadata: Metadata = {
-  title: "Errungenschaften — Momo",
+  title: "Errungenschaften",
 };
 
 const RARITY_ORDER = ["legendary", "epic", "rare", "common"] as const;

@@ -32,7 +32,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export const metadata: Metadata = {
-  title: "Gewohnheiten — Momo",
+  title: "Gewohnheiten",
 };
 
 interface HabitsPageProps {

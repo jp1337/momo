@@ -1302,7 +1302,7 @@ export async function sendMorningBriefingNotifications(): Promise<{
     }
 
     if (data.streakCurrent > 0) {
-      lines.push(`🔥 Streak: ${data.streakCurrent} Tage`);
+      lines.push(`🔥 Streak: ${data.streakCurrent} ${data.streakCurrent === 1 ? "Tag" : "Tage"}`);
     }
 
     if (data.recentAchievements.length > 0) {

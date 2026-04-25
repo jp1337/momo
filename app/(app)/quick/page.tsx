@@ -20,7 +20,7 @@ import { FiveMinuteView } from "@/components/quick/five-minute-view";
 import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "5 Min — Momo",
+  title: "5 Min",
 };
 
 /**
