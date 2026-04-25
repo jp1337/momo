@@ -752,7 +752,8 @@
     "feature_focus_desc": "Distraction-free view: only your quest and short tasks. Nothing else.",
     "feature_selfhost_title": "Open Source & Self-Hostable",
     "feature_selfhost_desc": "Docker Compose or Kubernetes. Your data, your server. Free on GitHub.",
-    "seo_text": "Momo is a free, open-source task management app for people with procrastination, ADHD, or avoidance tendencies. Instead of endless lists, you get one quest per day — energy-aware, with gamification rewards, habit tracking, and gentle reminders via push, Telegram, email, or ntfy.sh. Self-hostable with Docker, multilingual, and fully GDPR-compliant."
+    "seo_text": "Momo is a free, open-source task management app for people with procrastination, ADHD, or avoidance tendencies. Instead of endless lists, you get one quest per day — energy-aware, with gamification rewards (coins, streaks, levels), GitHub-style habit tracking, focus mode, and gentle reminders via push notifications, Telegram, email, or ntfy.sh. Self-hostable with Docker Compose or Kubernetes, multilingual (German, English, French, Spanish, Dutch), and fully GDPR-compliant.",
+    "footer_docs": "Documentation"
   },
   "closure": {
     "setting_label": "Emotional Closure",

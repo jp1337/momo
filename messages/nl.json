@@ -752,7 +752,8 @@
     "feature_focus_desc": "Afleidingsvrije weergave: alleen je quest en korte taken. Niets anders.",
     "feature_selfhost_title": "Open Source & Zelf te hosten",
     "feature_selfhost_desc": "Docker Compose of Kubernetes. Jouw data, jouw server. Gratis op GitHub.",
-    "seo_text": "Momo is een gratis, open-source taakbeheersapp voor mensen met uitstelgedrag, ADHD of vermijdingstendensen. In plaats van eindeloze lijsten krijg je elke dag één quest — energie-bewust, met gamification-beloningen, gewoonte-tracking en zachte herinneringen via push, Telegram, e-mail of ntfy.sh."
+    "seo_text": "Momo is een gratis, open-source taakbeheersapp voor mensen met uitstelgedrag, ADHD of vermijdingstendensen. In plaats van eindeloze lijsten krijg je elke dag één quest — energie-bewust, met gamification-beloningen (munten, reeksen, niveaus), GitHub-stijl gewoontetracking, focusmodus en zachte herinneringen via push-meldingen, Telegram, e-mail of ntfy.sh. Zelf te hosten met Docker Compose of Kubernetes, meertalig en volledig AVG-conform.",
+    "footer_docs": "Documentatie"
   },
   "closure": {
     "setting_label": "Emotionele afsluiting",

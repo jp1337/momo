@@ -752,7 +752,8 @@
     "feature_focus_desc": "Ablenkungsfreie Ansicht: nur deine Quest und kurze Aufgaben. Kein Rauschen drum herum.",
     "feature_selfhost_title": "Open Source & selbst-hostbar",
     "feature_selfhost_desc": "Docker Compose oder Kubernetes. Deine Daten, dein Server. Kostenlos auf GitHub.",
-    "seo_text": "Momo ist eine kostenlose, open-source Aufgaben-App für Menschen mit Prokrastination, ADHS oder Vermeidungstendenzen. Statt endlosen Listen gibt es jeden Tag genau eine Quest — energiebewusst ausgewählt, mit Gamification-Belohnungen, Habit Tracking und sanften Erinnerungen über Push, Telegram, E-Mail oder ntfy.sh. Selbst-hostbar mit Docker, mehrsprachig und vollständig DSGVO-konform."
+    "seo_text": "Momo ist eine kostenlose, open-source Aufgaben-App für Menschen mit Prokrastination, ADHS oder Vermeidungstendenzen. Statt endlosen Listen gibt es jeden Tag genau eine Quest — energiebewusst ausgewählt, mit Gamification-Belohnungen (Münzen, Streaks, Level), Habit Tracking im GitHub-Stil, Fokus-Modus und sanften Erinnerungen über Push-Benachrichtigungen, Telegram, E-Mail oder ntfy.sh. Selbst-hostbar mit Docker Compose oder Kubernetes, mehrsprachig (Deutsch, Englisch, Französisch, Spanisch, Niederländisch) und vollständig DSGVO-konform.",
+    "footer_docs": "Dokumentation"
   },
   "closure": {
     "setting_label": "Emotionaler Abschluss",

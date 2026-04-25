@@ -467,7 +467,20 @@ export default async function LandingPage() {
             {t("footer_github")}
           </a>
           <a
-            href="/imprint"
+            href="https://jp1337.github.io/momo"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              fontSize: "0.85rem",
+              color: "#8aaa8c",
+              textDecoration: "none",
+            }}
+          >
+            {t("footer_docs")}
+          </a>
+          <a
+            href="/impressum"
             style={{
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
               fontSize: "0.85rem",
@@ -478,7 +491,7 @@ export default async function LandingPage() {
             {t("footer_imprint")}
           </a>
           <a
-            href="/privacy"
+            href="/datenschutz"
             style={{
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
               fontSize: "0.85rem",

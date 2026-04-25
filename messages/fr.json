@@ -752,7 +752,8 @@
     "feature_focus_desc": "Vue sans distraction : seulement votre quête et les tâches courtes. Rien d'autre.",
     "feature_selfhost_title": "Open Source & Auto-hébergeable",
     "feature_selfhost_desc": "Docker Compose ou Kubernetes. Vos données, votre serveur. Gratuit sur GitHub.",
-    "seo_text": "Momo est une application de gestion de tâches gratuite et open-source pour les personnes souffrant de procrastination, de TDAH ou de tendances à l'évitement. Au lieu de listes interminables, vous obtenez une quête par jour — consciente de votre énergie, avec des récompenses de gamification et un suivi des habitudes."
+    "seo_text": "Momo est une application de gestion de tâches gratuite et open-source pour les personnes souffrant de procrastination, de TDAH ou de tendances à l'évitement. Au lieu de listes interminables, vous obtenez une quête par jour — consciente de votre énergie, avec des récompenses de gamification (pièces, séries, niveaux), un suivi des habitudes en style GitHub, un mode concentration et des rappels doux via push, Telegram, e-mail ou ntfy.sh. Hébergeable soi-même avec Docker Compose ou Kubernetes, multilingue et entièrement conforme au RGPD.",
+    "footer_docs": "Documentation"
   },
   "closure": {
     "setting_label": "Clôture émotionnelle",
