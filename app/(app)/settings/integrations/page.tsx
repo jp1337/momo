@@ -62,7 +62,15 @@ export default async function IntegrationsSettingsPage() {
             {t("section_outbound_webhooks")}
           </h2>
           <p className="text-sm" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-            {t("outbound_webhooks_hint")}
+            {t("outbound_webhooks_hint")}{" "}
+            <a
+              href="https://jp1337.github.io/momo/webhooks"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "var(--accent-amber)", textDecoration: "underline" }}
+            >
+              {t("outbound_webhooks_docs")}
+            </a>
           </p>
         </div>
         <OutboundWebhooks
