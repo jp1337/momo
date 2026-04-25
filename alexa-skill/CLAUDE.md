@@ -27,9 +27,9 @@ models/
   en-US.json          → English interaction model
 skill.json            → Skill manifest (publishing info, account linking config)
 deploy.zip            → Output of `npm run build && npm run zip` — uploaded to Lambda
-SETUP.md              → Step-by-step Amazon Developer Console + Lambda + Account Linking guide
-README.md             → Overview + dev instructions for this subproject
 ```
+
+User-facing setup guide lives at `docs-site/alexa-skill.md` (published at jp1337.github.io/momo/alexa-skill).
 
 ## Patterns
 - Each intent gets its own file in `handlers/` exporting a single `RequestHandler`
