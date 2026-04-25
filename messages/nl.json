@@ -373,6 +373,8 @@
     "section_channels": "Extra meldingskanalen",
     "channels_hint": "Ontvang meldingen via extra services naast pushmeldingen.",
     "channel_add": "Kanaal toevoegen",
+    "channel_enable": "Inschakelen",
+    "channel_disable": "Uitschakelen",
     "channel_remove": "Verwijderen",
     "channel_remove_confirm": "Dit kanaal echt verwijderen?",
     "channel_test": "Testmelding sturen",
