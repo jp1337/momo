@@ -13,7 +13,7 @@ import { TopicsGrid } from "@/components/topics/topics-grid";
 import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "Topics — Momo",
+  title: "Topics",
 };
 
 /**

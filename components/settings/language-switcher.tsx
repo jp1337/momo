@@ -24,6 +24,14 @@ const LOCALE_FLAGS: Record<string, string> = {
   nl: "🇳🇱",
 };
 
+const LOCALE_LABELS: Record<string, string> = {
+  de: "Deutsch",
+  en: "English",
+  fr: "Français",
+  es: "Español",
+  nl: "Nederlands",
+};
+
 /**
  * Renders a button for each supported locale.
  * The active locale button is highlighted.
@@ -66,7 +74,7 @@ export function LanguageSwitcher({ currentLocale }: LanguageSwitcherProps) {
           aria-label={t(locale)}
         >
           <span>{LOCALE_FLAGS[locale] ?? locale.toUpperCase()}</span>
-          <span>{t(locale)}</span>
+          <span>{LOCALE_LABELS[locale] ?? locale.toUpperCase()}</span>
         </button>
       ))}
     </div>

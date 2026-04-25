@@ -36,7 +36,7 @@ import {
 import { checkForUpdates } from "@/lib/update-checker";
 
 export const metadata: Metadata = {
-  title: "Admin — Momo",
+  title: "Admin",
 };
 
 // Force dynamic rendering so process.env.ADMIN_USER_IDS is read at request

@@ -17,7 +17,7 @@ import { WishlistView } from "@/components/wishlist/wishlist-view";
 import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "Wishlist — Momo",
+  title: "Wishlist",
 };
 
 /**

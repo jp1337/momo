@@ -22,7 +22,7 @@ import { DueTodayBanner } from "@/components/tasks/due-today-banner";
 import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "Tasks — Momo",
+  title: "Tasks",
 };
 
 /**

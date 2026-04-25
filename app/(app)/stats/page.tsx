@@ -43,7 +43,7 @@ import { resolveTopicIcon } from "@/lib/topic-icons";
 import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "Statistiken — Momo",
+  title: "Statistiken",
 };
 
 /**

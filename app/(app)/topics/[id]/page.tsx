@@ -18,7 +18,7 @@ import { resolveTopicIcon } from "@/lib/topic-icons";
 import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "Topic — Momo",
+  title: "Topic",
 };
 
 interface TopicDetailPageProps {

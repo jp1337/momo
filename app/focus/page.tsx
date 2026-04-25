@@ -20,7 +20,7 @@ import { eq, isNull, and, or, lte, asc, desc } from "drizzle-orm";
 import { FocusModeView } from "@/components/focus/focus-mode-view";
 
 export const metadata: Metadata = {
-  title: "Fokus-Modus — Momo",
+  title: "Fokus-Modus",
 };
 
 /**
