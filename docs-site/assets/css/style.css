@@ -256,9 +256,6 @@ pre {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin-bottom: 1.5rem;
   max-width: 100%;
   word-break: normal;
   white-space: pre;
@@ -281,16 +278,23 @@ td code {
   white-space: nowrap;
 }
 
-/* Wrap tables so they scroll horizontally on mobile without blowing viewport */
-.content-body table {
-  display: block;
+/* Scroll wrapper injected by JS around tables and pre blocks */
+.scroll-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  margin-bottom: 1.5rem;
+}
+
+.content-body table {
   border-collapse: collapse;
   width: max-content;
-  max-width: 100%;
-  margin-bottom: 1.5rem;
+  min-width: 100%;
   font-size: 0.875rem;
+  margin-bottom: 0;
+}
+
+.content-body pre {
+  margin-bottom: 0;
 }
 th {
   text-align: left;
