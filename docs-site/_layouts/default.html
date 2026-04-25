@@ -7,7 +7,7 @@
   <meta name="description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}?v=7">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}?v=8">
   <link rel="icon" type="image/svg+xml" href="{{ '/assets/img/icon.svg' | relative_url }}">
   <link rel="icon" type="image/png" sizes="192x192" href="{{ '/assets/img/icon.png' | relative_url }}">
   <link rel="apple-touch-icon" href="{{ '/assets/img/icon.png' | relative_url }}">
@@ -142,6 +142,21 @@
 
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
+      });
+    })();
+
+    // Wrap tables and pre blocks so they scroll horizontally on mobile.
+    // The wrapper is constrained to viewport width; the content inside
+    // is wider (width:max-content / white-space:pre) → wrapper scrolls.
+    // overflow-x:clip on body prevents the page from stealing the gesture.
+    (function () {
+      var body = document.querySelector('.content-body');
+      if (!body) return;
+      body.querySelectorAll('table, pre').forEach(function (el) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'scroll-wrapper';
+        el.parentNode.insertBefore(wrapper, el);
+        wrapper.appendChild(el);
       });
     })();
 
