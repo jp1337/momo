@@ -16,15 +16,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html {
-  height: 100%;
-  overflow-x: hidden;
-}
-
-body {
-  height: 100%;
-  overflow-x: hidden;
-}
+html, body { height: 100%; }
 
 body {
   background-color: var(--bg-primary);
@@ -264,7 +256,6 @@ pre {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem;
-  max-width: 100%;
   word-break: normal;
   white-space: pre;
 }
@@ -287,6 +278,7 @@ td code {
 }
 
 /* Scroll wrapper injected by JS around tables and pre blocks */
+/* Table scroll wrapper (injected by JS) */
 .scroll-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -298,14 +290,17 @@ td code {
 
 .content-body table {
   border-collapse: collapse;
-  width: max-content;
-  min-width: 100%;
+  width: max-content; /* table sizes to content, not clamped to viewport */
   font-size: 0.875rem;
   margin-bottom: 0;
 }
 
+/* Pre scrolls itself — no wrapper needed */
 .content-body pre {
-  margin-bottom: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
 }
 th {
   text-align: left;
