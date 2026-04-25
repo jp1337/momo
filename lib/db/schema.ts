@@ -843,6 +843,12 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   /** Full W3C PushSubscription JSON (endpoint + keys) */
   subscription: jsonb("subscription").notNull(),
 
+  /** User-assigned or auto-detected device name (e.g. "Chrome auf Windows") */
+  name: text("name"),
+
+  /** When false, push notifications are not sent to this device */
+  enabled: boolean("enabled").notNull().default(true),
+
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

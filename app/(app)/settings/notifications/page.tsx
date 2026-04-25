@@ -7,6 +7,7 @@ import { NotificationSettings } from "@/components/settings/notification-setting
 import { NotificationChannels } from "@/components/settings/notification-channels";
 import { NotificationHistory } from "@/components/settings/notification-history";
 import { MorningBriefingSettings } from "@/components/settings/morning-briefing-settings";
+import { PushDevicesSection } from "@/components/settings/push-devices-section";
 import { isEmailChannelAvailable } from "@/lib/notifications";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -96,6 +97,25 @@ export default async function NotificationsSettingsPage() {
           hasAnyChannel={channelRows.some((c) => c.enabled)}
           vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
         />
+
+        {/* Registered push devices — only when subscriptions exist */}
+        {activeSubs.length > 0 && (
+          <>
+            <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "4px 0" }} />
+            <div className="flex flex-col gap-1">
+              <h3
+                className="text-sm font-semibold"
+                style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
+              >
+                Registrierte Geräte
+              </h3>
+              <p className="text-xs" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
+                Verwalte, welche Geräte Web-Push-Benachrichtigungen erhalten.
+              </p>
+            </div>
+            <PushDevicesSection />
+          </>
+        )}
       </section>
 
       {/* Morning Briefing — directly after Push, only when at least one delivery method exists */}

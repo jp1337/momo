@@ -27,6 +27,7 @@ import { users, pushSubscriptions } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
+import { parseUserAgent } from "@/lib/sessions";
 
 /** Zod schema for a W3C PushSubscription JSON object */
 const pushSubscriptionSchema = z.object({
@@ -102,6 +103,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    // Auto-detect device name from User-Agent (only set on first registration, not on refresh)
+    const ua = req.headers.get("user-agent");
+    const deviceLabel = parseUserAgent(ua).deviceLabel;
+
     // Upsert the device subscription by endpoint (unique key per browser/device)
     await db
       .insert(pushSubscriptions)
@@ -109,9 +114,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         userId: user.userId,
         endpoint: subscription.endpoint,
         subscription,
+        name: deviceLabel || null,
       })
       .onConflictDoUpdate({
         target: pushSubscriptions.endpoint,
+        // On refresh: update keys but preserve user-set name and enabled flag
         set: { subscription, userId: user.userId },
       });
 
