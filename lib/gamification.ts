@@ -812,9 +812,14 @@ export async function retroactivelyGrantAchievements(
   const result = await checkAndUnlockAchievements(userId, context);
 
   if (result.coinsAwarded > 0) {
+    const newCoins = (user.coins ?? 0) + result.coinsAwarded;
+    const newLevel = getLevelForCoins(newCoins);
     await db
       .update(users)
-      .set({ coins: sql`${users.coins} + ${result.coinsAwarded}` })
+      .set({
+        coins: sql`${users.coins} + ${result.coinsAwarded}`,
+        level: newLevel.level,
+      })
       .where(eq(users.id, userId));
   }
 

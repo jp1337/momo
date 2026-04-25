@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getAchievementsWithProgress } from "@/lib/statistics";
-import { retroactivelyGrantAchievements } from "@/lib/gamification";
+import { retroactivelyGrantAchievements, getLevelForCoins, getNextLevel, LEVELS } from "@/lib/gamification";
 import { AchievementCard } from "@/components/achievements/achievement-card";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
@@ -56,16 +56,29 @@ export default async function AchievementsPage() {
   const t = await getTranslations("achievements");
 
   const userRow = await db
-    .select({ timezone: users.timezone })
+    .select({ timezone: users.timezone, coins: users.coins })
     .from(users)
     .where(eq(users.id, session.user.id))
     .limit(1);
   const timezone = userRow[0]?.timezone ?? null;
+  const coins = userRow[0]?.coins ?? 0;
 
   // Seed + retroactively grant achievements (idempotent — safe every page load)
   await retroactivelyGrantAchievements(session.user.id, timezone);
 
   const allAchievements = await getAchievementsWithProgress(session.user.id, timezone);
+
+  // Level progression (computed from coins — always accurate, not from stale DB level)
+  const currentLevelDef = getLevelForCoins(coins);
+  const nextLevelDef = getNextLevel(currentLevelDef.level);
+  const levelProgress = nextLevelDef
+    ? Math.round(
+        ((coins - currentLevelDef.minCoins) /
+          (nextLevelDef.minCoins - currentLevelDef.minCoins)) *
+          100
+      )
+    : 100;
+  const coinsToNext = nextLevelDef ? nextLevelDef.minCoins - coins : 0;
 
   const earned = allAchievements.filter((a) => a.earnedAt != null);
   const total = allAchievements.length;
@@ -89,6 +102,95 @@ export default async function AchievementsPage() {
         padding: "32px 20px 80px",
       }}
     >
+      {/* ── Level progression card ───────────────────────────────────────────── */}
+      {(() => {
+        const tierColor =
+          currentLevelDef.level >= 10 ? "var(--rarity-legendary)"
+          : currentLevelDef.level >= 7 ? "var(--accent-amber)"
+          : currentLevelDef.level >= 4 ? "var(--accent-green)"
+          : "var(--text-muted)";
+        const maxLevel = LEVELS[LEVELS.length - 1].level;
+        return (
+          <div
+            style={{
+              background: "linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%)",
+              border: `1.5px solid color-mix(in srgb, ${tierColor} 30%, var(--border))`,
+              borderRadius: "16px",
+              padding: "20px 24px",
+              marginBottom: "16px",
+              position: "relative",
+              overflow: "hidden",
+              boxShadow: `0 0 24px color-mix(in srgb, ${tierColor} 6%, transparent)`,
+            }}
+          >
+            {/* Top accent */}
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: tierColor, borderRadius: "16px 16px 0 0" }} />
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                {/* Level number badge */}
+                <div
+                  style={{
+                    width: "56px",
+                    height: "56px",
+                    borderRadius: "14px",
+                    background: `color-mix(in srgb, ${tierColor} 15%, var(--bg-surface))`,
+                    border: `1.5px solid color-mix(in srgb, ${tierColor} 40%, transparent)`,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.55rem", fontWeight: 700, color: tierColor, letterSpacing: "0.08em", textTransform: "uppercase", lineHeight: 1 }}>Lv.</span>
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: "1.6rem", fontWeight: 700, color: tierColor, lineHeight: 1 }}>{currentLevelDef.level}</span>
+                </div>
+
+                <div>
+                  <div style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", fontWeight: 700, fontStyle: "italic", color: "var(--text-primary)", marginBottom: "3px" }}>
+                    {currentLevelDef.title}
+                  </div>
+                  {nextLevelDef ? (
+                    <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                      Noch <span style={{ color: tierColor, fontWeight: 600 }}>{coinsToNext} Coins</span> bis Level {nextLevelDef.level} · {nextLevelDef.title}
+                    </div>
+                  ) : (
+                    <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: tierColor, fontWeight: 600 }}>
+                      Maximales Level erreicht 🎉
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Level out of max */}
+              <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.78rem", color: "var(--text-muted)", textAlign: "right", flexShrink: 0 }}>
+                {currentLevelDef.level} / {maxLevel}
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div style={{ marginTop: "16px" }}>
+              <div style={{ height: "6px", borderRadius: "3px", backgroundColor: "var(--border)", overflow: "hidden" }}>
+                <div style={{
+                  height: "100%",
+                  borderRadius: "3px",
+                  backgroundColor: tierColor,
+                  width: `${levelProgress}%`,
+                  transition: "width 0.6s ease",
+                  opacity: 0.85,
+                }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", fontFamily: "var(--font-ui)", fontSize: "0.68rem", color: "var(--text-muted)" }}>
+                <span>{currentLevelDef.minCoins} Coins</span>
+                {nextLevelDef && <span style={{ color: tierColor, fontWeight: 600 }}>{levelProgress}%</span>}
+                {nextLevelDef && <span>{nextLevelDef.minCoins} Coins</span>}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── Hero header ───────────────────────────────────────────────────────── */}
       <div
         style={{
