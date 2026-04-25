@@ -1203,7 +1203,15 @@ function WebhookForm({
         className="text-xs -mt-2"
         style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
       >
-        {t("channel_webhook_hint")}
+        {t("channel_webhook_hint")}{" "}
+        <a
+          href="https://jp1337.github.io/momo/webhooks"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "var(--accent-amber)", textDecoration: "underline" }}
+        >
+          {t("channel_webhook_docs")}
+        </a>
       </p>
 
       {/* URL input */}
