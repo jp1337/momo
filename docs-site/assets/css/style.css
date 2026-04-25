@@ -16,7 +16,15 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body { height: 100%; }
+html {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  height: 100%;
+  overflow-x: hidden;
+}
 
 body {
   background-color: var(--bg-primary);
@@ -282,6 +290,9 @@ td code {
 .scroll-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
+  width: 100%;
   margin-bottom: 1.5rem;
 }
 
