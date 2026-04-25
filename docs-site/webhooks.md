@@ -110,8 +110,8 @@ You can configure up to **10 endpoints**, each with its own signing secret and e
   "task": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "title": "Finish the React component",
-    "type": "TASK",
-    "priority": "HIGH",
+    "type": "ONE_TIME",
+    "priority": "NORMAL",
     "topicId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
     "dueDate": "2026-04-25",
     "completedAt": "2026-04-25T14:32:00.000Z",
@@ -126,8 +126,8 @@ You can configure up to **10 endpoints**, each with its own signing secret and e
 | `timestamp` | string | ISO 8601 event timestamp |
 | `task.id` | string | Task UUID |
 | `task.title` | string | Task title |
-| `task.type` | string | `TASK` or `RECURRING` |
-| `task.priority` | string | `LOW`, `MEDIUM`, `HIGH`, or `URGENT` |
+| `task.type` | string | `ONE_TIME`, `RECURRING`, or `DAILY_ELIGIBLE` |
+| `task.priority` | string | `HIGH`, `NORMAL`, or `SOMEDAY` |
 | `task.topicId` | string \| null | UUID of the associated topic |
 | `task.dueDate` | string \| null | Due date (`YYYY-MM-DD`) |
 | `task.completedAt` | string \| null | Completion timestamp (ISO 8601), only on `task.completed` |
@@ -227,6 +227,6 @@ A task is checked off
 
 ## See also
 
-- [Features — Notifications](/momo/features#notifications)
-- [Features — Integrations](/momo/features#integrations)
+- [Features — Push Notifications](/momo/features#push-notifications)
+- [Features — Outbound Webhooks](/momo/features#outbound-webhooks-task-automation)
 - [Getting Started](/momo/getting-started)
