@@ -295,12 +295,9 @@ td code {
   margin-bottom: 0;
 }
 
-/* Pre scrolls itself — no wrapper needed */
+/* Pre is wrapped by JS in .scroll-wrapper — no overflow-x on pre itself */
 .content-body pre {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  touch-action: pan-x pan-y;
+  margin-bottom: 0;
 }
 th {
   text-align: left;
