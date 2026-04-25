@@ -14,6 +14,7 @@
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CoinCounter } from "@/components/layout/coin-counter";
+import { LevelBadge } from "@/components/layout/level-badge";
 import { UserMenu } from "@/components/layout/user-menu";
 import Image from "next/image";
 import Link from "next/link";
@@ -27,6 +28,10 @@ interface NavbarProps {
   userEmail?: string | null;
   /** Initial coin balance fetched server-side */
   initialCoins?: number;
+  /** Current level number (computed from coins) */
+  initialLevel?: number;
+  /** Human-readable level title */
+  levelTitle?: string;
   /** If true, the Admin link is shown in the user menu */
   isAdmin?: boolean;
 }
@@ -40,7 +45,7 @@ interface NavbarProps {
  * @param initialCoins - Initial coin balance for the animated counter
  * @param isAdmin   - If true, shows the Admin link in the user menu
  */
-export function Navbar({ userName, userImage, userEmail, initialCoins = 0, isAdmin }: NavbarProps) {
+export function Navbar({ userName, userImage, userEmail, initialCoins = 0, initialLevel = 1, levelTitle = "", isAdmin }: NavbarProps) {
   return (
     <header
       className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 border-b"
@@ -76,6 +81,7 @@ export function Navbar({ userName, userImage, userEmail, initialCoins = 0, isAdm
 
       {/* Right-side actions */}
       <div className="flex items-center gap-3">
+        <LevelBadge level={initialLevel} title={levelTitle} />
         <CoinCounter initialCoins={initialCoins} />
         <ThemeToggle />
         <UserMenu

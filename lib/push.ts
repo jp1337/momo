@@ -208,12 +208,17 @@ export async function sendDailyQuestNotifications(): Promise<{
   // Cache quests per user so multiple device subscriptions don't re-query
   const questCache = new Map<string, string | null>();
 
-  /** Resolve quest title once per user, using cache. */
+  /** Resolve quest title once per user, using cache.
+   *
+   * Always calls selectDailyQuest (not getCurrentDailyQuest) so that stale
+   * is_daily_quest flags from previous days are cleaned up before we read the
+   * title. Without this, a quest set on day N but never cleared could be
+   * returned by getCurrentDailyQuest on day N+1, producing a notification
+   * whose title does not match what the user sees when they open the app.
+   */
   async function resolveQuestTitle(userId: string, timezone: string | null): Promise<string | null> {
     if (questCache.has(userId)) return questCache.get(userId)!;
-    const quest =
-      (await getCurrentDailyQuest(userId)) ??
-      (await selectDailyQuest(userId, timezone));
+    const quest = await selectDailyQuest(userId, timezone);
     const title = quest?.title ?? null;
     questCache.set(userId, title);
     return title;
