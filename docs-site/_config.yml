@@ -1,7 +1,7 @@
-title: Momo – Aufgabenverwaltung für Prokrastination & ADHS
+title: Momo – Task Management for Procrastination & ADHD
 description: >-
-  Kostenlose, open-source Aufgaben-App für Menschen mit Prokrastination und ADHS.
-  Daily Quest, Gamification, Habit Tracker, Streaks, Fokus-Modus — selbst-hostbar mit Docker.
+  Free, open-source task app for people with procrastination and ADHD.
+  Daily Quest, gamification, habit tracker, streaks, focus mode — self-hostable with Docker.
 baseurl: "/momo"
 url: "https://jp1337.github.io"
 
@@ -9,7 +9,7 @@ author:
   name: jp1337
   url: https://github.com/jp1337
 
-lang: de
+lang: en
 timezone: Europe/Berlin
 
 # jekyll-seo-tag

@@ -1,62 +1,62 @@
 ---
 layout: default
 title: Webhooks
-description: Momo hat zwei verschiedene Webhook-Typen — HTTP-Alert für Benachrichtigungen und Aufgaben-Events für Automatisierungen. Diese Seite erklärt beide mit Payload-Beispielen und Code-Snippets.
+description: Momo has two distinct webhook types — HTTP Alert for notifications and Task Events for automation. This page explains both with payload examples and code snippets.
 ---
 
 # Webhooks
 
-Momo hat **zwei verschiedene Webhook-Typen**, die oft verwechselt werden:
+Momo has **two distinct webhook types** that are easy to confuse:
 
-| Typ | Wo | Zweck | Payload |
+| Type | Where | Purpose | Payload |
 |---|---|---|---|
-| **HTTP-Alert** | Einstellungen → Benachrichtigungen → Kanäle | Momo-Benachrichtigungen per HTTP empfangen | `momo.notification` mit Titel + Text |
-| **Aufgaben-Events** | Einstellungen → Integrationen → Aufgaben-Events | Automatisierungen bei Aufgaben-Änderungen | `task.created/updated/completed/deleted` mit Aufgaben-Daten |
+| **HTTP Alert** | Settings → Notifications → Channels | Receive Momo notifications via HTTP | `momo.notification` with title + body |
+| **Task Events** | Settings → Integrations → Task Events | Automate on task changes | `task.created/updated/completed/deleted` with task data |
 
 ---
 
-## HTTP-Alert (Benachrichtigungskanal)
+## HTTP Alert (Notification Channel)
 
-Der **HTTP-Alert** ist ein weiterer Zustellungsweg für Momo-Benachrichtigungen — neben Web Push, ntfy, Pushover, Telegram und E-Mail. Wenn Momo eine Benachrichtigung sendet (z. B. Daily Quest, Streak-Erinnerung, fällige Aufgaben), schickt es diese auch als HTTP POST an deine URL.
+The **HTTP Alert** is a delivery channel for Momo notifications — alongside Web Push, ntfy, Pushover, Telegram, and Email. Whenever Momo sends a notification (e.g. Daily Quest, streak reminder, due tasks), it also POSTs it to your configured URL.
 
-**Einrichten:** Einstellungen → Benachrichtigungen → Kanäle → + HTTP-Alert
+**Setup:** Settings → Notifications → Channels → + HTTP Alert
 
 ### Payload
 
 ```json
 {
   "event": "momo.notification",
-  "title": "Deine Daily Quest wartet",
-  "body": "Heutige Mission: React-Komponente fertigstellen",
+  "title": "Your Daily Quest is waiting",
+  "body": "Today's mission: finish the React component",
   "url": "/dashboard",
   "tag": "daily-quest",
   "timestamp": "2026-04-25T08:00:00.000Z"
 }
 ```
 
-| Feld | Typ | Beschreibung |
+| Field | Type | Description |
 |---|---|---|
-| `event` | string | Immer `"momo.notification"` |
-| `title` | string | Benachrichtigungstitel |
-| `body` | string | Benachrichtigungstext |
-| `url` | string \| null | Relativer App-Pfad zum Öffnen |
-| `tag` | string \| null | Eindeutiger Bezeichner des Benachrichtigungstyps (z. B. `daily-quest`, `streak`, `due-today`) |
-| `timestamp` | string | ISO 8601 Zeitstempel |
+| `event` | string | Always `"momo.notification"` |
+| `title` | string | Notification title |
+| `body` | string | Notification body text |
+| `url` | string \| null | Relative app path to open |
+| `tag` | string \| null | Unique identifier for the notification type (e.g. `daily-quest`, `streak`, `due-today`) |
+| `timestamp` | string | ISO 8601 timestamp |
 
-### Typische `tag`-Werte
+### Common `tag` values
 
-| Tag | Auslöser |
+| Tag | Trigger |
 |---|---|
-| `daily-quest` | Tägliche Quest-Erinnerung |
-| `streak` | Streak-Erinnerung |
-| `due-today` | Aufgaben heute fällig |
-| `overdue` | Überfällige Aufgaben |
-| `recurring-due` | Wiederkehrende Aufgaben fällig |
-| `weekly-review` | Wöchentlicher Rückblick |
-| `morning-briefing` | Morgen-Zusammenfassung |
-| `achievement` | Errungenschaft freigeschaltet |
+| `daily-quest` | Daily quest reminder |
+| `streak` | Streak reminder |
+| `due-today` | Tasks due today |
+| `overdue` | Overdue tasks |
+| `recurring-due` | Recurring tasks due |
+| `weekly-review` | Weekly review summary |
+| `morning-briefing` | Morning digest |
+| `achievement` | Achievement unlocked |
 
-### Beispiel: Home Assistant
+### Example: Home Assistant
 
 ```yaml
 # configuration.yaml
@@ -67,7 +67,7 @@ rest_command:
     content_type: "application/json"
 
 automation:
-  - alias: "Momo Benachrichtigung als Notification"
+  - alias: "Momo Notification → Mobile"
     trigger:
       platform: webhook
       webhook_id: momo-alert
@@ -78,28 +78,28 @@ automation:
         message: "{{ trigger.json.body }}"
 ```
 
-### Beispiel: n8n / Zapier
+### Example: n8n / Zapier
 
-Füge einen **Webhook-Trigger** hinzu und nutze `{{ $json.title }}` und `{{ $json.body }}` als Eingabe für weitere Aktionen.
+Add a **Webhook Trigger** node and use `{{ $json.title }}` and `{{ $json.body }}` as inputs for further actions.
 
 ---
 
-## Aufgaben-Events (Outbound Webhooks)
+## Task Events (Outbound Webhooks)
 
-Die **Aufgaben-Events** sind für Automatisierungen. Momo sendet strukturierte JSON-Events an deine konfigurierten Endpunkte, wenn sich Aufgaben ändern — unabhängig von Benachrichtigungseinstellungen.
+**Task Events** are for automation. Momo sends structured JSON events to your configured endpoints whenever tasks change — independent of notification settings.
 
-**Einrichten:** Einstellungen → Integrationen → Aufgaben-Events → + Endpunkt hinzufügen
+**Setup:** Settings → Integrations → Task Events → + Add Endpoint
 
-Du kannst bis zu **10 Endpunkte** konfigurieren, jeden mit eigenem Signing-Secret und Event-Filter.
+You can configure up to **10 endpoints**, each with its own signing secret and event filter.
 
 ### Events
 
-| Event | Auslöser |
+| Event | Trigger |
 |---|---|
-| `task.created` | Aufgabe wurde erstellt |
-| `task.updated` | Aufgabe wurde bearbeitet |
-| `task.completed` | Aufgabe wurde abgehakt |
-| `task.deleted` | Aufgabe wurde gelöscht |
+| `task.created` | A task was created |
+| `task.updated` | A task was edited |
+| `task.completed` | A task was checked off |
+| `task.deleted` | A task was deleted |
 
 ### Payload
 
@@ -109,7 +109,7 @@ Du kannst bis zu **10 Endpunkte** konfigurieren, jeden mit eigenem Signing-Secre
   "timestamp": "2026-04-25T14:32:00.000Z",
   "task": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "title": "React-Komponente fertigstellen",
+    "title": "Finish the React component",
     "type": "TASK",
     "priority": "HIGH",
     "topicId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
@@ -120,50 +120,50 @@ Du kannst bis zu **10 Endpunkte** konfigurieren, jeden mit eigenem Signing-Secre
 }
 ```
 
-| Feld | Typ | Beschreibung |
+| Field | Type | Description |
 |---|---|---|
 | `event` | string | `task.created` / `task.updated` / `task.completed` / `task.deleted` |
-| `timestamp` | string | ISO 8601 Zeitstempel des Events |
-| `task.id` | string | UUID der Aufgabe |
-| `task.title` | string | Aufgabentitel |
-| `task.type` | string | `TASK` oder `RECURRING` |
-| `task.priority` | string | `LOW`, `MEDIUM`, `HIGH` oder `URGENT` |
-| `task.topicId` | string \| null | UUID des zugehörigen Themas |
-| `task.dueDate` | string \| null | Fälligkeitsdatum (`YYYY-MM-DD`) |
-| `task.completedAt` | string \| null | Abschlusszeitpunkt (ISO 8601), nur bei `task.completed` |
-| `task.createdAt` | string | Erstellungszeitpunkt (ISO 8601) |
+| `timestamp` | string | ISO 8601 event timestamp |
+| `task.id` | string | Task UUID |
+| `task.title` | string | Task title |
+| `task.type` | string | `TASK` or `RECURRING` |
+| `task.priority` | string | `LOW`, `MEDIUM`, `HIGH`, or `URGENT` |
+| `task.topicId` | string \| null | UUID of the associated topic |
+| `task.dueDate` | string \| null | Due date (`YYYY-MM-DD`) |
+| `task.completedAt` | string \| null | Completion timestamp (ISO 8601), only on `task.completed` |
+| `task.createdAt` | string | Creation timestamp (ISO 8601) |
 
-### Beispiel: n8n Workflow
+### Example: n8n Workflow
 
 ```
 Webhook Trigger (POST /webhook/momo)
   → IF event == "task.completed"
-    → HTTP Request → Notion API (Seite aktualisieren)
-    → Slack Message → #erledigt
+    → HTTP Request → Notion API (update page)
+    → Slack Message → #done
 ```
 
-### Beispiel: Zapier
+### Example: Zapier
 
 1. Trigger: **Webhooks by Zapier → Catch Hook**
-2. Kopiere die Zapier-URL in Momo als Endpunkt-URL
-3. Wähle die Events die dich interessieren (oder alle)
-4. Action: z. B. Zeile in Google Sheets erstellen, Trello-Karte bewegen, etc.
+2. Copy the Zapier URL into Momo as the endpoint URL
+3. Select the events you care about (or all of them)
+4. Action: e.g. add a row to Google Sheets, move a Trello card, etc.
 
 ---
 
-## Signierung (HMAC-SHA256)
+## Request Signing (HMAC-SHA256)
 
-Beide Webhook-Typen unterstützen optionale **Request-Signierung** zur Verifizierung der Herkunft.
+Both webhook types support optional **request signing** to verify the origin of incoming requests.
 
-Wenn ein Signing-Secret konfiguriert ist, enthält jede Anfrage den Header:
+When a signing secret is configured, every request includes the header:
 
 ```
 X-Momo-Signature: sha256=<hex-digest>
 ```
 
-Der Digest wird berechnet als HMAC-SHA256 über den **rohen JSON-Body** mit deinem Secret als Schlüssel.
+The digest is computed as HMAC-SHA256 over the **raw JSON body** using your secret as the key.
 
-### Verifikation in verschiedenen Sprachen
+### Verification examples
 
 **Node.js / TypeScript:**
 ```typescript
@@ -202,31 +202,31 @@ function verifyMomoSignature(string $body, string $secret, string $header): bool
 }
 ```
 
-> **Wichtig:** Immer den rohen Request-Body vor dem JSON-Parsen für die Signaturberechnung verwenden. Und `timingSafeEqual` / `compare_digest` / `hash_equals` nutzen — keine einfachen String-Vergleiche (Timing-Attack-Schutz).
+> **Important:** Always use the raw request body *before* JSON-parsing for signature verification. Use `timingSafeEqual` / `compare_digest` / `hash_equals` — never a plain string comparison (timing attack protection).
 
 ---
 
-## Unterschied auf einen Blick
+## At a Glance
 
 ```
-Momo sendet eine Benachrichtigung
+Momo sends a notification
   │
-  ├── Web Push (Browser)
+  ├── Web Push (browser)
   ├── ntfy.sh
   ├── Pushover
   ├── Telegram
-  ├── E-Mail
-  └── HTTP-Alert ← Benachrichtigungs-Webhook
+  ├── Email
+  └── HTTP Alert  ← notification webhook
         Payload: { event: "momo.notification", title, body, ... }
 
-Aufgabe wird abgehakt
+A task is checked off
   │
-  └── Aufgaben-Events Webhook ← Outbound Webhook
+  └── Task Events webhook  ← outbound webhook
         Payload: { event: "task.completed", task: { id, title, ... } }
 ```
 
-## Siehe auch
+## See also
 
-- [Features — Benachrichtigungen](/momo/features#benachrichtigungen)
-- [Features — Integrationen](/momo/features#integrationen)
+- [Features — Notifications](/momo/features#notifications)
+- [Features — Integrations](/momo/features#integrations)
 - [Getting Started](/momo/getting-started)
