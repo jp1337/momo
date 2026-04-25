@@ -7,7 +7,7 @@
   <meta name="description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}?v=6">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}?v=7">
   <link rel="icon" type="image/svg+xml" href="{{ '/assets/img/icon.svg' | relative_url }}">
   <link rel="icon" type="image/png" sizes="192x192" href="{{ '/assets/img/icon.png' | relative_url }}">
   <link rel="apple-touch-icon" href="{{ '/assets/img/icon.png' | relative_url }}">
@@ -145,18 +145,6 @@
       });
     })();
 
-    // Wrap tables and pre blocks in a div scroll container.
-    // overflow-x:auto directly on pre/table is unreliable on iOS Safari.
-    (function () {
-      var body = document.querySelector('.content-body');
-      if (!body) return;
-      body.querySelectorAll('table, pre').forEach(function (el) {
-        var wrapper = document.createElement('div');
-        wrapper.className = 'scroll-wrapper';
-        el.parentNode.insertBefore(wrapper, el);
-        wrapper.appendChild(el);
-      });
-    })();
   </script>
 
 </body>
