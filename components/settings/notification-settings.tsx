@@ -266,22 +266,28 @@ export function NotificationSettings({
     setMessage(null);
 
     try {
-      // Get the current device's push subscription so we only unsubscribe this device
+      // Get the current device's push subscription so we only unsubscribe this device.
+      // Capture endpoint BEFORE calling unsubscribe() — the object stays valid but
+      // it's cleaner to grab it first. If there's no subscription in the browser,
+      // endpoint is null and we skip the server call.
       const registration = await navigator.serviceWorker.ready;
       const sub = await registration.pushManager.getSubscription();
+      const endpoint = sub?.endpoint ?? null;
       if (sub) {
         await sub.unsubscribe();
       }
 
-      const res = await fetch("/api/push/subscribe", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ endpoint: sub?.endpoint ?? "" }),
-      });
+      if (endpoint) {
+        const res = await fetch("/api/push/subscribe", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint }),
+        });
 
-      if (!res.ok) {
-        const data = await res.json() as { error?: string };
-        throw new Error(data.error ?? t("notif_err_disable"));
+        if (!res.ok) {
+          const data = await res.json() as { error?: string };
+          throw new Error(data.error ?? t("notif_err_disable"));
+        }
       }
 
       setStatus("default");
