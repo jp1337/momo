@@ -203,6 +203,7 @@ export function NotificationHistory() {
           const meta = CHANNEL_META[entry.channel] ?? { label: entry.channel, icon: faBell, color: "var(--text-muted)" };
           const isFailed = entry.status === "failed";
           const isExpanded = expandedId === entry.id;
+          const hasDetail = isFailed ? !!entry.error : !!entry.body;
 
           return (
             <div key={entry.id}>
@@ -211,13 +212,13 @@ export function NotificationHistory() {
                 className={`
                   grid grid-cols-[1fr_auto] sm:grid-cols-[7rem_6rem_1fr_5rem] gap-2 sm:gap-3
                   px-4 py-2.5 items-center transition-colors text-sm
-                  ${isFailed ? "cursor-pointer" : ""}
+                  ${hasDetail ? "cursor-pointer hover:bg-[var(--bg-hover)]" : ""}
                 `}
                 style={{
                   fontFamily: "var(--font-ui)",
                   color: "var(--text-primary)",
                 }}
-                onClick={() => isFailed && setExpandedId(isExpanded ? null : entry.id)}
+                onClick={() => hasDetail && setExpandedId(isExpanded ? null : entry.id)}
               >
                 {/* Time */}
                 <span
@@ -233,28 +234,46 @@ export function NotificationHistory() {
                   <span style={{ color: "var(--text-secondary)" }}>{meta.label}</span>
                 </span>
 
-                {/* Mobile: stacked title + meta */}
-                <div className="sm:hidden flex flex-col gap-0.5">
+                {/* Mobile: stacked title + body + meta */}
+                <div className="sm:hidden flex flex-col gap-0.5 min-w-0">
                   <span
-                    className="text-sm truncate"
+                    className="text-sm truncate font-medium"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
                     {entry.title}
                   </span>
-                  <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
+                  {entry.body && (
+                    <span
+                      className="text-xs truncate"
+                      style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
+                    >
+                      {entry.body}
+                    </span>
+                  )}
+                  <div className="flex items-center gap-2 text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
                     <FontAwesomeIcon icon={meta.icon} style={{ color: meta.color, fontSize: "0.65rem" }} />
                     <span>{meta.label}</span>
                     <span>{formatTime(entry.sentAt, locale)}</span>
                   </div>
                 </div>
 
-                {/* Desktop: title */}
-                <span
-                  className="hidden sm:block truncate text-sm"
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  {entry.title}
-                </span>
+                {/* Desktop: title + body stacked */}
+                <div className="hidden sm:flex flex-col gap-0.5 min-w-0">
+                  <span
+                    className="truncate text-sm font-medium"
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    {entry.title}
+                  </span>
+                  {entry.body && (
+                    <span
+                      className="truncate text-xs"
+                      style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
+                    >
+                      {entry.body}
+                    </span>
+                  )}
+                </div>
 
                 {/* Status badge */}
                 <div className="flex items-center justify-end gap-1.5">
@@ -274,7 +293,7 @@ export function NotificationHistory() {
                   >
                     {isFailed ? t("notif_history_status_failed") : t("notif_history_status_sent")}
                   </span>
-                  {isFailed && (
+                  {hasDetail && (
                     <FontAwesomeIcon
                       icon={isExpanded ? faChevronUp : faChevronDown}
                       style={{ color: "var(--text-muted)", fontSize: "0.6rem" }}
@@ -283,17 +302,28 @@ export function NotificationHistory() {
                 </div>
               </div>
 
-              {/* Expanded error detail */}
-              {isFailed && isExpanded && entry.error && (
+              {/* Expanded detail: error for failed, full body for all */}
+              {isExpanded && (
                 <div
-                  className="px-4 pb-3 text-xs"
+                  className="px-4 pb-3 pt-1 text-xs flex flex-col gap-1"
                   style={{
-                    color: "var(--accent-red)",
                     fontFamily: "var(--font-body)",
-                    backgroundColor: "color-mix(in srgb, var(--accent-red) 5%, transparent)",
+                    backgroundColor: isFailed
+                      ? "color-mix(in srgb, var(--accent-red) 5%, transparent)"
+                      : "color-mix(in srgb, var(--accent-amber) 4%, transparent)",
+                    borderTop: "1px solid var(--border)",
                   }}
                 >
-                  {entry.error}
+                  {entry.body && (
+                    <p style={{ color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 }}>
+                      {entry.body}
+                    </p>
+                  )}
+                  {isFailed && entry.error && (
+                    <p style={{ color: "var(--accent-red)", margin: 0, marginTop: entry.body ? "6px" : 0 }}>
+                      {entry.error}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
