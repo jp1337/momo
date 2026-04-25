@@ -16,7 +16,14 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body { height: 100%; }
+html { height: 100%; }
+
+body {
+  height: 100%;
+  /* clip (not hidden) stops horizontal page scroll without creating a
+     scroll container — hidden would break iOS touch scroll in children */
+  overflow-x: clip;
+}
 
 body {
   background-color: var(--bg-primary);
@@ -278,13 +285,10 @@ td code {
 }
 
 /* Scroll wrapper injected by JS around tables and pre blocks */
-/* Table scroll wrapper (injected by JS) */
+/* Table/pre scroll wrapper injected by JS */
 .scroll-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  touch-action: pan-x pan-y;
-  width: 100%;
   margin-bottom: 1.5rem;
 }
 
