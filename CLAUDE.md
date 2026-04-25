@@ -87,33 +87,23 @@ Use JSDoc with `@param` and `@returns` tags. API routes get a header comment wit
 Every time a **new environment variable** is introduced:
 
 1. Add it to `.env.example` with a descriptive comment
-2. Document it in `docs/environment-variables.md` with type, default value, and description
+2. Document it in `docs-site/environment-variables.md` with type, default value, and description
 
-### 3. API Documentation (`docs/api.md`)
+### 3. Feature Documentation (`docs-site/`)
 
-Every API route must be listed in `docs/api.md` with:
+All documentation lives in `docs-site/` (GitHub Pages). When a phase or major feature is completed, update the relevant page:
 
-- Method & path
-- Authentication required (yes/no)
-- Request body schema
-- Response schema
-- Example request/response
+| Feature completed          | Update this file                         |
+| -------------------------- | ---------------------------------------- |
+| Auth / OAuth change        | `docs-site/oauth-setup.md`               |
+| New environment variables  | `docs-site/environment-variables.md`     |
+| Docker / deployment change | `docs-site/deployment.md`                |
+| Kubernetes change          | `docs-site/kubernetes.md`                |
+| New user-facing feature    | `docs-site/features.md`                  |
+| Webhook change             | `docs-site/webhooks.md`                  |
+| Alexa Skill change         | `docs-site/alexa-skill.md`               |
 
-### 4. Feature Documentation (`docs/`)
-
-When a **phase or major feature** is completed, update or create the relevant doc file:
-
-| Feature completed          | Update this file                |
-| -------------------------- | ------------------------------- |
-| Auth setup                 | `docs/oauth-setup.md`           |
-| Database schema change     | `docs/database.md`              |
-| New environment variables  | `docs/environment-variables.md` |
-| Docker / deployment change | `docs/deployment.md`            |
-| Kubernetes change          | `docs/kubernetes.md`            |
-| New user-facing feature    | `docs/features.md`              |
-| API route added/changed    | `docs/api.md`                   |
-
-### 5. README & CHANGELOG
+### 4. README & CHANGELOG
 
 - Update `README.md` status table when a full phase is completed
 - Update `CHANGELOG.md` under `[Unreleased]` for every user-facing or infrastructure change (Added/Changed/Fixed)
