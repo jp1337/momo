@@ -279,6 +279,11 @@ blockquote {
   margin-bottom: 1rem;
 }
 
+/* Code in table cells (variable names, values) must never word-break */
+td code {
+  white-space: nowrap;
+}
+
 /* Wrap tables so they scroll horizontally on mobile without blowing viewport */
 .content-body table {
   display: block;
