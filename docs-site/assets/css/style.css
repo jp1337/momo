@@ -299,7 +299,7 @@ td code {
 
 .content-body table {
   border-collapse: collapse;
-  width: max-content; /* wider than wrapper → wrapper scrolls */
+  width: 100%;
   font-size: 0.875rem;
   margin-bottom: 0;
 }
@@ -389,4 +389,7 @@ tr:last-child td { border-bottom: none; }
   h1 { font-size: 1.75rem; }
   .hero h1 { font-size: 2rem; }
   .features-grid { grid-template-columns: 1fr; }
+
+  /* Tables: full natural width so wrapper scrolls horizontally */
+  .content-body table { width: max-content; }
 }
