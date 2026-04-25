@@ -263,6 +263,8 @@ pre {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   word-break: normal;
   white-space: pre;
 }
@@ -285,23 +287,14 @@ td code {
 }
 
 /* Scroll wrapper injected by JS around tables and pre blocks */
-/* Table/pre scroll wrapper injected by JS */
-.scroll-wrapper {
+.content-body table {
+  display: block;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  margin-bottom: 1.5rem;
-}
-
-.content-body table {
   border-collapse: collapse;
-  width: max-content; /* table sizes to content, not clamped to viewport */
+  width: max-content;
   font-size: 0.875rem;
-  margin-bottom: 0;
-}
-
-/* Pre is wrapped by JS in .scroll-wrapper — no overflow-x on pre itself */
-.content-body pre {
-  margin-bottom: 0;
+  margin-bottom: 1.5rem;
 }
 th {
   text-align: left;
