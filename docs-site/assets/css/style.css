@@ -390,6 +390,7 @@ tr:last-child td { border-bottom: none; }
   .hero h1 { font-size: 2rem; }
   .features-grid { grid-template-columns: 1fr; }
 
-  /* Tables: full natural width so wrapper scrolls horizontally */
-  .content-body table { width: max-content; }
+  /* Tables: fill container, let text wrap — only truly unwrappable content
+     (variable names in code) may cause slight overflow, not 2000px+ */
+  .content-body table { width: 100%; }
 }
