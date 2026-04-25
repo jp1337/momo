@@ -1,52 +1,147 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="de" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% if page.title %}{{ page.title }} – {% endif %}{{ site.title }}</title>
   <meta name="description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}?v=2">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}?v=5">
   {% seo %}
 </head>
 <body>
-  <header class="site-header">
-    <nav class="nav-container">
-      <a href="{{ '/' | relative_url }}" class="site-logo">🪶 Momo</a>
-      <div class="nav-links" id="nav-links">
-        {% for item in site.nav %}
-          <a href="{{ item.url }}" class="nav-link {% if page.url == item.url %}active{% endif %}">{{ item.title }}</a>
-        {% endfor %}
-      </div>
-      <a href="https://github.com/jp1337/momo" class="github-link" target="_blank" rel="noopener">GitHub ↗</a>
-      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
-    </nav>
+
+  <!-- ── Mobile top bar ──────────────────────────────────────────────── -->
+  <header class="topbar">
+    <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Navigation öffnen" aria-expanded="false">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <rect y="3" width="20" height="2" rx="1" fill="currentColor"/>
+        <rect y="9" width="20" height="2" rx="1" fill="currentColor"/>
+        <rect y="15" width="20" height="2" rx="1" fill="currentColor"/>
+      </svg>
+    </button>
+    <a href="{{ '/' | relative_url }}" class="topbar-logo">🪶 momo</a>
+    <a href="https://github.com/jp1337/momo" class="topbar-github" target="_blank" rel="noopener">GitHub ↗</a>
   </header>
 
+  <!-- ── Sidebar backdrop (mobile) ──────────────────────────────────── -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+  <div class="layout">
+
+    <!-- ── Sidebar ──────────────────────────────────────────────────── -->
+    <nav class="sidebar" id="sidebar" aria-label="Dokumentation Navigation">
+      <div class="sidebar-header">
+        <a href="{{ '/' | relative_url }}" class="sidebar-logo">🪶 momo</a>
+        <a href="https://github.com/jp1337/momo" class="sidebar-github" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+
+      <div class="nav-section">
+        <a href="{{ '/momo/' | relative_url }}"
+           class="nav-link {% if page.url == '/momo/' %}active{% endif %}">
+          Home
+        </a>
+        <a href="{{ '/momo/getting-started' | relative_url }}"
+           class="nav-link {% if page.url contains 'getting-started' %}active{% endif %}">
+          Getting Started
+        </a>
+        <a href="{{ '/momo/features' | relative_url }}"
+           class="nav-link {% if page.url contains 'features' %}active{% endif %}">
+          Features
+        </a>
+      </div>
+
+      <div class="nav-group-label">Setup</div>
+      <div class="nav-section">
+        <a href="{{ '/momo/self-hosting' | relative_url }}"
+           class="nav-link {% if page.url contains 'self-hosting' %}active{% endif %}">
+          Self-Hosting
+        </a>
+        <a href="{{ '/momo/deployment' | relative_url }}"
+           class="nav-link {% if page.url contains 'deployment' %}active{% endif %}">
+          Deployment
+        </a>
+        <a href="{{ '/momo/environment-variables' | relative_url }}"
+           class="nav-link {% if page.url contains 'environment-variables' %}active{% endif %}">
+          Umgebungsvariablen
+        </a>
+        <a href="{{ '/momo/oauth-setup' | relative_url }}"
+           class="nav-link {% if page.url contains 'oauth-setup' %}active{% endif %}">
+          OAuth Setup
+        </a>
+        <a href="{{ '/momo/kubernetes' | relative_url }}"
+           class="nav-link {% if page.url contains 'kubernetes' %}active{% endif %}">
+          Kubernetes
+        </a>
+      </div>
+
+      <div class="nav-group-label">Guides</div>
+      <div class="nav-section">
+        <a href="{{ '/momo/two-factor-auth' | relative_url }}"
+           class="nav-link {% if page.url contains 'two-factor-auth' %}active{% endif %}">
+          Zwei-Faktor-Auth
+        </a>
+        <a href="{{ '/momo/passkeys' | relative_url }}"
+           class="nav-link {% if page.url contains 'passkeys' %}active{% endif %}">
+          Passkeys
+        </a>
+        <a href="{{ '/momo/webhooks' | relative_url }}"
+           class="nav-link {% if page.url contains 'webhooks' %}active{% endif %}">
+          Webhooks
+        </a>
+        <a href="{{ '/momo/alexa-skill' | relative_url }}"
+           class="nav-link {% if page.url contains 'alexa-skill' %}active{% endif %}">
+          Alexa Skill
+        </a>
+      </div>
+    </nav>
+
+    <!-- ── Page content ─────────────────────────────────────────────── -->
+    <main class="content" id="main-content">
+      <article class="content-body">
+        {{ content }}
+      </article>
+
+      <footer class="page-footer">
+        <p>Momo – <em>Steal your time back.</em> · MIT License · <a href="https://github.com/jp1337/momo" target="_blank" rel="noopener">GitHub</a> · <a href="https://momotask.app">momotask.app</a></p>
+        <p class="footer-quote">Benannt nach Momo von Michael Ende. Für alle, deren Graue Herren ihre Zeit stehlen.</p>
+      </footer>
+    </main>
+
+  </div>
+
   <script>
-    (function() {
-      var toggle = document.getElementById('nav-toggle');
-      var links = document.getElementById('nav-links');
-      toggle.addEventListener('click', function() {
-        var open = links.classList.toggle('open');
-        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        toggle.textContent = open ? '✕' : '☰';
+    (function () {
+      var toggle = document.getElementById('sidebar-toggle');
+      var sidebar = document.getElementById('sidebar');
+      var backdrop = document.getElementById('sidebar-backdrop');
+
+      function openSidebar() {
+        sidebar.classList.add('open');
+        backdrop.classList.add('visible');
+        toggle.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('open');
+        backdrop.classList.remove('visible');
+        toggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      }
+
+      toggle.addEventListener('click', function () {
+        sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+      });
+
+      backdrop.addEventListener('click', closeSidebar);
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('open')) closeSidebar();
       });
     })();
   </script>
 
-  <main class="main-content">
-    <div class="content-wrapper">
-      {{ content }}
-    </div>
-  </main>
-
-  <footer class="site-footer">
-    <div class="footer-container">
-      <p>Momo – <em>Steal your time back.</em> · MIT License · <a href="https://github.com/jp1337/momo">GitHub</a></p>
-      <p class="footer-quote">Named after Momo, by Michael Ende. For everyone whose Grey Gentlemen have been stealing their time.</p>
-    </div>
-  </footer>
 </body>
 </html>
