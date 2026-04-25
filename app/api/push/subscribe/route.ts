@@ -24,7 +24,7 @@
 import { resolveApiUser } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { users, pushSubscriptions } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { parseUserAgent } from "@/lib/sessions";
@@ -103,10 +103,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    // Auto-detect device name from User-Agent (only set on first registration, not on refresh)
-    const ua = req.headers.get("user-agent");
-    const deviceLabel = parseUserAgent(ua).deviceLabel;
-
     // Upsert the device subscription by endpoint (unique key per browser/device)
     await db
       .insert(pushSubscriptions)
@@ -114,13 +110,33 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         userId: user.userId,
         endpoint: subscription.endpoint,
         subscription,
-        name: deviceLabel || null,
       })
       .onConflictDoUpdate({
         target: pushSubscriptions.endpoint,
         // On refresh: update keys but preserve user-set name and enabled flag
         set: { subscription, userId: user.userId },
       });
+
+    // Best-effort: auto-detect device name from User-Agent on first registration.
+    // Runs after the critical insert so a naming failure never blocks subscribing.
+    try {
+      const ua = req.headers.get("user-agent");
+      const deviceLabel = parseUserAgent(ua).deviceLabel;
+      if (deviceLabel && deviceLabel !== "Unknown") {
+        await db
+          .update(pushSubscriptions)
+          .set({ name: deviceLabel })
+          .where(
+            and(
+              eq(pushSubscriptions.endpoint, subscription.endpoint),
+              eq(pushSubscriptions.userId, user.userId),
+              isNull(pushSubscriptions.name) // only set if user hasn't renamed it
+            )
+          );
+      }
+    } catch {
+      // Non-critical — device naming never blocks subscription
+    }
 
     // Mark the user as having notifications enabled, and update preferences if provided
     await db
