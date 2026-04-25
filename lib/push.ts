@@ -255,6 +255,7 @@ export async function sendDailyQuestNotifications(): Promise<{
       .innerJoin(users, eq(pushSubscriptions.userId, users.id))
       .where(and(
         eq(users.notificationEnabled, true),
+        eq(pushSubscriptions.enabled, true),
         eq(users.morningBriefingEnabled, false), // digest users get this via morning briefing
         timeBucketCondition,
       ));
@@ -447,6 +448,7 @@ export async function sendDueTodayNotifications(): Promise<{
       .where(
         and(
           eq(users.notificationEnabled, true),
+          eq(pushSubscriptions.enabled, true),
           eq(users.dueTodayReminderEnabled, true),
           eq(users.morningBriefingEnabled, false), // digest users get this via morning briefing
           timeBucketCondition
@@ -643,6 +645,7 @@ export async function sendOverdueNotifications(): Promise<{
       .where(
         and(
           eq(users.notificationEnabled, true),
+          eq(pushSubscriptions.enabled, true),
           eq(users.overdueReminderEnabled, true),
           eq(users.morningBriefingEnabled, false),
           timeBucketCondition
@@ -850,6 +853,7 @@ export async function sendRecurringDueNotifications(): Promise<{
       .where(
         and(
           eq(users.notificationEnabled, true),
+          eq(pushSubscriptions.enabled, true),
           eq(users.recurringDueReminderEnabled, true),
           eq(users.morningBriefingEnabled, false),
           timeBucketCondition
@@ -1001,6 +1005,7 @@ export async function sendStreakReminders(): Promise<{
       .where(
         and(
           eq(users.notificationEnabled, true),
+          eq(pushSubscriptions.enabled, true),
           eq(users.morningBriefingEnabled, false), // digest users get streak via morning briefing
           gt(users.streakCurrent, 0),
           timeBucketCondition
@@ -1124,7 +1129,7 @@ export async function sendWeeklyReviewNotifications(): Promise<{
       })
       .from(pushSubscriptions)
       .innerJoin(users, eq(pushSubscriptions.userId, users.id))
-      .where(and(eq(users.notificationEnabled, true), sundayCondition));
+      .where(and(eq(users.notificationEnabled, true), eq(pushSubscriptions.enabled, true), sundayCondition));
 
     for (const row of eligibleSubscriptions) {
       try {
@@ -1331,7 +1336,7 @@ export async function sendMorningBriefingNotifications(): Promise<{
       })
       .from(pushSubscriptions)
       .innerJoin(users, eq(pushSubscriptions.userId, users.id))
-      .where(and(eq(users.notificationEnabled, true), timeBucketCondition));
+      .where(and(eq(users.notificationEnabled, true), eq(pushSubscriptions.enabled, true), timeBucketCondition));
 
     for (const row of eligibleSubscriptions) {
       try {
@@ -1405,7 +1410,7 @@ export async function sendStreakShieldNotification(
     const subs = await db
       .select({ subscription: pushSubscriptions.subscription })
       .from(pushSubscriptions)
-      .where(eq(pushSubscriptions.userId, userId));
+      .where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.enabled, true)));
 
     for (const row of subs) {
       try {
@@ -1462,7 +1467,7 @@ export async function sendAchievementNotifications(
       const subs = await db
         .select({ subscription: pushSubscriptions.subscription })
         .from(pushSubscriptions)
-        .where(eq(pushSubscriptions.userId, userId));
+        .where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.enabled, true)));
 
       for (const row of subs) {
         try {
