@@ -29,8 +29,6 @@ type NotificationStatus =
   | "inactive";         // Previously subscribed but now disabled
 
 interface NotificationSettingsProps {
-  /** Whether the user currently has notifications enabled (from DB) */
-  initialEnabled: boolean;
   /** Current notification time from DB (HH:MM) — shared by daily-quest and streak reminders */
   initialTime: string;
   /** Whether the "Due today" reminder is currently enabled (from DB) */
@@ -66,11 +64,9 @@ interface NotificationSettingsProps {
  * Notification settings section for the settings page.
  * Manages push notification permission, subscription, and preferred time.
  *
- * @param initialEnabled - Whether notifications are currently enabled for this user
  * @param initialTime - Current notification time preference in HH:MM format
  */
 export function NotificationSettings({
-  initialEnabled,
   initialTime,
   initialDueTodayEnabled,
   initialRecurringDueEnabled,
@@ -134,13 +130,20 @@ export function NotificationSettings({
       return;
     }
 
-    if (initialEnabled && Notification.permission === "granted") {
-      setStatus("active");
+    if (Notification.permission === "granted") {
+      // Must check whether *this browser* actually has an active push subscription.
+      // initialEnabled is user-level (true if any device is subscribed), not
+      // device-level — so a user with mobile still subscribed would show "active"
+      // here even after unsubscribing the desktop browser.
+      navigator.serviceWorker.ready
+        .then((reg) => reg.pushManager.getSubscription())
+        .then((sub) => setStatus(sub ? "active" : "default"))
+        .catch(() => setStatus("default"));
       return;
     }
 
     setStatus("default");
-  }, [initialEnabled, vapidPublicKey]);
+  }, [vapidPublicKey]);
 
   /**
    * Requests notification permission, subscribes to push,
