@@ -85,7 +85,6 @@ export default async function NotificationsSettingsPage() {
           </p>
         </div>
         <NotificationSettings
-          initialEnabled={user.notificationEnabled && activeSubs.length > 0}
           initialTime={user.notificationTime ?? "08:00"}
           initialDueTodayEnabled={user.dueTodayReminderEnabled}
           initialOverdueEnabled={user.overdueReminderEnabled}
