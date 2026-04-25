@@ -20,9 +20,6 @@ html { height: 100%; }
 
 body {
   height: 100%;
-  /* clip (not hidden) stops horizontal page scroll without creating a
-     scroll container — hidden would break iOS touch scroll in children */
-  overflow-x: clip;
 }
 
 body {
@@ -265,6 +262,9 @@ pre {
   padding: 1.25rem;
   word-break: normal;
   white-space: pre;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   margin-bottom: 0;
 }
 pre code { background: none; padding: 0; color: var(--text-primary); font-size: 0.85rem; }
@@ -290,6 +290,8 @@ td code {
 .scroll-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  max-width: 100%;
   margin-bottom: 1.5rem;
 }
 
