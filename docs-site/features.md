@@ -581,7 +581,7 @@ To verify the HMAC signature on your server, compute `HMAC-SHA256(secret, rawBod
 
 ## Outbound webhooks (task automation)
 
-**Settings → Outbound Webhooks** lets you connect Momo to any automation platform — Zapier, Make, n8n, Home Assistant, or your own backend. Every time a task changes, Momo fires an HTTP POST to your configured endpoints.
+**Settings → Integrations** has an **Outbound Webhooks** section that lets you connect Momo to any automation platform — Zapier, Make, n8n, Home Assistant, or your own backend. Every time a task changes, Momo fires an HTTP POST to your configured endpoints.
 
 This is separate from the notification webhook channel above. Notification webhooks deliver personal alerts ("Daily Quest ready"). Outbound webhooks deliver structured task lifecycle events for automation.
 
@@ -596,7 +596,7 @@ This is separate from the notification webhook channel above. Notification webho
 
 ### Setting up an endpoint
 
-1. Go to **Settings → Outbound Webhooks** and click **+ Add endpoint**
+1. Go to **Settings → Integrations** and click **+ Add endpoint** in the Outbound Webhooks section
 2. Give the endpoint a name (e.g. "n8n automation")
 3. Enter your HTTPS URL — Momo only sends to `https://` addresses
 4. Optionally add a **signing secret** — Momo will sign every request with HMAC-SHA256 so your server can verify it came from Momo (see below)
