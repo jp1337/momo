@@ -373,6 +373,8 @@
     "section_channels": "Zusätzliche Benachrichtigungskanäle",
     "channels_hint": "Erhalte Benachrichtigungen über weitere Dienste neben Push-Benachrichtigungen.",
     "channel_add": "Kanal hinzufügen",
+    "channel_enable": "Aktivieren",
+    "channel_disable": "Deaktivieren",
     "channel_remove": "Entfernen",
     "channel_remove_confirm": "Kanal wirklich entfernen?",
     "channel_test": "Test senden",

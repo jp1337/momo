@@ -373,6 +373,8 @@
     "section_channels": "Canales de notificación adicionales",
     "channels_hint": "Recibe notificaciones a través de servicios adicionales más allá de las notificaciones push.",
     "channel_add": "Añadir canal",
+    "channel_enable": "Activar",
+    "channel_disable": "Desactivar",
     "channel_remove": "Eliminar",
     "channel_remove_confirm": "¿Eliminar este canal?",
     "channel_test": "Enviar prueba",
