@@ -50,6 +50,9 @@ body {
   color: var(--accent-amber);
   text-decoration: none;
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .topbar-github {
@@ -131,6 +134,9 @@ body {
   font-weight: 700;
   color: var(--accent-amber);
   text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .sidebar-github {

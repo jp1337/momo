@@ -1,4 +1,8 @@
-# 🪶 Momo
+<p align="center">
+  <img src="public/icon.svg" width="80" height="80" alt="Momo" />
+</p>
+
+<h1 align="center">momo</h1>
 
 [![Build & Publish](https://github.com/jp1337/momo/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/jp1337/momo/actions/workflows/build-and-publish.yml)
 [![Tests](https://github.com/jp1337/momo/actions/workflows/test.yml/badge.svg)](https://github.com/jp1337/momo/actions/workflows/test.yml)
