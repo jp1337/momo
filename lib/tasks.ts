@@ -688,12 +688,19 @@ export async function completeTask(
     console.error("[completeTask] achievement check failed (non-fatal):", err);
   }
 
-  // Book achievement coins into the user's balance (atomic SQL expression)
+  // Book achievement coins into the user's balance (atomic SQL expression).
+  // Also update users.level if the achievement coins push the user to a new level —
+  // the transaction above only updated the level for task coins, not achievement coins.
   if (achievementCoinsEarned > 0) {
     try {
+      const finalCoins = newCoins + achievementCoinsEarned;
+      const finalLevel = getLevelForCoins(finalCoins);
       await db
         .update(users)
-        .set({ coins: sql`${users.coins} + ${achievementCoinsEarned}` })
+        .set({
+          coins: sql`${users.coins} + ${achievementCoinsEarned}`,
+          ...(finalLevel.level > levelAfter.level ? { level: finalLevel.level } : {}),
+        })
         .where(eq(users.id, userId));
     } catch (err) {
       console.error("[completeTask] achievement coin booking failed (non-fatal):", err);

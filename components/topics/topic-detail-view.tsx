@@ -63,7 +63,6 @@ export function TopicDetailView({
   topicSequential = false,
 }: TopicDetailViewProps) {
   const t = useTranslations("topics");
-  const tg = useTranslations("task_group");
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -428,24 +427,7 @@ export function TopicDetailView({
                           {groupTasks.map((task) => {
                             const isBlocked = blockedByGroup.has(task.id);
                             return (
-                              <div key={task.id} style={{ position: "relative" }}>
-                                {isBlocked && (
-                                  <div
-                                    className="absolute inset-0 rounded-xl z-10 flex items-center justify-end pr-3 cursor-not-allowed"
-                                    style={{ backgroundColor: "color-mix(in srgb, var(--bg-primary) 50%, transparent)" }}
-                                  >
-                                    <span
-                                      className="text-xs flex items-center gap-1"
-                                      style={{
-                                        fontFamily: "var(--font-ui)",
-                                        color: "var(--text-muted)",
-                                      }}
-                                      title={tg("blocked_hint")}
-                                    >
-                                      🔒
-                                    </span>
-                                  </div>
-                                )}
+                              <div key={task.id}>
                                 <TaskItem
                                   id={task.id}
                                   title={task.title}
@@ -465,6 +447,7 @@ export function TopicDetailView({
                                   snoozedUntil={task.snoozedUntil}
                                   onSnooze={handleSnooze}
                                   onUnsnooze={handleUnsnooze}
+                                  isBlocked={isBlocked}
                                 />
                               </div>
                             );
