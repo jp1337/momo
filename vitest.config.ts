@@ -46,6 +46,20 @@ export default defineConfig({
      * created by another, producing spurious FK violations and undefined rows.
      */
     fileParallelism: false,
+
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov"],
+      include: ["lib/**/*.ts", "app/api/**/*.ts"],
+      exclude: [
+        "**/*.test.ts",
+        "**/__tests__/**",
+        "**/node_modules/**",
+        "lib/env.ts",
+        "lib/db.ts",
+        "lib/auth.ts",
+      ],
+    },
   },
 
   resolve: {

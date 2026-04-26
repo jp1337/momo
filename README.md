@@ -1,7 +1,8 @@
 # 🪶 Momo
 
 [![Build & Publish](https://github.com/jp1337/momo/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/jp1337/momo/actions/workflows/build-and-publish.yml)
-[![Tests](https://img.shields.io/badge/tests-491%20passing-brightgreen?logo=vitest&logoColor=white)](https://github.com/jp1337/momo/tree/main/__tests__)
+[![Tests](https://github.com/jp1337/momo/actions/workflows/test.yml/badge.svg)](https://github.com/jp1337/momo/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/jp1337/momo/graph/badge.svg)](https://codecov.io/gh/jp1337/momo)
 [![Version](https://img.shields.io/github/package-json/v/jp1337/momo?label=version&color=7c3aed)](https://github.com/jp1337/momo/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?logo=opensourceinitiative&logoColor=white)](https://github.com/jp1337/momo/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/node-22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
