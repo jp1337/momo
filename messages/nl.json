@@ -761,7 +761,9 @@
     "done_back": "Terug naar dashboard",
     "empty_title": "Geen openstaande taken",
     "empty_subtitle": "Niets te doen – geniet van het moment!",
-    "empty_back": "Naar dashboard"
+    "empty_back": "Naar dashboard",
+    "minutes_abbr": "{minutes} min",
+    "work_completion_error": "Opslaan mislukt — probeer het opnieuw."
   },
   "landing": {
     "hero_heading": "Neem je tijd terug.",

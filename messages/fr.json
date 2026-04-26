@@ -761,7 +761,9 @@
     "done_back": "Retour au tableau de bord",
     "empty_title": "Aucune tâche ouverte",
     "empty_subtitle": "Rien à faire – profite du moment !",
-    "empty_back": "Aller au tableau de bord"
+    "empty_back": "Aller au tableau de bord",
+    "minutes_abbr": "{minutes} min",
+    "work_completion_error": "Échec de la sauvegarde — veuillez réessayer."
   },
   "landing": {
     "hero_heading": "Reprenez votre temps.",

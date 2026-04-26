@@ -761,7 +761,9 @@
     "done_back": "Zurück zum Dashboard",
     "empty_title": "Keine offenen Aufgaben",
     "empty_subtitle": "Nichts zu tun – genieß die Pause!",
-    "empty_back": "Zum Dashboard"
+    "empty_back": "Zum Dashboard",
+    "minutes_abbr": "{minutes} Min",
+    "work_completion_error": "Speichern fehlgeschlagen — bitte erneut versuchen."
   },
   "landing": {
     "hero_heading": "Steal your time back.",

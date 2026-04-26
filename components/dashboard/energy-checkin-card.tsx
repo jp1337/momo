@@ -126,11 +126,11 @@ export function EnergyCheckinCard({
           previousId: data.previousQuestId,
           previousTitle: data.previousQuestTitle,
         });
+        // keep expanded so the user can see the swap notice and hit Undo
       } else {
         setSwapNotice(null);
+        setExpanded(false);
       }
-
-      setExpanded(false);
       startTransition(() => {
         router.refresh();
       });
@@ -207,15 +207,33 @@ export function EnergyCheckinCard({
           {t("energy_card_change")}
         </button>
 
-        {/* Swap notification — shown briefly after a successful re-roll */}
+        {/* Swap notification — fallback if card somehow collapses while swapNotice is set */}
         <AnimatePresence>
           {swapNotice && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute"
-            />
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="w-full rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-xs mt-1"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--accent-amber) 10%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--accent-amber) 30%, transparent)",
+                color: "var(--text-primary)",
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              }}
+            >
+              <span className="truncate">
+                {t("energy_card_swapped", { title: swapNotice.previousTitle })}
+              </span>
+              <button
+                type="button"
+                onClick={handleUndoSwap}
+                className="flex-shrink-0 underline cursor-pointer"
+                style={{ color: "var(--accent-amber)" }}
+              >
+                {t("energy_card_swapped_undo")}
+              </button>
+            </motion.div>
           )}
         </AnimatePresence>
       </motion.div>

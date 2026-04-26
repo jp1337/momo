@@ -308,7 +308,7 @@ function SelectionPhase({
                         color: "var(--text-muted)",
                       }}
                     >
-                      ⏱ {task.estimatedMinutes} Min
+                      ⏱ {t("minutes_abbr", { minutes: task.estimatedMinutes })}
                     </span>
                   )}
                   <span
@@ -402,6 +402,7 @@ function WorkPhase({
   onSkip,
   onExit,
   isCompleting,
+  completionError,
 }: {
   tasks: FocusTask[];
   topics: TopicOption[];
@@ -410,6 +411,7 @@ function WorkPhase({
   onSkip: () => void;
   onExit: () => void;
   isCompleting: boolean;
+  completionError: boolean;
 }) {
   const t = useTranslations("focus");
   const topicMap = new Map(topics.map((tp) => [tp.id, tp]));
@@ -658,6 +660,20 @@ function WorkPhase({
                 <FontAwesomeIcon icon={faForward} style={{ fontSize: "0.75rem" }} />
                 {t("work_skip")}
               </button>
+
+              {completionError && (
+                <p
+                  style={{
+                    fontFamily: "var(--font-ui)",
+                    fontSize: "0.75rem",
+                    color: "var(--accent-red)",
+                    marginTop: "8px",
+                    textAlign: "center",
+                  }}
+                >
+                  {t("work_completion_error")}
+                </p>
+              )}
             </div>
           </motion.div>
         </AnimatePresence>
@@ -823,6 +839,7 @@ export function FocusModeView({ initialTasks, topics }: FocusModeViewProps) {
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const [achievements, setAchievements] = useState<AchievementItem[]>([]);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [completionError, setCompletionError] = useState(false);
 
   const handleStart = useCallback((tasks: FocusTask[]) => {
     setSelected(tasks);
@@ -848,7 +865,9 @@ export function FocusModeView({ initialTasks, topics }: FocusModeViewProps) {
   const handleComplete = useCallback(async () => {
     if (isCompleting) return;
     setIsCompleting(true);
+    setCompletionError(false);
     const task = selected[currentIndex];
+    let succeeded = false;
     try {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const res = await fetch(`/api/tasks/${task.id}/complete`, {
@@ -870,12 +889,17 @@ export function FocusModeView({ initialTasks, topics }: FocusModeViewProps) {
         if (data.unlockedAchievements?.length) {
           setAchievements((prev) => [...prev, ...data.unlockedAchievements!]);
         }
+        succeeded = true;
       }
     } catch {
-      // silent fail — still advance
+      // network failure — show error, do not advance
     }
     setIsCompleting(false);
-    advance(selected, currentIndex);
+    if (succeeded) {
+      advance(selected, currentIndex);
+    } else {
+      setCompletionError(true);
+    }
   }, [isCompleting, selected, currentIndex, advance]);
 
   const handleSkip = useCallback(() => {
@@ -920,6 +944,7 @@ export function FocusModeView({ initialTasks, topics }: FocusModeViewProps) {
               onSkip={handleSkip}
               onExit={handleExit}
               isCompleting={isCompleting}
+              completionError={completionError}
             />
           </motion.div>
         )}

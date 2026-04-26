@@ -1036,6 +1036,13 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                     : "7",
                   dueDate: editingTask.dueDate ?? "",
                   coinValue: String(editingTask.coinValue),
+                  estimatedMinutes: ([5, 15, 30, 60] as const).includes(
+                    editingTask.estimatedMinutes as 5 | 15 | 30 | 60
+                  )
+                    ? (editingTask.estimatedMinutes as 5 | 15 | 30 | 60)
+                    : null,
+                  energyLevel: editingTask.energyLevel ?? null,
+                  taskGroup: editingTask.taskGroup ?? "",
                 }
               : undefined
           }

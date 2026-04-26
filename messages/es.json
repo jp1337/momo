@@ -761,7 +761,9 @@
     "done_back": "Volver al panel",
     "empty_title": "No hay tareas abiertas",
     "empty_subtitle": "Nada que hacer – ¡disfruta del momento!",
-    "empty_back": "Ir al panel"
+    "empty_back": "Ir al panel",
+    "minutes_abbr": "{minutes} min",
+    "work_completion_error": "Error al guardar — por favor inténtelo de nuevo."
   },
   "landing": {
     "hero_heading": "Recupera el control de tu tiempo.",
