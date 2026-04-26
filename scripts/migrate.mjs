@@ -505,3 +505,54 @@ async function seedAchievements() {
 }
 
 await seedAchievements();
+
+// One-time data fix: sync users.level with actual coin balance.
+// Previously, achievement coins were booked without recalculating the level,
+// causing a mismatch between the dashboard (reads DB level) and the navbar
+// (computes from coins). Idempotent — safe to run on every startup.
+async function syncUserLevels() {
+  const pool = new Pool({
+    connectionString,
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 5_000,
+  });
+  const client = await pool.connect();
+  try {
+    const result = await client.query(`
+      UPDATE users SET level = CASE
+        WHEN coins >= 3000 THEN 10
+        WHEN coins >= 2300 THEN 9
+        WHEN coins >= 1700 THEN 8
+        WHEN coins >= 1200 THEN 7
+        WHEN coins >= 800  THEN 6
+        WHEN coins >= 500  THEN 5
+        WHEN coins >= 300  THEN 4
+        WHEN coins >= 150  THEN 3
+        WHEN coins >= 50   THEN 2
+        ELSE 1
+      END
+      WHERE level != CASE
+        WHEN coins >= 3000 THEN 10
+        WHEN coins >= 2300 THEN 9
+        WHEN coins >= 1700 THEN 8
+        WHEN coins >= 1200 THEN 7
+        WHEN coins >= 800  THEN 6
+        WHEN coins >= 500  THEN 5
+        WHEN coins >= 300  THEN 4
+        WHEN coins >= 150  THEN 3
+        WHEN coins >= 50   THEN 2
+        ELSE 1
+      END
+    `);
+    if (result.rowCount > 0) {
+      console.log(`[migrate] Synced level for ${result.rowCount} user(s) whose level was out of sync with coins.`);
+    }
+  } catch (err) {
+    console.error("[migrate] syncUserLevels failed (non-fatal):", err.message ?? err);
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+await syncUserLevels();
