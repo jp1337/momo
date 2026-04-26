@@ -140,7 +140,6 @@ export function FiveMinuteView({ initialTasks, topics }: FiveMinuteViewProps) {
   }, [refreshTasks]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!window.confirm(t("confirm_delete"))) return;
     try {
       const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -149,7 +148,7 @@ export function FiveMinuteView({ initialTasks, topics }: FiveMinuteViewProps) {
     } catch {
       // silent fail
     }
-  }, [t]);
+  }, []);
 
   const handleInlineEdit = useCallback(async (id: string, newTitle: string) => {
     try {

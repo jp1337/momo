@@ -17,6 +17,7 @@
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { WEBHOOK_EVENTS, type WebhookEvent } from "@/lib/validators/webhooks";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 /** Public shape of a webhook endpoint as returned by the API */
 interface WebhookEndpointData {
@@ -213,7 +214,6 @@ export function OutboundWebhooks({ initialEndpoints }: OutboundWebhooksProps) {
   // ─── Delete ────────────────────────────────────────────────────────────────
 
   async function handleDelete(id: string) {
-    if (!confirm(t("webhook_endpoint_delete_confirm"))) return;
     try {
       const res = await fetch(`/api/settings/webhooks/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
@@ -411,12 +411,13 @@ export function OutboundWebhooks({ initialEndpoints }: OutboundWebhooksProps) {
                 >
                   {t("webhook_endpoint_edit_btn")}
                 </button>
-                <button
-                  onClick={() => handleDelete(ep.id)}
+                <ConfirmButton
+                  onConfirm={() => handleDelete(ep.id)}
+                  confirmPrompt={t("webhook_endpoint_delete_confirm")}
                   style={btnStyle("var(--color-error, #ef4444)")}
                 >
                   {t("webhook_endpoint_delete_btn")}
-                </button>
+                </ConfirmButton>
               </div>
             </div>
           ) : (

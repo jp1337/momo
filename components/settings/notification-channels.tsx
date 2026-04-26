@@ -14,6 +14,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 /** Channel data as returned from the API / passed as props */
 interface ChannelData {
@@ -69,7 +70,6 @@ export function NotificationChannels({
   }
 
   async function handleRemove(channelType: string) {
-    if (!confirm(t("channel_remove_confirm"))) return;
     try {
       const res = await fetch(`/api/settings/notification-channels/${channelType}`, {
         method: "DELETE",
@@ -244,8 +244,9 @@ export function NotificationChannels({
             >
               {t("channel_test")}
             </button>
-            <button
-              onClick={() => handleRemove(channel.type)}
+            <ConfirmButton
+              onConfirm={() => handleRemove(channel.type)}
+              confirmPrompt={t("channel_remove_confirm")}
               className="text-xs px-3 py-1.5 rounded-md transition-colors"
               style={{
                 fontFamily: "var(--font-ui)",
@@ -255,7 +256,7 @@ export function NotificationChannels({
               }}
             >
               {t("channel_remove")}
-            </button>
+            </ConfirmButton>
           </div>
         </div>
       ))}

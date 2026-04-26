@@ -136,14 +136,13 @@ export function TopicDetailView({
   );
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!window.confirm(t("detail_confirm_delete"))) return;
     try {
       const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
       if (res.ok) setTasks((prev) => prev.filter((task) => task.id !== id));
     } catch {
       // silent fail
     }
-  }, [t]);
+  }, []);
 
   const handleBreakdown = useCallback((id: string) => {
     setTasks((prev) => prev.filter((task) => task.id !== id));

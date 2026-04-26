@@ -14,6 +14,7 @@ import { cookies } from "next/headers";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { QuickAddModal } from "@/components/layout/quick-add-modal";
 import { getUserStats, getLevelForCoins } from "@/lib/gamification";
 import {
   isSessionSecondFactorVerified,
@@ -117,6 +118,9 @@ export default async function AppLayout({
 
       {/* Bottom tab bar — mobile only (hidden on md+) */}
       <MobileNav />
+
+      {/* Global Quick Add modal — triggered by N or / shortcut */}
+      <QuickAddModal />
     </div>
   );
 }

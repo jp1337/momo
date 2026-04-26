@@ -17,6 +17,7 @@ import {
   faRightFromBracket,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 interface ActiveSessionsProps {
   initialSessions: SessionSummary[];
@@ -63,8 +64,6 @@ export function ActiveSessions({ initialSessions }: ActiveSessionsProps) {
 
   const revokeOne = useCallback(
     async (sessionId: string) => {
-      if (!window.confirm(t("session_revoke_confirm"))) return;
-
       setMessage(null);
       setLoading(sessionId);
       try {
@@ -89,8 +88,6 @@ export function ActiveSessions({ initialSessions }: ActiveSessionsProps) {
   );
 
   const revokeAll = useCallback(async () => {
-    if (!window.confirm(t("session_revoke_all_confirm"))) return;
-
     setMessage(null);
     setLoading("__all__");
     try {
@@ -250,9 +247,9 @@ export function ActiveSessions({ initialSessions }: ActiveSessionsProps) {
 
             {/* Revoke button */}
             {!session.isCurrent && (
-              <button
-                type="button"
-                onClick={() => revokeOne(session.id)}
+              <ConfirmButton
+                onConfirm={() => revokeOne(session.id)}
+                confirmPrompt={t("session_revoke_confirm")}
                 disabled={loading !== null}
                 style={{
                   flexShrink: 0,
@@ -268,27 +265,13 @@ export function ActiveSessions({ initialSessions }: ActiveSessionsProps) {
                   opacity: loading ? 0.5 : 1,
                   transition: "background-color 0.15s, opacity 0.15s",
                 }}
-                onMouseOver={(e) => {
-                  if (!loading)
-                    e.currentTarget.style.backgroundColor =
-                      "color-mix(in srgb, var(--accent-red, #ef4444) 10%, transparent)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }}
               >
-                {loading === session.id ? (
-                  t("session_revoking")
-                ) : (
-                  <>
-                    <FontAwesomeIcon
-                      icon={faRightFromBracket}
-                      style={{ marginRight: "0.35rem", fontSize: "0.75rem" }}
-                    />
-                    {t("session_revoke_btn")}
-                  </>
-                )}
-              </button>
+                <FontAwesomeIcon
+                  icon={faRightFromBracket}
+                  style={{ marginRight: "0.35rem", fontSize: "0.75rem" }}
+                />
+                {t("session_revoke_btn")}
+              </ConfirmButton>
             )}
           </li>
         ))}
@@ -313,9 +296,9 @@ export function ActiveSessions({ initialSessions }: ActiveSessionsProps) {
 
       {/* Revoke all button */}
       {otherSessions.length > 0 ? (
-        <button
-          type="button"
-          onClick={revokeAll}
+        <ConfirmButton
+          onConfirm={revokeAll}
+          confirmPrompt={t("session_revoke_all_confirm")}
           disabled={loading !== null}
           style={{
             marginTop: "0.75rem",
@@ -332,19 +315,9 @@ export function ActiveSessions({ initialSessions }: ActiveSessionsProps) {
             opacity: loading ? 0.5 : 1,
             transition: "background-color 0.15s, opacity 0.15s",
           }}
-          onMouseOver={(e) => {
-            if (!loading)
-              e.currentTarget.style.backgroundColor =
-                "color-mix(in srgb, var(--accent-red, #ef4444) 10%, transparent)";
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-          }}
         >
-          {loading === "__all__"
-            ? t("session_revoking")
-            : t("session_revoke_all_btn")}
-        </button>
+          {t("session_revoke_all_btn")}
+        </ConfirmButton>
       ) : (
         <p
           style={{

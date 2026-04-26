@@ -22,7 +22,8 @@
     "review": "Bilan",
     "focus_mode": "Focus",
     "habits": "Habitudes",
-    "achievements": "Succès"
+    "achievements": "Succès",
+    "progress": "Progrès"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -1056,5 +1057,33 @@
     "section_common": "Commun",
     "section_secret": "Secret",
     "no_achievements": "Pas encore de succès — accomplissez des tâches pour les débloquer !"
+  },
+  "quick_add": {
+    "title": "Ajout rapide",
+    "placeholder": "Que devez-vous faire ?",
+    "more_options": "Plus d'options",
+    "topic": "Sujet",
+    "no_topic": "Sans sujet",
+    "priority": "Priorité",
+    "priority_high": "Haute",
+    "priority_normal": "Normale",
+    "priority_someday": "Un jour",
+    "energy": "Énergie",
+    "energy_any": "Peu importe",
+    "energy_high": "Haute",
+    "energy_medium": "Moyenne",
+    "energy_low": "Basse",
+    "save": "Ajouter la tâche",
+    "saving": "Enregistrement…",
+    "error": "Impossible d'enregistrer — réessayez.",
+    "close": "Fermer",
+    "hint_save": "pour enregistrer",
+    "hint_close": "pour fermer"
+  },
+  "progress": {
+    "page_title": "Progrès",
+    "tab_habits": "Habitudes",
+    "tab_achievements": "Succès",
+    "tab_review": "Bilan hebdomadaire"
   }
 }

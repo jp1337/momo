@@ -22,7 +22,8 @@
     "review": "Resumen",
     "focus_mode": "Enfoque",
     "habits": "Hábitos",
-    "achievements": "Logros"
+    "achievements": "Logros",
+    "progress": "Progreso"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -1056,5 +1057,33 @@
     "section_common": "Común",
     "section_secret": "Secreto",
     "no_achievements": "Aún no hay logros — ¡completa tareas para desbloquearlos!"
+  },
+  "quick_add": {
+    "title": "Añadir rápido",
+    "placeholder": "¿Qué necesitas hacer?",
+    "more_options": "Más opciones",
+    "topic": "Tema",
+    "no_topic": "Sin tema",
+    "priority": "Prioridad",
+    "priority_high": "Alta",
+    "priority_normal": "Normal",
+    "priority_someday": "Algún día",
+    "energy": "Energía",
+    "energy_any": "Cualquiera",
+    "energy_high": "Alta",
+    "energy_medium": "Media",
+    "energy_low": "Baja",
+    "save": "Añadir tarea",
+    "saving": "Guardando…",
+    "error": "No se pudo guardar — inténtalo de nuevo.",
+    "close": "Cerrar",
+    "hint_save": "para guardar",
+    "hint_close": "para cerrar"
+  },
+  "progress": {
+    "page_title": "Progreso",
+    "tab_habits": "Hábitos",
+    "tab_achievements": "Logros",
+    "tab_review": "Revisión semanal"
   }
 }

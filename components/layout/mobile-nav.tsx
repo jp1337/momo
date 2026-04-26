@@ -17,7 +17,7 @@ import {
   faBullseye,
   faListCheck,
   faFolderOpen,
-  faStar,
+  faChartLine,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
@@ -28,11 +28,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", labelKey: "dashboard", icon: faHouse },
+  { href: "/dashboard", labelKey: "dashboard",  icon: faHouse },
   { href: "/focus",     labelKey: "focus_mode", icon: faBullseye },
-  { href: "/tasks",     labelKey: "tasks",     icon: faListCheck },
-  { href: "/topics",    labelKey: "topics",    icon: faFolderOpen },
-  { href: "/wishlist",  labelKey: "wishlist",  icon: faStar },
+  { href: "/tasks",     labelKey: "tasks",      icon: faListCheck },
+  { href: "/topics",    labelKey: "topics",     icon: faFolderOpen },
+  { href: "/progress",  labelKey: "progress",   icon: faChartLine },
 ];
 
 /**

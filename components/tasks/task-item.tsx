@@ -20,6 +20,7 @@ import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoins, faLayerGroup, faClock } from "@fortawesome/free-solid-svg-icons";
 import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 interface TaskItemProps {
   id: string;
@@ -763,18 +764,18 @@ export function TaskItem({
           >
             ✎
           </button>
-          <button
-            onClick={() => onDelete(id)}
+          <ConfirmButton
+            onConfirm={() => onDelete(id)}
+            confirmPrompt={t("confirm_delete")}
             className="p-1.5 rounded-lg transition-colors"
             style={{
               color: "var(--accent-red)",
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             }}
             aria-label={t("aria_delete")}
-            title={t("aria_delete")}
           >
             ✕
-          </button>
+          </ConfirmButton>
         </div>
       )}
 

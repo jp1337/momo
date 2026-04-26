@@ -17,6 +17,7 @@ import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faListOl, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
 import { resolveTopicIcon } from "@/lib/topic-icons";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 interface TopicCardProps {
   id: string;
@@ -155,15 +156,15 @@ export function TopicCard({
           >
             <FontAwesomeIcon icon={faBoxArchive} style={{ fontSize: 13 }} />
           </button>
-          <button
-            onClick={() => onDelete(id)}
+          <ConfirmButton
+            onConfirm={() => onDelete(id)}
+            confirmPrompt={t("confirm_delete")}
             className="p-1.5 rounded-lg transition-colors"
             style={{ color: "var(--accent-red)" }}
             aria-label={t("aria_delete")}
-            title={t("aria_delete")}
           >
             ✕
-          </button>
+          </ConfirmButton>
         </div>
       </div>
 

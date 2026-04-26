@@ -18,6 +18,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { startRegistration } from "@simplewebauthn/browser";
 import type { PasskeySummary } from "@/lib/webauthn";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 interface PasskeysSectionProps {
   initialPasskeys: PasskeySummary[];
@@ -107,12 +108,6 @@ export function PasskeysSection({
 
   async function handleDelete(credentialID: string) {
     setError(null);
-    const confirmed =
-      typeof window === "undefined"
-        ? true
-        : window.confirm(t("passkey_delete_confirm"));
-    if (!confirmed) return;
-
     try {
       const r = await fetch(
         `/api/auth/passkey/${encodeURIComponent(credentialID)}`,
@@ -285,9 +280,9 @@ export function PasskeysSection({
                   {t("passkey_rename_btn")}
                 </button>
                 {canDelete(p.credentialID) && (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(p.credentialID)}
+                  <ConfirmButton
+                    onConfirm={() => handleDelete(p.credentialID)}
+                    confirmPrompt={t("passkey_delete_confirm")}
                     className="text-xs px-2 py-1 rounded"
                     style={{
                       backgroundColor: "transparent",
@@ -295,10 +290,9 @@ export function PasskeysSection({
                       border: "1px solid #c9515166",
                       fontFamily: "var(--font-ui)",
                     }}
-                    title={t("passkey_delete_btn")}
                   >
                     {t("passkey_delete_btn")}
-                  </button>
+                  </ConfirmButton>
                 )}
               </div>
             </li>

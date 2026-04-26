@@ -424,7 +424,6 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
   }, [refreshTasks]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!window.confirm(t("confirm_delete"))) return;
     try {
       const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -433,7 +432,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
     } catch {
       // silent fail
     }
-  }, [t]);
+  }, []);
 
   const handleFormSuccess = useCallback(async () => {
     setEditingTaskId(null);
@@ -513,7 +512,6 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
   /* ─── Bulk action handlers ───────────────────────────────────────────── */
 
   const handleBulkDelete = useCallback(async () => {
-    if (!window.confirm(t("bulk_confirm_delete", { count: selectedIds.size }))) return;
     try {
       const res = await fetch("/api/tasks/bulk", {
         method: "PATCH",
@@ -527,7 +525,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
     } catch {
       // silent fail
     }
-  }, [selectedIds, t, clearSelection]);
+  }, [selectedIds, clearSelection]);
 
   const handleBulkComplete = useCallback(async () => {
     try {

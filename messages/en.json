@@ -22,7 +22,8 @@
     "review": "Review",
     "focus_mode": "Focus",
     "habits": "Habits",
-    "achievements": "Achievements"
+    "achievements": "Achievements",
+    "progress": "Progress"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -1056,5 +1057,33 @@
     "section_common": "Common",
     "section_secret": "Secret",
     "no_achievements": "No achievements yet — complete tasks to unlock them!"
+  },
+  "quick_add": {
+    "title": "Quick Add",
+    "placeholder": "What do you need to do?",
+    "more_options": "More options",
+    "topic": "Topic",
+    "no_topic": "No topic",
+    "priority": "Priority",
+    "priority_high": "High",
+    "priority_normal": "Normal",
+    "priority_someday": "Someday",
+    "energy": "Energy",
+    "energy_any": "Any",
+    "energy_high": "High",
+    "energy_medium": "Medium",
+    "energy_low": "Low",
+    "save": "Add task",
+    "saving": "Saving…",
+    "error": "Could not save — try again.",
+    "close": "Close",
+    "hint_save": "to save",
+    "hint_close": "to close"
+  },
+  "progress": {
+    "page_title": "Progress",
+    "tab_habits": "Habits",
+    "tab_achievements": "Achievements",
+    "tab_review": "Weekly Review"
   }
 }

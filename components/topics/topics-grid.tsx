@@ -17,6 +17,7 @@ import { faChevronDown, faChevronRight, faBoxArchive } from "@fortawesome/free-s
 import { TopicCard } from "./topic-card";
 import { TopicForm } from "./topic-form";
 import { TemplatePicker } from "./template-picker";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 interface Topic {
   id: string;
@@ -121,7 +122,6 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm(t("confirm_delete"))) return;
       try {
         const res = await fetch(`/api/topics/${id}`, { method: "DELETE" });
         if (res.ok) {
@@ -131,7 +131,7 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
         // silent fail
       }
     },
-    [t]
+    []
   );
 
   const handleArchive = useCallback(async (id: string) => {
@@ -396,15 +396,15 @@ function ArchivedTopicCard({
         >
           {t("unarchive_btn")}
         </button>
-        <button
-          onClick={() => onDelete(id)}
+        <ConfirmButton
+          onConfirm={() => onDelete(id)}
+          confirmPrompt={t("confirm_delete")}
           className="p-1.5 rounded-lg transition-colors"
           style={{ color: "var(--accent-red)" }}
           aria-label={t("aria_delete")}
-          title={t("aria_delete")}
         >
           ✕
-        </button>
+        </ConfirmButton>
       </div>
     </div>
   );

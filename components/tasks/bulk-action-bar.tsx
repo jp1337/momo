@@ -19,6 +19,7 @@ import {
   faFlag,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 interface TopicOption {
   id: string;
@@ -215,8 +216,9 @@ export function BulkActionBar({
               </div>
 
               {/* Delete */}
-              <button
-                onClick={() => { closeMenus(); onDelete(); }}
+              <ConfirmButton
+                onConfirm={() => { closeMenus(); onDelete(); }}
+                confirmPrompt={t("bulk_confirm_delete", { count: selectedCount })}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
                 style={{
                   backgroundColor: "color-mix(in srgb, var(--accent-red) 15%, transparent)",
@@ -226,7 +228,7 @@ export function BulkActionBar({
               >
                 <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
                 {t("bulk_delete")}
-              </button>
+              </ConfirmButton>
             </div>
           </div>
         </motion.div>

@@ -19,18 +19,22 @@ interface YearSelectorProps {
   currentYear: number;
   years: number[];
   label: string;
+  /** Optional base URL to use instead of current pathname (e.g. "/progress?tab=habits") */
+  baseHref?: string;
+  /** Name of the year query param; defaults to "year" */
+  yearParam?: string;
 }
 
-export function YearSelector({ currentYear, years, label }: YearSelectorProps) {
+export function YearSelector({ currentYear, years, label, baseHref, yearParam = "year" }: YearSelectorProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
   function selectYear(year: number) {
-    const params = new URLSearchParams();
-    params.set("year", String(year));
+    const base = baseHref ?? pathname;
+    const separator = base.includes("?") ? "&" : "?";
     startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`);
+      router.push(`${base}${separator}${yearParam}=${year}`);
     });
   }
 

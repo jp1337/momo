@@ -22,7 +22,8 @@
     "review": "Rückblick",
     "focus_mode": "Fokus",
     "habits": "Gewohnheiten",
-    "achievements": "Errungenschaften"
+    "achievements": "Errungenschaften",
+    "progress": "Fortschritt"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -1056,5 +1057,33 @@
     "section_common": "Gewöhnlich",
     "section_secret": "Geheimnis",
     "no_achievements": "Noch keine Errungenschaften — erledige Aufgaben um sie freizuschalten!"
+  },
+  "quick_add": {
+    "title": "Schnell hinzufügen",
+    "placeholder": "Was musst du erledigen?",
+    "more_options": "Mehr Optionen",
+    "topic": "Thema",
+    "no_topic": "Kein Thema",
+    "priority": "Priorität",
+    "priority_high": "Hoch",
+    "priority_normal": "Normal",
+    "priority_someday": "Irgendwann",
+    "energy": "Energie",
+    "energy_any": "Egal",
+    "energy_high": "Hoch",
+    "energy_medium": "Mittel",
+    "energy_low": "Niedrig",
+    "save": "Aufgabe hinzufügen",
+    "saving": "Wird gespeichert…",
+    "error": "Konnte nicht gespeichert werden — bitte nochmal.",
+    "close": "Schließen",
+    "hint_save": "zum Speichern",
+    "hint_close": "zum Schließen"
+  },
+  "progress": {
+    "page_title": "Fortschritt",
+    "tab_habits": "Gewohnheiten",
+    "tab_achievements": "Errungenschaften",
+    "tab_review": "Wochenrückblick"
   }
 }

@@ -26,6 +26,7 @@ import {
   faTrash,
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 interface CalendarFeedSectionProps {
   initialActive: boolean;
@@ -44,15 +45,8 @@ export function CalendarFeedSection({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  async function handleRotate(isRotation: boolean) {
+  async function handleRotate() {
     setError(null);
-    if (isRotation) {
-      const ok =
-        typeof window === "undefined"
-          ? true
-          : window.confirm(t("calendar_feed_rotate_confirm"));
-      if (!ok) return;
-    }
     setBusy(true);
     try {
       const res = await fetch("/api/settings/calendar-feed", { method: "POST" });
@@ -74,11 +68,6 @@ export function CalendarFeedSection({
 
   async function handleRevoke() {
     setError(null);
-    const ok =
-      typeof window === "undefined"
-        ? true
-        : window.confirm(t("calendar_feed_revoke_confirm"));
-    if (!ok) return;
     setBusy(true);
     try {
       const res = await fetch("/api/settings/calendar-feed", { method: "DELETE" });
@@ -179,7 +168,7 @@ export function CalendarFeedSection({
         {!active ? (
           <button
             type="button"
-            onClick={() => handleRotate(false)}
+            onClick={handleRotate}
             disabled={busy}
             className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
             style={{
@@ -192,9 +181,9 @@ export function CalendarFeedSection({
           </button>
         ) : (
           <>
-            <button
-              type="button"
-              onClick={() => handleRotate(true)}
+            <ConfirmButton
+              onConfirm={handleRotate}
+              confirmPrompt={t("calendar_feed_rotate_confirm")}
               disabled={busy}
               className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50"
               style={{
@@ -206,10 +195,10 @@ export function CalendarFeedSection({
             >
               <FontAwesomeIcon icon={faRotate} />
               {t("calendar_feed_rotate")}
-            </button>
-            <button
-              type="button"
-              onClick={handleRevoke}
+            </ConfirmButton>
+            <ConfirmButton
+              onConfirm={handleRevoke}
+              confirmPrompt={t("calendar_feed_revoke_confirm")}
               disabled={busy}
               className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50"
               style={{
@@ -221,7 +210,7 @@ export function CalendarFeedSection({
             >
               <FontAwesomeIcon icon={faTrash} />
               {t("calendar_feed_revoke")}
-            </button>
+            </ConfirmButton>
           </>
         )}
       </div>

@@ -22,7 +22,8 @@
     "review": "Terugblik",
     "focus_mode": "Focus",
     "habits": "Gewoonten",
-    "achievements": "Prestaties"
+    "achievements": "Prestaties",
+    "progress": "Voortgang"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -1056,5 +1057,33 @@
     "section_common": "Gewoon",
     "section_secret": "Geheim",
     "no_achievements": "Nog geen prestaties — voltooi taken om ze te ontgrendelen!"
+  },
+  "quick_add": {
+    "title": "Snel toevoegen",
+    "placeholder": "Wat moet je doen?",
+    "more_options": "Meer opties",
+    "topic": "Onderwerp",
+    "no_topic": "Geen onderwerp",
+    "priority": "Prioriteit",
+    "priority_high": "Hoog",
+    "priority_normal": "Normaal",
+    "priority_someday": "Ooit",
+    "energy": "Energie",
+    "energy_any": "Maakt niet uit",
+    "energy_high": "Hoog",
+    "energy_medium": "Gemiddeld",
+    "energy_low": "Laag",
+    "save": "Taak toevoegen",
+    "saving": "Opslaan…",
+    "error": "Kon niet opslaan — probeer opnieuw.",
+    "close": "Sluiten",
+    "hint_save": "om op te slaan",
+    "hint_close": "om te sluiten"
+  },
+  "progress": {
+    "page_title": "Voortgang",
+    "tab_habits": "Gewoonten",
+    "tab_achievements": "Prestaties",
+    "tab_review": "Weekoverzicht"
   }
 }

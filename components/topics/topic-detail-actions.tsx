@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { TopicForm } from "@/components/topics/topic-form";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 
 interface TopicDetailActionsProps {
   topic: {
@@ -34,7 +35,6 @@ export function TopicDetailActions({ topic }: TopicDetailActionsProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
-    if (!window.confirm(t("confirm_delete"))) return;
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/topics/${topic.id}`, { method: "DELETE" });
@@ -58,16 +58,16 @@ export function TopicDetailActions({ topic }: TopicDetailActionsProps) {
         >
           ✎
         </button>
-        <button
-          onClick={handleDelete}
+        <ConfirmButton
+          onConfirm={handleDelete}
+          confirmPrompt={t("confirm_delete")}
           disabled={isDeleting}
           className="p-2 rounded-lg transition-colors disabled:opacity-50"
           style={{ color: "var(--text-muted)" }}
           aria-label={t("aria_delete")}
-          title={t("aria_delete")}
         >
           ✕
-        </button>
+        </ConfirmButton>
       </div>
 
       {showEditForm && (
