@@ -85,6 +85,7 @@ export function WishlistCard({
 }: WishlistCardProps) {
   const t = useTranslations("wishlist");
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [swipeX, setSwipeX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -285,34 +286,67 @@ export function WishlistCard({
           )}
         </div>
 
-        {/* Edit + Delete — always visible top-right, identical to TopicCard */}
-        <div className="flex gap-1 flex-shrink-0">
-          <button
-            onClick={() => onEdit(id)}
-            className="p-1.5 rounded-lg transition-colors"
-            style={{
-              color: "var(--text-muted)",
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            }}
-            aria-label={t("card_btn_edit")}
-            title={t("card_btn_edit")}
-          >
-            ✎
-          </button>
-          <button
-            onClick={() => handleAction(() => onDelete(id))}
-            disabled={isLoading}
-            className="p-1.5 rounded-lg transition-colors"
-            style={{
-              color: "var(--accent-red)",
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              cursor: isLoading ? "not-allowed" : "pointer",
-            }}
-            aria-label={t("card_btn_delete")}
-            title={t("card_btn_delete")}
-          >
-            ✕
-          </button>
+        {/* Edit + Delete — always visible top-right */}
+        <div className="flex gap-1 flex-shrink-0 items-center">
+          {confirmingDelete ? (
+            <>
+              <button
+                onClick={() => { setConfirmingDelete(false); handleAction(() => onDelete(id)); }}
+                disabled={isLoading}
+                className="text-xs px-2 py-0.5 rounded font-medium transition-colors"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  backgroundColor: "color-mix(in srgb, var(--accent-red) 15%, transparent)",
+                  color: "var(--accent-red)",
+                  border: "1px solid color-mix(in srgb, var(--accent-red) 30%, transparent)",
+                }}
+                aria-label={t("card_btn_delete_confirm")}
+              >
+                {t("card_btn_delete_confirm")}
+              </button>
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                className="text-xs px-2 py-0.5 rounded font-medium transition-colors"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--border)",
+                }}
+                aria-label={t("card_btn_delete_cancel")}
+              >
+                {t("card_btn_delete_cancel")}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => onEdit(id)}
+                className="p-1.5 rounded-lg transition-colors"
+                style={{
+                  color: "var(--text-muted)",
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                }}
+                aria-label={t("card_btn_edit")}
+                title={t("card_btn_edit")}
+              >
+                ✎
+              </button>
+              <button
+                onClick={() => setConfirmingDelete(true)}
+                disabled={isLoading}
+                className="p-1.5 rounded-lg transition-colors"
+                style={{
+                  color: "var(--accent-red)",
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                }}
+                aria-label={t("card_btn_delete")}
+                title={t("card_btn_delete")}
+              >
+                ✕
+              </button>
+            </>
+          )}
         </div>
       </div>
 

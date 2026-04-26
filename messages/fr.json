@@ -327,6 +327,8 @@
     "card_btn_undo": "↩ Annuler",
     "card_btn_restore": "↩ Restaurer",
     "card_btn_delete": "Supprimer définitivement",
+    "card_btn_delete_confirm": "Oui, supprimer",
+    "card_btn_delete_cancel": "Annuler",
     "form_title_edit": "Modifier l'article",
     "form_title_new": "Ajouter à la liste de souhaits",
     "form_label_title": "Titre",

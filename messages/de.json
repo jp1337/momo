@@ -327,6 +327,8 @@
     "card_btn_undo": "↩ Rückgängig",
     "card_btn_restore": "↩ Wiederherstellen",
     "card_btn_delete": "Dauerhaft löschen",
+    "card_btn_delete_confirm": "Ja, löschen",
+    "card_btn_delete_cancel": "Abbrechen",
     "form_title_edit": "Wunschlisten-Artikel bearbeiten",
     "form_title_new": "Zur Wunschliste hinzufügen",
     "form_label_title": "Titel",
