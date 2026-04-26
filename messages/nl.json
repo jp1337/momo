@@ -299,7 +299,20 @@
     "form_error_title": "Titel is verplicht",
     "back_to_topics": "← Terug naar onderwerpen",
     "tasks_completed": "{completed}/{total} taken voltooid",
-    "from_template": "📋 Uit sjabloon"
+    "from_template": "📋 Uit sjabloon",
+    "new_topic_or_template": "Nieuw onderwerp",
+    "start_blank": "Leeg starten",
+    "start_blank_hint": "Maak een leeg onderwerp zonder sjabloon",
+    "aria_archive": "Onderwerp archiveren",
+    "aria_unarchive": "Archivering ongedaan maken",
+    "archive_confirm": "Dit onderwerp archiveren?",
+    "archive_btn": "Archiveren",
+    "unarchive_btn": "Herstellen",
+    "archived_section": "Gearchiveerd ({count})",
+    "archived_empty": "Geen gearchiveerde onderwerpen.",
+    "all_done_archive_hint": "Alle taken klaar — dit onderwerp archiveren?",
+    "template_picker_start_blank": "Leeg onderwerp",
+    "template_picker_or": "of direct starten"
   },
   "wishlist": {
     "page_title": "Verlanglijst",

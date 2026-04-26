@@ -8,13 +8,14 @@
  * - Title and description
  * - Priority badge
  * - Progress bar (X/Y tasks completed)
- * - View, Edit, and Delete action buttons
+ * - "All done" archive banner when 100% complete
+ * - View, Edit, Archive, and Delete action buttons
  */
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faListOl } from "@fortawesome/free-solid-svg-icons";
+import { faListOl, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
 import { resolveTopicIcon } from "@/lib/topic-icons";
 
 interface TopicCardProps {
@@ -29,6 +30,7 @@ interface TopicCardProps {
   completedCount: number;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onArchive: (id: string) => void;
 }
 
 const PRIORITY_STYLES = {
@@ -64,6 +66,7 @@ export function TopicCard({
   completedCount,
   onEdit,
   onDelete,
+  onArchive,
 }: TopicCardProps) {
   const t = useTranslations("topics");
 
@@ -75,6 +78,7 @@ export function TopicCard({
 
   const progressPercent =
     taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0;
+  const isAllDone = taskCount > 0 && completedCount === taskCount;
   const priorityStyle = PRIORITY_STYLES[priority];
   const priorityLabel = PRIORITY_LABELS[priority];
   const accentColor = color ?? "var(--accent-amber)";
@@ -84,7 +88,7 @@ export function TopicCard({
       className="group rounded-2xl p-5 flex flex-col gap-4 transition-shadow duration-200"
       style={{
         backgroundColor: "var(--bg-surface)",
-        border: `1px solid var(--border)`,
+        border: `1px solid ${isAllDone ? "color-mix(in srgb, var(--accent-green) 40%, var(--border))" : "var(--border)"}`,
         boxShadow: "var(--shadow-sm)",
       }}
     >
@@ -131,27 +135,30 @@ export function TopicCard({
           )}
         </div>
 
-        {/* Action buttons — always visible for touch and desktop accessibility */}
+        {/* Action buttons */}
         <div className="flex gap-1 flex-shrink-0">
           <button
             onClick={() => onEdit(id)}
             className="p-1.5 rounded-lg transition-colors"
-            style={{
-              color: "var(--text-muted)",
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            }}
+            style={{ color: "var(--text-muted)" }}
             aria-label={t("aria_edit")}
             title={t("aria_edit")}
           >
             ✎
           </button>
           <button
+            onClick={() => onArchive(id)}
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ color: "var(--text-muted)" }}
+            aria-label={t("aria_archive")}
+            title={t("aria_archive")}
+          >
+            <FontAwesomeIcon icon={faBoxArchive} style={{ fontSize: 13 }} />
+          </button>
+          <button
             onClick={() => onDelete(id)}
             className="p-1.5 rounded-lg transition-colors"
-            style={{
-              color: "var(--accent-red)",
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            }}
+            style={{ color: "var(--accent-red)" }}
             aria-label={t("aria_delete")}
             title={t("aria_delete")}
           >
@@ -159,6 +166,23 @@ export function TopicCard({
           </button>
         </div>
       </div>
+
+      {/* All-done archive banner */}
+      {isAllDone && (
+        <button
+          onClick={() => onArchive(id)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-opacity hover:opacity-80 w-full text-left"
+          style={{
+            backgroundColor: "color-mix(in srgb, var(--accent-green) 12%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--accent-green) 30%, transparent)",
+            color: "var(--accent-green)",
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+          }}
+        >
+          <FontAwesomeIcon icon={faBoxArchive} style={{ fontSize: 11 }} />
+          {t("all_done_archive_hint")}
+        </button>
+      )}
 
       {/* Progress bar */}
       <div>

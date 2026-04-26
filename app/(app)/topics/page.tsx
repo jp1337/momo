@@ -8,7 +8,7 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getUserTopics } from "@/lib/topics";
+import { getUserTopics, getArchivedTopics } from "@/lib/topics";
 import { TopicsGrid } from "@/components/topics/topics-grid";
 import { getTranslations } from "next-intl/server";
 
@@ -28,20 +28,29 @@ export default async function TopicsPage() {
 
   const t = await getTranslations("topics");
 
-  const topics = await getUserTopics(session.user.id);
+  const [topics, archivedTopics] = await Promise.all([
+    getUserTopics(session.user.id),
+    getArchivedTopics(session.user.id),
+  ]);
 
-  const serializedTopics = topics.map((t) => ({
-    id: t.id,
-    title: t.title,
-    description: t.description ?? null,
-    color: t.color ?? null,
-    icon: t.icon ?? null,
-    priority: t.priority,
-    defaultEnergyLevel: t.defaultEnergyLevel ?? null,
-    sequential: t.sequential,
-    taskCount: t.taskCount,
-    completedCount: t.completedCount,
-  }));
+  const serializeTopic = (topic: typeof topics[0], archived: boolean) => ({
+    id: topic.id,
+    title: topic.title,
+    description: topic.description ?? null,
+    color: topic.color ?? null,
+    icon: topic.icon ?? null,
+    priority: topic.priority,
+    defaultEnergyLevel: topic.defaultEnergyLevel ?? null,
+    sequential: topic.sequential,
+    archived,
+    taskCount: topic.taskCount,
+    completedCount: topic.completedCount,
+  });
+
+  const serializedTopics = [
+    ...topics.map((t) => serializeTopic(t, false)),
+    ...archivedTopics.map((t) => serializeTopic(t, true)),
+  ];
 
   const subtitle =
     topics.length === 0

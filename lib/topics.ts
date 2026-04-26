@@ -158,6 +158,8 @@ export async function updateTopic(
     updateValues.defaultEnergyLevel = input.defaultEnergyLevel;
   if (input.sequential !== undefined)
     updateValues.sequential = input.sequential;
+  if (input.archived !== undefined)
+    updateValues.archived = input.archived;
 
   const rows = await db
     .update(topics)
@@ -170,6 +172,67 @@ export async function updateTopic(
   }
 
   return rows[0];
+}
+
+/**
+ * Archives a topic (hides it from the main topics view without deleting it).
+ * Tasks remain attached to the topic.
+ *
+ * @param topicId - The topic's UUID
+ * @param userId - The authenticated user's UUID (for ownership check)
+ * @throws Error if topic not found or not owned by user
+ */
+export async function archiveTopic(topicId: string, userId: string): Promise<Topic> {
+  const rows = await db
+    .update(topics)
+    .set({ archived: true })
+    .where(and(eq(topics.id, topicId), eq(topics.userId, userId)))
+    .returning();
+
+  if (!rows[0]) throw new Error("Topic not found or access denied");
+  return rows[0];
+}
+
+/**
+ * Unarchives a topic (restores it to the active topics view).
+ *
+ * @param topicId - The topic's UUID
+ * @param userId - The authenticated user's UUID (for ownership check)
+ * @throws Error if topic not found or not owned by user
+ */
+export async function unarchiveTopic(topicId: string, userId: string): Promise<Topic> {
+  const rows = await db
+    .update(topics)
+    .set({ archived: false })
+    .where(and(eq(topics.id, topicId), eq(topics.userId, userId)))
+    .returning();
+
+  if (!rows[0]) throw new Error("Topic not found or access denied");
+  return rows[0];
+}
+
+/**
+ * Retrieves all archived topics for a user, with task count statistics.
+ *
+ * @param userId - The authenticated user's UUID
+ * @returns Array of archived topics with taskCount and completedCount fields
+ */
+export async function getArchivedTopics(userId: string): Promise<TopicWithCounts[]> {
+  const topicRows = await db
+    .select()
+    .from(topics)
+    .where(and(eq(topics.userId, userId), eq(topics.archived, true)));
+
+  const taskRows = await db
+    .select()
+    .from(tasks)
+    .where(eq(tasks.userId, userId));
+
+  return topicRows.map((topic) => {
+    const topicTasks = taskRows.filter((t) => t.topicId === topic.id);
+    const completedCount = topicTasks.filter((t) => t.completedAt !== null).length;
+    return { ...topic, taskCount: topicTasks.length, completedCount };
+  });
 }
 
 /**

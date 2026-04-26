@@ -299,7 +299,20 @@
     "form_error_title": "Titel ist erforderlich",
     "back_to_topics": "← Zurück zu Themen",
     "tasks_completed": "{completed}/{total} Aufgaben erledigt",
-    "from_template": "📋 Aus Vorlage"
+    "from_template": "📋 Aus Vorlage",
+    "new_topic_or_template": "Neues Thema",
+    "start_blank": "Leer starten",
+    "start_blank_hint": "Leeres Thema ohne Vorlage erstellen",
+    "aria_archive": "Thema archivieren",
+    "aria_unarchive": "Archivierung aufheben",
+    "archive_confirm": "Thema archivieren?",
+    "archive_btn": "Archivieren",
+    "unarchive_btn": "Wiederherstellen",
+    "archived_section": "Archiviert ({count})",
+    "archived_empty": "Keine archivierten Themen.",
+    "all_done_archive_hint": "Alle Aufgaben erledigt — Thema archivieren?",
+    "template_picker_start_blank": "Leeres Thema",
+    "template_picker_or": "oder direkt starten"
   },
   "wishlist": {
     "page_title": "Wunschliste",

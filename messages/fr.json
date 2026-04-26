@@ -299,7 +299,20 @@
     "form_error_title": "Le titre est requis",
     "back_to_topics": "← Retour aux sujets",
     "tasks_completed": "{completed}/{total} tâches terminées",
-    "from_template": "📋 Depuis un modèle"
+    "from_template": "📋 Depuis un modèle",
+    "new_topic_or_template": "Nouveau sujet",
+    "start_blank": "Démarrer vide",
+    "start_blank_hint": "Créer un sujet vide sans modèle",
+    "aria_archive": "Archiver le sujet",
+    "aria_unarchive": "Désarchiver le sujet",
+    "archive_confirm": "Archiver ce sujet ?",
+    "archive_btn": "Archiver",
+    "unarchive_btn": "Restaurer",
+    "archived_section": "Archivés ({count})",
+    "archived_empty": "Aucun sujet archivé.",
+    "all_done_archive_hint": "Toutes les tâches terminées — archiver ce sujet ?",
+    "template_picker_start_blank": "Sujet vide",
+    "template_picker_or": "ou démarrer directement"
   },
   "wishlist": {
     "page_title": "Liste de souhaits",

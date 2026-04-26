@@ -314,6 +314,8 @@ export const UpdateTopicInputSchema = z.object({
   defaultEnergyLevel: EnergyLevelSchema,
   /** Toggle sequential ordering enforcement for this topic. */
   sequential: z.boolean().optional(),
+  /** Archive or unarchive the topic. */
+  archived: z.boolean().optional(),
 });
 
 export type UpdateTopicInput = z.infer<typeof UpdateTopicInputSchema>;

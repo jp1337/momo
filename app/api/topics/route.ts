@@ -12,7 +12,7 @@
  */
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
-import { getUserTopics, createTopic } from "@/lib/topics";
+import { getUserTopics, getArchivedTopics, createTopic } from "@/lib/topics";
 import { CreateTopicInputSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { db } from "@/lib/db";
@@ -22,14 +22,20 @@ import { checkAndUnlockAchievements } from "@/lib/gamification";
 
 /**
  * GET /api/topics
- * Returns all topics with task count statistics.
+ * Returns all active (non-archived) topics with task count statistics.
+ * Pass ?archived=true to fetch archived topics instead.
  */
 export async function GET(request: Request) {
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { searchParams } = new URL(request.url);
+  const archived = searchParams.get("archived") === "true";
+
   try {
-    const userTopics = await getUserTopics(user.userId);
+    const userTopics = archived
+      ? await getArchivedTopics(user.userId)
+      : await getUserTopics(user.userId);
     return Response.json({ topics: userTopics });
   } catch (error) {
     console.error("[GET /api/topics]", error);

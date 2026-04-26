@@ -299,7 +299,20 @@
     "form_error_title": "El título es obligatorio",
     "back_to_topics": "← Volver a temas",
     "tasks_completed": "{completed}/{total} tareas completadas",
-    "from_template": "📋 Desde plantilla"
+    "from_template": "📋 Desde plantilla",
+    "new_topic_or_template": "Nuevo tema",
+    "start_blank": "Empezar vacío",
+    "start_blank_hint": "Crear un tema vacío sin plantilla",
+    "aria_archive": "Archivar tema",
+    "aria_unarchive": "Desarchivar tema",
+    "archive_confirm": "¿Archivar este tema?",
+    "archive_btn": "Archivar",
+    "unarchive_btn": "Restaurar",
+    "archived_section": "Archivados ({count})",
+    "archived_empty": "No hay temas archivados.",
+    "all_done_archive_hint": "Todas las tareas listas — ¿archivar este tema?",
+    "template_picker_start_blank": "Tema vacío",
+    "template_picker_or": "o empezar directamente"
   },
   "wishlist": {
     "page_title": "Lista de deseos",

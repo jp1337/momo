@@ -4,11 +4,16 @@
  * TopicsGrid component — interactive grid of topic cards.
  *
  * Manages topic state after initial server-fetched data.
- * Handles create/edit/delete actions via the TopicForm modal.
+ * Handles create/edit/delete/archive actions.
+ *
+ * "New Topic" button opens TemplatePicker (with template cards + blank start).
+ * Archived topics are shown in a collapsed section at the bottom.
  */
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronDown, faChevronRight, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
 import { TopicCard } from "./topic-card";
 import { TopicForm } from "./topic-form";
 import { TemplatePicker } from "./template-picker";
@@ -22,6 +27,7 @@ interface Topic {
   priority: "HIGH" | "NORMAL" | "SOMEDAY";
   defaultEnergyLevel: "HIGH" | "MEDIUM" | "LOW" | null;
   sequential: boolean;
+  archived: boolean;
   taskCount: number;
   completedCount: number;
 }
@@ -31,7 +37,7 @@ interface TopicsGridProps {
 }
 
 /**
- * Empty state for when the user has no topics.
+ * Empty state for when the user has no active topics.
  */
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   const t = useTranslations("topics");
@@ -80,23 +86,33 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 /**
- * Interactive grid of topic cards with CRUD functionality.
+ * Interactive grid of topic cards with CRUD + archive functionality.
  */
 export function TopicsGrid({ initialTopics }: TopicsGridProps) {
   const t = useTranslations("topics");
   const [topics, setTopics] = useState<Topic[]>(initialTopics);
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [archivedExpanded, setArchivedExpanded] = useState(false);
 
   const editingTopic = topics.find((topic) => topic.id === editingTopicId);
 
+  const activeTopics = topics.filter((t) => !t.archived);
+  const archivedTopics = topics.filter((t) => t.archived);
+
   const refreshTopics = useCallback(async () => {
     try {
-      const res = await fetch("/api/topics");
-      if (res.ok) {
-        const data = await res.json() as { topics: Topic[] };
-        setTopics(data.topics);
+      const [activeRes, archivedRes] = await Promise.all([
+        fetch("/api/topics"),
+        fetch("/api/topics?archived=true"),
+      ]);
+      if (activeRes.ok && archivedRes.ok) {
+        const [activeData, archivedData] = await Promise.all([
+          activeRes.json() as Promise<{ topics: Topic[] }>,
+          archivedRes.json() as Promise<{ topics: Topic[] }>,
+        ]);
+        setTopics([...activeData.topics, ...archivedData.topics.map((t) => ({ ...t, archived: true }))]);
       }
     } catch {
       // silent fail
@@ -118,6 +134,41 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
     [t]
   );
 
+  const handleArchive = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/topics/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: true }),
+      });
+      if (res.ok) {
+        setTopics((prev) =>
+          prev.map((topic) => (topic.id === id ? { ...topic, archived: true } : topic))
+        );
+        setArchivedExpanded(true);
+      }
+    } catch {
+      // silent fail
+    }
+  }, []);
+
+  const handleUnarchive = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/topics/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: false }),
+      });
+      if (res.ok) {
+        setTopics((prev) =>
+          prev.map((topic) => (topic.id === id ? { ...topic, archived: false } : topic))
+        );
+      }
+    } catch {
+      // silent fail
+    }
+  }, []);
+
   const handleFormSuccess = useCallback(async () => {
     setEditingTopicId(null);
     setShowCreateForm(false);
@@ -126,22 +177,10 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
 
   return (
     <div>
-      {/* New Topic / Template buttons */}
-      <div className="flex justify-end gap-2 mb-6 flex-wrap">
+      {/* New Topic button (opens template picker) */}
+      <div className="flex justify-end mb-6">
         <button
           onClick={() => setShowTemplatePicker(true)}
-          className="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            backgroundColor: "var(--bg-elevated)",
-            color: "var(--text-primary)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          {t("from_template")}
-        </button>
-        <button
-          onClick={() => setShowCreateForm(true)}
           className="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
           style={{
             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
@@ -154,14 +193,14 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
       </div>
 
       {/* Empty state */}
-      {topics.length === 0 && (
-        <EmptyState onAdd={() => setShowCreateForm(true)} />
+      {activeTopics.length === 0 && archivedTopics.length === 0 && (
+        <EmptyState onAdd={() => setShowTemplatePicker(true)} />
       )}
 
-      {/* Topics grid */}
-      {topics.length > 0 && (
+      {/* Active topics grid */}
+      {activeTopics.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {topics.map((topic) => (
+          {activeTopics.map((topic) => (
             <TopicCard
               key={topic.id}
               id={topic.id}
@@ -175,8 +214,52 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
               completedCount={topic.completedCount}
               onEdit={setEditingTopicId}
               onDelete={handleDelete}
+              onArchive={handleArchive}
             />
           ))}
+        </div>
+      )}
+
+      {/* Archived topics section */}
+      {archivedTopics.length > 0 && (
+        <div className="mt-8">
+          <button
+            onClick={() => setArchivedExpanded((v) => !v)}
+            className="flex items-center gap-2 mb-4 text-sm font-medium"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            <FontAwesomeIcon
+              icon={archivedExpanded ? faChevronDown : faChevronRight}
+              style={{ fontSize: 11 }}
+            />
+            <FontAwesomeIcon icon={faBoxArchive} style={{ fontSize: 13 }} />
+            {t("archived_section", { count: archivedTopics.length })}
+          </button>
+
+          {archivedExpanded && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {archivedTopics.map((topic) => (
+                <ArchivedTopicCard
+                  key={topic.id}
+                  id={topic.id}
+                  title={topic.title}
+                  color={topic.color}
+                  icon={topic.icon}
+                  taskCount={topic.taskCount}
+                  completedCount={topic.completedCount}
+                  onUnarchive={handleUnarchive}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -187,11 +270,15 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
             setShowTemplatePicker(false);
             await refreshTopics();
           }}
+          onStartBlank={() => {
+            setShowTemplatePicker(false);
+            setShowCreateForm(true);
+          }}
           onCancel={() => setShowTemplatePicker(false)}
         />
       )}
 
-      {/* Topic form modal */}
+      {/* Topic form modal (create or edit) */}
       {(showCreateForm || editingTopicId) && (
         <TopicForm
           initialData={
@@ -215,6 +302,110 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
           }}
         />
       )}
+    </div>
+  );
+}
+
+// ─── Archived Topic Card ───────────────────────────────────────────────────────
+
+interface ArchivedTopicCardProps {
+  id: string;
+  title: string;
+  color?: string | null;
+  icon?: string | null;
+  taskCount: number;
+  completedCount: number;
+  onUnarchive: (id: string) => void;
+  onDelete: (id: string) => void;
+}
+
+import { resolveTopicIcon } from "@/lib/topic-icons";
+
+/**
+ * Compact card for an archived topic — shows title, progress and restore/delete actions.
+ */
+function ArchivedTopicCard({
+  id,
+  title,
+  color,
+  icon,
+  taskCount,
+  completedCount,
+  onUnarchive,
+  onDelete,
+}: ArchivedTopicCardProps) {
+  const t = useTranslations("topics");
+  const accentColor = color ?? "var(--text-muted)";
+  const progressPercent = taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0;
+
+  return (
+    <div
+      className="rounded-2xl p-4 flex items-center gap-3"
+      style={{
+        backgroundColor: "var(--bg-surface)",
+        border: "1px solid var(--border)",
+        opacity: 0.75,
+      }}
+    >
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+        style={{
+          backgroundColor: color ? `${color}18` : "var(--bg-elevated)",
+          border: `2px solid ${accentColor}33`,
+        }}
+        aria-hidden
+      >
+        <FontAwesomeIcon
+          icon={resolveTopicIcon(icon)}
+          style={{ width: "1rem", height: "1rem", color: accentColor }}
+        />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p
+          className="text-sm font-medium truncate"
+          style={{
+            fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+            color: "var(--text-muted)",
+          }}
+        >
+          {title}
+        </p>
+        <p
+          className="text-xs"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            color: "var(--text-muted)",
+          }}
+        >
+          {t("task_progress", { completed: completedCount, total: taskCount })} · {progressPercent}%
+        </p>
+      </div>
+
+      <div className="flex gap-1 flex-shrink-0">
+        <button
+          onClick={() => onUnarchive(id)}
+          className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            backgroundColor: "var(--bg-elevated)",
+            border: "1px solid var(--border)",
+            color: "var(--text-primary)",
+          }}
+          title={t("aria_unarchive")}
+        >
+          {t("unarchive_btn")}
+        </button>
+        <button
+          onClick={() => onDelete(id)}
+          className="p-1.5 rounded-lg transition-colors"
+          style={{ color: "var(--accent-red)" }}
+          aria-label={t("aria_delete")}
+          title={t("aria_delete")}
+        >
+          ✕
+        </button>
+      </div>
     </div>
   );
 }

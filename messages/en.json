@@ -299,7 +299,20 @@
     "form_error_title": "Title is required",
     "back_to_topics": "← Back to Topics",
     "tasks_completed": "{completed}/{total} tasks completed",
-    "from_template": "📋 From Template"
+    "from_template": "📋 From Template",
+    "new_topic_or_template": "New Topic",
+    "start_blank": "Start blank",
+    "start_blank_hint": "Create an empty topic without a template",
+    "aria_archive": "Archive topic",
+    "aria_unarchive": "Unarchive topic",
+    "archive_confirm": "Archive this topic?",
+    "archive_btn": "Archive",
+    "unarchive_btn": "Restore",
+    "archived_section": "Archived ({count})",
+    "archived_empty": "No archived topics.",
+    "all_done_archive_hint": "All tasks done — archive this topic?",
+    "template_picker_start_blank": "Blank topic",
+    "template_picker_or": "or start directly"
   },
   "wishlist": {
     "page_title": "Wishlist",

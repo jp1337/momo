@@ -1,33 +1,21 @@
 "use client";
 
 /**
- * TemplatePicker component — modal to import a predefined topic template.
+ * TemplatePicker — modal to start a new topic from a curated template or blank.
  *
- * Displays the curated templates from `lib/templates.ts` as a grid of cards.
- * Each card shows the template icon, title, description, task count and
- * (if applicable) the sequential badge. Clicking "Import" POSTs to
- * `/api/topics/import-template` and signals success to the parent, which
- * refreshes the topics list.
- *
- * The template catalogue is intentionally mirrored on the client as a static
- * constant — there is no dedicated "list templates" endpoint because
- * templates are code, not user data. If the set changes on the server, update
- * both sides.
+ * Shows all available templates as clickable cards plus a "Leer starten" option.
+ * On template selection: POSTs to /api/topics/import-template.
+ * On blank: calls onStartBlank() so the parent can open the TopicForm.
  */
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faListOl } from "@fortawesome/free-solid-svg-icons";
+import { faListOl, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { resolveTopicIcon } from "@/lib/topic-icons";
 
-type TemplateKey = "moving" | "taxes" | "fitness" | "household";
+type TemplateKey = "moving" | "taxes" | "fitness" | "household" | "selling";
 
-/**
- * Static client-side mirror of `lib/templates.ts`. Only the fields needed for
- * rendering the picker live here; titles/descriptions/task counts are fetched
- * via i18n and hardcoded counts respectively.
- */
 const CLIENT_TEMPLATES: {
   key: TemplateKey;
   icon: string;
@@ -35,25 +23,28 @@ const CLIENT_TEMPLATES: {
   sequential: boolean;
   taskCount: number;
 }[] = [
-  { key: "moving", icon: "house", color: "#c97b3e", sequential: true, taskCount: 10 },
-  { key: "taxes", icon: "coins", color: "#4a8c5c", sequential: true, taskCount: 6 },
-  { key: "fitness", icon: "dumbbell", color: "#8a5cf0", sequential: false, taskCount: 7 },
-  { key: "household", icon: "broom", color: "#5c8ab8", sequential: false, taskCount: 6 },
+  { key: "moving",    icon: "house",    color: "#c97b3e", sequential: true,  taskCount: 10 },
+  { key: "taxes",     icon: "coins",    color: "#4a8c5c", sequential: true,  taskCount: 6  },
+  { key: "fitness",   icon: "dumbbell", color: "#8a5cf0", sequential: false, taskCount: 7  },
+  { key: "household", icon: "broom",    color: "#5c8ab8", sequential: false, taskCount: 6  },
+  { key: "selling",   icon: "tag",      color: "#b87c3e", sequential: true,  taskCount: 5  },
 ];
 
 interface TemplatePickerProps {
-  /** Called after a successful import. */
+  /** Called after a successful template import. */
   onImported: () => void;
-  /** Called when the modal should close without importing. */
+  /** Called when the user wants to create a blank topic instead. */
+  onStartBlank: () => void;
+  /** Called when the modal should close without action. */
   onCancel: () => void;
 }
 
 /**
- * Modal that lets the user import a predefined topic template as a new topic.
+ * Modal to start a new topic — pick a template or create blank.
  */
-export function TemplatePicker({ onImported, onCancel }: TemplatePickerProps) {
+export function TemplatePicker({ onImported, onStartBlank, onCancel }: TemplatePickerProps) {
   const t = useTranslations("templates");
-  const tc = useTranslations("common");
+  const tc = useTranslations("topics");
 
   const [importingKey, setImportingKey] = useState<TemplateKey | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,9 +58,7 @@ export function TemplatePicker({ onImported, onCancel }: TemplatePickerProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ templateKey: key }),
       });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       onImported();
     } catch {
       setError(t("import_failed"));
@@ -111,13 +100,13 @@ export function TemplatePicker({ onImported, onCancel }: TemplatePickerProps) {
             disabled={!!importingKey}
             className="p-1 rounded-lg"
             style={{ color: "var(--text-muted)" }}
-            aria-label={tc("close")}
+            aria-label="Schließen"
           >
             ✕
           </button>
         </div>
         <p
-          className="text-sm mb-6"
+          className="text-sm mb-5"
           style={{
             color: "var(--text-muted)",
             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
@@ -142,7 +131,7 @@ export function TemplatePicker({ onImported, onCancel }: TemplatePickerProps) {
         )}
 
         {/* Template grid */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {CLIENT_TEMPLATES.map((tpl) => {
             const isImporting = importingKey === tpl.key;
             const isDisabled = !!importingKey;
@@ -231,6 +220,35 @@ export function TemplatePicker({ onImported, onCancel }: TemplatePickerProps) {
             );
           })}
         </div>
+
+        {/* Divider + blank start */}
+        <div className="flex items-center gap-3 my-5">
+          <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
+          <span
+            className="text-xs uppercase tracking-wider"
+            style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui, 'DM Sans', sans-serif)" }}
+          >
+            {tc("template_picker_or")}
+          </span>
+          <div className="flex-1 h-px" style={{ backgroundColor: "var(--border)" }} />
+        </div>
+
+        <button
+          onClick={onStartBlank}
+          disabled={!!importingKey}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
+          style={{
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            backgroundColor: "var(--bg-elevated)",
+            border: "1px dashed var(--border)",
+            color: "var(--text-primary)",
+            cursor: importingKey ? "not-allowed" : "pointer",
+            opacity: importingKey ? 0.5 : 1,
+          }}
+        >
+          <FontAwesomeIcon icon={faPlus} style={{ fontSize: 14, color: "var(--accent-amber)" }} />
+          {tc("start_blank")}
+        </button>
       </div>
     </div>
   );
