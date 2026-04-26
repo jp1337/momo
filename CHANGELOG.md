@@ -9,6 +9,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Umfassende Test-Suite** — 1 294 Tests in 55 Dateien, davon: WebAuthn/Passkey-Logik (`lib/webauthn.ts`, alle 7 Passkey-Routen), Auth-2FA-Routen, Calendar-Feed, Sessions-Throttling, Webhook-Delivery, Update-Checker, Cron-Dispatcher, Push-Notifications, sämtliche API-Routen und alle Lib-Funktionen. Gesamtabdeckung: ~72 % Statements / ~65 % Branches / ~77 % Functions.
+- **Bug: `createPasskeyLoginSession` – leeres `db.update().set({})`** — Drizzle ORM wirft „No values to set" bei leerem `set({})`; das nutzlose no-op-Update wurde entfernt.
+
+### Added
+
 - **Quick Add Modal (N-Shortcut)** — Neue Aufgaben können jetzt mit `N` oder `/` per Tastatur direkt erstellt werden, ohne die aktuelle Seite zu verlassen. Das Modal öffnet sich global, fokussiert sofort das Titel-Feld, unterstützt Enter zum Speichern und Escape zum Schließen. „Mehr Optionen" klappt Thema, Priorität und Energie-Level auf.
 - **Progress-Seite** — Habits, Errungenschaften und Wochenrückblick sind jetzt unter `/progress` in einer einzigen Seite mit Tab-Navigation zusammengeführt (`?tab=habits|achievements|review`). Sidebar und Mobile-Nav zeigen einen einzigen „Progress"-Eintrag statt drei separaten Links.
 - **ConfirmButton-Komponente** — Neue `ConfirmButton`-Komponente ersetzt alle `window.confirm()`-Dialoge im gesamten Projekt. Klick zeigt inline ein Bestätigungs-Prompt (Ja/Abbrechen) direkt neben dem auslösenden Button — kein Browser-Dialog mehr.
