@@ -93,7 +93,7 @@ import {
   type Level,
   type UnlockedAchievement,
 } from "@/lib/gamification";
-import { getLocalDateString } from "@/lib/date-utils";
+import { getLocalDateString, getLocalMidnightUtc } from "@/lib/date-utils";
 import { getEnergyCheckinStreak } from "@/lib/energy";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -597,7 +597,7 @@ export async function completeTask(
   // Gather all context needed for the expanded achievement set — all queries
   // run in parallel to minimise latency.
   const today = getLocalDateString(timezone);
-  const todayStart = new Date(today + "T00:00:00Z");
+  const todayStart = getLocalMidnightUtc(today, timezone);
 
   const [
     completionCountRows,

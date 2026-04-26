@@ -188,17 +188,17 @@ export async function getEnergyCheckinStreak(
   // Deduplicate to one entry per date
   const datesWithCheckin = new Set(rows.map((r) => r.date));
 
-  const today = getLocalDateString(timezone);
-
-  // Walk backwards from today counting consecutive days
+  // Walk backwards from today by local date string, not UTC timestamp,
+  // so UTC− users don't get misclassified near midnight.
+  let dateStr = getLocalDateString(timezone);
   let streak = 0;
-  const current = new Date(today + "T00:00:00Z");
 
-  while (true) {
-    const dateStr = current.toISOString().split("T")[0];
-    if (!datesWithCheckin.has(dateStr)) break;
+  while (datesWithCheckin.has(dateStr)) {
     streak += 1;
-    current.setUTCDate(current.getUTCDate() - 1);
+    // Decrement by one local day using getLocalYesterdayString on the current date
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const prevUtc = new Date(Date.UTC(y, m - 1, d - 1));
+    dateStr = prevUtc.toISOString().split("T")[0];
   }
 
   return streak;

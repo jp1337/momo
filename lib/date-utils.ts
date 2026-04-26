@@ -109,6 +109,53 @@ export function getLocalYesterdayString(timezone?: string | null): string {
 }
 
 /**
+ * Returns a Date representing local midnight (00:00:00) in the given timezone,
+ * expressed as a UTC timestamp for use in DB timestamp comparisons.
+ *
+ * Handles non-integer offsets (e.g. India UTC+5:30, Nepal UTC+5:45) by
+ * extracting both hour and minute components from Intl.DateTimeFormat.
+ *
+ * @param dateStr - Local date string in YYYY-MM-DD format
+ * @param timezone - IANA timezone identifier (e.g. "Europe/Berlin")
+ * @returns UTC Date object corresponding to midnight in the given timezone
+ *
+ * @example
+ * // For Europe/Berlin (UTC+2 in summer), 2026-04-26 local midnight = 2026-04-25T22:00:00Z
+ * getLocalMidnightUtc("2026-04-26", "Europe/Berlin")
+ */
+export function getLocalMidnightUtc(dateStr: string, timezone?: string | null): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const utcMidnight = new Date(Date.UTC(y, m - 1, d));
+
+  if (!timezone) return utcMidnight;
+
+  try {
+    // Find what hour:minute UTC midnight maps to in the local timezone
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      hour: "numeric",
+      minute: "numeric",
+      hour12: false,
+    }).formatToParts(utcMidnight);
+
+    const localHour = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
+    const localMin = parseInt(parts.find((p) => p.type === "minute")?.value ?? "0", 10);
+    const localMinutesIntoDay = localHour * 60 + localMin;
+
+    // localMinutesIntoDay tells us how far past midnight (local) UTC midnight falls.
+    // If > 720 (noon), UTC midnight is in the "previous" local day → UTC is behind local.
+    const offsetMinutes =
+      localMinutesIntoDay > 12 * 60
+        ? -(24 * 60 - localMinutesIntoDay)
+        : localMinutesIntoDay;
+
+    return new Date(utcMidnight.getTime() - offsetMinutes * 60_000);
+  } catch {
+    return utcMidnight;
+  }
+}
+
+/**
  * Returns the day before yesterday as a YYYY-MM-DD string in the given IANA timezone.
  *
  * Used by the Streak Shield to detect exactly-one-day gaps (streakLastDate === dayBeforeYesterday

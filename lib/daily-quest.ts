@@ -17,7 +17,7 @@ import { db } from "@/lib/db";
 import type { Database } from "@/lib/db";
 import { tasks, users, topics, questPostponements } from "@/lib/db/schema";
 import { eq, and, isNull, isNotNull, lte, lt, gte, or, ne, sql, notInArray, asc } from "drizzle-orm";
-import { getLocalDateString, getLocalTomorrowString } from "@/lib/date-utils";
+import { getLocalDateString, getLocalTomorrowString, getLocalMidnightUtc } from "@/lib/date-utils";
 
 /** A Drizzle transaction or the base db instance */
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -354,7 +354,7 @@ export async function selectDailyQuest(
   energyLevel?: "HIGH" | "MEDIUM" | "LOW" | null
 ): Promise<TaskWithTopic | null> {
   const today = getLocalDateString(timezone);
-  const todayStart = new Date(`${today}T00:00:00Z`);
+  const todayStart = getLocalMidnightUtc(today, timezone);
 
   // If the user already completed a quest today, return it for the celebration
   // state. One quest per day is the intent — don't pick a new one.
