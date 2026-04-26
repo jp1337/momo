@@ -35,6 +35,7 @@ import {
   TotpBackupCodeSchema,
   TotpVerifyInputSchema,
   VacationModeInputSchema,
+  PushNotificationTimeSchema,
 } from "@/lib/validators/index";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -825,5 +826,65 @@ describe("VacationModeInputSchema", () => {
       endDate: "2025-09-01",
       timezone: null,
     });
+  });
+});
+
+// ─── PushNotificationTimeSchema ───────────────────────────────────────────────
+
+describe("PushNotificationTimeSchema", () => {
+  it("accepts a valid HH:MM time at midnight", () => {
+    parseSucceeds(PushNotificationTimeSchema, "00:00");
+  });
+
+  it("accepts a valid HH:MM time at last valid minute", () => {
+    parseSucceeds(PushNotificationTimeSchema, "23:59");
+  });
+
+  it("accepts a mid-day time", () => {
+    parseSucceeds(PushNotificationTimeSchema, "12:30");
+  });
+
+  it("accepts HH:MM:SS format and strips seconds", () => {
+    const result = PushNotificationTimeSchema.safeParse("07:45:00");
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data).toBe("07:45");
+  });
+
+  it("rejects hour 24 (out of range)", () => {
+    parseFails(PushNotificationTimeSchema, "24:00");
+  });
+
+  it("rejects minute 60 (out of range)", () => {
+    parseFails(PushNotificationTimeSchema, "12:60");
+  });
+
+  it("rejects hour 25 and minute 99 (both out of range)", () => {
+    parseFails(PushNotificationTimeSchema, "25:99");
+  });
+
+  it("rejects hour 99", () => {
+    parseFails(PushNotificationTimeSchema, "99:00");
+  });
+
+  it("rejects single-digit hour without zero-padding", () => {
+    parseFails(PushNotificationTimeSchema, "7:30");
+  });
+
+  it("rejects a plain number string", () => {
+    parseFails(PushNotificationTimeSchema, "1230");
+  });
+
+  it("rejects an empty string", () => {
+    parseFails(PushNotificationTimeSchema, "");
+  });
+
+  it("rejects a non-string value", () => {
+    parseFails(PushNotificationTimeSchema, 730);
+  });
+
+  it("transforms '23:59:59' to '23:59'", () => {
+    const result = PushNotificationTimeSchema.safeParse("23:59:59");
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data).toBe("23:59");
   });
 });

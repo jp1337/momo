@@ -28,6 +28,7 @@ import { eq, and, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { parseUserAgent } from "@/lib/sessions";
+import { PushNotificationTimeSchema } from "@/lib/validators";
 
 /** Zod schema for a W3C PushSubscription JSON object */
 const pushSubscriptionSchema = z.object({
@@ -42,15 +43,7 @@ const pushSubscriptionSchema = z.object({
 const subscribeBodySchema = z.object({
   subscription: pushSubscriptionSchema,
   /** Preferred notification time in HH:MM or HH:MM:SS 24h format */
-  notificationTime: z
-    .string()
-    .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
-    .refine((v) => {
-      const [h, m] = v.split(":").map(Number);
-      return h >= 0 && h <= 23 && m >= 0 && m <= 59;
-    }, "Time must be in range 00:00–23:59")
-    .transform((v) => v.slice(0, 5))
-    .optional(),
+  notificationTime: PushNotificationTimeSchema.optional(),
   /** IANA timezone identifier (e.g. "Europe/Berlin") */
   timezone: z.string().min(1).max(64).optional(),
 });
@@ -177,16 +170,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  /** Reusable HH:MM time field schema with range validation */
-  const timeField = z
-    .string()
-    .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
-    .refine((v) => {
-      const [h, m] = v.split(":").map(Number);
-      return h >= 0 && h <= 23 && m >= 0 && m <= 59;
-    }, "Time must be in range 00:00–23:59")
-    .transform((v) => v.slice(0, 5))
-    .optional();
+  const timeField = PushNotificationTimeSchema.optional();
 
   const parsed = z
     .object({

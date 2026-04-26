@@ -610,6 +610,27 @@ export type UpsertNotificationChannelInput = z.infer<
   typeof UpsertNotificationChannelSchema
 >;
 
+// ─── Push Notification Validators ────────────────────────────────────────────
+
+/**
+ * Schema for a push notification time field.
+ * Accepts HH:MM or HH:MM:SS 24-hour format and validates that hour is 0–23
+ * and minute is 0–59.  Transforms the value to HH:MM (seconds are stripped).
+ *
+ * Used by POST /api/push/subscribe (notificationTime) and all per-type time
+ * fields on PATCH /api/push/subscribe.
+ */
+export const PushNotificationTimeSchema = z
+  .string()
+  .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be HH:MM format")
+  .refine((v) => {
+    const [h, m] = v.split(":").map(Number);
+    return h >= 0 && h <= 23 && m >= 0 && m <= 59;
+  }, "Time must be in range 00:00–23:59")
+  .transform((v) => v.slice(0, 5));
+
+export type PushNotificationTime = z.infer<typeof PushNotificationTimeSchema>;
+
 // ─── Two-Factor Authentication (TOTP) ─────────────────────────────────────────
 
 /** Six-digit numeric TOTP code as displayed by an authenticator app. */

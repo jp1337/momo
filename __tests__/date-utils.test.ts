@@ -12,6 +12,7 @@ import {
   getLocalTomorrowString,
   getLocalYesterdayString,
   getLocalDayBeforeYesterdayString,
+  getLocalMidnightUtc,
 } from "@/lib/date-utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -173,5 +174,87 @@ describe("getLocalDayBeforeYesterdayString", () => {
   it("works with null timezone", () => {
     const result = getLocalDayBeforeYesterdayString(null);
     expect(isDateString(result)).toBe(true);
+  });
+});
+
+// ─── getLocalMidnightUtc ──────────────────────────────────────────────────────
+
+describe("getLocalMidnightUtc", () => {
+  // Helper: UTC timestamp in ms for a given ISO string
+  const ms = (iso: string) => new Date(iso).getTime();
+
+  it("returns UTC midnight when timezone is null", () => {
+    const result = getLocalMidnightUtc("2026-04-26", null);
+    expect(result.getTime()).toBe(ms("2026-04-26T00:00:00Z"));
+  });
+
+  it("returns UTC midnight when timezone is undefined", () => {
+    const result = getLocalMidnightUtc("2026-04-26");
+    expect(result.getTime()).toBe(ms("2026-04-26T00:00:00Z"));
+  });
+
+  it("returns UTC midnight for the UTC timezone itself", () => {
+    const result = getLocalMidnightUtc("2026-04-26", "UTC");
+    expect(result.getTime()).toBe(ms("2026-04-26T00:00:00Z"));
+  });
+
+  it("falls back to UTC midnight for an invalid timezone", () => {
+    const result = getLocalMidnightUtc("2026-04-26", "Not/ATimezone");
+    expect(result.getTime()).toBe(ms("2026-04-26T00:00:00Z"));
+  });
+
+  it("Europe/Berlin (UTC+2 in summer): local midnight = 22:00 UTC prev day", () => {
+    // 2026-04-26 00:00 Berlin = 2026-04-25T22:00:00Z
+    const result = getLocalMidnightUtc("2026-04-26", "Europe/Berlin");
+    expect(result.getTime()).toBe(ms("2026-04-25T22:00:00Z"));
+  });
+
+  it("Europe/Berlin (UTC+1 in winter): local midnight = 23:00 UTC prev day", () => {
+    // 2026-01-15 00:00 Berlin = 2026-01-14T23:00:00Z
+    const result = getLocalMidnightUtc("2026-01-15", "Europe/Berlin");
+    expect(result.getTime()).toBe(ms("2026-01-14T23:00:00Z"));
+  });
+
+  it("America/New_York (UTC-5 in winter): local midnight = 05:00 UTC same day", () => {
+    // 2026-01-15 00:00 New York = 2026-01-15T05:00:00Z
+    const result = getLocalMidnightUtc("2026-01-15", "America/New_York");
+    expect(result.getTime()).toBe(ms("2026-01-15T05:00:00Z"));
+  });
+
+  it("America/New_York (UTC-4 in summer): local midnight = 04:00 UTC same day", () => {
+    // 2026-07-01 00:00 New York = 2026-07-01T04:00:00Z
+    const result = getLocalMidnightUtc("2026-07-01", "America/New_York");
+    expect(result.getTime()).toBe(ms("2026-07-01T04:00:00Z"));
+  });
+
+  it("Asia/Kolkata (UTC+5:30, non-integer offset): local midnight = 18:30 UTC prev day", () => {
+    // 2026-04-26 00:00 Kolkata = 2026-04-25T18:30:00Z
+    const result = getLocalMidnightUtc("2026-04-26", "Asia/Kolkata");
+    expect(result.getTime()).toBe(ms("2026-04-25T18:30:00Z"));
+  });
+
+  it("Asia/Kathmandu (UTC+5:45, non-integer offset): local midnight = 18:15 UTC prev day", () => {
+    // 2026-04-26 00:00 Kathmandu = 2026-04-25T18:15:00Z
+    const result = getLocalMidnightUtc("2026-04-26", "Asia/Kathmandu");
+    expect(result.getTime()).toBe(ms("2026-04-25T18:15:00Z"));
+  });
+
+  it("Pacific/Auckland (UTC+12 in winter): local midnight = 12:00 UTC prev day", () => {
+    // 2026-07-01 00:00 Auckland = 2026-06-30T12:00:00Z
+    const result = getLocalMidnightUtc("2026-07-01", "Pacific/Auckland");
+    expect(result.getTime()).toBe(ms("2026-06-30T12:00:00Z"));
+  });
+
+  it("the returned Date is always before or at the given date's UTC midnight", () => {
+    // For any UTC+ timezone the local midnight is before UTC midnight of the same date
+    const berlin = getLocalMidnightUtc("2026-04-26", "Europe/Berlin");
+    const utcMidnight = ms("2026-04-26T00:00:00Z");
+    expect(berlin.getTime()).toBeLessThan(utcMidnight);
+  });
+
+  it("for UTC- timezones the returned Date is after the given date's UTC midnight", () => {
+    const ny = getLocalMidnightUtc("2026-04-26", "America/New_York");
+    const utcMidnight = ms("2026-04-26T00:00:00Z");
+    expect(ny.getTime()).toBeGreaterThan(utcMidnight);
   });
 });
