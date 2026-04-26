@@ -4,7 +4,8 @@
  * Covers: extractIp, parseUserAgent (pure functions),
  * listUserSessions (non-expired, isCurrent flag, device info),
  * revokeSession (by hash ID), revokeAllOtherSessions,
- * touchSessionMetadata (metadata update + first-touch detection).
+ * touchSessionMetadata (metadata update + first-touch detection),
+ * maybeUpdateSessionMetadata (throttle behaviour).
  */
 
 import { describe, it, expect } from "vitest";
@@ -18,6 +19,7 @@ import {
   revokeSession,
   revokeAllOtherSessions,
   touchSessionMetadata,
+  maybeUpdateSessionMetadata,
 } from "@/lib/sessions";
 import { createTestUser } from "./helpers/fixtures";
 import { createHash } from "crypto";
@@ -233,6 +235,29 @@ describe("revokeAllOtherSessions", () => {
     const count = await revokeAllOtherSessions(user.id, token);
     expect(count).toBe(0);
   });
+
+  it("returns 0 when the user has no sessions at all", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const count = await revokeAllOtherSessions(user.id, "nonexistent-token");
+    expect(count).toBe(0);
+  });
+
+  it("revokes multiple sessions and leaves only the current one", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const current = "current-session-token";
+    const others = ["other-1", "other-2", "other-3"];
+    await createTestSession(user.id, current);
+    for (const t of others) {
+      await createTestSession(user.id, t);
+    }
+
+    const count = await revokeAllOtherSessions(user.id, current);
+    expect(count).toBe(others.length);
+
+    const remaining = await listUserSessions(user.id, current);
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].isCurrent).toBe(true);
+  });
 });
 
 // ─── touchSessionMetadata ─────────────────────────────────────────────────────
@@ -294,5 +319,45 @@ describe("touchSessionMetadata", () => {
     await expect(
       touchSessionMetadata("nonexistent-token", headers)
     ).resolves.toBeUndefined();
+  });
+});
+
+// ─── maybeUpdateSessionMetadata ───────────────────────────────────────────────
+
+describe("maybeUpdateSessionMetadata", () => {
+  it("does not throw on first call", () => {
+    expect(() =>
+      maybeUpdateSessionMetadata(
+        "unique-token-for-throttle-test-" + Date.now(),
+        new Headers(),
+        "user-id"
+      )
+    ).not.toThrow();
+  });
+
+  it("is a no-op (does not throw) on repeated calls within the throttle window", () => {
+    const token = "repeated-throttle-token-" + Date.now();
+    // First call
+    maybeUpdateSessionMetadata(token, new Headers(), "user-id");
+    // Second call — should be throttled but must not throw
+    expect(() =>
+      maybeUpdateSessionMetadata(token, new Headers(), "user-id")
+    ).not.toThrow();
+  });
+
+  it("accepts calls without a userId", () => {
+    const token = "no-user-id-token-" + Date.now();
+    expect(() =>
+      maybeUpdateSessionMetadata(token, new Headers())
+    ).not.toThrow();
+  });
+
+  it("handles different tokens independently without interference", () => {
+    const tokenA = "throttle-token-a-" + Date.now();
+    const tokenB = "throttle-token-b-" + Date.now();
+    expect(() => {
+      maybeUpdateSessionMetadata(tokenA, new Headers(), "user-a");
+      maybeUpdateSessionMetadata(tokenB, new Headers(), "user-b");
+    }).not.toThrow();
   });
 });
