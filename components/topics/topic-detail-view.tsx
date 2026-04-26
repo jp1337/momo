@@ -33,6 +33,8 @@ interface Task {
   createdAt: string;
   recurrenceInterval?: number | null;
   estimatedMinutes?: number | null;
+  energyLevel?: "HIGH" | "MEDIUM" | "LOW" | null;
+  postponeCount?: number;
   snoozedUntil?: string | null;
   sortOrder: number;
   taskGroup?: string | null;
@@ -588,6 +590,7 @@ export function TopicDetailView({
                   estimatedMinutes: ([5, 15, 30, 60] as const).includes(editingTask.estimatedMinutes as 5 | 15 | 30 | 60)
                     ? (editingTask.estimatedMinutes as 5 | 15 | 30 | 60)
                     : null,
+                  energyLevel: editingTask.energyLevel ?? null,
                   taskGroup: editingTask.taskGroup ?? "",
                 }
               : undefined

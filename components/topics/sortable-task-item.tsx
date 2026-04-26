@@ -23,6 +23,9 @@ interface SortableTaskItemProps {
   topicTitle?: string | null;
   topicColor?: string | null;
   coinValue: number;
+  estimatedMinutes?: number | null;
+  energyLevel?: "HIGH" | "MEDIUM" | "LOW" | null;
+  postponeCount?: number;
   snoozedUntil?: string | null;
   onComplete: (id: string) => void;
   onUncomplete: (id: string) => void;
@@ -96,6 +99,9 @@ export function SortableTaskItem(props: SortableTaskItemProps) {
           topicTitle={props.topicTitle}
           topicColor={props.topicColor}
           coinValue={props.coinValue}
+          estimatedMinutes={props.estimatedMinutes}
+          energyLevel={props.energyLevel}
+          postponeCount={props.postponeCount}
           onComplete={props.onComplete}
           onUncomplete={props.onUncomplete}
           onEdit={props.onEdit}

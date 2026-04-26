@@ -44,6 +44,9 @@ interface Task {
   coinValue: number;
   createdAt: string;
   sortOrder: number;
+  estimatedMinutes?: number | null;
+  energyLevel?: "HIGH" | "MEDIUM" | "LOW" | null;
+  postponeCount?: number;
   snoozedUntil?: string | null;
 }
 
@@ -140,6 +143,9 @@ export function SortableTaskList({
               topicTitle={topicTitle}
               topicColor={topicColor}
               coinValue={task.coinValue}
+              estimatedMinutes={task.estimatedMinutes}
+              energyLevel={task.energyLevel}
+              postponeCount={task.postponeCount}
               onComplete={onComplete}
               onUncomplete={onUncomplete}
               onEdit={onEdit}

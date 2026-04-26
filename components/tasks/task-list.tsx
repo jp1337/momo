@@ -48,6 +48,7 @@ interface Task {
   energyLevel?: "HIGH" | "MEDIUM" | "LOW" | null;
   recurrenceInterval?: number | null;
   snoozedUntil?: string | null;
+  taskGroup?: string | null;
 }
 
 interface TopicOption {
