@@ -60,6 +60,8 @@ interface TaskItemProps {
   isSelected?: boolean;
   /** Toggle selection for this task */
   onToggleSelect?: (id: string) => void;
+  /** When true, completion is blocked (group ordering); edit/delete still work */
+  isBlocked?: boolean;
 }
 
 /**
@@ -95,6 +97,7 @@ export function TaskItem({
   selectionMode = false,
   isSelected = false,
   onToggleSelect,
+  isBlocked = false,
 }: TaskItemProps) {
   const t = useTranslations("tasks");
 
@@ -370,6 +373,14 @@ export function TaskItem({
             </svg>
           )}
         </button>
+      ) : isBlocked ? (
+        <div
+          className="mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center cursor-not-allowed"
+          style={{ borderColor: "var(--border)", color: "var(--text-muted)", opacity: 0.5 }}
+          title="🔒"
+        >
+          <span style={{ fontSize: "10px", lineHeight: 1 }}>🔒</span>
+        </div>
       ) : (
         <button
           onClick={handleCheckboxChange}
