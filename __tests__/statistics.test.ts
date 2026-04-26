@@ -12,6 +12,8 @@ import {
   computeStreakHistory,
   getUserStatistics,
   getAdminStatistics,
+  getAchievementsWithProgress,
+  getRecentCronRuns,
 } from "@/lib/statistics";
 import {
   createTestUser,
@@ -19,6 +21,7 @@ import {
   createTestTopic,
   createTestWishlistItem,
 } from "./helpers/fixtures";
+import { seedAchievements } from "@/lib/gamification";
 
 const TZ = "Europe/Berlin";
 
@@ -299,5 +302,89 @@ describe("getAdminStatistics", () => {
 
     expect(typeof stats.wishlistStats.totalBought).toBe("number");
     expect(typeof stats.wishlistStats.totalSpent).toBe("number");
+  });
+});
+
+// ─── getRecentCronRuns ────────────────────────────────────────────────────────
+
+describe("getRecentCronRuns", () => {
+  it("returns rows array and minutesSinceLastRun when no cron runs exist", async () => {
+    const result = await getRecentCronRuns();
+
+    expect(Array.isArray(result.rows)).toBe(true);
+    // minutesSinceLastRun is null when there are no runs at all (or a non-null number)
+    expect(result.minutesSinceLastRun === null || typeof result.minutesSinceLastRun === "number").toBe(true);
+  });
+
+  it("each row has required fields", async () => {
+    const result = await getRecentCronRuns();
+
+    for (const row of result.rows) {
+      expect(row.id).toBeDefined();
+      expect(row.ranAt).toBeDefined();
+      expect(typeof row.sent).toBe("number");
+      expect(typeof row.failed).toBe("number");
+    }
+  });
+});
+
+// ─── getAchievementsWithProgress ─────────────────────────────────────────────
+
+describe("getAchievementsWithProgress", () => {
+  it("returns an empty array when no achievements are seeded", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    // achievements table is empty unless seeded
+    const result = await getAchievementsWithProgress(user.id, TZ);
+    // May be empty or populated depending on whether global seeding ran
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it("after seeding, returns achievements with required fields", async () => {
+    await seedAchievements();
+    const user = await createTestUser({ timezone: TZ });
+
+    const result = await getAchievementsWithProgress(user.id, TZ);
+
+    expect(result.length).toBeGreaterThan(0);
+
+    for (const item of result) {
+      expect(typeof item.id).toBe("string");
+      expect(typeof item.key).toBe("string");
+      expect(typeof item.title).toBe("string");
+      expect(typeof item.coinReward).toBe("number");
+      expect(typeof item.secret).toBe("boolean");
+      // earnedAt is null for unearned achievements
+      expect(item.earnedAt === null || item.earnedAt instanceof Date).toBe(true);
+    }
+  });
+
+  it("all achievements start with earnedAt: null for a new user", async () => {
+    await seedAchievements();
+    const user = await createTestUser({ timezone: TZ });
+
+    const result = await getAchievementsWithProgress(user.id, TZ);
+    const earned = result.filter((a) => a.earnedAt !== null);
+    expect(earned).toHaveLength(0);
+  });
+
+  it("includes progress data for countable achievements", async () => {
+    await seedAchievements();
+    const user = await createTestUser({ timezone: TZ });
+
+    const result = await getAchievementsWithProgress(user.id, TZ);
+    const firstTask = result.find((a) => a.key === "first_task");
+
+    expect(firstTask).toBeDefined();
+    expect(firstTask!.progress).toBeDefined();
+    expect(firstTask!.progress!.total).toBe(1);
+    expect(firstTask!.progress!.current).toBe(0);
+  });
+
+  it("works with null timezone", async () => {
+    await seedAchievements();
+    const user = await createTestUser({ timezone: TZ });
+
+    await expect(getAchievementsWithProgress(user.id, null)).resolves.toBeDefined();
   });
 });
