@@ -270,6 +270,22 @@ describe("UpdateTaskInputSchema", () => {
       recurrenceInterval: null,
     });
   });
+
+  it("rejects RECURRING with WEEKDAY type and empty weekdays array", () => {
+    parseFails(UpdateTaskInputSchema, {
+      type: "RECURRING",
+      recurrenceType: "WEEKDAY",
+      recurrenceWeekdays: [],
+    });
+  });
+
+  it("accepts RECURRING with WEEKDAY type and at least one weekday", () => {
+    parseSucceeds(UpdateTaskInputSchema, {
+      type: "RECURRING",
+      recurrenceType: "WEEKDAY",
+      recurrenceWeekdays: [0, 4], // Monday and Friday
+    });
+  });
 });
 
 // ─── SnoozeTaskInputSchema ────────────────────────────────────────────────────
@@ -526,6 +542,22 @@ describe("UpdateWishlistItemInputSchema", () => {
 
   it("accepts null price (clear price)", () => {
     parseSucceeds(UpdateWishlistItemInputSchema, { price: null });
+  });
+
+  it("coerces empty string URL to undefined (treated as absent)", () => {
+    const result = UpdateWishlistItemInputSchema.safeParse({ url: "" });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.url).toBeUndefined();
+    }
+  });
+
+  it("accepts a valid URL string", () => {
+    parseSucceeds(UpdateWishlistItemInputSchema, { url: "https://example.com/item" });
+  });
+
+  it("rejects an invalid URL string", () => {
+    parseFails(UpdateWishlistItemInputSchema, { url: "not-a-url" });
   });
 });
 
