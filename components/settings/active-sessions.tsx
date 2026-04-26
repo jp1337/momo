@@ -7,7 +7,7 @@
  */
 
 import { useState, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import type { SessionSummary } from "@/lib/sessions";
 import {
   faDesktop,
@@ -35,9 +35,9 @@ function getDeviceIcon(os: string) {
 }
 
 /**
- * Formats an ISO date string as a relative time or short date.
+ * Formats an ISO date string as a locale-aware relative time or short date.
  */
-function formatRelativeDate(iso: string | null): string {
+function formatRelativeDate(iso: string | null, locale: string): string {
   if (!iso) return "—";
   const date = new Date(iso);
   const now = Date.now();
@@ -46,15 +46,17 @@ function formatRelativeDate(iso: string | null): string {
   const diffHour = Math.floor(diffMs / 3_600_000);
   const diffDay = Math.floor(diffMs / 86_400_000);
 
-  if (diffMin < 1) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHour < 24) return `${diffHour}h ago`;
-  if (diffDay < 30) return `${diffDay}d ago`;
-  return date.toLocaleDateString();
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (diffMin < 1) return rtf.format(0, "second");
+  if (diffMin < 60) return rtf.format(-diffMin, "minute");
+  if (diffHour < 24) return rtf.format(-diffHour, "hour");
+  if (diffDay < 30) return rtf.format(-diffDay, "day");
+  return date.toLocaleDateString(locale);
 }
 
 export function ActiveSessions({ initialSessions }: ActiveSessionsProps) {
   const t = useTranslations("settings");
+  const locale = useLocale();
   const [sessions, setSessions] = useState<SessionSummary[]>(initialSessions);
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -231,14 +233,14 @@ export function ActiveSessions({ initialSessions }: ActiveSessionsProps) {
                 {session.createdAt && (
                   <span>
                     {t("session_created", {
-                      date: formatRelativeDate(session.createdAt),
+                      date: formatRelativeDate(session.createdAt, locale),
                     })}
                   </span>
                 )}
                 {session.lastActiveAt && (
                   <span>
                     {t("session_last_active", {
-                      date: formatRelativeDate(session.lastActiveAt),
+                      date: formatRelativeDate(session.lastActiveAt, locale),
                     })}
                   </span>
                 )}

@@ -191,8 +191,9 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
         body: JSON.stringify({ taskId: quest.id, timezone }),
       });
 
+      const data = (await res.json()) as { error?: string; postponesToday?: number };
+
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
         if (data.error === "LIMIT_REACHED") {
           setLocalPostponesToday(postponeLimit);
         } else {
@@ -201,7 +202,6 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
         return;
       }
 
-      const data = (await res.json()) as { postponesToday?: number };
       if (data.postponesToday !== undefined) {
         setLocalPostponesToday(data.postponesToday);
       }

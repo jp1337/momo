@@ -59,6 +59,8 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
     createdAt: t.createdAt.toISOString(),
     recurrenceInterval: t.recurrenceInterval ?? null,
     estimatedMinutes: t.estimatedMinutes ?? null,
+    energyLevel: t.energyLevel ?? null,
+    postponeCount: t.postponeCount ?? 0,
     snoozedUntil: t.snoozedUntil ?? null,
     sortOrder: t.sortOrder ?? 0,
     taskGroup: t.taskGroup ?? null,

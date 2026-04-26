@@ -113,6 +113,7 @@ export function TaskItem({
   const inputRef = useRef<HTMLInputElement>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
+  const isCompletingRef = useRef(false);
   const SWIPE_THRESHOLD = 80;
   const SWIPE_MAX = 110;
 
@@ -193,10 +194,13 @@ export function TaskItem({
       onUncomplete(id);
       return;
     }
+    if (isCompletingRef.current) return;
+    isCompletingRef.current = true;
     setIsAnimating(true);
     setTimeout(() => {
       onComplete(id);
       setIsAnimating(false);
+      isCompletingRef.current = false;
     }, 300);
   };
 
