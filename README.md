@@ -23,6 +23,22 @@ Momo is a task management app built for people who struggle with avoidance, proc
 
 ---
 
+## 📸 Screenshots
+
+| Dashboard | Topics |
+|:---------:|:------:|
+| ![Dashboard — Daily Quest, energy check-in, and quick actions](public/screenshots/01-dashboard.png) | ![Topics — project cards with progress bars and archive hint](public/screenshots/02-topics.png) |
+
+| Habits | Statistics |
+|:------:|:----------:|
+| ![Habits — GitHub-style year heatmap with streak stats](public/screenshots/03-habits.png) | ![Statistics — overview, streak sparkline, and energy heatmap](public/screenshots/04-stats.png) |
+
+| Wishlist |
+|:--------:|
+| ![Wishlist — items with coin prices, budget tracker, and priority filter](public/screenshots/05-wishlist.png) |
+
+---
+
 ## ✨ The Name
 
 The name **Momo** comes from Michael Ende's 1973 novel *Momo* — one of the most quietly radical books about time, attention, and what it means to be present.
