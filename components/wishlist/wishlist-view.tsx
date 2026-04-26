@@ -198,7 +198,6 @@ export function WishlistView({
 
   /** Permanently delete an item */
   const handleDelete = async (id: string) => {
-    if (!confirm(t("view_confirm_delete"))) return;
     try {
       await fetch(`/api/wishlist/${id}`, { method: "DELETE" });
       setItems((prev) => prev.filter((i) => i.id !== id));

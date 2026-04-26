@@ -327,6 +327,8 @@
     "card_btn_undo": "↩ Ongedaan maken",
     "card_btn_restore": "↩ Herstellen",
     "card_btn_delete": "Definitief verwijderen",
+    "card_btn_delete_confirm": "Ja, verwijderen",
+    "card_btn_delete_cancel": "Annuleren",
     "form_title_edit": "Verlanglijst-item bewerken",
     "form_title_new": "Toevoegen aan verlanglijst",
     "form_label_title": "Titel",

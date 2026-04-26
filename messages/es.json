@@ -327,6 +327,8 @@
     "card_btn_undo": "↩ Deshacer",
     "card_btn_restore": "↩ Restaurar",
     "card_btn_delete": "Eliminar permanentemente",
+    "card_btn_delete_confirm": "Sí, eliminar",
+    "card_btn_delete_cancel": "Cancelar",
     "form_title_edit": "Editar elemento de la lista",
     "form_title_new": "Añadir a la lista de deseos",
     "form_label_title": "Título",
