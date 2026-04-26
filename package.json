@@ -48,6 +48,7 @@
     "zod": "^4.3.6"
   },
   "overrides": {
+    "postcss": "^8.5.10",
     "serialize-javascript": "^7.0.5",
     "lodash": "4.18.1",
     "esbuild": "^0.25.0",
