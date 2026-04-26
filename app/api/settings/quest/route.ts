@@ -89,7 +89,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const updates: Record<string, unknown> = {};
+    const updates: Partial<{ questPostponeLimit: number; emotionalClosureEnabled: boolean }> = {};
     if (parsed.data.postponeLimit !== undefined) {
       updates.questPostponeLimit = parsed.data.postponeLimit;
     }

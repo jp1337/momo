@@ -698,6 +698,8 @@
     "login_notification_description": "Erhalte eine Benachrichtigung auf allen konfigurierten Kanälen, wenn du dich von einem bisher unbekannten Gerät anmeldest.",
     "login_notification_saved": "Einstellung gespeichert.",
     "login_notification_error": "Fehler beim Speichern. Bitte erneut versuchen.",
+    "push_devices_heading": "Registrierte Geräte",
+    "push_devices_hint": "Verwalte, welche Geräte Web-Push-Benachrichtigungen erhalten.",
     "push_device_unnamed": "Unbekanntes Gerät",
     "push_device_this": "Dieses Gerät",
     "push_device_disabled": "Deaktiviert",

@@ -698,6 +698,8 @@
     "login_notification_description": "Recevez une notification sur tous les canaux configurés lorsque vous vous connectez depuis un appareil inconnu.",
     "login_notification_saved": "Paramètre enregistré.",
     "login_notification_error": "Échec de l'enregistrement. Veuillez réessayer.",
+    "push_devices_heading": "Appareils enregistrés",
+    "push_devices_hint": "Gérez quels appareils reçoivent les notifications push web.",
     "push_device_unnamed": "Appareil inconnu",
     "push_device_this": "Cet appareil",
     "push_device_disabled": "Désactivé",

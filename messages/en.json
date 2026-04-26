@@ -698,6 +698,8 @@
     "login_notification_description": "Receive a notification on all configured channels when you log in from a previously unseen device.",
     "login_notification_saved": "Setting saved.",
     "login_notification_error": "Failed to save. Please try again.",
+    "push_devices_heading": "Registered devices",
+    "push_devices_hint": "Manage which devices receive web push notifications.",
     "push_device_unnamed": "Unknown device",
     "push_device_this": "This device",
     "push_device_disabled": "Disabled",

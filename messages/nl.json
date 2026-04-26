@@ -698,6 +698,8 @@
     "login_notification_description": "Ontvang een melding op alle geconfigureerde kanalen wanneer je inlogt vanaf een eerder onbekend apparaat.",
     "login_notification_saved": "Instelling opgeslagen.",
     "login_notification_error": "Opslaan mislukt. Probeer het opnieuw.",
+    "push_devices_heading": "Geregistreerde apparaten",
+    "push_devices_hint": "Beheer welke apparaten web-pushmeldingen ontvangen.",
     "push_device_unnamed": "Onbekend apparaat",
     "push_device_this": "Dit apparaat",
     "push_device_disabled": "Uitgeschakeld",

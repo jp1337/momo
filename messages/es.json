@@ -698,6 +698,8 @@
     "login_notification_description": "Recibe una notificación en todos los canales configurados cuando inicies sesión desde un dispositivo no visto anteriormente.",
     "login_notification_saved": "Ajuste guardado.",
     "login_notification_error": "No se pudo guardar. Inténtalo de nuevo.",
+    "push_devices_heading": "Dispositivos registrados",
+    "push_devices_hint": "Gestiona qué dispositivos reciben notificaciones push web.",
     "push_device_unnamed": "Dispositivo desconocido",
     "push_device_this": "Este dispositivo",
     "push_device_disabled": "Desactivado",

@@ -106,10 +106,10 @@ export default async function NotificationsSettingsPage() {
                 className="text-sm font-semibold"
                 style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
               >
-                Registrierte Geräte
+                {t("push_devices_heading")}
               </h3>
               <p className="text-xs" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-                Verwalte, welche Geräte Web-Push-Benachrichtigungen erhalten.
+                {t("push_devices_hint")}
               </p>
             </div>
             <PushDevicesSection />
