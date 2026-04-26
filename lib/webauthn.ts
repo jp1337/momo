@@ -45,7 +45,7 @@ import {
 import { createHmac, timingSafeEqual, randomUUID } from "crypto";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { authenticators, sessions, users } from "@/lib/db/schema";
+import { authenticators, sessions } from "@/lib/db/schema";
 import { serverEnv, clientEnv } from "@/lib/env";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -338,12 +338,6 @@ export async function createPasskeyLoginSession(
     userAgent: options?.userAgent ?? null,
     ipAddress: options?.ipAddress ?? null,
   });
-  // Touch the users row so Auth.js session callbacks get fresh info on
-  // the next request — no-op if nothing to update.
-  await db
-    .update(users)
-    .set({})
-    .where(eq(users.id, userId));
   return sessionToken;
 }
 

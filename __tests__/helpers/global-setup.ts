@@ -18,7 +18,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 const TEST_DB_URL =
   process.env.TEST_DATABASE_URL ??
   process.env.DATABASE_URL ??
-  "postgresql://momo:momo_dev_password@localhost:5432/momo_test";
+  "postgresql://momo:password@localhost:5432/momo_test";
 
 /**
  * Ensures the test database exists — creates it if not.
