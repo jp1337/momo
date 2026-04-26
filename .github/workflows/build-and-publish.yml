@@ -43,6 +43,50 @@ jobs:
           wait $PID_LINT || CODE=$((CODE + $?))
           exit $CODE
 
+  test:
+    needs: []
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: momo
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: momo_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Cache node_modules
+        id: nm-cache
+        uses: actions/cache@v5
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.nm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Run integration tests
+        env:
+          TEST_DATABASE_URL: postgresql://momo:password@localhost:5432/momo_test
+        run: npm test
+
   # Build each platform natively in parallel to avoid slow QEMU emulation.
   # amd64 runs on a standard GitHub-hosted runner, arm64 on a native ARM runner.
   # Each job pushes the image by digest (no tag) to GHCR as a staging area,
@@ -135,7 +179,7 @@ jobs:
   # in all three registries. All three registry pushes run in parallel to
   # cut the merge step from ~30 s to ~10 s.
   merge:
-    needs: [lint, build]
+    needs: [lint, build, test]
     runs-on: ubuntu-latest
     permissions:
       contents: read
