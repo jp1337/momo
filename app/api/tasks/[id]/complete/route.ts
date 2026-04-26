@@ -86,6 +86,10 @@ export async function DELETE(
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
 
+  // Rate limit: 30 uncompletions per minute per user (mirrors the POST limit)
+  const uncompRateCheck = checkRateLimit(`tasks-uncomplete:${user.userId}`, 30, 60_000);
+  if (uncompRateCheck.limited) return rateLimitResponse(uncompRateCheck.resetAt);
+
   const { id } = await params;
 
   try {

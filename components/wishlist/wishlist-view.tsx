@@ -179,7 +179,8 @@ export function WishlistView({
   /** Restore a discarded item back to OPEN */
   const handleUndiscard = async (id: string) => {
     try {
-      await fetch(`/api/wishlist/${id}/discard`, { method: "DELETE" });
+      const res = await fetch(`/api/wishlist/${id}/discard`, { method: "DELETE" });
+      if (!res.ok) return;
       await refresh();
     } catch {
       // no-op
@@ -189,7 +190,8 @@ export function WishlistView({
   /** Mark an item as discarded */
   const handleDiscard = async (id: string) => {
     try {
-      await fetch(`/api/wishlist/${id}/discard`, { method: "POST" });
+      const res = await fetch(`/api/wishlist/${id}/discard`, { method: "POST" });
+      if (!res.ok) return;
       await refresh();
     } catch {
       // no-op
@@ -199,7 +201,8 @@ export function WishlistView({
   /** Permanently delete an item */
   const handleDelete = async (id: string) => {
     try {
-      await fetch(`/api/wishlist/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/wishlist/${id}`, { method: "DELETE" });
+      if (!res.ok) return;
       setItems((prev) => prev.filter((i) => i.id !== id));
     } catch {
       // no-op
@@ -268,7 +271,7 @@ export function WishlistView({
             color: "var(--text-primary)",
           }}
         >
-          Wishlist
+          {t("page_title")}
           {openItems.length > 0 && (
             <span
               className="ml-2 text-sm font-normal"

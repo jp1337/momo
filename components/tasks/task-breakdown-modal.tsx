@@ -65,15 +65,13 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
         body: JSON.stringify({ subtaskTitles: filledSteps }),
       });
 
+      const data = (await res.json()) as { error?: string; topicId?: string };
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
         setError(data.error ?? t("breakdown_error"));
         return;
       }
-
-      const data = (await res.json()) as { topicId: string };
       onSuccess?.();
-      router.push(`/topics?open=${data.topicId}`);
+      router.push(`/topics?open=${data.topicId ?? ""}`);
       router.refresh();
     } catch {
       setError(t("breakdown_error"));
