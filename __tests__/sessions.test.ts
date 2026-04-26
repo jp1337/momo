@@ -3,18 +3,21 @@
  *
  * Covers: extractIp, parseUserAgent (pure functions),
  * listUserSessions (non-expired, isCurrent flag, device info),
- * revokeSession (by hash ID), revokeAllOtherSessions.
+ * revokeSession (by hash ID), revokeAllOtherSessions,
+ * touchSessionMetadata (metadata update + first-touch detection).
  */
 
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
 import { sessions } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import {
   extractIp,
   parseUserAgent,
   listUserSessions,
   revokeSession,
   revokeAllOtherSessions,
+  touchSessionMetadata,
 } from "@/lib/sessions";
 import { createTestUser } from "./helpers/fixtures";
 import { createHash } from "crypto";
@@ -229,5 +232,67 @@ describe("revokeAllOtherSessions", () => {
 
     const count = await revokeAllOtherSessions(user.id, token);
     expect(count).toBe(0);
+  });
+});
+
+// ─── touchSessionMetadata ─────────────────────────────────────────────────────
+
+describe("touchSessionMetadata", () => {
+  it("updates lastActiveAt, userAgent, and ipAddress on the session", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const token = "touch-test-token";
+    await createTestSession(user.id, token, {
+      userAgent: "OldBrowser/1.0",
+      ipAddress: "1.2.3.4",
+    });
+
+    const headers = new Headers({
+      "user-agent": "NewBrowser/2.0",
+      "x-forwarded-for": "5.6.7.8",
+    });
+
+    await touchSessionMetadata(token, headers, user.id);
+
+    const [updated] = await db
+      .select({ userAgent: sessions.userAgent, ipAddress: sessions.ipAddress, lastActiveAt: sessions.lastActiveAt })
+      .from(sessions)
+      .where(eq(sessions.sessionToken, token));
+
+    expect(updated.userAgent).toBe("NewBrowser/2.0");
+    expect(updated.ipAddress).toBe("5.6.7.8");
+    expect(updated.lastActiveAt).not.toBeNull();
+  });
+
+  it("sets createdAt on first touch when it was null", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const token = "first-touch-token";
+
+    // Insert session with createdAt as null to simulate pre-createdAt sessions
+    await db.insert(sessions).values({
+      sessionToken: token,
+      userId: user.id,
+      expires: new Date(Date.now() + 3_600_000),
+      userAgent: null,
+      ipAddress: null,
+      createdAt: null,
+      lastActiveAt: null,
+    });
+
+    const headers = new Headers({ "user-agent": "Browser/1.0" });
+    await touchSessionMetadata(token, headers, user.id);
+
+    const [updated] = await db
+      .select({ createdAt: sessions.createdAt })
+      .from(sessions)
+      .where(eq(sessions.sessionToken, token));
+
+    expect(updated.createdAt).not.toBeNull();
+  });
+
+  it("does not throw when session token does not exist", async () => {
+    const headers = new Headers({ "user-agent": "Browser/1.0" });
+    await expect(
+      touchSessionMetadata("nonexistent-token", headers)
+    ).resolves.toBeUndefined();
   });
 });
