@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Energie-Heatmap (90 Tage)** — Die Energie-Statistik auf der Stats-Seite zeigt jetzt ein 13-Wochen-GitHub-Style-Heatmap (statt bisherigem 14-Tage-Balkendiagramm). Jeder Tag wird als farbiges Kästchen dargestellt: Amber für HIGH, Grün für MEDIUM, Indigo für LOW; leere Tage zeigen einen gerahmten Platzhalter. Monatsbeschriftung oben, Wochentag-Labels links, kompakte Legende darunter.
 - **Aufgaben-Gruppen (Task Groups)** — Aufgaben innerhalb eines Themas können jetzt einem optionalen **Gruppen-Namen** zugewiesen werden. Aufgaben derselben Gruppe werden automatisch sequenziell behandelt (nach Sortierreihenfolge): nur die erste offene Aufgabe pro Gruppe ist für die Daily Quest und im Topic-View freigeschalten — die nachfolgenden zeigen ein 🔒-Icon. Das Gruppen-Feld im Task-Formular schlägt automatisch den Titel-Präfix vor (alles vor „: " oder „ - ") und listet bestehende Gruppen im selben Thema zur Auswahl auf.
 - **Template: Artikel verkaufen** — Neues sequenzielles Template für den Verkauf von Gebrauchtartikeln: Marktpreis recherchieren → Zustand prüfen & fotografieren → Inserat erstellen → Anfragen beantworten → Versand. Für jeden zu verkaufenden Artikel einmal importieren.
 
