@@ -9,6 +9,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Quick Add Modal (N-Shortcut)** — Neue Aufgaben können jetzt mit `N` oder `/` per Tastatur direkt erstellt werden, ohne die aktuelle Seite zu verlassen. Das Modal öffnet sich global, fokussiert sofort das Titel-Feld, unterstützt Enter zum Speichern und Escape zum Schließen. „Mehr Optionen" klappt Thema, Priorität und Energie-Level auf.
+- **Progress-Seite** — Habits, Errungenschaften und Wochenrückblick sind jetzt unter `/progress` in einer einzigen Seite mit Tab-Navigation zusammengeführt (`?tab=habits|achievements|review`). Sidebar und Mobile-Nav zeigen einen einzigen „Progress"-Eintrag statt drei separaten Links.
+- **ConfirmButton-Komponente** — Neue `ConfirmButton`-Komponente ersetzt alle `window.confirm()`-Dialoge im gesamten Projekt. Klick zeigt inline ein Bestätigungs-Prompt (Ja/Abbrechen) direkt neben dem auslösenden Button — kein Browser-Dialog mehr.
+
+### Changed
+
 - **Topic-Archivierung** — Topics können jetzt archiviert werden statt nur gelöscht. Archivieren-Button (📦) im Topic-Card-Menü; wenn alle Aufgaben erledigt sind, erscheint ein grüner Banner direkt auf der Karte mit Einladung zum Archivieren. Archivierte Topics verschwinden aus der Hauptliste, sind aber in einer ausklappbaren "Archiviert (N)"-Sektion am Seitenende wieder zugänglich — mit Wiederherstellen- und Löschen-Option.
 - **Vorlage-Flow in Topic-Erstellung integriert** — Der "Neues Thema"-Button öffnet jetzt zuerst den Template-Picker (mit allen 5 Vorlagen), der einen "Leer starten"-Eintrag unten hat. Der separate "Aus Vorlage"-Button fällt weg. Außerdem wurde das fehlende "Artikel verkaufen"-Template nachgetragen.
 - **Energie-Heatmap (90 Tage)** — Die Energie-Statistik auf der Stats-Seite zeigt jetzt ein 13-Wochen-GitHub-Style-Heatmap (statt bisherigem 14-Tage-Balkendiagramm). Jeder Tag wird als farbiges Kästchen dargestellt: Amber für HIGH, Grün für MEDIUM, Indigo für LOW; leere Tage zeigen einen gerahmten Platzhalter. Monatsbeschriftung oben, Wochentag-Labels links, kompakte Legende darunter.

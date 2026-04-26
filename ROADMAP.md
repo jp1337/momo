@@ -21,26 +21,21 @@ Die nächste Phase heißt nicht "mehr bauen". Sie heißt **vereinfachen, poliere
 
 ## Die drei Themen
 
-### 1. Vereinfachen — Friction raus
+### 1. Vereinfachen — Friction raus ✅ (2026-04-26)
 
 Das Versprechen muss sich in jedem Klick anfühlen. Nicht nur im Tagline.
 
-**Task-Erfassung radikal vereinfachen**
-Eine neue Aufgabe soll in unter fünf Sekunden erfasst sein — Titel eintippen, Enter, fertig.
-Typ, Priorität, Energielevel, Zeitschätzung, Topic: alles optional, alles versteckt hinter
-einem "Mehr"-Klick. Heute fragt die App zu viel bevor sie zuhört.
+**Task-Erfassung radikal vereinfachen** ✅
+Ein globaler Keyboard-Shortcut (`N` oder `/`) öffnet ein minimales Eingabefeld überall in der App.
+Titel, Enter, fertig. Thema, Priorität, Energie-Level versteckt hinter „Mehr Optionen".
 
-Ein globaler Keyboard-Shortcut (`N` oder `/`) öffnet ein minimales Eingabefeld überall in der App —
-ohne Navigation, ohne Kontextwechsel. Für ADHS-Nutzer: Gedanken festhalten bevor sie verschwinden.
+**Navigation konsolidieren** ✅
+Habits, Errungenschaften und Wochenrückblick leben jetzt unter `/progress` mit Tab-Navigation.
+Sidebar und Mobile-Nav: ein „Progress"-Eintrag statt drei separate Toplevel-Seiten.
 
-**Navigation konsolidieren**
-Die Sidebar hat zu viele Einträge. Habits, Review und Achievements könnten unter einem
-"Übersicht"-Dach leben statt als separate Toplevel-Seiten. Weniger Entscheidungen, welche
-Seite man jetzt öffnet.
-
-**Letzte window.confirm-Dialoge ersetzen**
-Topics-Seite hat noch native Browser-Dialoge beim Löschen. Die blockieren Browser-Extensions
-und fühlen sich 2012 an. Inline-Bestätigung wie auf der Wishlist-Seite.
+**Letzte window.confirm-Dialoge ersetzen** ✅
+Alle 12 `window.confirm()`-Aufrufe im gesamten Projekt durch `ConfirmButton` ersetzt.
+Inline-Bestätigung (Ja/Abbrechen) direkt am auslösenden Button.
 
 ---
 
