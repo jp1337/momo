@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBell,
@@ -41,10 +42,10 @@ function deviceIcon(name: string | null) {
   return faDesktop;
 }
 
-/** Format a date as a human-readable relative string. */
-function formatDate(isoString: string): string {
+/** Format a date as a locale-aware date string. */
+function formatDate(isoString: string, locale: string): string {
   const date = new Date(isoString);
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -58,6 +59,7 @@ interface RenameRowProps {
 }
 
 function RenameRow({ device, onSave, onCancel }: RenameRowProps) {
+  const t = useTranslations("settings");
   const [value, setValue] = useState(device.name ?? "");
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -99,7 +101,7 @@ function RenameRow({ device, onSave, onCancel }: RenameRowProps) {
         disabled={saving || !value.trim()}
         className="p-1 rounded transition-colors"
         style={{ color: "var(--accent-green)" }}
-        title="Speichern"
+        title={t("push_device_save_title")}
       >
         <FontAwesomeIcon icon={faCheck} style={{ fontSize: "0.75rem" }} />
       </button>
@@ -107,7 +109,7 @@ function RenameRow({ device, onSave, onCancel }: RenameRowProps) {
         onClick={onCancel}
         className="p-1 rounded transition-colors"
         style={{ color: "var(--text-muted)" }}
-        title="Abbrechen"
+        title={t("push_device_cancel_title")}
       >
         <FontAwesomeIcon icon={faXmark} style={{ fontSize: "0.75rem" }} />
       </button>
@@ -116,6 +118,8 @@ function RenameRow({ device, onSave, onCancel }: RenameRowProps) {
 }
 
 export function PushDevicesSection() {
+  const t = useTranslations("settings");
+  const locale = useLocale();
   const [devices, setDevices] = useState<PushDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -214,7 +218,7 @@ export function PushDevicesSection() {
   if (error) {
     return (
       <p className="text-sm" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-        Geräte konnten nicht geladen werden.
+        {t("push_device_load_error")}
       </p>
     );
   }
@@ -222,7 +226,7 @@ export function PushDevicesSection() {
   if (devices.length === 0) {
     return (
       <p className="text-sm text-center py-4" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-        Keine Geräte registriert. Aktiviere Web Push, um dein erstes Gerät hinzuzufügen.
+        {t("push_device_empty")}
       </p>
     );
   }
@@ -238,7 +242,7 @@ export function PushDevicesSection() {
           style={{ fontFamily: "var(--font-ui)", color: "var(--text-secondary)", backgroundColor: "var(--bg-hover)" }}
         >
           <FontAwesomeIcon icon={faArrowsRotate} className={refreshing ? "animate-spin" : ""} style={{ fontSize: "0.7rem" }} />
-          Aktualisieren
+          {t("notif_history_refresh")}
         </button>
       </div>
 
@@ -253,7 +257,7 @@ export function PushDevicesSection() {
           const isRenaming = renamingId === device.id;
           const isToggling = togglingId === device.id;
           const isRemoving = removingId === device.id;
-          const displayName = device.name || "Unbekanntes Gerät";
+          const displayName = device.name || t("push_device_unnamed");
 
           return (
             <div
@@ -305,7 +309,7 @@ export function PushDevicesSection() {
                           border: "1px solid color-mix(in srgb, var(--accent-amber) 30%, transparent)",
                         }}
                       >
-                        Dieses Gerät
+                        {t("push_device_this")}
                       </span>
                     )}
                     {!device.enabled && (
@@ -318,14 +322,14 @@ export function PushDevicesSection() {
                           border: "1px solid var(--border)",
                         }}
                       >
-                        Deaktiviert
+                        {t("push_device_disabled")}
                       </span>
                     )}
                     <button
                       onClick={() => setRenamingId(device.id)}
                       className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:opacity-100"
                       style={{ color: "var(--text-muted)" }}
-                      title="Umbenennen"
+                      title={t("push_device_rename_title")}
                     >
                       <FontAwesomeIcon icon={faPen} style={{ fontSize: "0.6rem" }} />
                     </button>
@@ -333,7 +337,7 @@ export function PushDevicesSection() {
                 )}
                 {!isRenaming && (
                   <span className="text-xs" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-                    Hinzugefügt am {formatDate(device.createdAt)}
+                    {t("push_device_added", { date: formatDate(device.createdAt, locale) })}
                   </span>
                 )}
               </div>
@@ -350,7 +354,7 @@ export function PushDevicesSection() {
                       color: device.enabled ? "var(--accent-amber)" : "var(--text-muted)",
                       backgroundColor: "transparent",
                     }}
-                    title={device.enabled ? "Benachrichtigungen deaktivieren" : "Benachrichtigungen aktivieren"}
+                    title={device.enabled ? t("push_device_notif_disable") : t("push_device_notif_enable")}
                   >
                     <FontAwesomeIcon
                       icon={device.enabled ? faBell : faBellSlash}
@@ -364,7 +368,7 @@ export function PushDevicesSection() {
                     disabled={isRemoving || isToggling}
                     className="p-2 rounded-lg transition-colors"
                     style={{ color: "var(--text-muted)" }}
-                    title="Gerät entfernen"
+                    title={t("push_device_remove")}
                   >
                     <FontAwesomeIcon
                       icon={faTrash}

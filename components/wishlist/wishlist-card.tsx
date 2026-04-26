@@ -17,7 +17,7 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 interface WishlistCardProps {
   id: string;
@@ -84,6 +84,7 @@ export function WishlistCard({
   onDelete,
 }: WishlistCardProps) {
   const t = useTranslations("wishlist");
+  const locale = useLocale();
   const [isLoading, setIsLoading] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [swipeX, setSwipeX] = useState(0);
@@ -363,7 +364,7 @@ export function WishlistCard({
                 : "var(--accent-amber)",
             }}
           >
-            €{numericPrice.toLocaleString("de-DE", {
+            €{numericPrice.toLocaleString(locale, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}

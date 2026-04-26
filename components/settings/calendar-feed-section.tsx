@@ -117,7 +117,7 @@ export function CalendarFeedSection({
           className="rounded-lg p-4 flex flex-col gap-3"
           style={{
             backgroundColor: "var(--bg-elevated)",
-            border: "1px dashed var(--accent)",
+            border: "1px dashed var(--accent-amber)",
           }}
         >
           <p
@@ -129,7 +129,7 @@ export function CalendarFeedSection({
           >
             <FontAwesomeIcon
               icon={faTriangleExclamation}
-              style={{ color: "var(--accent)", marginTop: "2px" }}
+              style={{ color: "var(--accent-amber)", marginTop: "2px" }}
             />
             <span>{t("calendar_feed_warning_once")}</span>
           </p>
@@ -150,7 +150,7 @@ export function CalendarFeedSection({
               onClick={handleCopy}
               className="px-3 py-2 rounded text-xs font-medium flex items-center gap-1 shrink-0"
               style={{
-                backgroundColor: "var(--accent)",
+                backgroundColor: "var(--accent-amber)",
                 color: "white",
                 fontFamily: "var(--font-ui)",
               }}
@@ -172,7 +172,7 @@ export function CalendarFeedSection({
             disabled={busy}
             className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
             style={{
-              backgroundColor: "var(--accent)",
+              backgroundColor: "var(--accent-amber)",
               color: "white",
               fontFamily: "var(--font-ui)",
             }}

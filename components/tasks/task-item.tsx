@@ -16,7 +16,7 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoins, faLayerGroup, faClock } from "@fortawesome/free-solid-svg-icons";
 import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
@@ -101,6 +101,7 @@ export function TaskItem({
   isBlocked = false,
 }: TaskItemProps) {
   const t = useTranslations("tasks");
+  const locale = useLocale();
 
   const [isAnimating, setIsAnimating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -179,7 +180,7 @@ export function TaskItem({
     }
 
     return {
-      text: due.toLocaleDateString("de-DE", { month: "short", day: "numeric" }),
+      text: due.toLocaleDateString(locale, { month: "short", day: "numeric" }),
       overdue: false,
     };
   }
@@ -298,7 +299,7 @@ export function TaskItem({
           </svg>
           {swipeX > 40 && (
             <span style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", fontSize: "0.75rem", fontWeight: 600 }}>
-              Erledigt
+              {t("swipe_complete")}
             </span>
           )}
         </div>
@@ -317,7 +318,7 @@ export function TaskItem({
       >
         {-swipeX > 40 && (
           <span style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", fontSize: "0.75rem", fontWeight: 600 }}>
-            Löschen
+            {t("swipe_delete")}
           </span>
         )}
         <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">

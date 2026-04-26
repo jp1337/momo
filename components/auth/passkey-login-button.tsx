@@ -77,8 +77,8 @@ export function PasskeyLoginButton() {
         className="w-full flex items-center justify-center gap-3 px-5 py-3 rounded-xl text-sm font-medium transition-all duration-150 hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
         style={{
           fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          backgroundColor: "var(--accent)",
-          color: "white",
+          backgroundColor: "var(--accent-amber)",
+          color: "#1a1a0a",
           boxShadow: "var(--shadow-sm)",
         }}
       >

@@ -247,7 +247,11 @@
     "banner_greeting_afternoon": "Goedemiddag",
     "banner_greeting_evening": "Goedenavond",
     "banner_task": "{count, plural, one {# taak} other {# taken}}",
-    "banner_waits": "{count, plural, one {wacht} other {wachten}} vandaag op je."
+    "banner_waits": "{count, plural, one {wacht} other {wachten}} vandaag op je.",
+    "swipe_complete": "Klaar",
+    "swipe_delete": "Verwijderen",
+    "undo": "Ongedaan maken",
+    "deleted_undo": "Taak verwijderd."
   },
   "topics": {
     "page_title": "Onderwerpen",
@@ -658,6 +662,8 @@
     "passkey_add_another_btn": "Nog een toegangssleutel toevoegen",
     "passkey_registering": "Prompt openen…",
     "passkey_name_prompt": "Geef deze toegangssleutel een naam:",
+    "passkey_continue_btn": "Doorgaan",
+    "passkey_cancel_btn": "Annuleren",
     "passkey_unnamed": "Naamloze toegangssleutel",
     "passkey_device_synced": "Gesynchroniseerd op apparaten",
     "passkey_device_bound": "Gebonden aan dit apparaat",
@@ -691,7 +697,19 @@
     "login_notification_label": "Melden bij nieuwe apparaten",
     "login_notification_description": "Ontvang een melding op alle geconfigureerde kanalen wanneer je inlogt vanaf een eerder onbekend apparaat.",
     "login_notification_saved": "Instelling opgeslagen.",
-    "login_notification_error": "Opslaan mislukt. Probeer het opnieuw."
+    "login_notification_error": "Opslaan mislukt. Probeer het opnieuw.",
+    "push_device_unnamed": "Onbekend apparaat",
+    "push_device_this": "Dit apparaat",
+    "push_device_disabled": "Uitgeschakeld",
+    "push_device_added": "Toegevoegd op {date}",
+    "push_device_rename_title": "Hernoemen",
+    "push_device_save_title": "Opslaan",
+    "push_device_cancel_title": "Annuleren",
+    "push_device_notif_disable": "Meldingen uitschakelen",
+    "push_device_notif_enable": "Meldingen inschakelen",
+    "push_device_remove": "Apparaat verwijderen",
+    "push_device_load_error": "Apparaten konden niet worden geladen.",
+    "push_device_empty": "Geen apparaten geregistreerd. Schakel Web Push in om je eerste apparaat toe te voegen."
   },
   "animations": {
     "achievement_title": "Prestatie ontgrendeld!",
@@ -988,7 +1006,14 @@
     "wishlist_bought": "Gekocht",
     "wishlist_spent": "Uitgegeven",
     "wishlist_open": "Open",
-    "wishlist_discarded": "Weggegooid"
+    "wishlist_discarded": "Weggegooid",
+    "energy_level_high": "Hoog",
+    "energy_level_medium": "Gemiddeld",
+    "energy_level_low": "Laag",
+    "energy_empty_hint": "Nog geen energiegegevens — check elke ochtend in om hier je patroon te zien.",
+    "energy_heatmap_header": "Laatste 90 dagen",
+    "energy_heatmap_aria": "90-daagse energie-heatmap",
+    "energy_no_checkin": "geen inchecking"
   },
   "onboarding": {
     "page_title": "Welkom bij Momo",
@@ -1056,7 +1081,15 @@
     "section_rare": "Zeldzaam",
     "section_common": "Gewoon",
     "section_secret": "Geheim",
-    "no_achievements": "Nog geen prestaties — voltooi taken om ze te ontgrendelen!"
+    "no_achievements": "Nog geen prestaties — voltooi taken om ze te ontgrendelen!",
+    "level_label": "Nv.",
+    "level_max_reached": "Maximum level bereikt 🎉",
+    "coins_to_next_level": "Nog {count} munten tot niveau {level} · {title}",
+    "level_of_max": "{level} / {max}",
+    "unlocked_count": "{earned} / {total} ontgrendeld",
+    "recently_unlocked": "Recent ontgrendeld",
+    "toast_unlocked": "Prestatie ontgrendeld",
+    "toast_coins": "🪙 +{coins} munten"
   },
   "quick_add": {
     "title": "Snel toevoegen",
@@ -1085,5 +1118,39 @@
     "tab_habits": "Gewoonten",
     "tab_achievements": "Prestaties",
     "tab_review": "Weekoverzicht"
+  },
+  "api_keys": {
+    "new_key_created": "Nieuwe API-sleutel aangemaakt — slechts eenmalig zichtbaar!",
+    "new_key_copy_hint": "Kopieer deze sleutel nu. Hij wordt niet opnieuw weergegeven.",
+    "close": "Sluiten",
+    "copy": "Sleutel kopiëren",
+    "create_form_title": "Nieuwe API-sleutel aanmaken",
+    "label_name": "Naam",
+    "placeholder_name": "bijv. Claude MCP, Domotica",
+    "label_expiry": "Geldigheid",
+    "expiry_30d": "30 dagen",
+    "expiry_90d": "90 dagen",
+    "expiry_1y": "1 jaar",
+    "expiry_never": "Geen vervaldatum",
+    "label_readonly": "Alleen-lezen",
+    "readonly_hint": "(alleen GET-verzoeken toegestaan)",
+    "btn_create": "Aanmaken",
+    "btn_creating": "Aanmaken…",
+    "btn_cancel": "Annuleren",
+    "btn_new_key": "Nieuwe sleutel aanmaken",
+    "empty_hint": "Nog geen API-sleutels.",
+    "meta_created": "Aangemaakt:",
+    "meta_expires": "Verloopt:",
+    "meta_never": "Nooit",
+    "meta_last_used": "Laatst gebruikt:",
+    "meta_never_used": "Nooit",
+    "btn_revoke": "Intrekken",
+    "aria_revoke": "Sleutel {name} intrekken",
+    "aria_close": "Sluiten",
+    "aria_copy": "Sleutel kopiëren",
+    "docs_hint": "API-sleutels worden verzonden als",
+    "docs_link": "API-documentatie →",
+    "error_create": "Aanmaken mislukt — probeer het opnieuw.",
+    "error_network": "Netwerkfout — probeer het opnieuw."
   }
 }

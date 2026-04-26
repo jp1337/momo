@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faChevronDown, faChevronUp, faXmark } from "@fortawesome/free-solid-svg-icons";
 
@@ -20,6 +21,7 @@ interface Topic {
 
 export function QuickAddModal() {
   const t = useTranslations("quick_add");
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [expanded, setExpanded] = useState(false);
@@ -92,12 +94,13 @@ export function QuickAddModal() {
       });
       if (!res.ok) throw new Error("Failed");
       setOpen(false);
+      router.refresh();
     } catch {
       setError(t("error"));
     } finally {
       setSaving(false);
     }
-  }, [title, priority, topicId, energyLevel, t]);
+  }, [title, priority, topicId, energyLevel, t, router]);
 
   if (!open) return null;
 

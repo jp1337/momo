@@ -17,6 +17,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 export interface AchievementItem {
   key: string;
@@ -31,28 +32,31 @@ interface AchievementToastProps {
   onAllDone?: () => void;
 }
 
-const RARITY_CONFIG = {
+type RarityKey = "legendary" | "epic" | "rare" | "common";
+type RarityLabelKey = "rarity_legendary" | "rarity_epic" | "rarity_rare" | "rarity_common";
+
+const RARITY_CONFIG: Record<RarityKey, { color: string; labelKey: RarityLabelKey; glow: string; shimmer: boolean }> = {
   legendary: {
     color: "var(--rarity-legendary)",
-    label: "Legendär",
+    labelKey: "rarity_legendary",
     glow: "0 0 32px color-mix(in srgb, var(--rarity-legendary) 50%, transparent), 0 0 8px color-mix(in srgb, var(--rarity-legendary) 30%, transparent)",
     shimmer: true,
   },
   epic: {
     color: "var(--accent-amber)",
-    label: "Episch",
+    labelKey: "rarity_epic",
     glow: "0 0 24px color-mix(in srgb, var(--accent-amber) 40%, transparent), 0 0 6px color-mix(in srgb, var(--accent-amber) 25%, transparent)",
     shimmer: false,
   },
   rare: {
     color: "var(--accent-green)",
-    label: "Selten",
+    labelKey: "rarity_rare",
     glow: "0 0 20px color-mix(in srgb, var(--accent-green) 35%, transparent)",
     shimmer: false,
   },
   common: {
     color: "var(--text-muted)",
-    label: "Gewöhnlich",
+    labelKey: "rarity_common",
     glow: "0 2px 12px rgba(0,0,0,0.15)",
     shimmer: false,
   },
@@ -65,7 +69,8 @@ function SingleToast({
   achievement: AchievementItem;
   onDone: () => void;
 }) {
-  const rarity = achievement.rarity ?? "common";
+  const t = useTranslations("achievements");
+  const rarity = (achievement.rarity ?? "common") as RarityKey;
   const cfg = RARITY_CONFIG[rarity];
   const [iconVisible, setIconVisible] = useState(false);
   useEffect(() => {
@@ -140,7 +145,7 @@ function SingleToast({
               color: cfg.color,
             }}
           >
-            Errungenschaft freigeschaltet
+            {t("toast_unlocked")}
           </span>
           <span
             style={{
@@ -155,7 +160,7 @@ function SingleToast({
               padding: "1px 5px",
             }}
           >
-            {cfg.label}
+            {t(cfg.labelKey)}
           </span>
         </div>
 
@@ -203,7 +208,7 @@ function SingleToast({
                   gap: "3px",
                 }}
               >
-                🪙 +{achievement.coinReward} Coins
+                {t("toast_coins", { coins: achievement.coinReward })}
               </span>
             )}
           </div>

@@ -6,7 +6,7 @@
  */
 
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSeedling,
@@ -64,10 +64,7 @@ const RARITY_ACCENT: Record<string, string> = {
 function formatShortDate(dateStr: string, locale: string): string {
   const [y, m, d] = dateStr.split("-").map(Number);
   const date = new Date(Date.UTC(y, m - 1, d));
-  return date.toLocaleDateString(
-    locale === "de" ? "de-DE" : locale === "fr" ? "fr-FR" : "en-US",
-    { day: "numeric", month: "short" }
-  );
+  return date.toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
 
 // ── Main component ───────────────────────────────────────────────────────────
@@ -334,7 +331,7 @@ async function AchievementsTab({ userId }: { userId: string }) {
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0,
               }}
             >
-              <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.55rem", fontWeight: 700, color: tierColor, letterSpacing: "0.08em", textTransform: "uppercase", lineHeight: 1 }}>Lv.</span>
+              <span style={{ fontFamily: "var(--font-ui)", fontSize: "0.55rem", fontWeight: 700, color: tierColor, letterSpacing: "0.08em", textTransform: "uppercase", lineHeight: 1 }}>{t("level_label")}</span>
               <span style={{ fontFamily: "var(--font-display)", fontSize: "1.6rem", fontWeight: 700, color: tierColor, lineHeight: 1 }}>{currentLevelDef.level}</span>
             </div>
             <div>
@@ -343,17 +340,19 @@ async function AchievementsTab({ userId }: { userId: string }) {
               </div>
               {nextLevelDef ? (
                 <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                  Noch <span style={{ color: tierColor, fontWeight: 600 }}>{coinsToNext} Coins</span> bis Level {nextLevelDef.level} · {nextLevelDef.title}
+                  <span style={{ color: tierColor, fontWeight: 600 }}>
+                    {t("coins_to_next_level", { count: coinsToNext, level: nextLevelDef.level, title: nextLevelDef.title })}
+                  </span>
                 </div>
               ) : (
                 <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: tierColor, fontWeight: 600 }}>
-                  Maximales Level erreicht 🎉
+                  {t("level_max_reached")}
                 </div>
               )}
             </div>
           </div>
           <div style={{ fontFamily: "var(--font-ui)", fontSize: "0.78rem", color: "var(--text-muted)", textAlign: "right", flexShrink: 0 }}>
-            {currentLevelDef.level} / {maxLevel}
+            {t("level_of_max", { level: currentLevelDef.level, max: maxLevel })}
           </div>
         </div>
         <div style={{ marginTop: "16px" }}>
@@ -361,9 +360,9 @@ async function AchievementsTab({ userId }: { userId: string }) {
             <div style={{ height: "100%", borderRadius: "3px", backgroundColor: tierColor, width: `${levelProgress}%`, transition: "width 0.6s ease", opacity: 0.85 }} />
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", fontFamily: "var(--font-ui)", fontSize: "0.68rem", color: "var(--text-muted)" }}>
-            <span>{currentLevelDef.minCoins} Coins</span>
+            <span>{currentLevelDef.minCoins}</span>
             {nextLevelDef && <span style={{ color: tierColor, fontWeight: 600 }}>{levelProgress}%</span>}
-            {nextLevelDef && <span>{nextLevelDef.minCoins} Coins</span>}
+            {nextLevelDef && <span>{nextLevelDef.minCoins}</span>}
           </div>
         </div>
       </div>
@@ -394,7 +393,7 @@ async function AchievementsTab({ userId }: { userId: string }) {
             </p>
             <div style={{ width: "min(320px, 100%)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--font-ui)", fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "6px" }}>
-                <span>{earned.length} / {total} freigeschaltet</span>
+                <span>{t("unlocked_count", { earned: earned.length, total })}</span>
                 <span style={{ color: "var(--accent-amber)", fontWeight: 700 }}>{pct}%</span>
               </div>
               <div style={{ height: "6px", borderRadius: "3px", backgroundColor: "var(--border)", overflow: "hidden" }}>
@@ -423,7 +422,7 @@ async function AchievementsTab({ userId }: { userId: string }) {
       {recentlyEarned.length > 0 && (
         <div style={{ marginBottom: "36px" }}>
           <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", margin: "0 0 12px" }}>
-            Zuletzt freigeschaltet
+            {t("recently_unlocked")}
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "10px" }}>
             {recentlyEarned.map((a) => <AchievementCard key={a.key} achievement={a} highlighted />)}
@@ -477,11 +476,7 @@ async function ReviewTab({ userId }: { userId: string }) {
 
   const review = await getWeeklyReview(userId, timezone);
 
-  const navT = await getTranslations("nav");
-  const locale =
-    navT("dashboard") === "Dashboard"
-      ? navT("tasks") === "Tasks" ? "en" : "de"
-      : "fr";
+  const locale = await getLocale();
 
   const delta = review.completionsThisWeek - review.completionsLastWeek;
   let deltaText: string;
@@ -497,11 +492,12 @@ async function ReviewTab({ userId }: { userId: string }) {
     deltaColor = "var(--text-muted)";
   }
 
-  let motivationKey: string;
-  if (review.completionsThisWeek >= 10) motivationKey = "motivation_great";
-  else if (review.completionsThisWeek >= 5) motivationKey = "motivation_good";
-  else if (review.completionsThisWeek >= 1) motivationKey = "motivation_ok";
-  else motivationKey = "motivation_zero";
+  const motivationKey = (
+    review.completionsThisWeek >= 10 ? "motivation_great" :
+    review.completionsThisWeek >= 5  ? "motivation_good" :
+    review.completionsThisWeek >= 1  ? "motivation_ok" :
+    "motivation_zero"
+  ) as "motivation_great" | "motivation_good" | "motivation_ok" | "motivation_zero";
 
   const weekSubtitle = t("page_subtitle", {
     start: formatShortDate(review.weekStart, locale),

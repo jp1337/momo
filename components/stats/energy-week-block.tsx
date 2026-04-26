@@ -6,10 +6,11 @@
  *   2. A 13-week × 7-day calendar heatmap coloured by energy level.
  *   3. A compact legend below the grid.
  *
- * Pure server component — receives pre-fetched data via props from
- * `app/(app)/stats/page.tsx`.
+ * Async server component — fetches its own locale and translations.
+ * Receives pre-fetched data via props from `app/(app)/stats/page.tsx`.
  */
 
+import { getTranslations, getLocale } from "next-intl/server";
 import type { EnergyCheckin, EnergyLevelCounts } from "@/lib/energy";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -34,14 +35,11 @@ interface DaySlot {
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const LEVEL_META: Record<EnergyLevel, { color: string; icon: string; labelDe: string }> = {
-  HIGH:   { color: "var(--accent-amber)", icon: "⚡", labelDe: "Hoch" },
-  MEDIUM: { color: "var(--accent-green)", icon: "☀",  labelDe: "Mittel" },
-  LOW:    { color: "#818cf8",             icon: "🌙", labelDe: "Niedrig" },
+const LEVEL_META: Record<EnergyLevel, { color: string; icon: string; labelKey: "energy_level_high" | "energy_level_medium" | "energy_level_low" }> = {
+  HIGH:   { color: "var(--accent-amber)", icon: "⚡", labelKey: "energy_level_high" },
+  MEDIUM: { color: "var(--accent-green)", icon: "☀",  labelKey: "energy_level_medium" },
+  LOW:    { color: "#818cf8",             icon: "🌙", labelKey: "energy_level_low" },
 };
-
-const WEEKDAY_LABELS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-const MONTH_LABELS   = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -91,19 +89,43 @@ function buildHeatmap(history: EnergyCheckin[]): DaySlot[][] {
  * Returns the month abbreviation to show above a week column, or "" if the
  * month has already been labelled in a previous column.
  */
-function getMonthLabel(weeks: DaySlot[][], weekIndex: number): string {
+function getMonthLabel(weeks: DaySlot[][], weekIndex: number, monthLabels: string[]): string {
   const monday = weeks[weekIndex][0];
   if (!monday.inRange) return "";
   const month = new Date(monday.date + "T00:00:00Z").getUTCMonth();
-  if (weekIndex === 0) return MONTH_LABELS[month];
+  if (weekIndex === 0) return monthLabels[month];
   const prevMonday = weeks[weekIndex - 1][0];
   const prevMonth = new Date(prevMonday.date + "T00:00:00Z").getUTCMonth();
-  return month !== prevMonth ? MONTH_LABELS[month] : "";
+  return month !== prevMonth ? monthLabels[month] : "";
+}
+
+/** Generates locale-aware weekday abbreviations (Mon–Sun order). */
+function buildWeekdayLabels(locale: string): string[] {
+  const fmt = new Intl.DateTimeFormat(locale, { weekday: "short" });
+  // 2024-01-01 was a Monday; use Mon–Sun for labels
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(Date.UTC(2024, 0, 1 + i));
+    return fmt.format(d);
+  });
+}
+
+/** Generates locale-aware month abbreviations. */
+function buildMonthLabels(locale: string): string[] {
+  const fmt = new Intl.DateTimeFormat(locale, { month: "short" });
+  return Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(Date.UTC(2024, i, 1));
+    return fmt.format(d);
+  });
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
-export function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWeekBlockProps) {
+export async function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWeekBlockProps) {
+  const [t, locale] = await Promise.all([getTranslations("stats"), getLocale()]);
+
+  const weekdayLabels = buildWeekdayLabels(locale);
+  const monthLabels = buildMonthLabels(locale);
+
   if (isEmpty) {
     return (
       <div
@@ -114,7 +136,7 @@ export function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWeekBloc
           className="text-sm"
           style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
         >
-          Noch keine Energie-Daten — checke dich morgens ein, dann siehst du hier dein Muster.
+          {t("energy_empty_hint")}
         </p>
       </div>
     );
@@ -147,7 +169,7 @@ export function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWeekBloc
                   className="text-xs uppercase tracking-wider"
                   style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
                 >
-                  {meta.labelDe}
+                  {t(meta.labelKey)}
                 </span>
                 <span
                   className="text-xl font-bold"
@@ -167,16 +189,16 @@ export function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWeekBloc
           className="text-xs font-medium uppercase tracking-wider mb-3"
           style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
         >
-          Letzte 90 Tage
+          {t("energy_heatmap_header")}
         </p>
 
-        <div className="flex gap-2 overflow-x-auto pb-1" role="img" aria-label="90-Tage Energie-Heatmap">
+        <div className="flex gap-2 overflow-x-auto pb-1" role="img" aria-label={t("energy_heatmap_aria")}>
           {/* Weekday labels */}
           <div
             className="flex flex-col flex-shrink-0"
             style={{ gap: "3px", paddingTop: "18px" }}
           >
-            {WEEKDAY_LABELS.map((label, i) => (
+            {weekdayLabels.map((label, i) => (
               <div
                 key={i}
                 style={{
@@ -212,7 +234,7 @@ export function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWeekBloc
                     userSelect: "none",
                   }}
                 >
-                  {getMonthLabel(weeks, wi)}
+                  {getMonthLabel(weeks, wi, monthLabels)}
                 </div>
               ))}
             </div>
@@ -228,7 +250,7 @@ export function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWeekBloc
                       key={wi}
                       title={
                         slot.inRange
-                          ? `${slot.date}${slot.level ? ` — ${LEVEL_META[slot.level].labelDe}` : " — kein Check-in"}`
+                          ? `${slot.date}${slot.level ? ` — ${t(LEVEL_META[slot.level].labelKey)}` : ` — ${t("energy_no_checkin")}`}`
                           : undefined
                       }
                       style={{
@@ -272,7 +294,7 @@ export function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWeekBloc
                   }}
                 />
                 <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
-                  {meta.icon} {meta.labelDe}
+                  {meta.icon} {t(meta.labelKey)}
                 </span>
               </div>
             );
@@ -288,7 +310,7 @@ export function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWeekBloc
                 flexShrink: 0,
               }}
             />
-            <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>kein Check-in</span>
+            <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{t("energy_no_checkin")}</span>
           </div>
         </div>
       </div>

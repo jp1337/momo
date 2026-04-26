@@ -247,7 +247,11 @@
     "banner_greeting_afternoon": "Good afternoon",
     "banner_greeting_evening": "Good evening",
     "banner_task": "{count, plural, one {# task} other {# tasks}}",
-    "banner_waits": "{count, plural, one {is waiting} other {are waiting}} for you today."
+    "banner_waits": "{count, plural, one {is waiting} other {are waiting}} for you today.",
+    "swipe_complete": "Done",
+    "swipe_delete": "Delete",
+    "undo": "Undo",
+    "deleted_undo": "Task deleted."
   },
   "topics": {
     "page_title": "Topics",
@@ -658,6 +662,8 @@
     "passkey_add_another_btn": "Add another passkey",
     "passkey_registering": "Opening prompt…",
     "passkey_name_prompt": "Give this passkey a name:",
+    "passkey_continue_btn": "Continue",
+    "passkey_cancel_btn": "Cancel",
     "passkey_unnamed": "Unnamed passkey",
     "passkey_device_synced": "Synced across devices",
     "passkey_device_bound": "Bound to this device",
@@ -691,7 +697,19 @@
     "login_notification_label": "Notify on new devices",
     "login_notification_description": "Receive a notification on all configured channels when you log in from a previously unseen device.",
     "login_notification_saved": "Setting saved.",
-    "login_notification_error": "Failed to save. Please try again."
+    "login_notification_error": "Failed to save. Please try again.",
+    "push_device_unnamed": "Unknown device",
+    "push_device_this": "This device",
+    "push_device_disabled": "Disabled",
+    "push_device_added": "Added on {date}",
+    "push_device_rename_title": "Rename",
+    "push_device_save_title": "Save",
+    "push_device_cancel_title": "Cancel",
+    "push_device_notif_disable": "Disable notifications",
+    "push_device_notif_enable": "Enable notifications",
+    "push_device_remove": "Remove device",
+    "push_device_load_error": "Could not load devices.",
+    "push_device_empty": "No devices registered. Enable Web Push to add your first device."
   },
   "animations": {
     "achievement_title": "Achievement unlocked!",
@@ -988,7 +1006,14 @@
     "wishlist_bought": "Bought",
     "wishlist_spent": "Spent",
     "wishlist_open": "Open",
-    "wishlist_discarded": "Discarded"
+    "wishlist_discarded": "Discarded",
+    "energy_level_high": "High",
+    "energy_level_medium": "Medium",
+    "energy_level_low": "Low",
+    "energy_empty_hint": "No energy data yet — check in each morning to see your pattern here.",
+    "energy_heatmap_header": "Last 90 days",
+    "energy_heatmap_aria": "90-day energy heatmap",
+    "energy_no_checkin": "no check-in"
   },
   "onboarding": {
     "page_title": "Welcome to Momo",
@@ -1056,7 +1081,15 @@
     "section_rare": "Rare",
     "section_common": "Common",
     "section_secret": "Secret",
-    "no_achievements": "No achievements yet — complete tasks to unlock them!"
+    "no_achievements": "No achievements yet — complete tasks to unlock them!",
+    "level_label": "Lv.",
+    "level_max_reached": "Maximum level reached 🎉",
+    "coins_to_next_level": "Only {count} coins until Level {level} · {title}",
+    "level_of_max": "{level} / {max}",
+    "unlocked_count": "{earned} / {total} unlocked",
+    "recently_unlocked": "Recently unlocked",
+    "toast_unlocked": "Achievement unlocked",
+    "toast_coins": "🪙 +{coins} coins"
   },
   "quick_add": {
     "title": "Quick Add",
@@ -1085,5 +1118,39 @@
     "tab_habits": "Habits",
     "tab_achievements": "Achievements",
     "tab_review": "Weekly Review"
+  },
+  "api_keys": {
+    "new_key_created": "New API key created — only visible once!",
+    "new_key_copy_hint": "Copy this key now. It will not be shown again.",
+    "close": "Close",
+    "copy": "Copy key",
+    "create_form_title": "Create a new API key",
+    "label_name": "Name",
+    "placeholder_name": "e.g. Claude MCP, Home Automation",
+    "label_expiry": "Validity",
+    "expiry_30d": "30 days",
+    "expiry_90d": "90 days",
+    "expiry_1y": "1 year",
+    "expiry_never": "No expiry",
+    "label_readonly": "Read-Only",
+    "readonly_hint": "(only GET requests allowed)",
+    "btn_create": "Create",
+    "btn_creating": "Creating…",
+    "btn_cancel": "Cancel",
+    "btn_new_key": "Create new key",
+    "empty_hint": "No API keys yet.",
+    "meta_created": "Created:",
+    "meta_expires": "Expires:",
+    "meta_never": "Never",
+    "meta_last_used": "Last used:",
+    "meta_never_used": "Never",
+    "btn_revoke": "Revoke",
+    "aria_revoke": "Revoke key {name}",
+    "aria_close": "Close",
+    "aria_copy": "Copy key",
+    "docs_hint": "API keys are sent as an",
+    "docs_link": "API documentation →",
+    "error_create": "Failed to create key — please try again.",
+    "error_network": "Network error — please try again."
   }
 }

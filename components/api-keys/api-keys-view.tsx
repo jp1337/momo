@@ -22,25 +22,20 @@ import {
   faLockOpen,
   faLock,
 } from "@fortawesome/free-solid-svg-icons";
+import { useTranslations, useLocale } from "next-intl";
 import type { ApiKeyRecord } from "@/lib/api-keys";
 
 interface ApiKeysViewProps {
   initialKeys: ApiKeyRecord[];
 }
 
-/** Expiry option display config */
-const EXPIRY_OPTIONS = [
-  { value: "30d", label: "30 Tage" },
-  { value: "90d", label: "90 Tage" },
-  { value: "1y", label: "1 Jahr" },
-  { value: "", label: "Kein Ablauf" },
-] as const;
-
 /**
  * Interactive API key management page component.
  * Manages key creation, one-time display, and revocation client-side.
  */
 export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
+  const t = useTranslations("api_keys");
+  const locale = useLocale();
   const [keys, setKeys] = useState<ApiKeyRecord[]>(initialKeys);
   const [showForm, setShowForm] = useState(false);
   const [newKeyPlaintext, setNewKeyPlaintext] = useState<string | null>(null);
@@ -52,6 +47,13 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
   const [formExpiry, setFormExpiry] = useState<string>("90d");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const expiryOptions = [
+    { value: "30d", label: t("expiry_30d") },
+    { value: "90d", label: t("expiry_90d") },
+    { value: "1y", label: t("expiry_1y") },
+    { value: "", label: t("expiry_never") },
+  ];
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -71,7 +73,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
 
       const data = await res.json();
       if (!res.ok) {
-        setFormError(data.error ?? "Fehler beim Erstellen des Keys");
+        setFormError(data.error ?? t("error_create"));
         return;
       }
 
@@ -82,7 +84,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
       setFormReadonly(false);
       setFormExpiry("90d");
     } catch {
-      setFormError("Netzwerkfehler — bitte erneut versuchen");
+      setFormError(t("error_network"));
     } finally {
       setSubmitting(false);
     }
@@ -111,7 +113,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
 
   function formatDate(date: Date | string | null): string {
     if (!date) return "–";
-    return new Date(date).toLocaleDateString("de-DE", {
+    return new Date(date).toLocaleDateString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -139,7 +141,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                   color: "var(--accent-amber)",
                 }}
               >
-                Neuer API Key erstellt — nur einmal sichtbar!
+                {t("new_key_created")}
               </p>
               <p
                 className="text-xs mt-1"
@@ -148,12 +150,12 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                   color: "var(--text-muted)",
                 }}
               >
-                Kopiere diesen Key jetzt. Er wird nicht erneut angezeigt.
+                {t("new_key_copy_hint")}
               </p>
             </div>
             <button
               onClick={() => setNewKeyPlaintext(null)}
-              aria-label="Schließen"
+              aria-label={t("aria_close")}
               className="flex-shrink-0 transition-opacity hover:opacity-60"
               style={{ color: "var(--text-muted)" }}
             >
@@ -175,12 +177,12 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
             </code>
             <button
               onClick={handleCopy}
-              aria-label="Key kopieren"
+              aria-label={t("aria_copy")}
               className="flex-shrink-0 px-3 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90"
               style={{
                 fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
                 backgroundColor: copied ? "var(--accent-green)" : "var(--accent-amber)",
-                color: "var(--bg-primary)",
+                color: "#1a1a0a",
               }}
             >
               <FontAwesomeIcon
@@ -208,7 +210,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
               color: "var(--text-primary)",
             }}
           >
-            Neuen API Key erstellen
+            {t("create_form_title")}
           </h2>
 
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
@@ -222,14 +224,14 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                   color: "var(--text-muted)",
                 }}
               >
-                Name
+                {t("label_name")}
               </label>
               <input
                 id="key-name"
                 type="text"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="z.B. Claude MCP, Home Automation"
+                placeholder={t("placeholder_name")}
                 required
                 maxLength={64}
                 className="px-3 py-2 rounded-lg text-sm outline-none"
@@ -252,7 +254,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                   color: "var(--text-muted)",
                 }}
               >
-                Gültigkeit
+                {t("label_expiry")}
               </label>
               <select
                 id="key-expiry"
@@ -266,7 +268,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                   border: "1px solid var(--border)",
                 }}
               >
-                {EXPIRY_OPTIONS.map((opt) => (
+                {expiryOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -290,9 +292,9 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                   color: "var(--text-primary)",
                 }}
               >
-                Read-Only{" "}
+                {t("label_readonly")}{" "}
                 <span style={{ color: "var(--text-muted)" }}>
-                  (nur GET-Anfragen erlaubt)
+                  {t("readonly_hint")}
                 </span>
               </span>
             </label>
@@ -317,10 +319,10 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                 style={{
                   fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
                   backgroundColor: "var(--accent-amber)",
-                  color: "var(--bg-primary)",
+                  color: "#1a1a0a",
                 }}
               >
-                {submitting ? "Erstelle…" : "Erstellen"}
+                {submitting ? t("btn_creating") : t("btn_create")}
               </button>
               <button
                 type="button"
@@ -336,7 +338,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                   border: "1px solid var(--border)",
                 }}
               >
-                Abbrechen
+                {t("btn_cancel")}
               </button>
             </div>
           </form>
@@ -348,11 +350,11 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
           style={{
             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             backgroundColor: "var(--accent-amber)",
-            color: "var(--bg-primary)",
+            color: "#1a1a0a",
           }}
         >
           <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
-          Neuen Key erstellen
+          {t("btn_new_key")}
         </button>
       )}
 
@@ -378,7 +380,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                 color: "var(--text-muted)",
               }}
             >
-              Noch keine API Keys vorhanden.
+              {t("empty_hint")}
             </p>
           </div>
         ) : (
@@ -414,7 +416,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                       }}
                     >
                       <FontAwesomeIcon icon={faLock} className="w-2.5 h-2.5" />
-                      Read-Only
+                      {t("label_readonly")}
                     </span>
                   ) : (
                     <span
@@ -451,14 +453,14 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                     color: "var(--text-muted)",
                   }}
                 >
-                  <span>Erstellt: {formatDate(key.createdAt)}</span>
+                  <span>{t("meta_created")} {formatDate(key.createdAt)}</span>
                   <span>
-                    Läuft ab:{" "}
-                    {key.expiresAt ? formatDate(key.expiresAt) : "Niemals"}
+                    {t("meta_expires")}{" "}
+                    {key.expiresAt ? formatDate(key.expiresAt) : t("meta_never")}
                   </span>
                   <span>
-                    Zuletzt verwendet:{" "}
-                    {key.lastUsedAt ? formatDate(key.lastUsedAt) : "Nie"}
+                    {t("meta_last_used")}{" "}
+                    {key.lastUsedAt ? formatDate(key.lastUsedAt) : t("meta_never_used")}
                   </span>
                 </div>
               </div>
@@ -466,7 +468,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
               {/* Revoke button */}
               <button
                 onClick={() => handleRevoke(key.id)}
-                aria-label={`Key ${key.name} widerrufen`}
+                aria-label={t("aria_revoke", { name: key.name })}
                 className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:opacity-80"
                 style={{
                   fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
@@ -476,7 +478,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
                 }}
               >
                 <FontAwesomeIcon icon={faTrash} className="w-3 h-3 mr-1.5" />
-                Widerrufen
+                {t("btn_revoke")}
               </button>
             </div>
           ))
@@ -491,7 +493,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
           color: "var(--text-muted)",
         }}
       >
-        API Keys werden als{" "}
+        {t("docs_hint")}{" "}
         <code
           style={{
             fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
@@ -499,9 +501,9 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
         >
           Authorization: Bearer &lt;key&gt;
         </code>{" "}
-        Header übermittelt.{" "}
+        Header.{" "}
         <a href="/api-docs" style={{ color: "var(--accent-amber)" }}>
-          API-Dokumentation →
+          {t("docs_link")}
         </a>
       </p>
     </div>

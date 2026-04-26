@@ -281,8 +281,8 @@ export function SecuritySection({
                 disabled={code.length !== 6}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                 style={{
-                  backgroundColor: action === "disabling" ? "#c95151" : "var(--accent)",
-                  color: "white",
+                  backgroundColor: action === "disabling" ? "#c95151" : "var(--accent-amber)",
+                  color: action === "disabling" ? "white" : "#1a1a0a",
                   fontFamily: "var(--font-ui)",
                 }}
               >
@@ -331,8 +331,8 @@ export function SecuritySection({
         onClick={() => setAction("wizard")}
         className="self-start px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         style={{
-          backgroundColor: "var(--accent)",
-          color: "white",
+          backgroundColor: "var(--accent-amber)",
+          color: "#1a1a0a",
           fontFamily: "var(--font-ui)",
         }}
       >

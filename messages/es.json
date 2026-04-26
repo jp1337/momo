@@ -247,7 +247,11 @@
     "banner_greeting_afternoon": "Buenas tardes",
     "banner_greeting_evening": "Buenas noches",
     "banner_task": "{count, plural, one {# tarea} other {# tareas}}",
-    "banner_waits": "{count, plural, one {te espera} other {te esperan}} hoy."
+    "banner_waits": "{count, plural, one {te espera} other {te esperan}} hoy.",
+    "swipe_complete": "Hecho",
+    "swipe_delete": "Eliminar",
+    "undo": "Deshacer",
+    "deleted_undo": "Tarea eliminada."
   },
   "topics": {
     "page_title": "Temas",
@@ -658,6 +662,8 @@
     "passkey_add_another_btn": "Añadir otra clave de acceso",
     "passkey_registering": "Abriendo solicitud…",
     "passkey_name_prompt": "Ponle un nombre a esta clave de acceso:",
+    "passkey_continue_btn": "Continuar",
+    "passkey_cancel_btn": "Cancelar",
     "passkey_unnamed": "Clave de acceso sin nombre",
     "passkey_device_synced": "Sincronizada entre dispositivos",
     "passkey_device_bound": "Vinculada a este dispositivo",
@@ -691,7 +697,19 @@
     "login_notification_label": "Notificar en nuevos dispositivos",
     "login_notification_description": "Recibe una notificación en todos los canales configurados cuando inicies sesión desde un dispositivo no visto anteriormente.",
     "login_notification_saved": "Ajuste guardado.",
-    "login_notification_error": "No se pudo guardar. Inténtalo de nuevo."
+    "login_notification_error": "No se pudo guardar. Inténtalo de nuevo.",
+    "push_device_unnamed": "Dispositivo desconocido",
+    "push_device_this": "Este dispositivo",
+    "push_device_disabled": "Desactivado",
+    "push_device_added": "Añadido el {date}",
+    "push_device_rename_title": "Renombrar",
+    "push_device_save_title": "Guardar",
+    "push_device_cancel_title": "Cancelar",
+    "push_device_notif_disable": "Desactivar notificaciones",
+    "push_device_notif_enable": "Activar notificaciones",
+    "push_device_remove": "Eliminar dispositivo",
+    "push_device_load_error": "No se pudieron cargar los dispositivos.",
+    "push_device_empty": "No hay dispositivos registrados. Activa Web Push para añadir tu primer dispositivo."
   },
   "animations": {
     "achievement_title": "¡Logro desbloqueado!",
@@ -988,7 +1006,14 @@
     "wishlist_bought": "Comprado",
     "wishlist_spent": "Gastado",
     "wishlist_open": "Pendiente",
-    "wishlist_discarded": "Descartado"
+    "wishlist_discarded": "Descartado",
+    "energy_level_high": "Alta",
+    "energy_level_medium": "Media",
+    "energy_level_low": "Baja",
+    "energy_empty_hint": "Aún no hay datos de energía — regístrate cada mañana para ver tu patrón aquí.",
+    "energy_heatmap_header": "Últimos 90 días",
+    "energy_heatmap_aria": "Mapa de calor de energía de 90 días",
+    "energy_no_checkin": "sin registro"
   },
   "onboarding": {
     "page_title": "Bienvenido a Momo",
@@ -1056,7 +1081,15 @@
     "section_rare": "Raro",
     "section_common": "Común",
     "section_secret": "Secreto",
-    "no_achievements": "Aún no hay logros — ¡completa tareas para desbloquearlos!"
+    "no_achievements": "Aún no hay logros — ¡completa tareas para desbloquearlos!",
+    "level_label": "Nv.",
+    "level_max_reached": "Nivel máximo alcanzado 🎉",
+    "coins_to_next_level": "Solo {count} monedas hasta el nivel {level} · {title}",
+    "level_of_max": "{level} / {max}",
+    "unlocked_count": "{earned} / {total} desbloqueados",
+    "recently_unlocked": "Desbloqueados recientemente",
+    "toast_unlocked": "Logro desbloqueado",
+    "toast_coins": "🪙 +{coins} monedas"
   },
   "quick_add": {
     "title": "Añadir rápido",
@@ -1085,5 +1118,39 @@
     "tab_habits": "Hábitos",
     "tab_achievements": "Logros",
     "tab_review": "Revisión semanal"
+  },
+  "api_keys": {
+    "new_key_created": "¡Nueva clave API creada — solo visible una vez!",
+    "new_key_copy_hint": "Copia esta clave ahora. No se mostrará de nuevo.",
+    "close": "Cerrar",
+    "copy": "Copiar clave",
+    "create_form_title": "Crear una nueva clave API",
+    "label_name": "Nombre",
+    "placeholder_name": "ej. Claude MCP, Automatización del hogar",
+    "label_expiry": "Validez",
+    "expiry_30d": "30 días",
+    "expiry_90d": "90 días",
+    "expiry_1y": "1 año",
+    "expiry_never": "Sin caducidad",
+    "label_readonly": "Solo lectura",
+    "readonly_hint": "(solo solicitudes GET)",
+    "btn_create": "Crear",
+    "btn_creating": "Creando…",
+    "btn_cancel": "Cancelar",
+    "btn_new_key": "Crear nueva clave",
+    "empty_hint": "Aún no hay claves API.",
+    "meta_created": "Creada:",
+    "meta_expires": "Caduca:",
+    "meta_never": "Nunca",
+    "meta_last_used": "Último uso:",
+    "meta_never_used": "Nunca",
+    "btn_revoke": "Revocar",
+    "aria_revoke": "Revocar clave {name}",
+    "aria_close": "Cerrar",
+    "aria_copy": "Copiar clave",
+    "docs_hint": "Las claves API se envían como",
+    "docs_link": "Documentación API →",
+    "error_create": "Error al crear la clave — inténtalo de nuevo.",
+    "error_network": "Error de red — inténtalo de nuevo."
   }
 }

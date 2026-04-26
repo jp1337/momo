@@ -14,7 +14,7 @@
  * `/api/auth/passkey/register/verify`.
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { startRegistration } from "@simplewebauthn/browser";
 import type { PasskeySummary } from "@/lib/webauthn";
@@ -44,6 +44,11 @@ export function PasskeysSection({
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Inline name-collection state — replaces window.prompt
+  const [namingOptions, setNamingOptions] = useState<Record<string, unknown> | null>(null);
+  const [pendingName, setPendingName] = useState("");
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
   async function handleRegister() {
     setError(null);
     setRegistering(true);
@@ -57,16 +62,28 @@ export function PasskeysSection({
         return;
       }
       const options = await optsRes.json();
+      // Show inline name form instead of window.prompt
+      setPendingName(guessDefaultName());
+      setNamingOptions(options);
+      setRegistering(false);
+      setTimeout(() => nameInputRef.current?.focus(), 50);
+    } catch {
+      setError(t("passkey_err_network"));
+      setRegistering(false);
+    }
+  }
 
-      const defaultName = guessDefaultName();
-      const name =
-        typeof window === "undefined"
-          ? defaultName
-          : window.prompt(t("passkey_name_prompt"), defaultName) ?? defaultName;
-
+  async function handleNameConfirm() {
+    if (!namingOptions) return;
+    const name = pendingName.trim() || guessDefaultName();
+    setNamingOptions(null);
+    setRegistering(true);
+    setError(null);
+    try {
       let attestation;
       try {
-        attestation = await startRegistration({ optionsJSON: options });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        attestation = await startRegistration({ optionsJSON: namingOptions as any });
       } catch (err) {
         console.error(err);
         setError(t("passkey_err_cancelled"));
@@ -98,8 +115,7 @@ export function PasskeysSection({
           pendingName: data.name ?? "",
         },
       ]);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError(t("passkey_err_network"));
     } finally {
       setRegistering(false);
@@ -219,9 +235,10 @@ export function PasskeysSection({
                       type="submit"
                       className="text-xs px-2 py-1 rounded"
                       style={{
-                        backgroundColor: "var(--accent)",
-                        color: "white",
+                        backgroundColor: "var(--accent-amber)",
+                        color: "#1a1a0a",
                         fontFamily: "var(--font-ui)",
+                        fontWeight: 600,
                       }}
                     >
                       {t("passkey_save_btn")}
@@ -300,16 +317,77 @@ export function PasskeysSection({
         </ul>
       )}
 
+      {/* Inline name input — replaces window.prompt */}
+      {namingOptions && (
+        <form
+          onSubmit={(e) => { e.preventDefault(); handleNameConfirm(); }}
+          className="flex flex-col gap-2 rounded-lg p-3"
+          style={{
+            backgroundColor: "var(--bg-elevated)",
+            border: "1px solid var(--accent-amber)",
+          }}
+        >
+          <label
+            className="text-xs font-semibold"
+            style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)", textTransform: "uppercase", letterSpacing: "0.05em" }}
+          >
+            {t("passkey_name_prompt")}
+          </label>
+          <div className="flex gap-2">
+            <input
+              ref={nameInputRef}
+              type="text"
+              value={pendingName}
+              onChange={(e) => setPendingName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Escape") setNamingOptions(null); }}
+              maxLength={80}
+              className="flex-1 px-3 py-1.5 text-sm rounded"
+              style={{
+                backgroundColor: "var(--bg-surface)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--border)",
+                fontFamily: "var(--font-ui)",
+              }}
+            />
+            <button
+              type="submit"
+              className="px-3 py-1.5 text-sm rounded font-semibold"
+              style={{
+                backgroundColor: "var(--accent-amber)",
+                color: "#1a1a0a",
+                fontFamily: "var(--font-ui)",
+              }}
+            >
+              {t("passkey_continue_btn")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setNamingOptions(null)}
+              className="px-3 py-1.5 text-sm rounded"
+              style={{
+                backgroundColor: "transparent",
+                color: "var(--text-muted)",
+                border: "1px solid var(--border)",
+                fontFamily: "var(--font-ui)",
+              }}
+            >
+              {t("passkey_cancel_btn")}
+            </button>
+          </div>
+        </form>
+      )}
+
       <div>
         <button
           type="button"
           onClick={handleRegister}
-          disabled={registering}
+          disabled={registering || !!namingOptions}
           className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           style={{
-            backgroundColor: "var(--accent)",
-            color: "white",
+            backgroundColor: "var(--accent-amber)",
+            color: "#1a1a0a",
             fontFamily: "var(--font-ui)",
+            fontWeight: 600,
           }}
         >
           {registering
@@ -332,7 +410,7 @@ export function PasskeysSection({
   );
 }
 
-/** Rough default name based on the UA string — user can override in the prompt. */
+/** Rough default name based on the UA string — user can change it in the inline form. */
 function guessDefaultName(): string {
   if (typeof navigator === "undefined") return "Passkey";
   const ua = navigator.userAgent;

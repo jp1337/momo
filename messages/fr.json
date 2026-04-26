@@ -247,7 +247,11 @@
     "banner_greeting_afternoon": "Bon après-midi",
     "banner_greeting_evening": "Bonsoir",
     "banner_task": "{count, plural, one {# tâche} other {# tâches}}",
-    "banner_waits": "{count, plural, one {t'attend} other {t'attendent}} aujourd'hui."
+    "banner_waits": "{count, plural, one {t'attend} other {t'attendent}} aujourd'hui.",
+    "swipe_complete": "Fait",
+    "swipe_delete": "Supprimer",
+    "undo": "Annuler",
+    "deleted_undo": "Tâche supprimée."
   },
   "topics": {
     "page_title": "Sujets",
@@ -658,6 +662,8 @@
     "passkey_add_another_btn": "Ajouter une autre clé d'accès",
     "passkey_registering": "Ouverture de la fenêtre…",
     "passkey_name_prompt": "Nom pour cette clé d'accès :",
+    "passkey_continue_btn": "Continuer",
+    "passkey_cancel_btn": "Annuler",
     "passkey_unnamed": "Clé d'accès sans nom",
     "passkey_device_synced": "Synchronisée entre appareils",
     "passkey_device_bound": "Liée à cet appareil",
@@ -691,7 +697,19 @@
     "login_notification_label": "Notifier les nouveaux appareils",
     "login_notification_description": "Recevez une notification sur tous les canaux configurés lorsque vous vous connectez depuis un appareil inconnu.",
     "login_notification_saved": "Paramètre enregistré.",
-    "login_notification_error": "Échec de l'enregistrement. Veuillez réessayer."
+    "login_notification_error": "Échec de l'enregistrement. Veuillez réessayer.",
+    "push_device_unnamed": "Appareil inconnu",
+    "push_device_this": "Cet appareil",
+    "push_device_disabled": "Désactivé",
+    "push_device_added": "Ajouté le {date}",
+    "push_device_rename_title": "Renommer",
+    "push_device_save_title": "Enregistrer",
+    "push_device_cancel_title": "Annuler",
+    "push_device_notif_disable": "Désactiver les notifications",
+    "push_device_notif_enable": "Activer les notifications",
+    "push_device_remove": "Supprimer l'appareil",
+    "push_device_load_error": "Impossible de charger les appareils.",
+    "push_device_empty": "Aucun appareil enregistré. Activez Web Push pour ajouter votre premier appareil."
   },
   "animations": {
     "achievement_title": "Succès débloqué !",
@@ -988,7 +1006,14 @@
     "wishlist_bought": "Acheté",
     "wishlist_spent": "Dépensé",
     "wishlist_open": "Ouvert",
-    "wishlist_discarded": "Écarté"
+    "wishlist_discarded": "Écarté",
+    "energy_level_high": "Élevée",
+    "energy_level_medium": "Moyenne",
+    "energy_level_low": "Basse",
+    "energy_empty_hint": "Pas encore de données d'énergie — faites un bilan chaque matin pour voir votre schéma ici.",
+    "energy_heatmap_header": "90 derniers jours",
+    "energy_heatmap_aria": "Carte thermique d'énergie sur 90 jours",
+    "energy_no_checkin": "pas de bilan"
   },
   "onboarding": {
     "page_title": "Bienvenue sur Momo",
@@ -1056,7 +1081,15 @@
     "section_rare": "Rare",
     "section_common": "Commun",
     "section_secret": "Secret",
-    "no_achievements": "Pas encore de succès — accomplissez des tâches pour les débloquer !"
+    "no_achievements": "Pas encore de succès — accomplissez des tâches pour les débloquer !",
+    "level_label": "Nv.",
+    "level_max_reached": "Niveau maximum atteint 🎉",
+    "coins_to_next_level": "Encore {count} pièces pour le niveau {level} · {title}",
+    "level_of_max": "{level} / {max}",
+    "unlocked_count": "{earned} / {total} débloqués",
+    "recently_unlocked": "Récemment débloqués",
+    "toast_unlocked": "Succès débloqué",
+    "toast_coins": "🪙 +{coins} pièces"
   },
   "quick_add": {
     "title": "Ajout rapide",
@@ -1085,5 +1118,39 @@
     "tab_habits": "Habitudes",
     "tab_achievements": "Succès",
     "tab_review": "Bilan hebdomadaire"
+  },
+  "api_keys": {
+    "new_key_created": "Nouvelle clé API créée — visible une seule fois !",
+    "new_key_copy_hint": "Copiez cette clé maintenant. Elle ne sera plus affichée.",
+    "close": "Fermer",
+    "copy": "Copier la clé",
+    "create_form_title": "Créer une nouvelle clé API",
+    "label_name": "Nom",
+    "placeholder_name": "ex. Claude MCP, Domotique",
+    "label_expiry": "Validité",
+    "expiry_30d": "30 jours",
+    "expiry_90d": "90 jours",
+    "expiry_1y": "1 an",
+    "expiry_never": "Aucune expiration",
+    "label_readonly": "Lecture seule",
+    "readonly_hint": "(uniquement requêtes GET)",
+    "btn_create": "Créer",
+    "btn_creating": "Création…",
+    "btn_cancel": "Annuler",
+    "btn_new_key": "Créer une nouvelle clé",
+    "empty_hint": "Aucune clé API pour l'instant.",
+    "meta_created": "Créée :",
+    "meta_expires": "Expire :",
+    "meta_never": "Jamais",
+    "meta_last_used": "Dernière utilisation :",
+    "meta_never_used": "Jamais",
+    "btn_revoke": "Révoquer",
+    "aria_revoke": "Révoquer la clé {name}",
+    "aria_close": "Fermer",
+    "aria_copy": "Copier la clé",
+    "docs_hint": "Les clés API sont transmises en tant que",
+    "docs_link": "Documentation API →",
+    "error_create": "Échec de la création — veuillez réessayer.",
+    "error_network": "Erreur réseau — veuillez réessayer."
   }
 }

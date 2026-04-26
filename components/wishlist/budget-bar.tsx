@@ -13,7 +13,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 interface BudgetBarProps {
   monthlyBudget: number | null;
@@ -24,10 +24,10 @@ interface BudgetBarProps {
 }
 
 /**
- * Formats a number as a currency string (€).
+ * Formats a number as a currency string (€) using the given locale.
  */
-function formatCurrency(amount: number): string {
-  return amount.toLocaleString("de-DE", {
+function formatCurrency(amount: number, locale: string): string {
+  return amount.toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -53,6 +53,7 @@ export function BudgetBar({
 }: BudgetBarProps) {
   const t = useTranslations("wishlist");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [isEditing, setIsEditing] = useState(false);
   const [budgetInput, setBudgetInput] = useState(
     monthlyBudget !== null ? String(monthlyBudget) : ""
@@ -187,11 +188,11 @@ export function BudgetBar({
               fontSize: "1.1rem",
             }}
           >
-            €{formatCurrency(spentThisMonth)}
+            €{formatCurrency(spentThisMonth, locale)}
             {monthlyBudget !== null && (
               <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
                 {" "}
-                / €{formatCurrency(monthlyBudget)}
+                / €{formatCurrency(monthlyBudget, locale)}
               </span>
             )}
           </span>
@@ -206,7 +207,7 @@ export function BudgetBar({
             >
               ({remaining < 0
                 ? t("budget_over")
-                : t("budget_left", { amount: `€${formatCurrency(remaining)}` })})
+                : t("budget_left", { amount: `€${formatCurrency(remaining, locale)}` })})
             </span>
           )}
         </div>

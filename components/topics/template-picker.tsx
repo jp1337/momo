@@ -100,7 +100,7 @@ export function TemplatePicker({ onImported, onStartBlank, onCancel }: TemplateP
             disabled={!!importingKey}
             className="p-1 rounded-lg"
             style={{ color: "var(--text-muted)" }}
-            aria-label="Schließen"
+            aria-label={tc("picker_close")}
           >
             ✕
           </button>

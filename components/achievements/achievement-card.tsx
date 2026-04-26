@@ -26,11 +26,12 @@ const RARITY_COLORS: Record<Rarity, string> = {
   legendary: "var(--rarity-legendary)",
 };
 
-const RARITY_LABELS: Record<Rarity, string> = {
-  common: "Gewöhnlich",
-  rare: "Selten",
-  epic: "Episch",
-  legendary: "Legendär",
+type RarityLabelKey = "rarity_common" | "rarity_rare" | "rarity_epic" | "rarity_legendary";
+const RARITY_LABEL_KEYS: Record<Rarity, RarityLabelKey> = {
+  common: "rarity_common",
+  rare: "rarity_rare",
+  epic: "rarity_epic",
+  legendary: "rarity_legendary",
 };
 
 function rarityColor(rarity: string): string {
@@ -128,7 +129,7 @@ export function AchievementCard({ achievement, highlighted = false }: Achievemen
               whiteSpace: "nowrap",
             }}
           >
-            {RARITY_LABELS[rarity] ?? rarity}
+            {t(RARITY_LABEL_KEYS[rarity] ?? "rarity_common")}
           </span>
         </div>
 
