@@ -15,10 +15,14 @@ import {
   getNextLevel,
   getUserStats,
   checkAndUnlockAchievements,
+  retroactivelyGrantAchievements,
   LEVELS,
 } from "@/lib/gamification";
 import { getLocalDateString } from "@/lib/date-utils";
-import { createTestUser } from "./helpers/fixtures";
+import { createTestUser, createTestTask } from "./helpers/fixtures";
+import { db } from "@/lib/db";
+import { eq } from "drizzle-orm";
+import { users } from "@/lib/db/schema";
 
 const TZ = "Europe/Berlin";
 
@@ -227,5 +231,65 @@ describe("checkAndUnlockAchievements", () => {
 
     expect(result.unlocked).toHaveLength(0);
     expect(result.coinsAwarded).toBe(0);
+  });
+});
+
+// ─── retroactivelyGrantAchievements ──────────────────────────────────────────
+
+describe("retroactivelyGrantAchievements", () => {
+  it("returns 0 unlocked for a brand-new user with no activity", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const count = await retroactivelyGrantAchievements(user.id, TZ);
+    expect(count).toBe(0);
+  });
+
+  it("grants first_task achievement when user has completed tasks", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    // Simulate a user who completed 1 task (insert a fake task_completions row)
+    const task = await createTestTask(user.id, { completedAt: new Date() });
+    await db.insert((await import("@/lib/db/schema")).taskCompletions).values({
+      taskId: task.id,
+      userId: user.id,
+    });
+
+    const count = await retroactivelyGrantAchievements(user.id, TZ);
+    expect(count).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does not re-grant achievements already awarded", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, { completedAt: new Date() });
+    await db.insert((await import("@/lib/db/schema")).taskCompletions).values({
+      taskId: task.id,
+      userId: user.id,
+    });
+
+    // First call grants the achievement
+    const first = await retroactivelyGrantAchievements(user.id, TZ);
+    expect(first).toBeGreaterThanOrEqual(1);
+
+    // Second call should grant 0 new achievements (all already unlocked)
+    const second = await retroactivelyGrantAchievements(user.id, TZ);
+    expect(second).toBe(0);
+  });
+
+  it("awards coins to the user for retroactively granted achievements", async () => {
+    const user = await createTestUser({ timezone: TZ, coins: 0 });
+    const task = await createTestTask(user.id, { completedAt: new Date() });
+    await db.insert((await import("@/lib/db/schema")).taskCompletions).values({
+      taskId: task.id,
+      userId: user.id,
+    });
+
+    await retroactivelyGrantAchievements(user.id, TZ);
+
+    const [updated] = await db.select({ coins: users.coins }).from(users).where(eq(users.id, user.id));
+    expect(updated.coins).toBeGreaterThan(0);
+  });
+
+  it("handles null timezone without throwing", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    await expect(retroactivelyGrantAchievements(user.id, null)).resolves.toBeDefined();
   });
 });

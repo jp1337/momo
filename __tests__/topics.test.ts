@@ -2,7 +2,8 @@
  * Integration tests for lib/topics.ts.
  *
  * Covers: getUserTopics (counts), getTopicById, createTopic, updateTopic,
- * deleteTopic (task reassignment to null on delete).
+ * deleteTopic (task reassignment to null on delete), archiveTopic,
+ * unarchiveTopic, getArchivedTopics.
  */
 
 import { describe, it, expect } from "vitest";
@@ -15,6 +16,9 @@ import {
   createTopic,
   updateTopic,
   deleteTopic,
+  archiveTopic,
+  unarchiveTopic,
+  getArchivedTopics,
 } from "@/lib/topics";
 import { createTestUser, createTestTopic, createTestTask } from "./helpers/fixtures";
 
@@ -221,5 +225,122 @@ describe("deleteTopic", () => {
     const topic = await createTestTopic(userA.id, { title: "Protected" });
 
     await expect(deleteTopic(topic.id, userB.id)).rejects.toThrow();
+  });
+});
+
+// ─── archiveTopic ─────────────────────────────────────────────────────────────
+
+describe("archiveTopic", () => {
+  it("sets archived: true on the topic", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id, { title: "To Archive" });
+
+    const result = await archiveTopic(topic.id, user.id);
+    expect(result.archived).toBe(true);
+  });
+
+  it("archived topic no longer appears in getUserTopics", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id, { title: "Will Disappear" });
+
+    await archiveTopic(topic.id, user.id);
+
+    const active = await getUserTopics(user.id);
+    expect(active.find((t) => t.id === topic.id)).toBeUndefined();
+  });
+
+  it("throws when topic belongs to another user", async () => {
+    const owner = await createTestUser({ timezone: TZ });
+    const other = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(owner.id, { title: "Protected" });
+
+    await expect(archiveTopic(topic.id, other.id)).rejects.toThrow(
+      "Topic not found or access denied"
+    );
+  });
+});
+
+// ─── unarchiveTopic ───────────────────────────────────────────────────────────
+
+describe("unarchiveTopic", () => {
+  it("clears archived flag (sets to false)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id, { title: "Was Archived" });
+    await archiveTopic(topic.id, user.id);
+
+    const result = await unarchiveTopic(topic.id, user.id);
+    expect(result.archived).toBe(false);
+  });
+
+  it("unarchived topic reappears in getUserTopics", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id, { title: "Restored" });
+    await archiveTopic(topic.id, user.id);
+    await unarchiveTopic(topic.id, user.id);
+
+    const active = await getUserTopics(user.id);
+    expect(active.find((t) => t.id === topic.id)).toBeDefined();
+  });
+
+  it("throws when topic belongs to another user", async () => {
+    const owner = await createTestUser({ timezone: TZ });
+    const other = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(owner.id, { title: "Mine" });
+    await archiveTopic(topic.id, owner.id);
+
+    await expect(unarchiveTopic(topic.id, other.id)).rejects.toThrow(
+      "Topic not found or access denied"
+    );
+  });
+});
+
+// ─── getArchivedTopics ────────────────────────────────────────────────────────
+
+describe("getArchivedTopics", () => {
+  it("returns only archived topics", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const active = await createTestTopic(user.id, { title: "Active" });
+    const archived = await createTestTopic(user.id, { title: "Archived" });
+    await archiveTopic(archived.id, user.id);
+
+    const result = await getArchivedTopics(user.id);
+    expect(result.find((t) => t.id === archived.id)).toBeDefined();
+    expect(result.find((t) => t.id === active.id)).toBeUndefined();
+  });
+
+  it("returns empty array when no topics are archived", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    await createTestTopic(user.id, { title: "Active Only" });
+
+    const result = await getArchivedTopics(user.id);
+    expect(result).toHaveLength(0);
+  });
+
+  it("includes taskCount and completedCount for each archived topic", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id, { title: "With Tasks" });
+    await createTestTask(user.id, { topicId: topic.id, title: "Open" });
+    await createTestTask(user.id, {
+      topicId: topic.id,
+      title: "Done",
+      completedAt: new Date(),
+    });
+    await archiveTopic(topic.id, user.id);
+
+    const result = await getArchivedTopics(user.id);
+    const found = result.find((t) => t.id === topic.id);
+    expect(found).toBeDefined();
+    expect(found!.taskCount).toBe(2);
+    expect(found!.completedCount).toBe(1);
+  });
+
+  it("isolates archived topics by user", async () => {
+    const userA = await createTestUser({ timezone: TZ });
+    const userB = await createTestUser({ timezone: TZ });
+    const topicA = await createTestTopic(userA.id, { title: "A's Archive" });
+    await archiveTopic(topicA.id, userA.id);
+
+    const result = await getArchivedTopics(userB.id);
+    expect(result).toHaveLength(0);
   });
 });
