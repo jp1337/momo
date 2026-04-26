@@ -23,6 +23,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Doppelte Aufgaben-Erledigung verhindert** — Race Condition in `TaskItem`: Checkbox-Klick und Swipe-Right konnten innerhalb des 300ms-Animations-Fensters beide `onComplete()` auslösen. Ein `isCompletingRef`-Guard verhindert jetzt den zweiten Aufruf.
+- **`handleNotToday` las Response-Body zweimal** — `res.json()` in `daily-quest-card.tsx` wurde einmal vor und einmal nach dem `!res.ok`-Check aufgerufen. Da ein HTTP-Response-Body nur einmal konsumiert werden kann, schlug der zweite Aufruf lautlos fehl. Der Body wird jetzt vor dem `ok`-Check einmalig geparst.
+- **Topic-Detail fehlende Task-Felder** — `energyLevel` und `postponeCount` fehlten im `serializedTasks`-Mapping in `app/(app)/topics/[id]/page.tsx`, weshalb Energie-Badges und „Oft verschoben"-Badge im Topic-Detail-View nicht angezeigt wurden.
+- **Aktive Sessions: englische Zeitangaben** — Relative Zeitstempel in der Session-Liste (z. B. „2m ago", „1h ago") wurden als hartcodierte englische Strings gerendert. Jetzt verwendet `Intl.RelativeTimeFormat` mit dem UI-Locale des Benutzers.
+
 - **Errungenschaften-Seite zeigte „0 von 0 freigeschaltet"** — Die `achievements`-Tabelle wurde nie automatisch befüllt. `scripts/migrate.mjs` seeded jetzt alle 31 Achievement-Definitionen nach jeder Migration (idempotent per `ON CONFLICT DO UPDATE`). Beim ersten Aufruf der Errungenschaften-Seite werden außerdem retroaktiv alle Achievements freigeschaltet, die der Nutzer bereits verdient hat (ohne Coin-Doppelzählung). Die Seite zeigt jetzt auch eine „Zuletzt freigeschaltet"-Sektion mit den neuesten 3 Errungenschaften.
 
 ### Changed
