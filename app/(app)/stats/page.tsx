@@ -61,7 +61,7 @@ export default async function StatsPage() {
     await Promise.all([
       getUserStatistics(userId),
       getEnergyLevelCounts(userId, 7),
-      getEnergyHistory(userId, 14),
+      getEnergyHistory(userId, 90),
       getEnergyCheckinDayCount(userId),
       getTranslations("stats"),
     ]);
