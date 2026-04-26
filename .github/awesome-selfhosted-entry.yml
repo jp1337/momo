@@ -1,0 +1,36 @@
+# Vorbereiteter Eintrag für awesome-selfhosted
+# Einreichen ab: 12. August 2026 (4-Monate-Regel ab v0.1.0 vom 12. April 2026)
+#
+# Ziel-Repo: https://github.com/awesome-selfhosted/awesome-selfhosted-data
+# Datei dort: software/momo.yml
+# PR-Titel: Add Momo - task management for procrastination & ADHD
+#
+# Vor dem Einreichen prüfen:
+# - [ ] Letzter Commit ist nicht älter als 6 Monate
+# - [ ] momotask.app ist erreichbar (als demo_url)
+# - [ ] Beschreibung unter 250 Zeichen (ohne "open-source", "free", "self-hosted")
+# - [ ] Eintrag stimmt mit actual features überein
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: "Momo"
+
+website_url: "https://momotask.app"
+
+source_code_url: "https://github.com/jp1337/momo"
+
+description: >-
+  Task management app for people with procrastination and ADHD. Daily Quest
+  selects one task per day, energy-aware quest swapping, coins and streaks,
+  habit tracker, wishlist rewards, and push notifications.
+
+licenses:
+  - MIT
+
+platforms:
+  - Docker
+  - Nodejs
+
+tags:
+  - "Task Management & To-do Lists"
+
+demo_url: "https://momotask.app"
