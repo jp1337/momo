@@ -1,70 +1,124 @@
-# Momo — Feature Roadmap
+# Momo — Roadmap
 
-Priorisierte Ideen und geplante Features. Kein Versprechen — ein lebendiges Dokument.
+Kein Feature-Backlog. Ein ehrlicher Blick auf das Projekt und was als nächstes wirklich zählt.
 Was bereits gebaut wurde, steht im [CHANGELOG](CHANGELOG.md).
 
 ---
 
-## Nächste Schritte (konkret geplant)
+## Wo Momo heute steht
 
-| Feature                        | Kategorie     | Aufwand | Notizen |
-| ------------------------------ | ------------- | ------- | ------- |
-| Keyboard Shortcut: Quick Add   | UX            | S       | Globaler Shortcut (z.B. `N` oder `/`) öffnet sofort ein minimales Task-Eingabefeld — ohne Navigation, ohne Klicken. Wichtigste Funktion für ADHS-Nutzer: Gedanken sofort festhalten bevor sie verschwinden. |
-| Kalender-Ansicht               | UX            | M       | Tasks mit Fälligkeitsdatum in einer Monats-/Wochenansicht. Kein externer Kalender nötig — iCal-Export existiert bereits, jetzt auch inline in der App. |
-| Pomodoro-Timer                 | Produktivität | M       | Integrierter 25/5-min Timer direkt bei der aktiven Aufgabe. Start-Button auf Task-Items, Countdown im Navbar-Bereich, optionaler Push bei Ablauf. Kein separates Tool mehr nötig. |
-| Quest-Verlauf                  | Statistiken   | S       | Seite `/quest-history` zeigt alle vergangenen Daily Quests mit Datum, ob erledigt oder verschoben und wie oft postponed. Gibt ein Gefühl für Muster ("immer montags unerledigte Quests"). |
-| Tages-Ziel (Daily Goal)        | Gamification  | S       | User setzt morgens ein Ziel: "Ich will heute X Aufgaben erledigen." Fortschrittsbalken auf dem Dashboard, Confetti bei Erreichen. Motiviert ohne zu stressen. |
+Momo hat eine starke Seele: *eine Aufgabe pro Tag, kein Overwhelm, du schaffst das.*
+Das technische Fundament ist solide — Self-hostable, GDPR-ready, multi-lingual, full API.
 
----
+**Das Problem:** Das Projekt ist schneller gewachsen als nötig. Zehn Seiten in der Navigation,
+sechs Entscheidungen um eine Aufgabe zu erstellen, Habits + Stats + Review + Achievements +
+Focus + Quick + Wishlist... Das ist Todoist-Komplexität mit Anti-Procrastination-Branding.
+Es untergräbt genau das, was Momo verspricht.
 
-## User Features
-
-### Kleiner Aufwand, hoher Impact
-
-- **Drag & Drop zwischen Topics** — Task per Drag aus einem Topic in ein anderes verschieben, statt Edit → TopicId ändern → Speichern. Dnd-kit ist bereits eingebunden.
-- **Quick-Edit Fälligkeitsdatum** — Datum direkt auf dem Task-Item ändern ohne das Formular zu öffnen (z.B. Klick auf das Datum → Datepicker-Popover). Besonders hilfreich beim Triage.
-- **Topic-Farbe als Streifen auf Task-Items** — kleiner farbiger Balken links auf jedem Task-Item wenn das Task zu einem Topic gehört. Gibt sofortigen visuellen Kontext auf der Task-Übersicht.
-- **"Erinnere mich an"-Shortcut** — Snooze-Auswahl vereinfachen: statt Datepicker zuerst schnelle Optionen "Heute Abend", "Morgen", "Nächste Woche", "In einem Monat" — mit Datepicker als Fallback.
-- **Offene Aufgaben zählen im Sidebar-Badge** — kleine Zahl hinter "Aufgaben" in der Sidebar zeigt wie viele nicht erledigte Tasks existieren. Motiviert aber lenkt nicht ab.
-
-### Mittlerer Aufwand
-
-- **Aufgaben-Import (CSV / JSON)** — Migration aus Todoist, Things, OmniFocus oder einfach einer Excel-Liste. Minimales Schema: Titel + optional Priorität/Topic/Fälligkeitsdatum. Nützlich beim Onboarding neuer Nutzer.
-- **Multi-Theme-Support** — zwei bis drei alternative Farbpaletten (z.B. "Ozean", "Sonnenuntergang") wählbar in den Settings neben Dark/Light/System. CSS-Variablen sind bereits abstrakt genug — nur neue `:root[data-palette="ocean"]`-Blöcke nötig.
-- **Streaks für einzelne Topics** — wie viele Tage in Folge wurde in diesem Topic eine Aufgabe erledigt. Kleiner Streak-Counter auf der TopicCard. Motiviert bei laufenden Projekten.
-- **Emoji-Reaktion auf Daily Quest** — nach Quest-Abschluss kurze Reaktionsmöglichkeit (😊😤😴 war es leicht/schwer/erschöpfend?). Drei Klicks, keine Pflicht. Liefert langfristig Daten für "was fällt dir schwer".
-- **Shared Topics (Read-only Link)** — öffentlicher, read-only Link zu einem einzelnen Topic mit seinen Aufgaben. Nützlich um jemandem zu zeigen was man gerade treibt, oder als öffentliche To-Do-Liste.
-
-### Größere Features
-
-- **Kalender-Ansicht** — Tasks mit Fälligkeitsdatum in einer Monats-/Wochenansicht innerhalb der App. iCal-Export existiert bereits, gibt eine gute Datengrundlage.
-- **Multi-User / Shared Workspace** — Topics und Tasks mit einer anderen Person teilen (z.B. Haushaltsliste mit Partner). Größtes Feature auf der Liste — erfordert Rollen, Einladungen, Datenisolations-Refactoring.
-- **Mobile PWA verbessern** — App-Shortcuts im Manifest (direkt zu "Neue Aufgabe", "Heutige Quest"), bessere Offline-Fehler-States, Share-Target (Text aus anderem App → neue Aufgabe).
+Die nächste Phase heißt nicht "mehr bauen". Sie heißt **vereinfachen, polieren, verbreiten.**
 
 ---
 
-## Technical Features
+## Die drei Themen
 
-### Stabilität & Betrieb
+### 1. Vereinfachen — Friction raus
 
-- **Error-Tracking** — Sentry oder GlitchTip (self-hostbar!) für Produktionsfehler-Visibility. `instrumentation.ts` in Next.js wäre der Einstiegspunkt. Alternativ OpenTelemetry mit eigenem Grafana-Stack.
-- **Automatische DB-Backups** — `pg_dump`-Cronjob in Docker Compose und Kubernetes-Manifest mit Retention (7 Tage daily, 4 Wochen weekly). Einfachste Verbesserung für Selfhoster.
-- **Offline-Queue (PWA)** — Tasks offline erstellen/abhaken; beim Reconnect syncen via Service Worker Background Sync API. Technisch aufwändig, aber für Mobile-first-Nutzer wichtig.
-- **E2E-Tests (Playwright)** — automatisierter Browser-Testlauf für die wichtigsten User Journeys: Registrierung → Onboarding → Task anlegen → Quest erledigen → Stats anschauen.
+Das Versprechen muss sich in jedem Klick anfühlen. Nicht nur im Tagline.
 
-### Authentifizierung
+**Task-Erfassung radikal vereinfachen**
+Eine neue Aufgabe soll in unter fünf Sekunden erfasst sein — Titel eintippen, Enter, fertig.
+Typ, Priorität, Energielevel, Zeitschätzung, Topic: alles optional, alles versteckt hinter
+einem "Mehr"-Klick. Heute fragt die App zu viel bevor sie zuhört.
 
-- **Microsoft / Azure AD** — Auth.js `microsoft-entra-id`-Provider; Tenant auf `consumers` pinnen für private Outlook/Hotmail/Xbox-Accounts. Geringer Aufwand, deckt eine relevante Nutzergruppe ab.
+Ein globaler Keyboard-Shortcut (`N` oder `/`) öffnet ein minimales Eingabefeld überall in der App —
+ohne Navigation, ohne Kontextwechsel. Für ADHS-Nutzer: Gedanken festhalten bevor sie verschwinden.
+
+**Navigation konsolidieren**
+Die Sidebar hat zu viele Einträge. Habits, Review und Achievements könnten unter einem
+"Übersicht"-Dach leben statt als separate Toplevel-Seiten. Weniger Entscheidungen, welche
+Seite man jetzt öffnet.
+
+**Letzte window.confirm-Dialoge ersetzen**
+Topics-Seite hat noch native Browser-Dialoge beim Löschen. Die blockieren Browser-Extensions
+und fühlen sich 2012 an. Inline-Bestätigung wie auf der Wishlist-Seite.
 
 ---
 
-## Ideen-Backlog (noch nicht bewertet)
+### 2. Polieren — Den Kern besser machen
 
-- **Pomodoro-Timer** — integrierter 25/5-Timer direkt bei der aktiven Aufgabe
-- **Zeittracking** — wie lange hat man wirklich an einer Aufgabe gearbeitet (vs. Schätzung)
-- **AI-Priorisierung** — Aufgaben automatisch nach Energie, Dringlichkeit und persönlichem Muster sortieren; Anthropic Claude API wäre die naheliegende Wahl
-- **Quest-Ablehnen** — "Diese Quest passt heute nicht" mit Grund-Auswahl (zu groß / falsche Energie / Abhängigkeit); liefert Daten für bessere Quest-Auswahl
-- **Gamification: Leagues / Ranglisten** — opt-in Wochenvergleich mit anonymen anderen Nutzern (Coins/Quests diese Woche)
-- **Benutzerdefinierte Achievements** — User definiert selbst "Wenn ich 10 Aufgaben im Topic Sport erledigt habe, schalte X frei"
-- **Aufgaben-Abhängigkeiten** — Task A blockiert Task B (über sequenzielle Topics hinaus; explizite "blocked by"-Relation)
-- **Keyboard-Navigation (Vim-ähnlich)** — `j/k` navigiert Tasks, `Space` erledigt, `e` editiert — für Power-User
+Neue Features bringen nichts wenn das Bestehende nicht überzeugt. Diese Bereiche
+verdienen mehr Aufmerksamkeit:
+
+**Der Aha-Moment für neue Nutzer**
+Was erlebt jemand in den ersten 10 Minuten? Das Onboarding existiert, aber:
+Sieht ein neuer Nutzer die komplette Schleife — Quest → Energy-Check-in → Task erledigt →
+Coins verdient → Wishlist — noch am ersten Tag? Wenn nicht, kommt er nicht zurück.
+
+Die Lücke: nach dem Onboarding landen Nutzer auf einem leeren Dashboard ohne klare
+nächste Aktion. Bessere Empty States die erklären *warum* man was tun soll, nicht nur *dass*
+noch nichts da ist.
+
+**Daily Quest Algorithm**
+Der Quest-Algorithmus ist das Herzstück. Wird er regelmäßig hinterfragt?
+Fühlt sich die ausgewählte Quest immer sinnvoll an — oder manchmal zufällig?
+Keine Code-Änderung nötig, aber: bewusst testen und beobachten.
+
+**Insights statt Daten**
+Die Stats-Seite zeigt Zahlen. Aber: "Du erledigst Aufgaben am häufigsten dienstagmorgens"
+ist mehr wert als ein Balkenchart. Kleine, kontextuelle Hinweise auf dem Dashboard
+("Dein stärkster Wochentag ist Dienstag — guter Tag für die große Aufgabe") machen
+bestehende Daten nützlicher ohne neue Seiten zu bauen.
+
+---
+
+### 3. Verbreiten — Momo bekannt machen
+
+Mehr Features bringen nichts wenn niemand Momo kennt. Das ist die größte Hebel.
+
+**awesome-selfhosted**
+Die bekannteste kuratierte Liste für Self-Hosting. Ein erfolgreicher PR dort bringt mehr
+echte Nutzer als jedes Feature. Frühestmöglich einreichen (aktuell: August 2026 nach
+Richtlinien-Anforderungen).
+
+**alternativeto.net**
+Kostenloses Listing als Alternative zu Todoist, Things, TickTick, Habitica.
+Jemand der googelt "Todoist Alternative self-hosted" soll Momo finden.
+
+**Ein kurzes Video**
+Kein Marketing-Video — eine echte 3-Minuten-Demo: Momo installieren mit Docker,
+erste Task anlegen, Daily Quest erledigen. Auf YouTube, verlinkt von der Doku-Seite.
+Senkt die Hürde für Selbsthosting massiv.
+
+**GitHub-Präsenz pflegen**
+README ist gut. Aber: Topics, Good-First-Issues, Contributors-Guide.
+Wer Momo auf GitHub findet, soll sofort wissen wie er mitmachen kann.
+
+---
+
+## Was wir bewusst nicht tun
+
+- Keine neuen Toplevel-Seiten bis Navigation vereinfacht ist
+- Keine weiteren Notification-Typen oder -Kanäle
+- Keine weiteren Auth-Provider
+- Keine KI-Features ohne klaren Nutzen für procrastination-geplagte User
+- Kein Feature das eine weitere Entscheidung vom Nutzer verlangt
+
+Das ist keine Freeze — neue Features sind willkommen wenn sie *Friction reduzieren*,
+nicht wenn sie Funktionsumfang erhöhen.
+
+---
+
+## Offene technische Schulden
+
+Kleine Dinge die irgendwann erledigt werden sollten — kein eigenes Feature, aber wichtig:
+
+- **Automatische DB-Backups** — pg_dump-Cronjob in Docker Compose für Selfhoster
+- **Error-Tracking** — GlitchTip (self-hostbar) oder Sentry für Produktionsfehler-Visibility
+- **E2E-Tests** — Playwright für die wichtigsten User Journeys als Regressions-Sicherung
+- **Offline-Queue** — Tasks offline erfassen via PWA Service Worker Background Sync
+
+---
+
+*Momo ist für die Menschen die zu viel im Kopf haben und zu wenig auf der Liste erledigt bekommen.
+Der nächste Schritt ist nicht ein neues Feature — es ist sicherzustellen dass das was da ist,
+wirklich für diese Menschen funktioniert.*
