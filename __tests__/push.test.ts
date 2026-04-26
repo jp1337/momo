@@ -243,10 +243,10 @@ describe("sendAchievementNotifications", () => {
     await createTestPushSubscription(user.id);
 
     const achievements = [
-      { key: "first_task", title: "First Task", icon: "🏅", coinReward: 10 },
-      { key: "streak_7", title: "Week Streak", icon: "🔥", coinReward: 25 },
-      { key: "coins_100", title: "Coin Hoarder", icon: "💰", coinReward: 50 },
-      { key: "tasks_10", title: "Task Master", icon: "⭐", coinReward: 20 },
+      { key: "first_task", title: "First Task", icon: "🏅", rarity: "common" as const, coinReward: 10 },
+      { key: "streak_7", title: "Week Streak", icon: "🔥", rarity: "rare" as const, coinReward: 25 },
+      { key: "coins_100", title: "Coin Hoarder", icon: "💰", rarity: "epic" as const, coinReward: 50 },
+      { key: "tasks_10", title: "Task Master", icon: "⭐", rarity: "common" as const, coinReward: 20 },
     ];
 
     await sendAchievementNotifications(user.id, achievements);
@@ -259,7 +259,7 @@ describe("sendAchievementNotifications", () => {
     await createTestPushSubscription(user.id);
 
     await sendAchievementNotifications(user.id, [
-      { key: "first_task", title: "First Task", icon: "🏅", coinReward: 10 },
+      { key: "first_task", title: "First Task", icon: "🏅", rarity: "common" as const, coinReward: 10 },
     ]);
     expect(mockSendNotification).toHaveBeenCalledTimes(1);
     const payload = JSON.parse(mockSendNotification.mock.calls[0][1] as string) as {

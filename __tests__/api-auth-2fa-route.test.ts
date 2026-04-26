@@ -13,6 +13,7 @@
  */
 
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -61,11 +62,11 @@ function asSession(userId: string, email = "test@example.com") {
 }
 
 function noSession() {
-  mockAuth.mockResolvedValue(null);
+  mockAuth.mockResolvedValue(null as never);
 }
 
-function jsonRequest(body: unknown): Request {
-  return new Request("http://localhost/api/auth/2fa", {
+function jsonRequest(body: unknown): NextRequest {
+  return new NextRequest("http://localhost/api/auth/2fa", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -182,7 +183,7 @@ describe("POST /api/auth/2fa/verify-setup", () => {
     const user = await createTestUser({ timezone: "Europe/Berlin" });
     asSession(user.id, user.email!);
 
-    const req = new Request("http://localhost/api/auth/2fa/verify-setup", {
+    const req = new NextRequest("http://localhost/api/auth/2fa/verify-setup", {
       method: "POST",
       body: "not-json",
       headers: { "Content-Type": "application/json" },
@@ -270,7 +271,7 @@ describe("POST /api/auth/2fa/verify", () => {
     const user = await createTestUser({ timezone: "Europe/Berlin" });
     asSession(user.id);
 
-    const req = new Request("http://localhost/api/auth/2fa/verify", {
+    const req = new NextRequest("http://localhost/api/auth/2fa/verify", {
       method: "POST",
       body: "not-json",
       headers: { "Content-Type": "application/json" },
@@ -332,7 +333,7 @@ describe("POST /api/auth/2fa/disable", () => {
     const user = await createTestUser({ timezone: "Europe/Berlin" });
     asSession(user.id);
 
-    const req = new Request("http://localhost/api/auth/2fa/disable", {
+    const req = new NextRequest("http://localhost/api/auth/2fa/disable", {
       method: "POST",
       body: "not-json",
       headers: { "Content-Type": "application/json" },
@@ -395,7 +396,7 @@ describe("POST /api/auth/2fa/regenerate-backup-codes", () => {
     const user = await createTestUser({ timezone: "Europe/Berlin" });
     asSession(user.id);
 
-    const req = new Request("http://localhost/api/auth/2fa/regen", {
+    const req = new NextRequest("http://localhost/api/auth/2fa/regen", {
       method: "POST",
       body: "not-json",
       headers: { "Content-Type": "application/json" },

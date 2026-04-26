@@ -466,7 +466,7 @@ describe("POST /api/auth/passkey/second-factor/verify", () => {
 
   it("returns 500 when session cookie is missing", async () => {
     mockAuth.mockResolvedValue(makeSession());
-    vi.mocked(totp.readSessionTokenFromCookieStore).mockReturnValue(null);
+    vi.mocked(totp.readSessionTokenFromCookieStore).mockReturnValue(undefined);
     const { POST } = await import("@/app/api/auth/passkey/second-factor/verify/route");
     const res = await POST(makeRequest(authResponse()));
     expect(res.status).toBe(500);

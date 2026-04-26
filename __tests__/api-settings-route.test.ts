@@ -93,7 +93,7 @@ function asVerifiedUser(userId: string): void {
   });
 }
 
-function asVerifiedUserFailed(reason = "UNAUTHENTICATED"): void {
+function asVerifiedUserFailed(reason: "UNAUTHORIZED" | "TOTP_REQUIRED" | "TOTP_SETUP_REQUIRED" = "UNAUTHORIZED"): void {
   mockVerifiedAuth.mockResolvedValue({ ok: false as const, reason });
 }
 
@@ -485,7 +485,7 @@ describe("GET /api/settings/notification-history", () => {
 
 describe("GET /api/settings/calendar-feed", () => {
   it("returns 401 when unauthenticated", async () => {
-    asVerifiedUserFailed("UNAUTHENTICATED");
+    asVerifiedUserFailed("UNAUTHORIZED");
     const res = await calendarGET(req("GET", "/api/settings/calendar-feed"));
     expect(res.status).toBe(401);
   });
@@ -502,7 +502,7 @@ describe("GET /api/settings/calendar-feed", () => {
 
 describe("POST /api/settings/calendar-feed", () => {
   it("returns 401 when unauthenticated", async () => {
-    asVerifiedUserFailed("UNAUTHENTICATED");
+    asVerifiedUserFailed("UNAUTHORIZED");
     const res = await calendarPOST(req("POST", "/api/settings/calendar-feed"));
     expect(res.status).toBe(401);
   });
@@ -522,7 +522,7 @@ describe("POST /api/settings/calendar-feed", () => {
 
 describe("DELETE /api/settings/calendar-feed", () => {
   it("returns 401 when unauthenticated", async () => {
-    asVerifiedUserFailed("UNAUTHENTICATED");
+    asVerifiedUserFailed("UNAUTHORIZED");
     const res = await calendarDELETE(req("DELETE", "/api/settings/calendar-feed"));
     expect(res.status).toBe(401);
   });

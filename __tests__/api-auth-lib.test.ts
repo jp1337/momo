@@ -78,7 +78,7 @@ function sessionRequest(): Request {
 beforeEach(() => {
   vi.clearAllMocks();
   // Safe defaults
-  mockAuth.mockResolvedValue(null);
+  mockAuth.mockResolvedValue(null as never);
   mockResolveApiKeyUser.mockResolvedValue(null);
   mockIsSessionSecondFactorVerified.mockResolvedValue(false);
   mockReadSessionToken.mockReturnValue(undefined);
@@ -131,7 +131,7 @@ describe("resolveApiUser", () => {
   });
 
   it("returns null when no bearer and no session", async () => {
-    mockAuth.mockResolvedValue(null);
+    mockAuth.mockResolvedValue(null as never);
 
     const result = await resolveApiUser(sessionRequest());
 
@@ -179,7 +179,7 @@ describe("resolveVerifiedApiUser", () => {
   });
 
   it("returns { ok: false, reason: 'UNAUTHORIZED' } when session is missing", async () => {
-    mockAuth.mockResolvedValue(null);
+    mockAuth.mockResolvedValue(null as never);
 
     const result = await resolveVerifiedApiUser(sessionRequest());
 
