@@ -14,7 +14,7 @@ import { defineConfig } from "vitest/config";
 
 const TEST_DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
-  "postgresql://momo:momo_dev_password@localhost:5432/momo_test";
+  "postgresql://momo:password@localhost:5432/momo_test";
 
 export default defineConfig({
   test: {

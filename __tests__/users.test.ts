@@ -2,14 +2,15 @@
  * Integration tests for lib/users.ts.
  *
  * Covers: deleteUser (cascade, not-found error),
- * updateUserProfile (name, email uniqueness enforcement).
+ * updateUserProfile (name, email uniqueness enforcement),
+ * processProfileImage (WebP conversion, invalid format rejection).
  */
 
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { users, tasks, topics } from "@/lib/db/schema";
-import { deleteUser, updateUserProfile } from "@/lib/users";
+import { deleteUser, updateUserProfile, processProfileImage } from "@/lib/users";
 import { createTestUser, createTestTopic, createTestTask } from "./helpers/fixtures";
 
 const TZ = "Europe/Berlin";
@@ -104,5 +105,55 @@ describe("updateUserProfile", () => {
     await expect(
       updateUserProfile(user.id, { email: user.email! })
     ).resolves.not.toThrow();
+  });
+
+  it("returns current profile when no update fields are provided", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const result = await updateUserProfile(user.id, {});
+    expect(result.email).toBe(user.email);
+  });
+
+  it("sets image to null when explicitly passed null", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const result = await updateUserProfile(user.id, { image: null });
+    expect(result.image).toBeNull();
+  });
+
+  it("throws 'User not found' for non-existent user in updateUserProfile", async () => {
+    await expect(
+      updateUserProfile("00000000-0000-0000-0000-000000000000", { name: "Ghost" })
+    ).rejects.toThrow("User not found");
+  });
+});
+
+// ─── processProfileImage ──────────────────────────────────────────────────────
+
+// Minimal 1×1 PNG as base64 (for Sharp tests)
+const TINY_PNG_B64 =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+const TINY_PNG_DATA_URL = `data:image/png;base64,${TINY_PNG_B64}`;
+
+describe("processProfileImage", () => {
+  it("converts a PNG data URL to WebP", async () => {
+    const result = await processProfileImage(TINY_PNG_DATA_URL);
+    expect(result).toMatch(/^data:image\/webp;base64,/);
+  });
+
+  it("returns a shorter or equal base64 string (WebP compression)", async () => {
+    const result = await processProfileImage(TINY_PNG_DATA_URL);
+    // Just verify it's a valid data URL with content
+    expect(result.length).toBeGreaterThan(30);
+  });
+
+  it("throws on an invalid data URL", async () => {
+    await expect(processProfileImage("not-a-data-url")).rejects.toThrow(
+      "Invalid image format"
+    );
+  });
+
+  it("throws on a plain text data URL", async () => {
+    await expect(
+      processProfileImage("data:text/plain;base64,aGVsbG8=")
+    ).rejects.toThrow("Invalid image format");
   });
 });

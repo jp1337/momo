@@ -134,6 +134,11 @@ const serverEnvSchema = z.object({
       "Set to true to disable the GitHub Releases update check. Useful for air-gap / offline installations where outbound internet access is restricted."
     ),
 
+  // E2E Testing (never set in production)
+  PLAYWRIGHT_TEST_PASSWORD: emptyToUndefined.describe(
+    "Password for the test-only credentials provider used in Playwright E2E tests. Never set in production."
+  ),
+
   // Runtime
   NODE_ENV: z
     .enum(["development", "production", "test"])

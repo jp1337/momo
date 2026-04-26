@@ -9,6 +9,8 @@
  *    enabled if MICROSOFT_CLIENT_ID is set; tenant pinned to "consumers" so
  *    work / school / Microsoft 365 accounts are intentionally NOT supported)
  *  - Generic OIDC (enabled only if OIDC_ISSUER is set — for Authentik, Keycloak, etc.)
+ *  - Test Credentials (enabled only when PLAYWRIGHT_TEST_PASSWORD is set and
+ *    NODE_ENV !== "production" — never available in production builds)
  *
  * Uses the Drizzle adapter to persist users, sessions, and accounts in PostgreSQL.
  * On first login, the user record is created by the adapter.
@@ -26,7 +28,7 @@ import { accounts, sessions, users, verificationTokens } from "@/lib/db/schema";
 import { serverEnv } from "@/lib/env";
 
 /** Build the list of enabled OAuth providers based on available env vars */
-function buildProviders() {
+async function buildProviders() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const providers: any[] = [];
 
@@ -88,6 +90,56 @@ function buildProviders() {
     );
   }
 
+  // Test-only credentials provider — only enabled when PLAYWRIGHT_TEST_PASSWORD is set
+  // and NODE_ENV is not "production". Used exclusively for Playwright E2E tests.
+  if (
+    serverEnv.PLAYWRIGHT_TEST_PASSWORD &&
+    process.env.NODE_ENV !== "production"
+  ) {
+    const { default: Credentials } = await import("next-auth/providers/credentials");
+    const { eq } = await import("drizzle-orm");
+    providers.push(
+      Credentials({
+        id: "test-credentials",
+        name: "Test Credentials",
+        credentials: {
+          email: { label: "Email", type: "email" },
+          password: { label: "Password", type: "password" },
+        },
+        authorize: async (credentials) => {
+          if (
+            !credentials?.password ||
+            credentials.password !== serverEnv.PLAYWRIGHT_TEST_PASSWORD
+          ) {
+            return null;
+          }
+          const email =
+            typeof credentials.email === "string"
+              ? credentials.email
+              : "test@momotest.local";
+
+          // Find or create the test user
+          const existing = await db
+            .select({ id: users.id, email: users.email, name: users.name })
+            .from(users)
+            .where(eq(users.email, email))
+            .limit(1);
+
+          if (existing.length > 0) {
+            return { id: existing[0].id, email: existing[0].email, name: existing[0].name };
+          }
+
+          const [created] = await db
+            .insert(users)
+            .values({ id: crypto.randomUUID(), email, name: "E2E Test User" })
+            .returning({ id: users.id, email: users.email, name: users.name });
+
+          return { id: created.id, email: created.email, name: created.name };
+        },
+      })
+    );
+  }
+
   return providers;
 }
 
@@ -99,7 +151,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     verificationTokensTable: verificationTokens,
   }),
 
-  providers: buildProviders(),
+  providers: await buildProviders(),
 
   session: {
     // Use database sessions for better security and revocability

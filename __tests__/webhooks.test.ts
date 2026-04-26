@@ -2,13 +2,17 @@
  * Tests for lib/webhooks.ts.
  *
  * Covers endpoint CRUD, ownership checks, secret encryption,
- * delivery-list authorization, and the cleanup cron job.
+ * delivery-list authorization, the cleanup cron job, and
+ * fireWebhookEvent / testWebhookEndpoint with a local mock HTTP server.
  *
- * `fireWebhookEvent` and `testWebhookEndpoint` make real HTTP calls and are
- * excluded — they require a mock HTTP server.
+ * Note: deliverToEndpoint enforces HTTPS at runtime. HTTP test-server URLs
+ * result in a logged "failure" delivery (not a thrown error), which lets us
+ * verify DB logging without a real TLS certificate.
  */
 
 import { describe, it, expect } from "vitest";
+import { createServer } from "http";
+import type { AddressInfo } from "net";
 import { db } from "@/lib/db";
 import { webhookDeliveries, webhookEndpoints } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -20,8 +24,11 @@ import {
   deleteWebhookEndpoint,
   listWebhookDeliveries,
   cleanupWebhookDeliveries,
+  fireWebhookEvent,
+  testWebhookEndpoint,
   MAX_WEBHOOK_ENDPOINTS,
 } from "@/lib/webhooks";
+import type { WebhookTaskPayload } from "@/lib/webhooks";
 import { createTestUser } from "./helpers/fixtures";
 
 const TZ = "Europe/Berlin";
@@ -318,5 +325,190 @@ describe("cleanupWebhookDeliveries", () => {
       .from(webhookDeliveries)
       .where(eq(webhookDeliveries.endpointId, created.id));
     expect(after).toHaveLength(1);
+  });
+});
+
+// ─── fireWebhookEvent + testWebhookEndpoint (mock HTTP server) ────────────────
+
+/**
+ * Minimal task payload for fireWebhookEvent tests.
+ */
+function makeTaskPayload(overrides: Partial<WebhookTaskPayload> = {}): WebhookTaskPayload {
+  return {
+    id: "task-123",
+    title: "Test Task",
+    type: "TASK",
+    priority: "MEDIUM",
+    topicId: null,
+    dueDate: null,
+    completedAt: null,
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+/**
+ * Helper to start a local HTTP server and return its URL + a stop function.
+ * Note: deliverToEndpoint enforces HTTPS at runtime, so deliveries to this
+ * server will be logged as failures with "Non-HTTPS endpoint" error.
+ * That still exercises the DB logging and event-filter paths.
+ */
+async function startLocalServer(
+  handler: (
+    method: string | undefined,
+    body: string,
+    respond: (status: number) => void
+  ) => void
+): Promise<{ url: string; stop: () => Promise<void> }> {
+  return new Promise((resolve) => {
+    const server = createServer((req, res) => {
+      let data = "";
+      req.on("data", (chunk) => (data += chunk));
+      req.on("end", () => {
+        handler(req.method, data, (status) => {
+          res.writeHead(status, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: status < 400 }));
+        });
+      });
+    });
+
+    server.listen(0, "127.0.0.1", () => {
+      const { port } = server.address() as AddressInfo;
+      resolve({
+        url: `http://127.0.0.1:${port}/hook`,
+        stop: () => new Promise<void>((res) => server.close(() => res())),
+      });
+    });
+  });
+}
+
+describe("fireWebhookEvent", () => {
+  it("logs a failure delivery when endpoint URL is HTTP (HTTPS enforced at runtime)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const { url, stop } = await startLocalServer((_method, _body, respond) => {
+      respond(200);
+    });
+
+    try {
+      // Endpoint stored with the HTTP test-server URL
+      await createWebhookEndpoint(user.id, ep({ url, name: "HTTP Test" }));
+      await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
+
+      // Give the async fire-and-forget DB write time to settle
+      await new Promise((r) => setTimeout(r, 300));
+
+      const [endpoint] = await listWebhookEndpoints(user.id);
+      const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
+      expect(deliveries.length).toBeGreaterThan(0);
+      // The delivery should be a failure because HTTP is rejected
+      expect(deliveries[0].status).toBe("failure");
+      expect(deliveries[0].errorMessage).toContain("Non-HTTPS");
+    } finally {
+      await stop();
+    }
+  });
+
+  it("only sends to endpoints subscribed to the event", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    let hitCount = 0;
+
+    const { url, stop } = await startLocalServer((_method, _body, respond) => {
+      hitCount++;
+      respond(200);
+    });
+
+    try {
+      // Endpoint subscribes only to task.completed — should NOT fire on task.created
+      await createWebhookEndpoint(
+        user.id,
+        ep({ url, name: "Selective EP", events: ["task.completed"] })
+      );
+      await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
+      await new Promise((r) => setTimeout(r, 200));
+
+      // The HTTP server should never have been reached
+      expect(hitCount).toBe(0);
+    } finally {
+      await stop();
+    }
+  });
+
+  it("does not fire when endpoint is disabled", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    let hitCount = 0;
+
+    const { url, stop } = await startLocalServer((_method, _body, respond) => {
+      hitCount++;
+      respond(200);
+    });
+
+    try {
+      await createWebhookEndpoint(
+        user.id,
+        ep({ url, name: "Disabled EP", enabled: false })
+      );
+      await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
+      await new Promise((r) => setTimeout(r, 200));
+
+      expect(hitCount).toBe(0);
+    } finally {
+      await stop();
+    }
+  });
+
+  it("returns without error when user has no endpoints", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    // Should resolve without throwing
+    await expect(
+      fireWebhookEvent(user.id, "task.created", makeTaskPayload())
+    ).resolves.toBeUndefined();
+  });
+});
+
+describe("testWebhookEndpoint", () => {
+  it("throws 'not_found' on ownership violation", async () => {
+    const userA = await createTestUser({ timezone: TZ });
+    const userB = await createTestUser({ timezone: TZ });
+
+    const { url, stop } = await startLocalServer((_method, _body, respond) => {
+      respond(200);
+    });
+
+    try {
+      const created = await createWebhookEndpoint(userA.id, ep({ url }));
+      await expect(testWebhookEndpoint(created.id, userB.id)).rejects.toThrow("not_found");
+    } finally {
+      await stop();
+    }
+  });
+
+  it("throws 'not_found' for a completely unknown endpoint ID", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const fakeId = "00000000-0000-0000-0000-000000000099";
+    await expect(testWebhookEndpoint(fakeId, user.id)).rejects.toThrow("not_found");
+  });
+
+  it("logs a delivery attempt to the DB after testWebhookEndpoint", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const { url, stop } = await startLocalServer((_method, _body, respond) => {
+      respond(200);
+    });
+
+    try {
+      const endpoint = await createWebhookEndpoint(user.id, ep({ url, name: "Test EP" }));
+      // testWebhookEndpoint calls deliverToEndpoint — even HTTP URLs log to DB
+      await testWebhookEndpoint(endpoint.id, user.id);
+
+      // Give the fire-and-forget DB write time to settle
+      await new Promise((r) => setTimeout(r, 300));
+
+      const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
+      expect(deliveries.length).toBeGreaterThan(0);
+      // HTTP enforces a failure, but a delivery log entry must exist
+      expect(deliveries[0].event).toBe("task.test");
+    } finally {
+      await stop();
+    }
   });
 });
