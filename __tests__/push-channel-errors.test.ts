@@ -1,8 +1,8 @@
 /**
- * Error-path tests for lib/push.ts → sendStreakShieldNotification and
- * sendAchievementNotifications when sendToAllChannels rejects.
+ * Error-path tests for lib/push.ts when sendToAllChannels rejects.
  *
  * Lines covered:
+ *   1369-1376 — sendMorningBriefingNotifications: notification channels loop + catch
  *   1432 — sendStreakShieldNotification: sendToAllChannels catch block
  *   1489 — sendAchievementNotifications: sendToAllChannels catch block
  *
@@ -45,9 +45,41 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
-import { sendStreakShieldNotification, sendAchievementNotifications } from "@/lib/push";
+vi.mock("@/lib/daily-quest", () => ({
+  selectDailyQuest: vi.fn().mockResolvedValue(null),
+  getCurrentDailyQuest: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock("@/lib/notification-log", () => ({
+  logNotification: vi.fn(),
+}));
+
+import {
+  sendStreakShieldNotification,
+  sendAchievementNotifications,
+  sendMorningBriefingNotifications,
+} from "@/lib/push";
+import { db } from "@/lib/db";
+import { users, notificationChannels } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { createTestUser } from "./helpers/fixtures";
 import type { UnlockedAchievement } from "@/lib/gamification";
+
+/** Mirror of push.test.ts helper — sets morningBriefingTime to the current UTC time bucket */
+async function enableMorningBriefingForUser(userId: string): Promise<void> {
+  const now = new Date();
+  const h = now.getUTCHours().toString().padStart(2, "0");
+  const m = (Math.floor(now.getUTCMinutes() / 5) * 5).toString().padStart(2, "0");
+  await db
+    .update(users)
+    .set({
+      notificationEnabled: true,
+      morningBriefingEnabled: true,
+      morningBriefingTime: `${h}:${m}`,
+      timezone: "UTC",
+    })
+    .where(eq(users.id, userId));
+}
 
 describe("push — sendToAllChannels error paths", () => {
   it("sendStreakShieldNotification swallows sendToAllChannels errors (covers line 1432)", async () => {
@@ -83,6 +115,33 @@ describe("push — sendToAllChannels error paths", () => {
 
     expect(consoleSpy).toHaveBeenCalledWith(
       "[channels] Failed to send achievement notification to",
+      user.id,
+      expect.any(Error)
+    );
+
+    consoleSpy.mockRestore();
+  });
+
+  it("sendMorningBriefingNotifications catches notification channel send errors (covers lines 1369-1376)", async () => {
+    const user = await createTestUser({ timezone: "UTC" });
+    await enableMorningBriefingForUser(user.id);
+
+    // Insert an active notification channel (sendToAllChannels is mocked to reject)
+    await db.insert(notificationChannels).values({
+      userId: user.id,
+      type: "ntfy",
+      config: { topic: "test-topic" },
+      enabled: true,
+    });
+
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await sendMorningBriefingNotifications();
+
+    // sendToAllChannels always rejects in this file → catch block fires → failed++
+    expect(result.failed).toBeGreaterThanOrEqual(1);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[channels] Failed to send morning briefing to",
       user.id,
       expect.any(Error)
     );
