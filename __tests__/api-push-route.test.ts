@@ -276,6 +276,18 @@ describe("DELETE /api/push/subscribe", () => {
     );
     expect(res.status).toBe(200);
   });
+
+  it("returns 400 for a malformed JSON body", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const badReq = new Request("http://localhost/api/push/subscribe", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: "not valid json",
+    });
+    const res = await subscribeDELETE(badReq as never);
+    expect(res.status).toBe(400);
+  });
 });
 
 // ─── GET /api/push/devices ────────────────────────────────────────────────────
