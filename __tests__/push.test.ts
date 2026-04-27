@@ -294,6 +294,20 @@ describe("sendAchievementNotifications", () => {
     expect(payload.title).toContain("Achievement");
     expect(payload.body).toContain("First Task");
   });
+
+  it("catches and ignores push errors per-achievement — does not throw", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+
+    // Make sendNotification throw a non-410 error for this test
+    mockSendNotification.mockRejectedValueOnce(Object.assign(new Error("Temporary push error"), { statusCode: 500 }));
+
+    await expect(
+      sendAchievementNotifications(user.id, [
+        { key: "first_task", title: "First Task", icon: "🏅", rarity: "common" as const, coinReward: 10 },
+      ])
+    ).resolves.toBeUndefined();
+  });
 });
 
 // ─── sendStreakShieldNotification ─────────────────────────────────────────────

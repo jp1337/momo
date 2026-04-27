@@ -16,6 +16,7 @@ import {
   getUserStats,
   checkAndUnlockAchievements,
   retroactivelyGrantAchievements,
+  updateQuestStreak,
   LEVELS,
 } from "@/lib/gamification";
 import { getLocalDateString } from "@/lib/date-utils";
@@ -291,5 +292,119 @@ describe("retroactivelyGrantAchievements", () => {
   it("handles null timezone without throwing", async () => {
     const user = await createTestUser({ timezone: TZ });
     await expect(retroactivelyGrantAchievements(user.id, null)).resolves.toBeDefined();
+  });
+});
+
+// ─── updateQuestStreak ────────────────────────────────────────────────────────
+
+describe("updateQuestStreak", () => {
+  it("returns questStreakCurrent=0 when user does not exist", async () => {
+    const result = await updateQuestStreak("00000000-0000-0000-0000-000000000000", TZ);
+    expect(result).toEqual({ questStreakCurrent: 0 });
+  });
+
+  it("returns the current streak unchanged when already updated today", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+
+    // Prime the streak: set questStreakLastDate to today so the idempotent guard fires
+    await db
+      .update(users)
+      .set({ questStreakCurrent: 5, questStreakLastDate: today })
+      .where(eq(users.id, user.id));
+
+    const result = await updateQuestStreak(user.id, TZ);
+    expect(result).toEqual({ questStreakCurrent: 5 });
+  });
+
+  it("increments the streak when last date was yesterday", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const yesterday = new Date();
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    await db
+      .update(users)
+      .set({ questStreakCurrent: 3, questStreakLastDate: yesterdayStr })
+      .where(eq(users.id, user.id));
+
+    const result = await updateQuestStreak(user.id, TZ);
+    expect(result.questStreakCurrent).toBe(4);
+  });
+
+  it("resets streak to 1 when last date was more than 1 day ago", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    await db
+      .update(users)
+      .set({ questStreakCurrent: 10, questStreakLastDate: "2000-01-01" })
+      .where(eq(users.id, user.id));
+
+    const result = await updateQuestStreak(user.id, TZ);
+    expect(result.questStreakCurrent).toBe(1);
+  });
+});
+
+// ─── checkAndUnlockAchievements — secret/time-based achievements ───────────
+
+describe("checkAndUnlockAchievements — secret achievements", () => {
+  it("unlocks night_owl when completionHour is 23", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const result = await checkAndUnlockAchievements(user.id, {
+      totalCompleted: 1,
+      streakCurrent: 0,
+      coins: 0,
+      level: 1,
+      completionHour: 23,
+    });
+
+    const keys = result.unlocked.map((a) => a.key);
+    expect(keys).toContain("night_owl");
+  });
+
+  it("unlocks early_bird when completionHour is 6", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const result = await checkAndUnlockAchievements(user.id, {
+      totalCompleted: 1,
+      streakCurrent: 0,
+      coins: 0,
+      level: 1,
+      completionHour: 6,
+    });
+
+    const keys = result.unlocked.map((a) => a.key);
+    expect(keys).toContain("early_bird");
+  });
+
+  it("unlocks double_shift when dailyQuestCompletionsToday is 2", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const result = await checkAndUnlockAchievements(user.id, {
+      totalCompleted: 1,
+      streakCurrent: 0,
+      coins: 0,
+      level: 1,
+      dailyQuestCompletionsToday: 2,
+    });
+
+    const keys = result.unlocked.map((a) => a.key);
+    expect(keys).toContain("double_shift");
+  });
+
+  it("does not unlock night_owl when completionHour is undefined", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const result = await checkAndUnlockAchievements(user.id, {
+      totalCompleted: 1,
+      streakCurrent: 0,
+      coins: 0,
+      level: 1,
+      // completionHour not set
+    });
+
+    const keys = result.unlocked.map((a) => a.key);
+    expect(keys).not.toContain("night_owl");
+    expect(keys).not.toContain("early_bird");
   });
 });

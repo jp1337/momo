@@ -10,7 +10,7 @@
  * verify DB logging without a real TLS certificate.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { createServer } from "http";
 import type { AddressInfo } from "net";
 import { db } from "@/lib/db";
@@ -510,5 +510,95 @@ describe("testWebhookEndpoint", () => {
     } finally {
       await stop();
     }
+  });
+});
+
+// ─── HTTPS delivery path (fetch-stubbed) ─────────────────────────────────────
+
+describe("fireWebhookEvent — HTTPS delivery", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("records a success delivery when the endpoint responds 2xx", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(""),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const endpoint = await createWebhookEndpoint(user.id, ep({ name: "HTTPS OK" }));
+    await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
+
+    // deliverToEndpoint logs via fire-and-forget — wait for the DB write
+    await new Promise((r) => setTimeout(r, 300));
+
+    const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
+    expect(deliveries.length).toBeGreaterThan(0);
+    expect(deliveries[0].status).toBe("success");
+    expect(deliveries[0].httpStatus).toBe(200);
+  });
+
+  it("records a failure delivery when the endpoint responds non-2xx", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: () => Promise.resolve("Internal Server Error"),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const endpoint = await createWebhookEndpoint(user.id, ep({ name: "HTTPS 500" }));
+    await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
+
+    await new Promise((r) => setTimeout(r, 300));
+
+    const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
+    expect(deliveries.length).toBeGreaterThan(0);
+    expect(deliveries[0].status).toBe("failure");
+    expect(deliveries[0].httpStatus).toBe(500);
+    expect(deliveries[0].errorMessage).toContain("Internal Server Error");
+  });
+
+  it("includes X-Momo-Signature header when endpoint has a signing secret", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(""),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await createWebhookEndpoint(user.id, ep({ name: "Signed EP", secret: "super-secret-key" }));
+    await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
+
+    await new Promise((r) => setTimeout(r, 300));
+
+    expect(mockFetch).toHaveBeenCalledOnce();
+    const [, callOptions] = mockFetch.mock.calls[0] as [string, { headers: Record<string, string> }];
+    expect(callOptions.headers["X-Momo-Signature"]).toMatch(/^sha256=[0-9a-f]{64}$/);
+    expect(callOptions.headers["X-Momo-Event"]).toBe("task.created");
+  });
+
+  it("records a failure when fetch throws (network error)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const mockFetch = vi.fn().mockRejectedValue(new Error("ECONNREFUSED"));
+    vi.stubGlobal("fetch", mockFetch);
+
+    const endpoint = await createWebhookEndpoint(user.id, ep({ name: "Network Fail" }));
+    await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
+
+    await new Promise((r) => setTimeout(r, 300));
+
+    const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
+    expect(deliveries.length).toBeGreaterThan(0);
+    expect(deliveries[0].status).toBe("failure");
+    expect(deliveries[0].errorMessage).toContain("ECONNREFUSED");
   });
 });

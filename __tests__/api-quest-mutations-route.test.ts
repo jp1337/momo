@@ -109,6 +109,27 @@ describe("POST /api/daily-quest/postpone", () => {
     expect(typeof body.postponesToday).toBe("number");
     expect(typeof body.postponeLimit).toBe("number");
   });
+
+  it("returns 400 for invalid JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badJsonReq = new Request("http://localhost/api/daily-quest/postpone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not-valid-json }",
+    });
+    const res = await POSTPostpone(badJsonReq);
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 when taskId does not belong to user", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await POSTPostpone(
+      req("POST", "/api/daily-quest/postpone", { taskId: FAKE_UUID })
+    );
+    expect(res.status).toBe(404);
+  });
 });
 
 // ─── POST /api/daily-quest/restore ───────────────────────────────────────────

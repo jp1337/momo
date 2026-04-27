@@ -119,6 +119,15 @@ describe("uncompleteTask", () => {
       "Task is not completed"
     );
   });
+
+  it("throws when the task does not exist", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const fakeId = "00000000-0000-0000-0000-000000000099";
+
+    await expect(uncompleteTask(fakeId, user.id)).rejects.toThrow(
+      "Task not found or access denied"
+    );
+  });
 });
 
 // ─── snoozeTask ───────────────────────────────────────────────────────────────

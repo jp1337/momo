@@ -396,6 +396,29 @@ describe("POST /api/tasks/:id/complete", () => {
     const body = await res.json() as { task: { completedAt: string | null } };
     expect(body.task.completedAt).not.toBeNull();
   });
+
+  it("returns 404 for a non-existent task", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await POSTComplete(req("POST", `/api/tasks/${FAKE_ID}/complete`, {}), {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 409 when task is already completed", async () => {
+    const user = await createTestUser();
+    const task = await createTestTask(user.id, {
+      title: "Already Done",
+      type: "ONE_TIME",
+      completedAt: new Date(),
+    });
+    authAs(user.id);
+    const res = await POSTComplete(req("POST", `/api/tasks/${task.id}/complete`, {}), {
+      params: Promise.resolve({ id: task.id }),
+    });
+    expect(res.status).toBe(409);
+  });
 });
 
 // ─── DELETE /api/tasks/:id/complete (uncomplete) ──────────────────────────────
@@ -407,6 +430,15 @@ describe("DELETE /api/tasks/:id/complete", () => {
       params: Promise.resolve({ id: FAKE_ID }),
     });
     expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for a readonly API key", async () => {
+    const user = await createTestUser();
+    authAs(user.id, true);
+    const res = await DELETEUncomplete(req("DELETE", `/api/tasks/${FAKE_ID}/complete`), {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(403);
   });
 
   it("returns 200 and task is open again after uncomplete", async () => {
@@ -423,5 +455,34 @@ describe("DELETE /api/tasks/:id/complete", () => {
     expect(res.status).toBe(200);
     const body = await res.json() as { task: { completedAt: string | null } };
     expect(body.task.completedAt).toBeNull();
+  });
+
+  it("returns 404 for a non-existent task", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await DELETEUncomplete(req("DELETE", `/api/tasks/${FAKE_ID}/complete`), {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 409 when task is not completed", async () => {
+    const user = await createTestUser();
+    const task = await createTestTask(user.id, { title: "Not Done", type: "ONE_TIME" });
+    authAs(user.id);
+    const res = await DELETEUncomplete(req("DELETE", `/api/tasks/${task.id}/complete`), {
+      params: Promise.resolve({ id: task.id }),
+    });
+    expect(res.status).toBe(409);
+  });
+
+  it("returns 409 when task is RECURRING (cannot be uncompleted)", async () => {
+    const user = await createTestUser();
+    const task = await createTestTask(user.id, { title: "Recurring", type: "RECURRING" });
+    authAs(user.id);
+    const res = await DELETEUncomplete(req("DELETE", `/api/tasks/${task.id}/complete`), {
+      params: Promise.resolve({ id: task.id }),
+    });
+    expect(res.status).toBe(409);
   });
 });

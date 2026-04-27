@@ -28,7 +28,7 @@ vi.mock("next/headers", () => ({
 }));
 
 import { resolveApiUser } from "@/lib/api-auth";
-import { GET as GETUser } from "@/app/api/user/route";
+import { GET as GETUser, DELETE as DELETEUser } from "@/app/api/user/route";
 import {
   GET as GETProfile,
   PATCH as PATCHProfile,
@@ -79,6 +79,32 @@ describe("GET /api/user", () => {
     const body = await res.json() as Record<string, unknown>;
     expect(typeof body.coins).toBe("number");
     expect(typeof body.level).toBe("number");
+  });
+});
+
+// ─── DELETE /api/user ─────────────────────────────────────────────────────────
+
+describe("DELETE /api/user", () => {
+  it("returns 401 when unauthenticated", async () => {
+    mockAuth.mockResolvedValue(null);
+    const res = await DELETEUser(req("DELETE", "/api/user"));
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for a readonly API key", async () => {
+    const user = await createTestUser();
+    authAs(user.id, true);
+    const res = await DELETEUser(req("DELETE", "/api/user"));
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 200 and deletes the user account", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await DELETEUser(req("DELETE", "/api/user"));
+    expect(res.status).toBe(200);
+    const body = await res.json() as { success: boolean };
+    expect(body.success).toBe(true);
   });
 });
 
@@ -141,6 +167,54 @@ describe("PATCH /api/user/profile", () => {
     expect(res.status).toBe(200);
     const body = await res.json() as { user: { name: string | null } };
     expect(body.user.name).toBe("Updated Name");
+  });
+
+  it("returns 400 for invalid JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badJsonReq = new Request("http://localhost/api/user/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await PATCHProfile(badJsonReq as never);
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 422 for Zod validation failure (invalid email format)", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await PATCHProfile(
+      req("PATCH", "/api/user/profile", { email: "not-an-email" }) as never
+    );
+    expect(res.status).toBe(422);
+    const body = await res.json() as { details: Record<string, unknown> };
+    expect(body.details).toBeDefined();
+  });
+
+  it("returns 409 when email is already taken", async () => {
+    const userA = await createTestUser();
+    const userB = await createTestUser();
+    authAs(userA.id);
+    // userB.email is already taken — trying to claim it returns 409
+    const res = await PATCHProfile(
+      req("PATCH", "/api/user/profile", { email: userB.email }) as never
+    );
+    expect(res.status).toBe(409);
+    const body = await res.json() as { code: string };
+    expect(body.code).toBe("EMAIL_TAKEN");
+  });
+
+  it("returns 422 for invalid image format", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    // TIFF is not a supported format — processProfileImage throws
+    const res = await PATCHProfile(
+      req("PATCH", "/api/user/profile", { image: "data:image/tiff;base64,AAAA" }) as never
+    );
+    expect(res.status).toBe(422);
+    const body = await res.json() as { code: string };
+    expect(body.code).toBe("INVALID_IMAGE");
   });
 });
 
