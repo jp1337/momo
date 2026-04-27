@@ -221,6 +221,15 @@ describe("NtfyChannel.send", () => {
 
     await expect(channel.send(basePayload)).rejects.toThrow("ntfy responded with 500");
   });
+
+  it("uses 'no body' when response.text() rejects on error response (covers .catch fallback)", async () => {
+    const failResponse = new Response("", { status: 500 });
+    vi.spyOn(failResponse, "text").mockRejectedValueOnce(new Error("read failed"));
+    fetchMock.mockResolvedValueOnce(failResponse);
+    const channel = createChannel("ntfy", { topic: "alerts" }) as NotificationChannel;
+
+    await expect(channel.send(basePayload)).rejects.toThrow("ntfy responded with 500: no body");
+  });
 });
 
 // ─── PushoverChannel ──────────────────────────────────────────────────────────
@@ -294,6 +303,15 @@ describe("PushoverChannel.send", () => {
     const channel = createChannel("pushover", pushoverConfig) as NotificationChannel;
 
     await expect(channel.send(basePayload)).rejects.toThrow("Pushover responded with 500");
+  });
+
+  it("uses 'no body' when response.text() rejects on error response (covers .catch fallback)", async () => {
+    const failResponse = new Response("", { status: 500 });
+    vi.spyOn(failResponse, "text").mockRejectedValueOnce(new Error("read failed"));
+    fetchMock.mockResolvedValueOnce(failResponse);
+    const channel = createChannel("pushover", pushoverConfig) as NotificationChannel;
+
+    await expect(channel.send(basePayload)).rejects.toThrow("Pushover responded with 500: no body");
   });
 });
 
@@ -380,6 +398,15 @@ describe("TelegramChannel.send", () => {
     const channel = createChannel("telegram", telegramConfig) as NotificationChannel;
 
     await expect(channel.send(basePayload)).rejects.toThrow("Telegram responded with 500");
+  });
+
+  it("uses 'no body' when response.text() rejects on error response (covers .catch fallback)", async () => {
+    const failResponse = new Response("", { status: 500 });
+    vi.spyOn(failResponse, "text").mockRejectedValueOnce(new Error("read failed"));
+    fetchMock.mockResolvedValueOnce(failResponse);
+    const channel = createChannel("telegram", telegramConfig) as NotificationChannel;
+
+    await expect(channel.send(basePayload)).rejects.toThrow("Telegram responded with 500: no body");
   });
 });
 
@@ -477,6 +504,15 @@ describe("WebhookChannel.send", () => {
     const channel = createChannel("webhook", webhookConfig) as NotificationChannel;
 
     await expect(channel.send(basePayload)).rejects.toThrow("Webhook responded with 500");
+  });
+
+  it("uses 'no body' when response.text() rejects on error response (covers .catch fallback)", async () => {
+    const failResponse = new Response("", { status: 500 });
+    vi.spyOn(failResponse, "text").mockRejectedValueOnce(new Error("read failed"));
+    fetchMock.mockResolvedValueOnce(failResponse);
+    const channel = createChannel("webhook", webhookConfig) as NotificationChannel;
+
+    await expect(channel.send(basePayload)).rejects.toThrow("Webhook responded with 500: no body");
   });
 
   it("signature is reproducible — same payload and secret yield same signature", async () => {
