@@ -7,6 +7,7 @@
  * golden-path tests in complete-task.test.ts.
  *
  * Lines covered:
+ *   688 — checkAndUnlockAchievements rejects (catch block)
  *   706 — achievement coin booking DB update fails
  *   714 — sendAchievementNotifications rejects
  *   722 — fireWebhookEvent rejects
@@ -29,6 +30,8 @@ vi.mock("@/lib/push", () => ({
 
 // Mock updateStreak so it does NOT call db.update, leaving the first db.update
 // call inside completeTask as the achievement coin booking (line 698-704).
+// checkAndUnlockAchievements is wrapped with vi.fn(pass-through) so individual
+// tests can use mockRejectedValueOnce to trigger the catch block at line 688.
 vi.mock("@/lib/gamification", async (orig) => {
   const actual = await orig<typeof import("@/lib/gamification")>();
   return {
@@ -38,6 +41,7 @@ vi.mock("@/lib/gamification", async (orig) => {
       streakMax: 0,
       shieldUsed: false,
     }),
+    checkAndUnlockAchievements: vi.fn(actual.checkAndUnlockAchievements),
   };
 });
 
@@ -45,6 +49,7 @@ vi.mock("@/lib/gamification", async (orig) => {
 
 import { completeTask } from "@/lib/tasks";
 import { db } from "@/lib/db";
+import { checkAndUnlockAchievements } from "@/lib/gamification";
 import { createTestUser, createTestTask } from "./helpers/fixtures";
 
 const TZ = "Europe/Berlin";
@@ -110,6 +115,27 @@ describe("completeTask — fire-and-forget error paths", () => {
     );
 
     updateSpy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+
+  it("swallows checkAndUnlockAchievements errors without throwing (covers line 688)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, { type: "ONE_TIME" });
+
+    vi.mocked(checkAndUnlockAchievements).mockRejectedValueOnce(
+      new Error("achievement check DB error")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await completeTask(task.id, user.id, TZ);
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(result.task).toBeDefined();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[completeTask] achievement check failed (non-fatal):",
+      expect.any(Error)
+    );
+
     consoleSpy.mockRestore();
   });
 });
