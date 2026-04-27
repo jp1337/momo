@@ -40,7 +40,7 @@ beforeEach(() => {
   mockAuth.mockReset();
 });
 
-function req(method: string, url: string, body?: unknown): Request {
+function req(method: string, url: string, body?: unknown): never {
   return new Request(`http://localhost${url}`, {
     method,
     headers: body !== undefined ? { "Content-Type": "application/json" } : {},
