@@ -15,7 +15,7 @@ import { createServer } from "http";
 import type { AddressInfo } from "net";
 import { db } from "@/lib/db";
 import { webhookDeliveries, webhookEndpoints } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import type { CreateWebhookEndpointInput } from "@/lib/validators/webhooks";
 import {
   listWebhookEndpoints,
@@ -635,6 +635,58 @@ describe("fireWebhookEvent — HTTPS delivery", () => {
 
     insertSpy.mockRestore();
     consoleSpy.mockRestore();
+  });
+
+  it("aborts fetch via AbortController when delivery takes longer than timeout (covers line 440)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    await createWebhookEndpoint(user.id, ep({ name: "Timeout EP" }));
+
+    // Intercept setTimeout to call the delivery-timeout callback immediately.
+    // DELIVERY_TIMEOUT_MS = 5000; we identify it by delay value.
+    // Other setTimeout calls (e.g. from the DB driver) are passed through.
+    const originalSetTimeout = globalThis.setTimeout;
+    const setTimeoutSpy = vi
+      .spyOn(globalThis, "setTimeout")
+      .mockImplementation(((fn: (...args: unknown[]) => void, delay: number, ...args: unknown[]) => {
+        if (delay === 5000) {
+          // Invoke the abort callback synchronously so fetch rejects immediately
+          fn(...args);
+          return 0 as unknown as ReturnType<typeof setTimeout>;
+        }
+        return originalSetTimeout(fn, delay, ...args);
+      }) as typeof setTimeout);
+
+    // With abort triggered immediately, fetch will reject because signal.aborted = true
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_url: string, opts: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            if (opts.signal?.aborted) {
+              reject(new DOMException("The operation was aborted.", "AbortError"));
+            } else if (opts.signal) {
+              opts.signal.addEventListener("abort", () =>
+                reject(new DOMException("The operation was aborted.", "AbortError"))
+              );
+            }
+          })
+      )
+    );
+
+    await fireWebhookEvent(user.id, "task.completed", makeTaskPayload());
+
+    setTimeoutSpy.mockRestore();
+
+    // Delivery should be logged as a failure
+    const [delivery] = await db
+      .select()
+      .from(webhookDeliveries)
+      .orderBy(desc(webhookDeliveries.deliveredAt))
+      .limit(1);
+
+    expect(delivery).toBeDefined();
+    expect(delivery.status).toBe("failure");
+    expect(delivery.errorMessage).toContain("aborted");
   });
 
 });
