@@ -279,6 +279,47 @@ describe("POST /api/user/api-keys", () => {
     expect(body.key.length).toBeGreaterThan(0);
     expect(body.record.name).toBe("My Key");
   });
+
+  it("returns 400 for invalid JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badJsonReq = new Request("http://localhost/api/user/api-keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await POSTApiKeys(badJsonReq);
+    expect(res.status).toBe(400);
+  });
+
+  it("creates a key with expiresIn=30d", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await POSTApiKeys(
+      req("POST", "/api/user/api-keys", { name: "30-Day Key", readonly: false, expiresIn: "30d" })
+    );
+    expect(res.status).toBe(201);
+    const body = await res.json() as { record: { expiresAt: string | null } };
+    expect(body.record.expiresAt).not.toBeNull();
+  });
+
+  it("creates a key with expiresIn=90d", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await POSTApiKeys(
+      req("POST", "/api/user/api-keys", { name: "90-Day Key", expiresIn: "90d" })
+    );
+    expect(res.status).toBe(201);
+  });
+
+  it("creates a key with expiresIn=1y", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await POSTApiKeys(
+      req("POST", "/api/user/api-keys", { name: "1-Year Key", expiresIn: "1y" })
+    );
+    expect(res.status).toBe(201);
+  });
 });
 
 // ─── DELETE /api/user/api-keys/:id ───────────────────────────────────────────

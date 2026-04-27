@@ -214,6 +214,16 @@ describe("PATCH /api/topics/:id", () => {
     const body = await res.json() as { topic: { title: string } };
     expect(body.topic.title).toBe("New Name");
   });
+
+  it("returns 404 for a non-existent topic", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await PATCHById(
+      req("PATCH", `/api/topics/${FAKE_ID}`, { title: "Updated" }),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(404);
+  });
 });
 
 // ─── DELETE /api/topics/:id ───────────────────────────────────────────────────
@@ -246,5 +256,14 @@ describe("DELETE /api/topics/:id", () => {
     expect(res.status).toBe(200);
     const body = await res.json() as { success: boolean };
     expect(body.success).toBe(true);
+  });
+
+  it("returns 404 for a non-existent topic", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await DELETEById(req("DELETE", `/api/topics/${FAKE_ID}`), {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(404);
   });
 });

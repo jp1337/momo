@@ -176,6 +176,33 @@ describe("updateTopic", () => {
       updateTopic(topic.id, userB.id, { title: "Hacked" })
     ).rejects.toThrow();
   });
+
+  it("updates the topic description", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id, { title: "Topic" });
+
+    const updated = await updateTopic(topic.id, user.id, { description: "New desc" });
+    expect(updated.description).toBe("New desc");
+  });
+
+  it("updates defaultEnergyLevel", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id);
+
+    const updated = await updateTopic(topic.id, user.id, { defaultEnergyLevel: "LOW" });
+    expect(updated.defaultEnergyLevel).toBe("LOW");
+  });
+
+  it("updates archived flag directly via updateTopic", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id);
+
+    const archived = await updateTopic(topic.id, user.id, { archived: true });
+    expect(archived.archived).toBe(true);
+
+    const unarchived = await updateTopic(topic.id, user.id, { archived: false });
+    expect(unarchived.archived).toBe(false);
+  });
 });
 
 // ─── deleteTopic ──────────────────────────────────────────────────────────────
