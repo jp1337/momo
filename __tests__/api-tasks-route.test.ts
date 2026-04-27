@@ -34,11 +34,13 @@ vi.mock("@/lib/tasks", async (orig) => {
     getTaskById: vi.fn(actual.getTaskById),
     updateTask: vi.fn(actual.updateTask),
     deleteTask: vi.fn(actual.deleteTask),
+    completeTask: vi.fn(actual.completeTask),
+    uncompleteTask: vi.fn(actual.uncompleteTask),
   };
 });
 
 import { resolveApiUser } from "@/lib/api-auth";
-import { getUserTasks, createTask, getTaskById, updateTask, deleteTask } from "@/lib/tasks";
+import { getUserTasks, createTask, getTaskById, updateTask, deleteTask, completeTask, uncompleteTask } from "@/lib/tasks";
 import { GET, POST } from "@/app/api/tasks/route";
 import {
   GET as GETById,
@@ -569,6 +571,24 @@ describe("GET /api/tasks — additional branches", () => {
     expect(Array.isArray(body.tasks)).toBe(true);
   });
 
+  it("filters by ?completed=true (covers line 51)", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await GET(req("GET", "/api/tasks?completed=true"));
+    expect(res.status).toBe(200);
+    const body = await res.json() as { tasks: unknown[] };
+    expect(Array.isArray(body.tasks)).toBe(true);
+  });
+
+  it("filters by ?completed=false (covers line 52)", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await GET(req("GET", "/api/tasks?completed=false"));
+    expect(res.status).toBe(200);
+    const body = await res.json() as { tasks: unknown[] };
+    expect(Array.isArray(body.tasks)).toBe(true);
+  });
+
   it("returns 500 when getUserTasks throws an unexpected error", async () => {
     const user = await createTestUser();
     authAs(user.id);
@@ -587,6 +607,36 @@ describe("POST /api/tasks — 500 error path", () => {
     vi.mocked(createTask).mockRejectedValueOnce(new Error("unexpected DB error"));
     const res = await POST(
       req("POST", "/api/tasks", { title: "Boom", type: "ONE_TIME" })
+    );
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── POST /api/tasks/:id/complete — 500 error path ────────────────────────────
+
+describe("POST /api/tasks/:id/complete — 500 error path", () => {
+  it("returns 500 when completeTask throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(completeTask).mockRejectedValueOnce(new Error("unexpected DB failure"));
+    const res = await POSTComplete(
+      req("POST", `/api/tasks/${FAKE_ID}/complete`, {}),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── DELETE /api/tasks/:id/complete — 500 error path ──────────────────────────
+
+describe("DELETE /api/tasks/:id/complete — 500 error path", () => {
+  it("returns 500 when uncompleteTask throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(uncompleteTask).mockRejectedValueOnce(new Error("unexpected DB failure"));
+    const res = await DELETEUncomplete(
+      req("DELETE", `/api/tasks/${FAKE_ID}/complete`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
     );
     expect(res.status).toBe(500);
   });

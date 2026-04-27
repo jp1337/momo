@@ -10,7 +10,7 @@
 
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
-import { sessions } from "@/lib/db/schema";
+import { sessions, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import {
   extractIp,
@@ -544,6 +544,46 @@ describe("notifyIfNewDevice (called from touchSessionMetadata on first touch)", 
     // Note: lines 315-317 in sessions.ts are currently unreachable because
     // touchSessionMetadata sets createdAt before notifyIfNewDevice queries, so the
     // current session's fingerprint is always in the known-devices set.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  });
+
+  it("fires sendToAllChannels when second-touch UA/IP differs from stored sessions (covers lines 315-317)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    await db.update(users).set({ loginNotificationNewDevice: true }).where(eq(users.id, user.id));
+
+    // Prior session — already touched, stored as OldBrowser
+    await db.insert(sessions).values({
+      sessionToken: "prior-old-browser-" + Date.now(),
+      userId: user.id,
+      expires: new Date(Date.now() + 3_600_000),
+      userAgent: "OldBrowser/1.0",
+      ipAddress: "192.168.1.1",
+      createdAt: new Date(Date.now() - 10_000),
+      lastActiveAt: new Date(Date.now() - 10_000),
+    });
+
+    // "Current" session — also already touched (createdAt IS NOT NULL), stored as AnotherBrowser
+    const currentToken = "current-retouched-" + Date.now();
+    await db.insert(sessions).values({
+      sessionToken: currentToken,
+      userId: user.id,
+      expires: new Date(Date.now() + 3_600_000),
+      userAgent: "AnotherBrowser/2.0",
+      ipAddress: "10.10.10.10",
+      createdAt: new Date(Date.now() - 5_000),
+      lastActiveAt: new Date(Date.now() - 5_000),
+    });
+
+    // touchSessionMetadata with a brand-new UA/IP — the UPDATE is skipped
+    // (createdAt IS NOT NULL), but notifyIfNewDevice is still called with
+    // "FreshBrowser/99.0" from "172.16.0.1", which is in neither stored session
+    // → reaches lines 315-317: parseUserAgent + sendToAllChannels fire
+    // (user has no channels configured, so it completes silently)
+    const headers = new Headers({
+      "user-agent": "FreshBrowser/99.0",
+      "x-forwarded-for": "172.16.0.1",
+    });
+    await touchSessionMetadata(currentToken, headers, user.id);
     await new Promise((resolve) => setTimeout(resolve, 200));
   });
 });

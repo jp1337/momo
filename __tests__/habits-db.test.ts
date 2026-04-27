@@ -292,6 +292,29 @@ describe("getHabitsWithHistory", () => {
     expect(habits[0].paused).toBe(true);
   });
 
+  it("skips completions outside all time windows but within fetch range (covers line 479 continue + line 495)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestRecurringTask(user.id, { timezone: TZ });
+
+    // Dec 31 of the previous year — inside fetchFrom window (fetchFrom ≈ Dec 31
+    // prev year) but outside YEAR range, last-30, and last-7 windows.
+    // → triggers the `continue` at line 479 and the false branch of the
+    // `if (date >= yearStartStr && date <= yearEndStr)` at line 495.
+    const prevYearEnd = new Date(`${YEAR - 1}-12-31T10:00:00Z`);
+    await db.insert(taskCompletions).values({
+      taskId: task.id,
+      userId: user.id,
+      completedAt: prevYearEnd,
+    });
+
+    const habits = await getHabitsWithHistory(user.id, YEAR, TZ);
+    expect(habits).toHaveLength(1);
+    // The Dec 31 completion is not counted in the current year totals
+    expect(habits[0].totalYear).toBe(0);
+    // Completions grid should not include a Dec-31 entry
+    expect(habits[0].completions.every((c) => c.date.startsWith(String(YEAR)))).toBe(true);
+  });
+
   it("falls back to local date when no timezone is provided (covers toLocalDateString fallback)", async () => {
     const user = await createTestUser({ timezone: TZ });
     await createTestRecurringTask(user.id, { title: "No-TZ Habit" });

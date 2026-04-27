@@ -87,9 +87,12 @@ import * as totp from "@/lib/totp";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { serverEnv } from "@/lib/env";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const mockAuth = auth as ReturnType<typeof vi.fn>;
 const mockCookies = cookies as ReturnType<typeof vi.fn>;
+const mockCheckRateLimit = vi.mocked(checkRateLimit);
+const mockRateLimitResponse = vi.mocked(rateLimitResponse);
 
 // Helper to build a mock cookie store
 function makeCookieStore(cookieMap: Record<string, string> = {}) {
@@ -500,6 +503,18 @@ describe("PATCH /api/auth/passkey/[id]", () => {
     expect(res.status).toBe(401);
   });
 
+  it("returns 429 when rate limit is exceeded", async () => {
+    mockAuth.mockResolvedValue(makeSession("user-abc"));
+    mockCheckRateLimit.mockReturnValueOnce({ limited: true, remaining: 0, resetAt: Date.now() + 60_000 });
+    mockRateLimitResponse.mockReturnValueOnce(
+      Response.json({ error: "Too Many Requests" }, { status: 429 }) as never
+    );
+    const { PATCH } = await import("@/app/api/auth/passkey/[id]/route");
+    const req = makeRequest({ name: "New Name" });
+    const res = await PATCH(req, { params: Promise.resolve({ id: "cred1" }) });
+    expect(res.status).toBe(429);
+  });
+
   it("returns 400 for invalid body (empty name)", async () => {
     mockAuth.mockResolvedValue(makeSession());
     const { PATCH } = await import("@/app/api/auth/passkey/[id]/route");
@@ -546,6 +561,17 @@ describe("DELETE /api/auth/passkey/[id]", () => {
     const { DELETE } = await import("@/app/api/auth/passkey/[id]/route");
     const res = await DELETE(makeDeleteRequest(), { params: Promise.resolve({ id: "cred1" }) });
     expect(res.status).toBe(401);
+  });
+
+  it("returns 429 when rate limit is exceeded", async () => {
+    mockAuth.mockResolvedValue(makeSession("user-abc"));
+    mockCheckRateLimit.mockReturnValueOnce({ limited: true, remaining: 0, resetAt: Date.now() + 60_000 });
+    mockRateLimitResponse.mockReturnValueOnce(
+      Response.json({ error: "Too Many Requests" }, { status: 429 }) as never
+    );
+    const { DELETE } = await import("@/app/api/auth/passkey/[id]/route");
+    const res = await DELETE(makeDeleteRequest(), { params: Promise.resolve({ id: "cred1" }) });
+    expect(res.status).toBe(429);
   });
 
   it("returns 200 and calls deletePasskey on success (REQUIRE_2FA=false)", async () => {

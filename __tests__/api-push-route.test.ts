@@ -42,6 +42,7 @@ import {
 } from "@/app/api/push/devices/[id]/route";
 import { POST as pushTestPOST } from "@/app/api/push/test/route";
 import { createTestUser } from "./helpers/fixtures";
+import { db } from "@/lib/db";
 import type { ApiUser } from "@/lib/api-auth";
 
 const mockAuth = vi.mocked(resolveApiUser);
@@ -590,5 +591,18 @@ describe("POST /api/push/test", () => {
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.sent).toBeGreaterThan(0);
+  });
+
+  it("returns 500 when db.select throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(db, "select").mockImplementationOnce(() => {
+      throw new Error("DB connection error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await pushTestPOST(req("POST", "/api/push/test"));
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });

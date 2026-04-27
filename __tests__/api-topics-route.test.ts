@@ -45,6 +45,7 @@ import {
   DELETE as DELETEById,
 } from "@/app/api/topics/[id]/route";
 import { createTestUser, createTestTopic } from "./helpers/fixtures";
+import * as gamification from "@/lib/gamification";
 import type { ApiUser } from "@/lib/api-auth";
 
 const mockAuth = vi.mocked(resolveApiUser);
@@ -332,6 +333,28 @@ describe("POST /api/topics — error path", () => {
     vi.mocked(createTopic).mockRejectedValueOnce(new Error("DB error"));
     const res = await POST(req("POST", "/api/topics", { title: "Boom" }));
     expect(res.status).toBe(500);
+  });
+
+  it("logs error and still returns 201 when achievement check throws (covers line 102)", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi
+      .spyOn(gamification, "checkAndUnlockAchievements")
+      .mockRejectedValueOnce(new Error("achievement DB error"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await POST(req("POST", "/api/topics", { title: "Achievement Crash Topic" }));
+    // The fire-and-forget IIFE runs after return, so wait for it
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(res.status).toBe(201);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[POST /api/topics] achievement check failed (non-fatal):",
+      expect.any(Error)
+    );
+
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });
 

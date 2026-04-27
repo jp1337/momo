@@ -34,6 +34,7 @@ import { PATCH as PATCHBulk } from "@/app/api/tasks/bulk/route";
 import { POST as POSTBreakdown } from "@/app/api/tasks/[id]/breakdown/route";
 import { POST as POSTPromoteToTopic } from "@/app/api/tasks/[id]/promote-to-topic/route";
 import { createTestUser, createTestTask, createTestTopic } from "./helpers/fixtures";
+import * as tasksLib from "@/lib/tasks";
 import type { ApiUser } from "@/lib/api-auth";
 
 const mockAuth = vi.mocked(resolveApiUser);
@@ -321,6 +322,39 @@ describe("POST /api/tasks/:id/breakdown", () => {
     expect(Array.isArray(body.tasks)).toBe(true);
     expect(body.tasks.length).toBe(2);
   });
+
+  it("returns 400 when request body is invalid JSON (covers line 43)", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badJsonReq = new Request(`http://localhost/api/tasks/${FAKE_ID}/breakdown`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{ invalid json !!",
+    });
+    const res = await POSTBreakdown(badJsonReq as never, {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe("Invalid JSON");
+  });
+
+  it("returns 500 when breakdownTask throws an unexpected error (covers line 62)", async () => {
+    const user = await createTestUser();
+    const task = await createTestTask(user.id, { title: "Exploding Task" });
+    authAs(user.id);
+    const spy = vi.spyOn(tasksLib, "breakdownTask").mockRejectedValueOnce(
+      new Error("Unexpected DB failure")
+    );
+    const res = await POSTBreakdown(
+      req("POST", `/api/tasks/${task.id}/breakdown`, {
+        subtaskTitles: ["Part A", "Part B"],
+      }) as never,
+      { params: Promise.resolve({ id: task.id }) }
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+  });
 });
 
 // ─── POST /api/tasks/:id/promote-to-topic ────────────────────────────────────
@@ -384,5 +418,65 @@ describe("POST /api/tasks/:id/promote-to-topic", () => {
     expect(res.status).toBe(201);
     const body = await res.json() as { topic: { id: string } };
     expect(typeof body.topic.id).toBe("string");
+  });
+});
+
+// ─── POST /api/tasks/:id/snooze — 500 error path ─────────────────────────────
+
+describe("POST /api/tasks/:id/snooze — 500 error path", () => {
+  it("returns 500 when snoozeTask throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(tasksLib, "snoozeTask").mockRejectedValueOnce(
+      new Error("unexpected DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await POSTSnooze(
+      req("POST", `/api/tasks/${FAKE_ID}/snooze`, { snoozedUntil: TOMORROW }),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── DELETE /api/tasks/:id/snooze — 500 error path ───────────────────────────
+
+describe("DELETE /api/tasks/:id/snooze — 500 error path", () => {
+  it("returns 500 when unsnoozeTask throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(tasksLib, "unsnoozeTask").mockRejectedValueOnce(
+      new Error("unexpected DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await DELETESnooze(
+      req("DELETE", `/api/tasks/${FAKE_ID}/snooze`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── POST /api/tasks/:id/promote-to-topic — 500 error path ───────────────────
+
+describe("POST /api/tasks/:id/promote-to-topic — 500 error path", () => {
+  it("returns 500 when promoteTaskToTopic throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(tasksLib, "promoteTaskToTopic").mockRejectedValueOnce(
+      new Error("unexpected DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await POSTPromoteToTopic(
+      req("POST", `/api/tasks/${FAKE_ID}/promote-to-topic`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });

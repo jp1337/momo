@@ -35,6 +35,7 @@ import { resolveApiUser } from "@/lib/api-auth";
 import { PUT as PUTReorder } from "@/app/api/topics/[id]/reorder/route";
 import { POST as POSTImportTemplate } from "@/app/api/topics/import-template/route";
 import { createTestUser, createTestTopic, createTestTask } from "./helpers/fixtures";
+import * as templatesLib from "@/lib/templates";
 import type { ApiUser } from "@/lib/api-auth";
 
 const mockAuth = vi.mocked(resolveApiUser);
@@ -194,5 +195,32 @@ describe("POST /api/topics/import-template", () => {
     const body = await res.json() as { topic: { id: string }; tasks: unknown[] };
     expect(typeof body.topic.id).toBe("string");
     expect(body.tasks.length).toBeGreaterThan(0);
+  });
+
+  it("returns 400 for invalid JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badReq = new Request("http://localhost/api/topics/import-template", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await POSTImportTemplate(badReq);
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 500 when importTopicFromTemplate throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(templatesLib, "importTopicFromTemplate").mockRejectedValueOnce(
+      new Error("unexpected DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await POSTImportTemplate(
+      req("POST", "/api/topics/import-template", { templateKey: "fitness" })
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });

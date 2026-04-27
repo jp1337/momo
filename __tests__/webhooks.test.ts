@@ -564,6 +564,27 @@ describe("fireWebhookEvent — HTTPS delivery", () => {
     expect(deliveries[0].errorMessage).toContain("Internal Server Error");
   });
 
+  it("uses HTTP status as error message when response body is empty (covers line 457)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      text: () => Promise.resolve(""),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const endpoint = await createWebhookEndpoint(user.id, ep({ name: "Empty Body EP" }));
+    await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
+
+    await new Promise((r) => setTimeout(r, 300));
+
+    const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
+    expect(deliveries.length).toBeGreaterThan(0);
+    expect(deliveries[0].status).toBe("failure");
+    expect(deliveries[0].errorMessage).toBe("HTTP 503");
+  });
+
   it("includes X-Momo-Signature header when endpoint has a signing secret", async () => {
     const user = await createTestUser({ timezone: TZ });
 

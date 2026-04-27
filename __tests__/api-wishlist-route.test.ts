@@ -42,6 +42,7 @@ vi.mock("@/lib/wishlist", async (orig) => {
 
 import { resolveApiUser } from "@/lib/api-auth";
 import { getUserWishlistItems, createWishlistItem, getBudgetSummary, updateWishlistItem, deleteWishlistItem } from "@/lib/wishlist";
+import * as wishlistLib from "@/lib/wishlist";
 import { GET, POST } from "@/app/api/wishlist/route";
 import {
   PATCH as PATCHById,
@@ -567,5 +568,85 @@ describe("DELETE /api/wishlist/:id — error path", () => {
       { params: Promise.resolve({ id: FAKE_ID }) }
     );
     expect(res.status).toBe(500);
+  });
+});
+
+// ─── POST /api/wishlist/:id/buy — 500 error path ─────────────────────────────
+
+describe("POST /api/wishlist/:id/buy — 500 error path", () => {
+  it("returns 500 when markAsBought throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(wishlistLib, "markAsBought").mockRejectedValueOnce(
+      new Error("unexpected DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await POSTBuy(
+      req("POST", `/api/wishlist/${FAKE_ID}/buy`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── DELETE /api/wishlist/:id/buy — 500 error path ───────────────────────────
+
+describe("DELETE /api/wishlist/:id/buy — 500 error path", () => {
+  it("returns 500 when unmarkAsBought throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(wishlistLib, "unmarkAsBought").mockRejectedValueOnce(
+      new Error("unexpected DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await DELETEBuy(
+      req("DELETE", `/api/wishlist/${FAKE_ID}/buy`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── POST /api/wishlist/:id/discard — 500 error path ─────────────────────────
+
+describe("POST /api/wishlist/:id/discard — 500 error path", () => {
+  it("returns 500 when discardWishlistItem throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(wishlistLib, "discardWishlistItem").mockRejectedValueOnce(
+      new Error("unexpected DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await POSTDiscard(
+      req("POST", `/api/wishlist/${FAKE_ID}/discard`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── DELETE /api/wishlist/:id/discard — 500 error path ───────────────────────
+
+describe("DELETE /api/wishlist/:id/discard — 500 error path", () => {
+  it("returns 500 when restoreWishlistItem throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(wishlistLib, "restoreWishlistItem").mockRejectedValueOnce(
+      new Error("unexpected DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await DELETEDiscard(
+      req("DELETE", `/api/wishlist/${FAKE_ID}/discard`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });

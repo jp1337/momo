@@ -20,7 +20,7 @@ vi.mock("@/lib/webhooks", () => ({
 }));
 
 import { createTask, updateTask, deleteTask } from "@/lib/tasks";
-import { createTestUser, createTestTask } from "./helpers/fixtures";
+import { createTestUser, createTestTask, createTestTopic } from "./helpers/fixtures";
 
 const TZ = "Europe/Berlin";
 
@@ -137,5 +137,27 @@ describe("task mutations — webhook fire-and-forget error paths", () => {
 
     expect(updated.recurrenceType).toBe("WEEKDAY");
     consoleSpy.mockRestore();
+  });
+
+  it("updateTask assigns a valid topicId to the task (covers lines 336-344)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id);
+    const task = await createTestTask(user.id, { type: "ONE_TIME" });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const updated = await updateTask(task.id, user.id, { topicId: topic.id });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(updated.topicId).toBe(topic.id);
+    consoleSpy.mockRestore();
+  });
+
+  it("updateTask throws when topicId does not belong to the user (covers line 341)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, { type: "ONE_TIME" });
+
+    await expect(
+      updateTask(task.id, user.id, { topicId: "00000000-0000-0000-0000-000000000000" })
+    ).rejects.toThrow("Topic not found or access denied");
   });
 });

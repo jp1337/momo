@@ -25,6 +25,7 @@ vi.mock("next/headers", () => ({
 import { resolveApiUser } from "@/lib/api-auth";
 import { PATCH } from "@/app/api/tasks/bulk/route";
 import { createTestUser, createTestTask } from "./helpers/fixtures";
+import * as tasksLib from "@/lib/tasks";
 import type { ApiUser } from "@/lib/api-auth";
 
 const mockAuth = vi.mocked(resolveApiUser);
@@ -133,5 +134,24 @@ describe("PATCH /api/tasks/bulk", () => {
     const body = await res.json() as { success: boolean; affected: number };
     expect(body.success).toBe(true);
     expect(body.affected).toBe(1);
+  });
+});
+
+// ─── PATCH /api/tasks/bulk — 500 error path ───────────────────────────────────
+
+describe("PATCH /api/tasks/bulk — 500 error path", () => {
+  it("returns 500 when bulkUpdateTasks throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(tasksLib, "bulkUpdateTasks").mockRejectedValueOnce(
+      new Error("unexpected DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await PATCH(
+      req({ action: "delete", taskIds: [FAKE_ID] })
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });

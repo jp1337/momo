@@ -6,7 +6,7 @@
  * The DB is reset to a clean state before each test by setup.ts.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   getVacationStatus,
   activateVacationMode,
@@ -273,5 +273,29 @@ describe("autoEndVacations", () => {
     const updated = await getUser(user.id);
     expect(updated.vacationEndDate).toBeNull();
     expect(result.sent).toBe(0);
+  });
+
+  it("increments failed count and logs error when deactivateVacationMode throws (covers lines 227-231)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    const [y, m, d] = today.split("-").map(Number);
+    const yesterday = new Date(Date.UTC(y, m - 1, d - 1)).toISOString().split("T")[0];
+
+    await db.update(users).set({ vacationEndDate: yesterday }).where(eq(users.id, user.id));
+
+    // Make the db.transaction call (used by deactivateVacationMode) reject once
+    const txSpy = vi.spyOn(db, "transaction").mockRejectedValueOnce(new Error("db tx failed") as never);
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await autoEndVacations();
+
+    expect(result.failed).toBeGreaterThanOrEqual(1);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`[vacation] Failed to auto-end vacation for user ${user.id}`),
+      expect.any(Error)
+    );
+
+    txSpy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });

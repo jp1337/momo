@@ -342,6 +342,34 @@ describe("POST /api/auth/2fa/disable", () => {
     const res = await POSTDisable(req);
     expect(res.status).toBe(400);
   });
+
+  it("returns 200 using a valid backup code to disable 2FA (covers consumeBackupCode branch)", async () => {
+    const user = await createTestUser({ timezone: "Europe/Berlin" });
+    const secret = generateSecret();
+    const setupCode = generateSync({ secret });
+    const { codes } = await enableTotpForUser(user.id, secret, setupCode);
+
+    asSession(user.id);
+
+    // Use the first plaintext backup code to disable 2FA
+    const res = await POSTDisable(jsonRequest({ backupCode: codes[0] }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+  });
+
+  it("returns 422 for an invalid backup code (covers consumeBackupCode false branch)", async () => {
+    const user = await createTestUser({ timezone: "Europe/Berlin" });
+    const secret = generateSecret();
+    const setupCode = generateSync({ secret });
+    await enableTotpForUser(user.id, secret, setupCode);
+
+    asSession(user.id);
+
+    // "AAAAAAAAAA" is a valid format but not a real backup code
+    const res = await POSTDisable(jsonRequest({ backupCode: "AAAAAAAAAA" }));
+    expect(res.status).toBe(422);
+  });
 });
 
 // ─── POST /api/auth/2fa/regenerate-backup-codes ───────────────────────────────
@@ -403,6 +431,15 @@ describe("POST /api/auth/2fa/regenerate-backup-codes", () => {
       headers: { "Content-Type": "application/json" },
     });
     const res = await POSTRegenerateBackupCodes(req);
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 for valid JSON with invalid schema (covers lines 52-56)", async () => {
+    const user = await createTestUser({ timezone: "Europe/Berlin" });
+    asSession(user.id);
+
+    // "code" must be a 6-digit string — "abc" fails the regex
+    const res = await POSTRegenerateBackupCodes(jsonRequest({ code: "abc" }));
     expect(res.status).toBe(400);
   });
 });

@@ -49,6 +49,10 @@ import { DELETE as DELETEApiKey } from "@/app/api/user/api-keys/[id]/route";
 import { GET as GETExport } from "@/app/api/user/export/route";
 import { exportUserData } from "@/lib/export";
 import { createTestUser, createTestApiKey } from "./helpers/fixtures";
+import * as usersLib from "@/lib/users";
+import * as apiKeysLib from "@/lib/api-keys";
+import * as gamificationLib from "@/lib/gamification";
+import { db } from "@/lib/db";
 import type { ApiUser } from "@/lib/api-auth";
 
 const mockAuth = vi.mocked(resolveApiUser);
@@ -88,6 +92,19 @@ describe("GET /api/user", () => {
     const body = await res.json() as Record<string, unknown>;
     expect(typeof body.coins).toBe("number");
     expect(typeof body.level).toBe("number");
+  });
+
+  it("returns 500 when getUserStats throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(gamificationLib, "getUserStats").mockRejectedValueOnce(
+      new Error("DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await GETUser(req("GET", "/api/user"));
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });
 
@@ -376,6 +393,22 @@ describe("DELETE /api/user/api-keys/:id", () => {
     );
     expect(res.status).toBe(404);
   });
+
+  it("returns 500 when revokeApiKey throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(apiKeysLib, "revokeApiKey").mockRejectedValueOnce(
+      new Error("unexpected DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await DELETEApiKey(
+      req("DELETE", `/api/user/api-keys/${FAKE_ID}`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
 });
 
 // ─── GET /api/user/export ─────────────────────────────────────────────────────
@@ -417,5 +450,77 @@ describe("GET /api/user/export", () => {
     vi.mocked(exportUserData).mockRejectedValueOnce(new Error("Export failed"));
     const res = await GETExport(req("GET", "/api/user/export"));
     expect(res.status).toBe(500);
+  });
+});
+
+// ─── GET /api/user/profile — 500 error path ──────────────────────────────────
+
+describe("GET /api/user/profile — 500 error path", () => {
+  it("returns 500 when the db query throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(db, "select").mockImplementationOnce(() => {
+      throw new Error("DB connection error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await GETProfile(req("GET", "/api/user/profile") as never);
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── PATCH /api/user/profile — 500 error path ────────────────────────────────
+
+describe("PATCH /api/user/profile — 500 error path", () => {
+  it("returns 500 when updateUserProfile throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(usersLib, "updateUserProfile").mockRejectedValueOnce(
+      new Error("unexpected failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await PATCHProfile(
+      req("PATCH", "/api/user/profile", { name: "Test" }) as never
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── GET /api/user/api-keys — 500 error path ─────────────────────────────────
+
+describe("GET /api/user/api-keys — 500 error path", () => {
+  it("returns 500 when listApiKeys throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(apiKeysLib, "listApiKeys").mockRejectedValueOnce(
+      new Error("DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await GETApiKeys(req("GET", "/api/user/api-keys"));
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── POST /api/user/api-keys — 500 error path ────────────────────────────────
+
+describe("POST /api/user/api-keys — 500 error path", () => {
+  it("returns 500 when createApiKey throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const spy = vi.spyOn(apiKeysLib, "createApiKey").mockRejectedValueOnce(
+      new Error("DB failure")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await POSTApiKeys(
+      req("POST", "/api/user/api-keys", { name: "Test Key", readonly: false, expiresIn: null })
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });

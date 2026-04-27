@@ -194,6 +194,18 @@ describe("completeTask — fire-and-forget error paths", () => {
     consoleSpy.mockRestore();
   });
 
+  it("uses fallback hour when timezone is invalid for Intl.DateTimeFormat (covers line 658)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, { type: "ONE_TIME" });
+
+    // "Not/A/Timezone" causes Intl.DateTimeFormat to throw a RangeError at
+    // line ~654 inside completeTask — the catch returns new Date().getHours()
+    const result = await completeTask(task.id, user.id, "Not/A/Timezone");
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(result.task).toBeDefined();
+  });
+
   it("swallows updateQuestStreak errors without throwing (covers line 592)", async () => {
     const user = await createTestUser({ timezone: TZ });
     const today = getLocalDateString(TZ);

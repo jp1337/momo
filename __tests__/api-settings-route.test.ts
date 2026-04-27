@@ -103,6 +103,8 @@ import {
   DELETE as webhookByIdDELETE,
 } from "@/app/api/settings/webhooks/[id]/route";
 import { createTestUser } from "./helpers/fixtures";
+import { db } from "@/lib/db";
+import * as rateLimitLib from "@/lib/rate-limit";
 import type { ApiUser } from "@/lib/api-auth";
 
 const mockAuth = vi.mocked(resolveApiUser);
@@ -217,6 +219,42 @@ describe("PATCH /api/settings/quest", () => {
   });
 });
 
+// ─── GET /api/settings/quest — 500 error path ────────────────────────────────
+
+describe("GET /api/settings/quest — 500 error path", () => {
+  it("returns 500 when db query throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(db, "select").mockImplementationOnce(() => {
+      throw new Error("DB connection error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await questGET(req("GET", "/api/settings/quest") as never);
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── PATCH /api/settings/quest — 500 error path ──────────────────────────────
+
+describe("PATCH /api/settings/quest — 500 error path", () => {
+  it("returns 500 when db update throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(db, "update").mockImplementationOnce(() => {
+      throw new Error("DB connection error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await questPATCH(
+      req("PATCH", "/api/settings/quest", { postponeLimit: 3 }) as never
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
 // ─── GET/PATCH /api/settings/timezone ────────────────────────────────────────
 
 describe("GET /api/settings/timezone", () => {
@@ -272,6 +310,42 @@ describe("PATCH /api/settings/timezone", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+  });
+});
+
+// ─── GET /api/settings/timezone — 500 error path ─────────────────────────────
+
+describe("GET /api/settings/timezone — 500 error path", () => {
+  it("returns 500 when db query throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(db, "select").mockImplementationOnce(() => {
+      throw new Error("DB connection error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await timezoneGET(req("GET", "/api/settings/timezone"));
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── PATCH /api/settings/timezone — 500 error path ───────────────────────────
+
+describe("PATCH /api/settings/timezone — 500 error path", () => {
+  it("returns 500 when db update throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(db, "update").mockImplementationOnce(() => {
+      throw new Error("DB connection error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await timezonePATCH(
+      req("PATCH", "/api/settings/timezone", { timezone: "Europe/Berlin" })
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });
 
@@ -552,6 +626,59 @@ describe("GET /api/settings/notification-history", () => {
   });
 });
 
+// ─── GET /api/settings/notification-history — 500 error path ─────────────────
+
+describe("GET /api/settings/notification-history — 500 error path", () => {
+  it("returns 500 when db query throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(db, "select").mockImplementationOnce(() => {
+      throw new Error("DB connection error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await notifHistoryGET(req("GET", "/api/settings/notification-history") as never);
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── GET /api/settings/login-notification — 500 error path ───────────────────
+
+describe("GET /api/settings/login-notification — 500 error path", () => {
+  it("returns 500 when db query throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(db, "select").mockImplementationOnce(() => {
+      throw new Error("DB connection error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await loginNotifGET(req("GET", "/api/settings/login-notification"));
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── PATCH /api/settings/login-notification — 500 error path ─────────────────
+
+describe("PATCH /api/settings/login-notification — 500 error path", () => {
+  it("returns 500 when db update throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(db, "update").mockImplementationOnce(() => {
+      throw new Error("DB connection error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await loginNotifPATCH(
+      req("PATCH", "/api/settings/login-notification", { enabled: true })
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
 // ─── GET/POST/DELETE /api/settings/calendar-feed ─────────────────────────────
 
 describe("GET /api/settings/calendar-feed", () => {
@@ -808,6 +935,21 @@ describe("POST /api/settings/notification-channels/:type/test", () => {
     );
     expect(res.status).toBe(400);
   });
+
+  it("returns 500 when sendTestNotification throws an unexpected error", async () => {
+    const { sendTestNotification } = await import("@/lib/notifications");
+    vi.mocked(sendTestNotification).mockRejectedValueOnce(new Error("Send failed"));
+
+    const user = await createTestUser();
+    asUser(user.id);
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await channelTypeTestPOST(
+      req("POST", "/api/settings/notification-channels/ntfy/test") as never,
+      { params: Promise.resolve({ type: "ntfy" }) }
+    );
+    expect(res.status).toBe(500);
+    consoleSpy.mockRestore();
+  });
 });
 
 // ─── GET/POST /api/settings/webhooks ─────────────────────────────────────────
@@ -856,6 +998,26 @@ describe("POST /api/settings/webhooks", () => {
       }) as never
     );
     expect(res.status).toBe(403);
+  });
+
+  it("returns 429 when rate limit is exceeded", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(rateLimitLib, "checkRateLimit").mockReturnValueOnce({
+      limited: true,
+      remaining: 0,
+      resetAt: Date.now() + 60_000,
+    });
+    const res = await webhooksPOST(
+      req("POST", "/api/settings/webhooks", {
+        name: "Test Webhook",
+        url: "https://example.com/hook",
+        events: [],
+        enabled: true,
+      }) as never
+    );
+    expect(res.status).toBe(429);
+    spy.mockRestore();
   });
 
   it("returns 422 for missing name", async () => {
@@ -1181,6 +1343,62 @@ describe("PUT /api/settings/notification-channels — additional paths", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+  });
+
+  it("returns 500 when db throws during PUT", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(db, "select").mockImplementationOnce(() => {
+      throw new Error("DB error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await channelsPUT(
+      req("PUT", "/api/settings/notification-channels", {
+        type: "ntfy",
+        config: { url: "https://ntfy.sh/error-test", topic: "error-test" },
+        enabled: true,
+      }) as never
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── GET /api/settings/notification-channels — 500 error path ────────────────
+
+describe("GET /api/settings/notification-channels — 500 error path", () => {
+  it("returns 500 when db query throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(db, "select").mockImplementationOnce(() => {
+      throw new Error("DB connection error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await channelsGET(req("GET", "/api/settings/notification-channels") as never);
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+});
+
+// ─── DELETE /api/settings/notification-channels/:type — 500 error path ───────
+
+describe("DELETE /api/settings/notification-channels/:type — 500 error path", () => {
+  it("returns 500 when db delete throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const spy = vi.spyOn(db, "delete").mockImplementationOnce(() => {
+      throw new Error("DB connection error");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const res = await channelTypeDELETE(
+      req("DELETE", "/api/settings/notification-channels/ntfy") as never,
+      { params: Promise.resolve({ type: "ntfy" }) }
+    );
+    expect(res.status).toBe(500);
+    spy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });
 
