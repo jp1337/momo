@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -109,5 +109,27 @@ describe("checkRateLimit", () => {
     const { resetAt: r2 } = checkRateLimit(key, 10, 60_000);
 
     expect(r1).toBe(r2);
+  });
+});
+
+// ─── rateLimitResponse ────────────────────────────────────────────────────────
+
+describe("rateLimitResponse", () => {
+  it("returns a 429 response", () => {
+    const res = rateLimitResponse(Date.now() + 30_000);
+    expect(res.status).toBe(429);
+  });
+
+  it("includes Retry-After and X-RateLimit-Reset headers", () => {
+    const resetAt = Date.now() + 30_000;
+    const res = rateLimitResponse(resetAt);
+    expect(res.headers.get("Retry-After")).toBeDefined();
+    expect(res.headers.get("X-RateLimit-Reset")).toBeDefined();
+  });
+
+  it("Retry-After is at least 1 when reset is in the past", () => {
+    const resetAt = Date.now() - 1_000; // already past
+    const res = rateLimitResponse(resetAt);
+    expect(Number(res.headers.get("Retry-After"))).toBeGreaterThanOrEqual(1);
   });
 });

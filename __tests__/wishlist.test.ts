@@ -124,6 +124,22 @@ describe("updateWishlistItem", () => {
       updateWishlistItem(item.id, userB.id, { title: "Hacked" })
     ).rejects.toThrow();
   });
+
+  it("updates the price", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const item = await createTestWishlistItem(user.id, { title: "Priceless" });
+
+    const updated = await updateWishlistItem(item.id, user.id, { price: 29.99 });
+    expect(Number(updated.price)).toBeCloseTo(29.99);
+  });
+
+  it("sets price to null when price=null is passed", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const item = await createTestWishlistItem(user.id, { title: "Free" });
+
+    const updated = await updateWishlistItem(item.id, user.id, { price: null });
+    expect(updated.price).toBeNull();
+  });
 });
 
 // ─── markAsBought ─────────────────────────────────────────────────────────────
@@ -236,6 +252,24 @@ describe("restoreWishlistItem", () => {
 
     const result = await restoreWishlistItem(item.id, user.id);
     expect(result.status).toBe("OPEN");
+  });
+
+  it("throws when item does not exist", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const fakeId = "00000000-0000-0000-0000-000000000099";
+
+    await expect(restoreWishlistItem(fakeId, user.id)).rejects.toThrow(
+      "Wishlist item not found or access denied"
+    );
+  });
+
+  it("throws when item is not in DISCARDED status", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const item = await createTestWishlistItem(user.id, { status: "OPEN" });
+
+    await expect(restoreWishlistItem(item.id, user.id)).rejects.toThrow(
+      "Wishlist item is not discarded"
+    );
   });
 });
 

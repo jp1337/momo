@@ -17,6 +17,7 @@ import {
   checkAndUnlockAchievements,
   retroactivelyGrantAchievements,
   updateQuestStreak,
+  updateStreak,
   LEVELS,
 } from "@/lib/gamification";
 import { getLocalDateString } from "@/lib/date-utils";
@@ -145,6 +146,29 @@ describe("getUserStats", () => {
     const stats = await getUserStats(user.id);
 
     expect(stats.streakShieldAvailable).toBe(true);
+  });
+});
+
+// ─── getUserStats early-exit ──────────────────────────────────────────────────
+
+describe("getUserStats — non-existent user", () => {
+  it("returns default values for an unknown userId", async () => {
+    const result = await getUserStats("00000000-0000-0000-0000-000000000000");
+    expect(result.coins).toBe(0);
+    expect(result.streakCurrent).toBe(0);
+    expect(result.level).toBe(1);
+    expect(result.streakShieldAvailable).toBe(true);
+  });
+});
+
+// ─── updateStreak early-exit ─────────────────────────────────────────────────
+
+describe("updateStreak — non-existent user", () => {
+  it("returns zero streak for an unknown userId", async () => {
+    const result = await updateStreak("00000000-0000-0000-0000-000000000000");
+    expect(result.streakCurrent).toBe(0);
+    expect(result.streakMax).toBe(0);
+    expect(result.shieldUsed).toBe(false);
   });
 });
 
