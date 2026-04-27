@@ -14,7 +14,7 @@ import { createHmac } from "node:crypto";
 import { generateSecret, generateSync } from "otplib";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
-import { users, totpBackupCodes } from "@/lib/db/schema";
+import { users, totpBackupCodes, sessions } from "@/lib/db/schema";
 import {
   generateTotpSetup,
   verifyTotpCode,
@@ -27,6 +27,8 @@ import {
   signSetupToken,
   verifySetupToken,
   readSessionTokenFromCookieStore,
+  markSessionSecondFactorVerified,
+  isSessionSecondFactorVerified,
   BACKUP_CODE_COUNT,
 } from "@/lib/totp";
 import { createTestUser } from "./helpers/fixtures";
@@ -450,5 +452,41 @@ describe("verifyUserTotpCode", () => {
 
     const result = await verifyUserTotpCode(user.id, "000000");
     expect(result).toBe(false);
+  });
+});
+
+// ─── markSessionSecondFactorVerified / isSessionSecondFactorVerified ──────────
+
+describe("markSessionSecondFactorVerified / isSessionSecondFactorVerified", () => {
+  async function createSession(userId: string, token: string): Promise<void> {
+    await db.insert(sessions).values({
+      sessionToken: token,
+      userId,
+      expires: new Date(Date.now() + 3_600_000),
+    });
+  }
+
+  it("isSessionSecondFactorVerified returns false for a fresh session", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const token = "sf-test-token-" + Date.now();
+    await createSession(user.id, token);
+
+    const result = await isSessionSecondFactorVerified(token);
+    expect(result).toBe(false);
+  });
+
+  it("isSessionSecondFactorVerified returns false for an unknown token", async () => {
+    const result = await isSessionSecondFactorVerified("nonexistent-token");
+    expect(result).toBe(false);
+  });
+
+  it("returns true after markSessionSecondFactorVerified is called", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const token = "sf-mark-token-" + Date.now();
+    await createSession(user.id, token);
+
+    await markSessionSecondFactorVerified(token);
+    const result = await isSessionSecondFactorVerified(token);
+    expect(result).toBe(true);
   });
 });
