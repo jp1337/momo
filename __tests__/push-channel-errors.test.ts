@@ -54,13 +54,14 @@ vi.mock("@/lib/notification-log", () => ({
   logNotification: vi.fn(),
 }));
 
+import webpush from "web-push";
 import {
   sendStreakShieldNotification,
   sendAchievementNotifications,
   sendMorningBriefingNotifications,
 } from "@/lib/push";
 import { db } from "@/lib/db";
-import { users, notificationChannels } from "@/lib/db/schema";
+import { users, notificationChannels, pushSubscriptions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { createTestUser } from "./helpers/fixtures";
 import type { UnlockedAchievement } from "@/lib/gamification";
@@ -120,6 +121,39 @@ describe("push — sendToAllChannels error paths", () => {
     );
 
     consoleSpy.mockRestore();
+  });
+
+  it("sendMorningBriefingNotifications catches push subscription send errors (covers line 1352)", async () => {
+    // isVapidConfigured() reads process.env directly, not clientEnv — stub it here
+    const origKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = "test-vapid-public-key";
+
+    const user = await createTestUser({ timezone: "UTC" });
+    await enableMorningBriefingForUser(user.id);
+
+    const endpoint = `https://fcm.googleapis.com/push/${user.id}`;
+    await db.insert(pushSubscriptions).values({
+      userId: user.id,
+      endpoint,
+      subscription: { endpoint, keys: { p256dh: "test-p256dh", auth: "test-auth" } },
+      enabled: true,
+    });
+
+    // Make webpush.sendNotification reject — sendPushNotification re-throws non-410 errors
+    vi.mocked(webpush.sendNotification).mockRejectedValueOnce(new Error("push delivery failed"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await sendMorningBriefingNotifications();
+
+    expect(result.failed).toBeGreaterThanOrEqual(1);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[push] Failed to send morning briefing to",
+      user.id,
+      expect.any(Error)
+    );
+
+    consoleSpy.mockRestore();
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = origKey;
   });
 
   it("sendMorningBriefingNotifications catches notification channel send errors (covers lines 1369-1376)", async () => {
