@@ -28,7 +28,18 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
+vi.mock("@/lib/wishlist", async (orig) => {
+  const actual = await orig<typeof import("@/lib/wishlist")>();
+  return {
+    ...actual,
+    getUserWishlistItems: vi.fn(actual.getUserWishlistItems),
+    createWishlistItem: vi.fn(actual.createWishlistItem),
+    getBudgetSummary: vi.fn(actual.getBudgetSummary),
+  };
+});
+
 import { resolveApiUser } from "@/lib/api-auth";
+import { getUserWishlistItems, createWishlistItem, getBudgetSummary } from "@/lib/wishlist";
 import { GET, POST } from "@/app/api/wishlist/route";
 import {
   PATCH as PATCHById,
@@ -484,5 +495,31 @@ describe("DELETE /api/wishlist/:id/discard (restore)", () => {
       { params: Promise.resolve({ id: FAKE_ID }) }
     );
     expect(res.status).toBe(404);
+  });
+});
+
+// ─── GET /api/wishlist — error path ───────────────────────────────────────────
+
+describe("GET /api/wishlist — error path", () => {
+  it("returns 500 when getUserWishlistItems throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(getUserWishlistItems).mockRejectedValueOnce(new Error("DB error"));
+    const res = await GET(req("GET", "/api/wishlist"));
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── POST /api/wishlist — error path ──────────────────────────────────────────
+
+describe("POST /api/wishlist — error path", () => {
+  it("returns 500 when createWishlistItem throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(createWishlistItem).mockRejectedValueOnce(new Error("DB error"));
+    const res = await POST(
+      req("POST", "/api/wishlist", { title: "Boom", price: 9.99, priority: "WANT" })
+    );
+    expect(res.status).toBe(500);
   });
 });

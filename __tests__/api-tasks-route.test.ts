@@ -25,7 +25,17 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
+vi.mock("@/lib/tasks", async (orig) => {
+  const actual = await orig<typeof import("@/lib/tasks")>();
+  return {
+    ...actual,
+    getUserTasks: vi.fn(actual.getUserTasks),
+    createTask: vi.fn(actual.createTask),
+  };
+});
+
 import { resolveApiUser } from "@/lib/api-auth";
+import { getUserTasks, createTask } from "@/lib/tasks";
 import { GET, POST } from "@/app/api/tasks/route";
 import {
   GET as GETById,
@@ -484,5 +494,40 @@ describe("DELETE /api/tasks/:id/complete", () => {
       params: Promise.resolve({ id: task.id }),
     });
     expect(res.status).toBe(409);
+  });
+});
+
+// ─── GET /api/tasks — additional branches ─────────────────────────────────────
+
+describe("GET /api/tasks — additional branches", () => {
+  it("filters by ?type=ONE_TIME", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await GET(req("GET", "/api/tasks?type=ONE_TIME"));
+    expect(res.status).toBe(200);
+    const body = await res.json() as { tasks: unknown[] };
+    expect(Array.isArray(body.tasks)).toBe(true);
+  });
+
+  it("returns 500 when getUserTasks throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(getUserTasks).mockRejectedValueOnce(new Error("DB error"));
+    const res = await GET(req("GET", "/api/tasks"));
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── POST /api/tasks — 500 error path ─────────────────────────────────────────
+
+describe("POST /api/tasks — 500 error path", () => {
+  it("returns 500 when createTask throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(createTask).mockRejectedValueOnce(new Error("unexpected DB error"));
+    const res = await POST(
+      req("POST", "/api/tasks", { title: "Boom", type: "ONE_TIME" })
+    );
+    expect(res.status).toBe(500);
   });
 });

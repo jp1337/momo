@@ -24,7 +24,17 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
+vi.mock("@/lib/topics", async (orig) => {
+  const actual = await orig<typeof import("@/lib/topics")>();
+  return {
+    ...actual,
+    getUserTopics: vi.fn(actual.getUserTopics),
+    createTopic: vi.fn(actual.createTopic),
+  };
+});
+
 import { resolveApiUser } from "@/lib/api-auth";
+import { getUserTopics, createTopic } from "@/lib/topics";
 import { GET, POST } from "@/app/api/topics/route";
 import {
   GET as GETById,
@@ -295,5 +305,29 @@ describe("DELETE /api/topics/:id", () => {
       params: Promise.resolve({ id: FAKE_ID }),
     });
     expect(res.status).toBe(404);
+  });
+});
+
+// ─── GET /api/topics — error path ─────────────────────────────────────────────
+
+describe("GET /api/topics — error path", () => {
+  it("returns 500 when getUserTopics throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(getUserTopics).mockRejectedValueOnce(new Error("DB error"));
+    const res = await GET(req("GET", "/api/topics"));
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── POST /api/topics — error path ────────────────────────────────────────────
+
+describe("POST /api/topics — error path", () => {
+  it("returns 500 when createTopic throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(createTopic).mockRejectedValueOnce(new Error("DB error"));
+    const res = await POST(req("POST", "/api/topics", { title: "Boom" }));
+    expect(res.status).toBe(500);
   });
 });

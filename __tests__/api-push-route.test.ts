@@ -369,6 +369,22 @@ describe("PATCH /api/push/devices/:id", () => {
     expect(res.status).toBe(422);
   });
 
+  it("returns 400 for malformed JSON body", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const fakeId = "00000000-0000-0000-0000-000000000000";
+    const badReq = new Request(`http://localhost/api/push/devices/${fakeId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await deviceByIdPATCH(
+      badReq as never,
+      { params: Promise.resolve({ id: fakeId }) }
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("returns 404 for non-existent device", async () => {
     const user = await createTestUser();
     asUser(user.id);

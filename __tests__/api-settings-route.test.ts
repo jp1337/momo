@@ -53,12 +53,43 @@ vi.mock("@/lib/wishlist", async (orig) => {
   };
 });
 
+vi.mock("@/lib/vacation", async (orig) => {
+  const actual = await orig<typeof import("@/lib/vacation")>();
+  return {
+    ...actual,
+    getVacationStatus: vi.fn(actual.getVacationStatus),
+    activateVacationMode: vi.fn(actual.activateVacationMode),
+    deactivateVacationMode: vi.fn(actual.deactivateVacationMode),
+  };
+});
+
+vi.mock("@/lib/calendar", async (orig) => {
+  const actual = await orig<typeof import("@/lib/calendar")>();
+  return {
+    ...actual,
+    createOrRotateCalendarToken: vi.fn(actual.createOrRotateCalendarToken),
+    revokeCalendarToken: vi.fn(actual.revokeCalendarToken),
+  };
+});
+
+vi.mock("@/lib/webhooks", async (orig) => {
+  const actual = await orig<typeof import("@/lib/webhooks")>();
+  return {
+    ...actual,
+    listWebhookEndpoints: vi.fn(actual.listWebhookEndpoints),
+    createWebhookEndpoint: vi.fn(actual.createWebhookEndpoint),
+  };
+});
+
 import { resolveApiUser, resolveVerifiedApiUser } from "@/lib/api-auth";
 import { GET as questGET, PATCH as questPATCH } from "@/app/api/settings/quest/route";
 import { GET as timezoneGET, PATCH as timezonePATCH } from "@/app/api/settings/timezone/route";
 import { GET as vacationGET, PATCH as vacationPATCH } from "@/app/api/settings/vacation-mode/route";
 import { GET as budgetGET, PATCH as budgetPATCH } from "@/app/api/settings/budget/route";
 import { getBudgetSummary, updateMonthlyBudget } from "@/lib/wishlist";
+import { getVacationStatus, activateVacationMode, deactivateVacationMode } from "@/lib/vacation";
+import { createOrRotateCalendarToken, revokeCalendarToken } from "@/lib/calendar";
+import { listWebhookEndpoints, createWebhookEndpoint } from "@/lib/webhooks";
 import { GET as loginNotifGET, PATCH as loginNotifPATCH } from "@/app/api/settings/login-notification/route";
 import { GET as notifHistoryGET } from "@/app/api/settings/notification-history/route";
 import { GET as calendarGET, POST as calendarPOST, DELETE as calendarDELETE } from "@/app/api/settings/calendar-feed/route";
@@ -1031,5 +1062,204 @@ describe("DELETE /api/settings/webhooks/:id", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+  });
+});
+
+// ─── Error paths: vacation-mode ───────────────────────────────────────────────
+
+describe("GET /api/settings/vacation-mode — error path", () => {
+  it("returns 500 when getVacationStatus throws", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    vi.mocked(getVacationStatus).mockRejectedValueOnce(new Error("DB error"));
+    const res = await vacationGET(req("GET", "/api/settings/vacation-mode"));
+    expect(res.status).toBe(500);
+  });
+});
+
+describe("PATCH /api/settings/vacation-mode — error paths", () => {
+  it("returns 400 for malformed JSON body", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const badReq = new Request("http://localhost/api/settings/vacation-mode", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await vacationPATCH(badReq);
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 500 when deactivateVacationMode throws", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    vi.mocked(deactivateVacationMode).mockRejectedValueOnce(new Error("DB error"));
+    const res = await vacationPATCH(
+      req("PATCH", "/api/settings/vacation-mode", { active: false })
+    );
+    expect(res.status).toBe(500);
+  });
+
+  it("returns 500 when activateVacationMode throws", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 7);
+    const endDate = futureDate.toISOString().slice(0, 10);
+    vi.mocked(activateVacationMode).mockRejectedValueOnce(new Error("DB error"));
+    const res = await vacationPATCH(
+      req("PATCH", "/api/settings/vacation-mode", { active: true, endDate })
+    );
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── Error paths: quest settings ─────────────────────────────────────────────
+
+describe("PATCH /api/settings/quest — error path", () => {
+  it("returns 400 for malformed JSON body", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const badReq = new Request("http://localhost/api/settings/quest", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await questPATCH(badReq as never);
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── Error paths: timezone settings ──────────────────────────────────────────
+
+describe("PATCH /api/settings/timezone — error path", () => {
+  it("returns 400 for malformed JSON body", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const badReq = new Request("http://localhost/api/settings/timezone", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await timezonePATCH(badReq);
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── Error paths: notification-channels ──────────────────────────────────────
+
+describe("PUT /api/settings/notification-channels — additional paths", () => {
+  it("returns 400 for malformed JSON body", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const badReq = new Request("http://localhost/api/settings/notification-channels", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await channelsPUT(badReq as never);
+    expect(res.status).toBe(400);
+  });
+
+  it("updates existing channel when PUT twice for same type", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const payload = {
+      type: "ntfy",
+      config: { url: "https://ntfy.sh/update-test", topic: "update-test" },
+      enabled: true,
+    };
+    // First PUT — inserts
+    await channelsPUT(req("PUT", "/api/settings/notification-channels", payload) as never);
+    // Second PUT — triggers the update branch (line 86)
+    const res = await channelsPUT(
+      req("PUT", "/api/settings/notification-channels", {
+        ...payload,
+        enabled: false,
+      }) as never
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+  });
+});
+
+// ─── Error paths: calendar-feed ──────────────────────────────────────────────
+
+describe("POST /api/settings/calendar-feed — error path", () => {
+  it("returns 500 when createOrRotateCalendarToken throws", async () => {
+    const user = await createTestUser();
+    asVerifiedUser(user.id);
+    vi.mocked(createOrRotateCalendarToken).mockRejectedValueOnce(new Error("DB error"));
+    const res = await calendarPOST(req("POST", "/api/settings/calendar-feed"));
+    expect(res.status).toBe(500);
+  });
+});
+
+describe("DELETE /api/settings/calendar-feed — error path", () => {
+  it("returns 500 when revokeCalendarToken throws", async () => {
+    const user = await createTestUser();
+    asVerifiedUser(user.id);
+    vi.mocked(revokeCalendarToken).mockRejectedValueOnce(new Error("DB error"));
+    const res = await calendarDELETE(req("DELETE", "/api/settings/calendar-feed"));
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── Error paths: webhooks ────────────────────────────────────────────────────
+
+describe("GET /api/settings/webhooks — error path", () => {
+  it("returns 500 when listWebhookEndpoints throws", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    vi.mocked(listWebhookEndpoints).mockRejectedValueOnce(new Error("DB error"));
+    const res = await webhooksGET(req("GET", "/api/settings/webhooks") as never);
+    expect(res.status).toBe(500);
+  });
+});
+
+describe("POST /api/settings/webhooks — error paths", () => {
+  it("returns 400 for malformed JSON body", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const badReq = new Request("http://localhost/api/settings/webhooks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await webhooksPOST(badReq as never);
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 409 when webhook limit is exceeded", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    vi.mocked(createWebhookEndpoint).mockRejectedValueOnce(new Error("limit_exceeded"));
+    const res = await webhooksPOST(
+      req("POST", "/api/settings/webhooks", {
+        name: "Over Limit",
+        url: "https://example.com/hook",
+        events: [],
+        enabled: true,
+      }) as never
+    );
+    expect(res.status).toBe(409);
+    const body = await res.json() as { code: string };
+    expect(body.code).toBe("limit_exceeded");
+  });
+
+  it("returns 500 when createWebhookEndpoint throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    vi.mocked(createWebhookEndpoint).mockRejectedValueOnce(new Error("unexpected"));
+    const res = await webhooksPOST(
+      req("POST", "/api/settings/webhooks", {
+        name: "Error Hook",
+        url: "https://example.com/hook",
+        events: [],
+        enabled: true,
+      }) as never
+    );
+    expect(res.status).toBe(500);
   });
 });
