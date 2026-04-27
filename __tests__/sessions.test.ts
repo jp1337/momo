@@ -361,3 +361,186 @@ describe("maybeUpdateSessionMetadata", () => {
     }).not.toThrow();
   });
 });
+
+// ─── listUserSessions — sort branch (non-current sessions) ───────────────────
+
+describe("listUserSessions sort (non-current sessions compared by lastActiveAt)", () => {
+  it("sorts two non-current sessions by lastActiveAt descending", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const older = "sort-token-older-" + Date.now();
+    const newer = "sort-token-newer-" + Date.now();
+    const current = "sort-token-current-" + Date.now();
+
+    const olderTime = new Date(Date.now() - 10_000);
+    const newerTime = new Date(Date.now() - 1_000);
+
+    await db.insert(sessions).values([
+      {
+        sessionToken: older,
+        userId: user.id,
+        expires: new Date(Date.now() + 3_600_000),
+        lastActiveAt: olderTime,
+        createdAt: olderTime,
+      },
+      {
+        sessionToken: newer,
+        userId: user.id,
+        expires: new Date(Date.now() + 3_600_000),
+        lastActiveAt: newerTime,
+        createdAt: newerTime,
+      },
+      {
+        sessionToken: current,
+        userId: user.id,
+        expires: new Date(Date.now() + 3_600_000),
+        lastActiveAt: new Date(),
+        createdAt: new Date(),
+      },
+    ]);
+
+    // Pass `current` as the caller token — the other two are non-current
+    // and must be sorted via bTime.localeCompare(aTime)
+    const result = await listUserSessions(user.id, current);
+    expect(result).toHaveLength(3);
+    expect(result[0].isCurrent).toBe(true);
+    // The non-current sessions should be in descending lastActiveAt order
+    const nonCurrent = result.filter((s) => !s.isCurrent);
+    expect(nonCurrent).toHaveLength(2);
+    const firstTime = nonCurrent[0].lastActiveAt ?? "";
+    const secondTime = nonCurrent[1].lastActiveAt ?? "";
+    expect(firstTime >= secondTime).toBe(true);
+  });
+});
+
+// ─── notifyIfNewDevice (via touchSessionMetadata) ────────────────────────────
+
+describe("notifyIfNewDevice (called from touchSessionMetadata on first touch)", () => {
+  /**
+   * Insert a session WITHOUT createdAt so that touchSessionMetadata treats it
+   * as a first-ever touch and calls notifyIfNewDevice.
+   */
+  async function createUntouchedSession(
+    userId: string,
+    token: string,
+    opts: { userAgent?: string; ipAddress?: string } = {}
+  ) {
+    await db.insert(sessions).values({
+      sessionToken: token,
+      userId,
+      expires: new Date(Date.now() + 3_600_000),
+      userAgent: opts.userAgent ?? null,
+      ipAddress: opts.ipAddress ?? null,
+      // createdAt intentionally omitted (null) — marks session as untouched
+    });
+  }
+
+  it("does not send a notification when loginNotificationNewDevice is false (default)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const token = "notify-disabled-" + Date.now();
+    await createUntouchedSession(user.id, token);
+
+    // Should complete without error; loginNotificationNewDevice=false by default
+    await expect(
+      touchSessionMetadata(token, new Headers({ "user-agent": "Chrome/1.0" }), user.id)
+    ).resolves.toBeUndefined();
+  });
+
+  it("does not send a notification on first-ever login (no prior sessions)", async () => {
+    const { db: dbInst } = await import("@/lib/db");
+    const { users: usersTable } = await import("@/lib/db/schema");
+    const { eq: eqFn } = await import("drizzle-orm");
+
+    const user = await createTestUser({ timezone: TZ });
+    // Enable login notification
+    await dbInst
+      .update(usersTable)
+      .set({ loginNotificationNewDevice: true })
+      .where(eqFn(usersTable.id, user.id));
+
+    const token = "notify-first-login-" + Date.now();
+    await createUntouchedSession(user.id, token);
+
+    // No prior sessions → notifyIfNewDevice exits early (no sessions to compare)
+    await expect(
+      touchSessionMetadata(token, new Headers({ "user-agent": "Chrome/1.0" }), user.id)
+    ).resolves.toBeUndefined();
+  });
+
+  it("does not send when the device fingerprint matches a prior session", async () => {
+    const { db: dbInst } = await import("@/lib/db");
+    const { users: usersTable } = await import("@/lib/db/schema");
+    const { eq: eqFn } = await import("drizzle-orm");
+
+    const user = await createTestUser({ timezone: TZ });
+    await dbInst
+      .update(usersTable)
+      .set({ loginNotificationNewDevice: true })
+      .where(eqFn(usersTable.id, user.id));
+
+    const ua = "Mozilla/5.0 SameDevice/1.0";
+    const ip = "10.0.0.1";
+
+    // Existing "prior" session — same UA and IP (same fingerprint)
+    const priorToken = "prior-session-" + Date.now();
+    await db.insert(sessions).values({
+      sessionToken: priorToken,
+      userId: user.id,
+      expires: new Date(Date.now() + 3_600_000),
+      userAgent: ua,
+      ipAddress: ip,
+      createdAt: new Date(Date.now() - 5_000), // already touched
+      lastActiveAt: new Date(Date.now() - 5_000),
+    });
+
+    // New session — same fingerprint → should not notify
+    const newToken = "new-session-same-device-" + Date.now();
+    const headers = new Headers({
+      "user-agent": ua,
+      "x-forwarded-for": ip,
+    });
+    await createUntouchedSession(user.id, newToken, { userAgent: ua, ipAddress: ip });
+    await expect(
+      touchSessionMetadata(newToken, headers, user.id)
+    ).resolves.toBeUndefined();
+  });
+
+  it("sends notification when fingerprint is new (new device detected)", async () => {
+    const { db: dbInst } = await import("@/lib/db");
+    const { users: usersTable } = await import("@/lib/db/schema");
+    const { eq: eqFn } = await import("drizzle-orm");
+
+    const user = await createTestUser({ timezone: TZ });
+    await dbInst
+      .update(usersTable)
+      .set({ loginNotificationNewDevice: true })
+      .where(eqFn(usersTable.id, user.id));
+
+    // Prior session — different UA/IP from the new one
+    const priorToken = "prior-session-diff-" + Date.now();
+    await db.insert(sessions).values({
+      sessionToken: priorToken,
+      userId: user.id,
+      expires: new Date(Date.now() + 3_600_000),
+      userAgent: "OldBrowser/1.0",
+      ipAddress: "192.168.1.1",
+      createdAt: new Date(Date.now() - 5_000),
+      lastActiveAt: new Date(Date.now() - 5_000),
+    });
+
+    // New session — completely different UA/IP → sendToAllChannels fires
+    // (user has no channels configured so it completes silently)
+    const newToken = "new-session-new-device-" + Date.now();
+    const headers = new Headers({
+      "user-agent": "NewBrowser/99.0",
+      "x-forwarded-for": "10.20.30.40",
+    });
+    await createUntouchedSession(user.id, newToken, {
+      userAgent: "NewBrowser/99.0",
+      ipAddress: "10.20.30.40",
+    });
+    await expect(
+      touchSessionMetadata(newToken, headers, user.id)
+    ).resolves.toBeUndefined();
+  });
+});

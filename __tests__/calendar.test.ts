@@ -217,3 +217,104 @@ describe("buildIcsForUser", () => {
     expect(ics).not.toContain("BEGIN:VEVENT");
   });
 });
+
+// ─── buildIcsForUser — recurrence type branches ───────────────────────────────
+
+describe("buildIcsForUser recurrence types", () => {
+  it("includes FREQ=WEEKLY for WEEKDAY recurrence type", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    await createTestTask(user.id, {
+      title: "Weekly WEEKDAY Task",
+      type: "RECURRING",
+      nextDueDate: today,
+      recurrenceType: "WEEKDAY",
+      recurrenceWeekdays: "[0]", // index 0 = MO
+    });
+
+    const ics = await buildIcsForUser(user.id, "http://localhost:3000");
+    expect(ics).toContain("FREQ=WEEKLY");
+    expect(ics).toContain("BYDAY=MO");
+  });
+
+  it("includes FREQ=MONTHLY for MONTHLY recurrence type", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    await createTestTask(user.id, {
+      title: "Monthly Task",
+      type: "RECURRING",
+      nextDueDate: today,
+      recurrenceType: "MONTHLY",
+    });
+
+    const ics = await buildIcsForUser(user.id, "http://localhost:3000");
+    expect(ics).toContain("FREQ=MONTHLY");
+    expect(ics).toContain("BYMONTHDAY=");
+  });
+
+  it("includes FREQ=YEARLY for YEARLY recurrence type", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    await createTestTask(user.id, {
+      title: "Yearly Task",
+      type: "RECURRING",
+      nextDueDate: today,
+      recurrenceType: "YEARLY",
+    });
+
+    const ics = await buildIcsForUser(user.id, "http://localhost:3000");
+    expect(ics).toContain("FREQ=YEARLY");
+    expect(ics).toContain("BYMONTH=");
+  });
+
+  it("omits RRULE when recurrenceType=INTERVAL but interval is 0", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    // recurrenceInterval=0 → buildRepeating returns null → no RRULE
+    await createTestTask(user.id, {
+      title: "Zero Interval Task",
+      type: "RECURRING",
+      nextDueDate: today,
+      recurrenceType: "INTERVAL",
+      recurrenceInterval: 0,
+    });
+
+    const ics = await buildIcsForUser(user.id, "http://localhost:3000");
+    // VEVENT exists but has no RRULE
+    expect(ics).toContain("BEGIN:VEVENT");
+    expect(ics).not.toContain("RRULE:");
+  });
+
+  it("falls back to RRULE:FREQ=WEEKLY when WEEKDAY recurrenceWeekdays is invalid JSON", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    await createTestTask(user.id, {
+      title: "Bad Weekday JSON",
+      type: "RECURRING",
+      nextDueDate: today,
+      recurrenceType: "WEEKDAY",
+      recurrenceWeekdays: "not-valid-json",
+    });
+
+    const ics = await buildIcsForUser(user.id, "http://localhost:3000");
+    // Falls back to [0] → index 0 = MO
+    expect(ics).toContain("FREQ=WEEKLY");
+    expect(ics).toContain("BYDAY=MO");
+  });
+
+  it("includes topic name as CATEGORIES when task belongs to a topic", async () => {
+    const { createTestTopic } = await import("./helpers/fixtures");
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id, { title: "Work Stuff" });
+    const today = getLocalDateString(TZ);
+    await createTestTask(user.id, {
+      title: "Categorised Task",
+      type: "ONE_TIME",
+      dueDate: today,
+      topicId: topic.id,
+    });
+
+    const ics = await buildIcsForUser(user.id, "http://localhost:3000");
+    expect(ics).toContain("CATEGORIES:Work Stuff");
+  });
+});
