@@ -537,4 +537,42 @@ describe("completeTask — recurrence type next-due-date logic", () => {
     const updated = await getTask(task.id);
     expect(updated.nextDueDate).toBe("2025-06-15");
   });
+
+  it("WEEKDAY: falls back to +7 days when recurrenceWeekdays is an empty array (covers line 39)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    const task = await createTestTask(user.id, {
+      type: "RECURRING",
+      recurrenceType: "WEEKDAY",
+      nextDueDate: today,
+      recurrenceWeekdays: "[]", // empty → triggers the weekdays.length === 0 guard
+    });
+
+    await completeTask(task.id, user.id, TZ);
+
+    const updated = await getTask(task.id);
+    // WEEKDAY always uses today as base; empty array → nextDueInterval(today, 7)
+    const [y, m, d] = today.split("-").map(Number);
+    const expected = new Date(Date.UTC(y, m - 1, d + 7)).toISOString().split("T")[0];
+    expect(updated.nextDueDate).toBe(expected);
+  });
+
+  it("WEEKDAY: falls back to Monday when recurrenceWeekdays contains invalid JSON (covers line 484)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    const task = await createTestTask(user.id, {
+      type: "RECURRING",
+      recurrenceType: "WEEKDAY",
+      nextDueDate: today,
+      recurrenceWeekdays: "not-valid-json", // parse error → default [0] (Monday)
+    });
+
+    await completeTask(task.id, user.id, TZ);
+
+    const updated = await getTask(task.id);
+    // Default [0] = Monday; nextDueWeekday finds the next Monday after today
+    // The result must be a future date (at least tomorrow)
+    expect(updated.nextDueDate).not.toBeNull();
+    expect(updated.nextDueDate! > today).toBe(true);
+  });
 });

@@ -7,6 +7,9 @@
  * golden-path tests in complete-task.test.ts.
  *
  * Lines covered:
+ *   572 — updateStreak rejects (catch block)
+ *   580 — sendStreakShieldNotification rejects (fire-and-forget)
+ *   592 — updateQuestStreak rejects (catch block)
  *   688 — checkAndUnlockAchievements rejects (catch block)
  *   706 — achievement coin booking DB update fails
  *   714 — sendAchievementNotifications rejects
@@ -23,6 +26,8 @@ vi.mock("@/lib/webhooks", () => ({
 }));
 
 // sendAchievementNotifications always rejects → covers line 714
+// sendStreakShieldNotification starts as resolving; individual tests can use
+// mockRejectedValueOnce to cover the shield notification catch (line 580).
 vi.mock("@/lib/push", () => ({
   sendAchievementNotifications: vi.fn().mockRejectedValue(new Error("push failed")),
   sendStreakShieldNotification: vi.fn().mockResolvedValue(undefined),
@@ -41,6 +46,7 @@ vi.mock("@/lib/gamification", async (orig) => {
       streakMax: 0,
       shieldUsed: false,
     }),
+    updateQuestStreak: vi.fn(actual.updateQuestStreak),
     checkAndUnlockAchievements: vi.fn(actual.checkAndUnlockAchievements),
   };
 });
@@ -49,8 +55,10 @@ vi.mock("@/lib/gamification", async (orig) => {
 
 import { completeTask } from "@/lib/tasks";
 import { db } from "@/lib/db";
-import { checkAndUnlockAchievements } from "@/lib/gamification";
+import { checkAndUnlockAchievements, updateStreak, updateQuestStreak } from "@/lib/gamification";
+import { sendStreakShieldNotification } from "@/lib/push";
 import { createTestUser, createTestTask } from "./helpers/fixtures";
+import { getLocalDateString } from "@/lib/date-utils";
 
 const TZ = "Europe/Berlin";
 
@@ -133,6 +141,78 @@ describe("completeTask — fire-and-forget error paths", () => {
     expect(result.task).toBeDefined();
     expect(consoleSpy).toHaveBeenCalledWith(
       "[completeTask] achievement check failed (non-fatal):",
+      expect.any(Error)
+    );
+
+    consoleSpy.mockRestore();
+  });
+
+  it("swallows updateStreak errors without throwing (covers line 572)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, { type: "ONE_TIME" });
+
+    vi.mocked(updateStreak).mockRejectedValueOnce(new Error("streak DB error"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await completeTask(task.id, user.id, TZ);
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(result.task).toBeDefined();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[completeTask] streak update failed (non-fatal):",
+      expect.any(Error)
+    );
+
+    consoleSpy.mockRestore();
+  });
+
+  it("swallows shield notification errors without throwing (covers line 580)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, { type: "ONE_TIME" });
+
+    // Make updateStreak report that a shield was used → triggers the shield notification
+    vi.mocked(updateStreak).mockResolvedValueOnce({
+      streakCurrent: 3,
+      streakMax: 3,
+      shieldUsed: true,
+    });
+    // Make the shield notification reject so the catch block fires
+    vi.mocked(sendStreakShieldNotification).mockRejectedValueOnce(
+      new Error("push send failed")
+    );
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await completeTask(task.id, user.id, TZ);
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(result.task).toBeDefined();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[completeTask] shield notification failed (non-fatal):",
+      expect.any(Error)
+    );
+
+    consoleSpy.mockRestore();
+  });
+
+  it("swallows updateQuestStreak errors without throwing (covers line 592)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    // isDailyQuest: true + dailyQuestDate: today → triggers the updateQuestStreak call
+    const task = await createTestTask(user.id, {
+      type: "ONE_TIME",
+      isDailyQuest: true,
+      dailyQuestDate: today,
+    });
+
+    vi.mocked(updateQuestStreak).mockRejectedValueOnce(new Error("quest streak DB error"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await completeTask(task.id, user.id, TZ);
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(result.task).toBeDefined();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[completeTask] quest streak update failed (non-fatal):",
       expect.any(Error)
     );
 

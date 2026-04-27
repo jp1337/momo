@@ -210,4 +210,20 @@ describe("completeTask", () => {
       "Cannot complete a paused task"
     );
   });
+
+  it("triggers a level-up and updates level in DB when coins cross a level threshold (covers line 554)", async () => {
+    // Level 2 requires 50 coins; starting with 45 and a 10-coin task crosses it
+    const user = await createTestUser({ timezone: TZ, coins: 45, level: 1 });
+    const task = await createTestTask(user.id, { type: "ONE_TIME", coinValue: 10 });
+
+    const result = await completeTask(task.id, user.id, TZ);
+
+    // newLevel should reflect the level-up
+    expect(result.newLevel).not.toBeNull();
+    expect(result.newLevel!.level).toBe(2);
+
+    // Confirm the DB was updated
+    const updated = await getUser(user.id);
+    expect(updated.level).toBe(2);
+  });
 });
