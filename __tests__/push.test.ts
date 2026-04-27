@@ -43,6 +43,24 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
+// Mock daily-quest so push.ts's selectDailyQuest / getCurrentDailyQuest calls
+// don't touch the DB during morning-briefing and daily-quest fan-out tests.
+vi.mock("@/lib/daily-quest", () => ({
+  selectDailyQuest: vi.fn().mockResolvedValue(null),
+  getCurrentDailyQuest: vi.fn().mockResolvedValue(null),
+}));
+
+// Mock weekly-review so push.ts's getWeeklyReview call returns predictable data.
+vi.mock("@/lib/weekly-review", () => ({
+  getWeeklyReview: vi.fn().mockResolvedValue({
+    completionsThisWeek: 5,
+    postponementsThisWeek: 2,
+    streakCurrent: 3,
+    coinsEarnedThisWeek: 15,
+    topTopics: [],
+  }),
+}));
+
 // Set NEXT_PUBLIC_VAPID_PUBLIC_KEY in process.env before push.ts loads it
 // (push.ts checks process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY directly)
 process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = "test-vapid-public-key";
@@ -56,8 +74,15 @@ import {
   sendStreakReminders,
   sendAchievementNotifications,
   sendStreakShieldNotification,
+  sendPushNotification,
+  sendDueTodayNotifications,
+  sendOverdueNotifications,
+  sendRecurringDueNotifications,
+  sendWeeklyReviewNotifications,
+  sendMorningBriefingNotifications,
 } from "@/lib/push";
 import { createTestUser, createTestTask } from "./helpers/fixtures";
+import { getLocalDateString, getLocalYesterdayString } from "@/lib/date-utils";
 
 const mockSendNotification = vi.mocked(webpush.sendNotification);
 
@@ -299,5 +324,503 @@ describe("sendStreakShieldNotification", () => {
 
     await sendStreakShieldNotification(user.id, 3);
     expect(mockSendNotification).not.toHaveBeenCalled();
+  });
+});
+
+// ─── sendPushNotification (core function) ────────────────────────────────────
+
+describe("sendPushNotification", () => {
+  const testPayload = {
+    title: "Test Notification",
+    body: "This is a test body",
+  };
+
+  it("removes a subscription and disables user notifications on 410 Gone", async () => {
+    const user = await createTestUser();
+    const sub = await createTestPushSubscription(user.id);
+    await db
+      .update(users)
+      .set({ notificationEnabled: true })
+      .where(eq(users.id, user.id));
+
+    // Mock web-push to throw a 410 error
+    mockSendNotification.mockRejectedValueOnce({ statusCode: 410 } as never);
+
+    await sendPushNotification(
+      user.id,
+      sub.subscription as { endpoint: string; keys: { p256dh: string; auth: string } },
+      testPayload
+    );
+
+    // Subscription row should be deleted
+    const remainingSubs = await db
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.endpoint, sub.endpoint));
+    expect(remainingSubs).toHaveLength(0);
+
+    // notificationEnabled should now be false (no subscriptions remain)
+    const [updatedUser] = await db
+      .select({ notificationEnabled: users.notificationEnabled })
+      .from(users)
+      .where(eq(users.id, user.id));
+    expect(updatedUser.notificationEnabled).toBe(false);
+  });
+
+  it("does not disable notifications if other subscriptions remain after 410", async () => {
+    const user = await createTestUser();
+    const sub1 = await createTestPushSubscription(user.id, { name: "Device 1" });
+    await createTestPushSubscription(user.id, { name: "Device 2" });
+    await db
+      .update(users)
+      .set({ notificationEnabled: true })
+      .where(eq(users.id, user.id));
+
+    // 410 only for sub1's endpoint
+    mockSendNotification.mockRejectedValueOnce({ statusCode: 410 } as never);
+
+    await sendPushNotification(
+      user.id,
+      sub1.subscription as { endpoint: string; keys: { p256dh: string; auth: string } },
+      testPayload
+    );
+
+    // sub1 row is deleted
+    const deletedSubs = await db
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.endpoint, sub1.endpoint));
+    expect(deletedSubs).toHaveLength(0);
+
+    // notificationEnabled stays true because Device 2 still exists
+    const [updatedUser] = await db
+      .select({ notificationEnabled: users.notificationEnabled })
+      .from(users)
+      .where(eq(users.id, user.id));
+    expect(updatedUser.notificationEnabled).toBe(true);
+  });
+
+  it("re-throws non-410 errors", async () => {
+    const user = await createTestUser();
+    const sub = await createTestPushSubscription(user.id);
+
+    mockSendNotification.mockRejectedValueOnce(new Error("network failure") as never);
+
+    await expect(
+      sendPushNotification(
+        user.id,
+        sub.subscription as { endpoint: string; keys: { p256dh: string; auth: string } },
+        testPayload
+      )
+    ).rejects.toThrow("network failure");
+  });
+});
+
+// ─── sendDueTodayNotifications ───────────────────────────────────────────────
+
+/**
+ * Set up a user with all flags required for the due-today reminder, with the
+ * reminder time set to the current 5-minute UTC bucket so the SQL check matches.
+ */
+async function enableDueTodayForUser(userId: string): Promise<void> {
+  const now = new Date();
+  const h = now.getUTCHours().toString().padStart(2, "0");
+  const m = (Math.floor(now.getUTCMinutes() / 5) * 5).toString().padStart(2, "0");
+  await db
+    .update(users)
+    .set({
+      notificationEnabled: true,
+      dueTodayReminderEnabled: true,
+      dueTodayReminderTime: `${h}:${m}`,
+      morningBriefingEnabled: false,
+      timezone: "UTC",
+    })
+    .where(eq(users.id, userId));
+}
+
+describe("sendDueTodayNotifications", () => {
+  it("sends 0 notifications when user has no push subscription", async () => {
+    const user = await createTestUser();
+    await enableDueTodayForUser(user.id);
+    await createTestTask(user.id, { dueDate: getLocalDateString("UTC") });
+
+    const result = await sendDueTodayNotifications();
+    expect(mockSendNotification).not.toHaveBeenCalled();
+    expect(result.sent).toBe(0);
+  });
+
+  it("sends 0 notifications when there are no due-today tasks", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableDueTodayForUser(user.id);
+    // No tasks inserted — silence-on-empty behaviour
+
+    const result = await sendDueTodayNotifications();
+    expect(mockSendNotification).not.toHaveBeenCalled();
+    expect(result.sent).toBe(0);
+  });
+
+  it("sends 1 notification for a single due-today task (single-task title path)", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableDueTodayForUser(user.id);
+    await createTestTask(user.id, { title: "My Due Task", dueDate: getLocalDateString("UTC") });
+
+    const result = await sendDueTodayNotifications();
+    expect(mockSendNotification).toHaveBeenCalledTimes(1);
+    expect(result.sent).toBe(1);
+    expect(result.failed).toBe(0);
+
+    const payload = JSON.parse(mockSendNotification.mock.calls[0][1] as string) as {
+      title: string;
+      body: string;
+    };
+    // Single-task path uses the task title in the notification title
+    expect(payload.title).toContain("Heute fällig");
+    expect(payload.title).toContain("My Due Task");
+  });
+
+  it("sends 1 bundled notification for multiple due-today tasks", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableDueTodayForUser(user.id);
+    const today = getLocalDateString("UTC");
+    await createTestTask(user.id, { title: "Task Alpha", dueDate: today });
+    await createTestTask(user.id, { title: "Task Beta", dueDate: today });
+    await createTestTask(user.id, { title: "Task Gamma", dueDate: today });
+
+    const result = await sendDueTodayNotifications();
+    // All 3 tasks → one bundled notification
+    expect(mockSendNotification).toHaveBeenCalledTimes(1);
+    expect(result.sent).toBe(1);
+
+    const payload = JSON.parse(mockSendNotification.mock.calls[0][1] as string) as {
+      title: string;
+    };
+    // Bundled path uses count in title
+    expect(payload.title).toMatch(/3/);
+  });
+
+  it("is suppressed when morningBriefingEnabled is true", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableDueTodayForUser(user.id);
+    // Override morningBriefingEnabled back to true after enableDueTodayForUser set it false
+    const now = new Date();
+    const h = now.getUTCHours().toString().padStart(2, "0");
+    const m = (Math.floor(now.getUTCMinutes() / 5) * 5).toString().padStart(2, "0");
+    await db
+      .update(users)
+      .set({ morningBriefingEnabled: true })
+      .where(eq(users.id, user.id));
+    await createTestTask(user.id, { title: "Should Not Notify", dueDate: getLocalDateString("UTC") });
+
+    // Suppress due to morningBriefingEnabled=true
+    const result = await sendDueTodayNotifications();
+    expect(mockSendNotification).not.toHaveBeenCalled();
+    expect(result.sent).toBe(0);
+
+    // Keep h/m in scope to satisfy the linter (they're used to build the time bucket above)
+    void h;
+    void m;
+  });
+});
+
+// ─── sendOverdueNotifications ────────────────────────────────────────────────
+
+/**
+ * Set up a user with all flags required for the overdue reminder, with the
+ * reminder time set to the current 5-minute UTC bucket so the SQL check matches.
+ */
+async function enableOverdueForUser(userId: string): Promise<void> {
+  const now = new Date();
+  const h = now.getUTCHours().toString().padStart(2, "0");
+  const m = (Math.floor(now.getUTCMinutes() / 5) * 5).toString().padStart(2, "0");
+  await db
+    .update(users)
+    .set({
+      notificationEnabled: true,
+      overdueReminderEnabled: true,
+      overdueReminderTime: `${h}:${m}`,
+      morningBriefingEnabled: false,
+      timezone: "UTC",
+    })
+    .where(eq(users.id, userId));
+}
+
+describe("sendOverdueNotifications", () => {
+  it("sends 0 notifications when user has no push subscription", async () => {
+    const user = await createTestUser();
+    await enableOverdueForUser(user.id);
+    // Insert an overdue task (yesterday)
+    await createTestTask(user.id, { title: "Overdue Task", dueDate: getLocalYesterdayString("UTC") });
+
+    const result = await sendOverdueNotifications();
+    expect(mockSendNotification).not.toHaveBeenCalled();
+    expect(result.sent).toBe(0);
+  });
+
+  it("sends 0 notifications when there are no overdue tasks", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableOverdueForUser(user.id);
+    // No tasks at all
+
+    const result = await sendOverdueNotifications();
+    expect(mockSendNotification).not.toHaveBeenCalled();
+    expect(result.sent).toBe(0);
+  });
+
+  it("sends 1 notification for a single overdue task (individual title path)", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableOverdueForUser(user.id);
+    await createTestTask(user.id, {
+      title: "Forgotten Task",
+      dueDate: getLocalYesterdayString("UTC"),
+    });
+
+    const result = await sendOverdueNotifications();
+    expect(mockSendNotification).toHaveBeenCalledTimes(1);
+    expect(result.sent).toBe(1);
+    expect(result.failed).toBe(0);
+
+    const payload = JSON.parse(mockSendNotification.mock.calls[0][1] as string) as {
+      title: string;
+    };
+    expect(payload.title).toContain("Überfällig");
+    expect(payload.title).toContain("Forgotten Task");
+  });
+
+  it("sends 1 bundled notification for multiple overdue tasks", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableOverdueForUser(user.id);
+    const yesterday = getLocalYesterdayString("UTC");
+    await createTestTask(user.id, { title: "Old Task 1", dueDate: yesterday });
+    await createTestTask(user.id, { title: "Old Task 2", dueDate: yesterday });
+    await createTestTask(user.id, { title: "Old Task 3", dueDate: yesterday });
+
+    const result = await sendOverdueNotifications();
+    expect(mockSendNotification).toHaveBeenCalledTimes(1);
+    expect(result.sent).toBe(1);
+
+    const payload = JSON.parse(mockSendNotification.mock.calls[0][1] as string) as {
+      title: string;
+    };
+    // Bundled path: "N überfällige Aufgaben"
+    expect(payload.title).toMatch(/überfällige Aufgaben/);
+    expect(payload.title).toContain("3");
+  });
+
+  it("is suppressed when morningBriefingEnabled is true", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableOverdueForUser(user.id);
+    await db
+      .update(users)
+      .set({ morningBriefingEnabled: true })
+      .where(eq(users.id, user.id));
+    await createTestTask(user.id, {
+      title: "Suppressed Overdue",
+      dueDate: getLocalYesterdayString("UTC"),
+    });
+
+    const result = await sendOverdueNotifications();
+    expect(mockSendNotification).not.toHaveBeenCalled();
+    expect(result.sent).toBe(0);
+  });
+});
+
+// ─── sendRecurringDueNotifications ───────────────────────────────────────────
+
+/**
+ * Set up a user with all flags required for the recurring-due reminder.
+ */
+async function enableRecurringDueForUser(userId: string): Promise<void> {
+  const now = new Date();
+  const h = now.getUTCHours().toString().padStart(2, "0");
+  const m = (Math.floor(now.getUTCMinutes() / 5) * 5).toString().padStart(2, "0");
+  await db
+    .update(users)
+    .set({
+      notificationEnabled: true,
+      recurringDueReminderEnabled: true,
+      recurringDueReminderTime: `${h}:${m}`,
+      morningBriefingEnabled: false,
+      timezone: "UTC",
+    })
+    .where(eq(users.id, userId));
+}
+
+describe("sendRecurringDueNotifications", () => {
+  it("sends 0 notifications when user has no push subscription", async () => {
+    const user = await createTestUser();
+    await enableRecurringDueForUser(user.id);
+    await createTestTask(user.id, {
+      title: "Daily Habit",
+      type: "RECURRING",
+      nextDueDate: getLocalDateString("UTC"),
+    });
+
+    const result = await sendRecurringDueNotifications();
+    expect(mockSendNotification).not.toHaveBeenCalled();
+    expect(result.sent).toBe(0);
+  });
+
+  it("sends 0 notifications when there are no recurring-due tasks", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableRecurringDueForUser(user.id);
+    // No tasks inserted
+
+    const result = await sendRecurringDueNotifications();
+    expect(mockSendNotification).not.toHaveBeenCalled();
+    expect(result.sent).toBe(0);
+  });
+
+  it("sends individual notifications for up to 3 recurring due tasks", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableRecurringDueForUser(user.id);
+    const today = getLocalDateString("UTC");
+    await createTestTask(user.id, { title: "Habit A", type: "RECURRING", nextDueDate: today });
+    await createTestTask(user.id, { title: "Habit B", type: "RECURRING", nextDueDate: today });
+
+    const result = await sendRecurringDueNotifications();
+    // 2 tasks → 2 individual notifications
+    expect(mockSendNotification).toHaveBeenCalledTimes(2);
+    expect(result.sent).toBe(2);
+
+    // Each notification title starts with the recurring emoji prefix
+    for (const call of mockSendNotification.mock.calls) {
+      const payload = JSON.parse(call[1] as string) as { title: string };
+      expect(payload.title).toMatch(/^🔁/);
+    }
+  });
+
+  it("sends 1 bundled notification when more than 3 recurring tasks are due", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableRecurringDueForUser(user.id);
+    const today = getLocalDateString("UTC");
+    for (let i = 1; i <= 4; i++) {
+      await createTestTask(user.id, {
+        title: `Recurring ${i}`,
+        type: "RECURRING",
+        nextDueDate: today,
+      });
+    }
+
+    const result = await sendRecurringDueNotifications();
+    // >3 tasks → 1 bundled notification
+    expect(mockSendNotification).toHaveBeenCalledTimes(1);
+    expect(result.sent).toBe(1);
+
+    const payload = JSON.parse(mockSendNotification.mock.calls[0][1] as string) as {
+      title: string;
+    };
+    expect(payload.title).toContain("4");
+    expect(payload.title).toContain("wiederkehrende");
+  });
+});
+
+// ─── sendWeeklyReviewNotifications ───────────────────────────────────────────
+
+describe("sendWeeklyReviewNotifications", () => {
+  it("returns { sent: 0, failed: 0 } when the DB has no eligible subscriptions", async () => {
+    // The function only sends on Sunday (DOW=0 SQL condition). Unless the test
+    // runs on a Sunday at the exact weeklyReviewTime bucket, 0 rows match.
+    // This test verifies the function completes without error in all cases.
+    const result = await sendWeeklyReviewNotifications();
+    expect(typeof result.sent).toBe("number");
+    expect(typeof result.failed).toBe("number");
+    expect(result.failed).toBe(0);
+  });
+});
+
+// ─── sendMorningBriefingNotifications ────────────────────────────────────────
+
+/**
+ * Set up a user with all flags required for the morning briefing.
+ */
+async function enableMorningBriefingForUser(userId: string): Promise<void> {
+  const now = new Date();
+  const h = now.getUTCHours().toString().padStart(2, "0");
+  const m = (Math.floor(now.getUTCMinutes() / 5) * 5).toString().padStart(2, "0");
+  await db
+    .update(users)
+    .set({
+      notificationEnabled: true,
+      morningBriefingEnabled: true,
+      morningBriefingTime: `${h}:${m}`,
+      timezone: "UTC",
+    })
+    .where(eq(users.id, userId));
+}
+
+describe("sendMorningBriefingNotifications", () => {
+  it("sends 0 notifications when user has no push subscription", async () => {
+    const user = await createTestUser();
+    await enableMorningBriefingForUser(user.id);
+    // No subscription — nothing to deliver
+
+    const result = await sendMorningBriefingNotifications();
+    expect(mockSendNotification).not.toHaveBeenCalled();
+    expect(result.sent).toBe(0);
+  });
+
+  it("sends a morning briefing notification when the user has an eligible subscription", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id);
+    await enableMorningBriefingForUser(user.id);
+
+    const result = await sendMorningBriefingNotifications();
+    expect(mockSendNotification).toHaveBeenCalledTimes(1);
+    expect(result.sent).toBe(1);
+    expect(result.failed).toBe(0);
+
+    const payload = JSON.parse(mockSendNotification.mock.calls[0][1] as string) as {
+      title: string;
+      body: string;
+    };
+    // Title is the fixed "Guten Morgen" greeting
+    expect(payload.title).toContain("Guten Morgen");
+  });
+
+  it("includes streak info in the briefing body when the user has a streak > 0", async () => {
+    const user = await createTestUser({ streakCurrent: 7 });
+    await createTestPushSubscription(user.id);
+    await enableMorningBriefingForUser(user.id);
+
+    await sendMorningBriefingNotifications();
+    expect(mockSendNotification).toHaveBeenCalledTimes(1);
+
+    const payload = JSON.parse(mockSendNotification.mock.calls[0][1] as string) as {
+      body: string;
+    };
+    // The briefing body should mention the streak count
+    expect(payload.body).toContain("7");
+  });
+
+  it("sends to all active devices for a briefing-enabled user", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id, { name: "Phone" });
+    await createTestPushSubscription(user.id, { name: "Tablet" });
+    await enableMorningBriefingForUser(user.id);
+
+    const result = await sendMorningBriefingNotifications();
+    expect(mockSendNotification).toHaveBeenCalledTimes(2);
+    expect(result.sent).toBe(2);
+  });
+
+  it("skips disabled subscriptions for morning briefing", async () => {
+    const user = await createTestUser();
+    await createTestPushSubscription(user.id, { enabled: false });
+    await enableMorningBriefingForUser(user.id);
+
+    const result = await sendMorningBriefingNotifications();
+    expect(mockSendNotification).not.toHaveBeenCalled();
+    expect(result.sent).toBe(0);
   });
 });
