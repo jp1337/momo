@@ -502,4 +502,45 @@ describe("POST /api/auth/2fa/verify-setup — additional paths", () => {
     const res = await POSTVerifySetup(jsonRequest({ wrongField: "bad" }));
     expect(res.status).toBe(400);
   });
+
+  it("returns 410 when setup cookie is present but signed for a different user (covers line 81)", async () => {
+    const user = await createTestUser({ timezone: "Europe/Berlin" });
+    asSession(user.id, user.email!);
+    // Token signed for a different user → verifySetupToken returns null for session.user.id
+    const otherUserId = "00000000-0000-0000-0000-000000000099";
+    const wrongUserToken = signSetupToken(otherUserId, "SOMESECRET");
+    mockCookies.mockResolvedValue({
+      get: (name: string) =>
+        name === SETUP_COOKIE_NAME
+          ? { name: SETUP_COOKIE_NAME, value: wrongUserToken }
+          : undefined,
+      set: vi.fn(),
+      delete: vi.fn(),
+    } as never);
+    const res = await POSTVerifySetup(jsonRequest({ code: "123456" }));
+    expect(res.status).toBe(410);
+    const body = await res.json() as { code: string };
+    expect(body.code).toBe("SETUP_EXPIRED");
+  });
+
+  it("calls markSessionSecondFactorVerified when authjs.session-token cookie is present (covers line 118)", async () => {
+    const user = await createTestUser({ timezone: "Europe/Berlin" });
+    asSession(user.id, user.email!);
+    const setup = await generateTotpSetup(user.email!);
+    const cookieVal = signSetupToken(user.id, setup.secret);
+    const validCode = generateSync({ secret: setup.secret });
+    mockCookies.mockResolvedValue({
+      get: (name: string) => {
+        if (name === SETUP_COOKIE_NAME) return { name: SETUP_COOKIE_NAME, value: cookieVal };
+        if (name === "authjs.session-token") return { name: "authjs.session-token", value: "fake-session-tok" };
+        return undefined;
+      },
+      set: vi.fn(),
+      delete: vi.fn(),
+    } as never);
+    const res = await POSTVerifySetup(jsonRequest({ code: validCode }));
+    expect(res.status).toBe(200);
+    const body = await res.json() as { backupCodes: string[] };
+    expect(Array.isArray(body.backupCodes)).toBe(true);
+  });
 });

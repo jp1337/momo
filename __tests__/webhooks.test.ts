@@ -602,4 +602,39 @@ describe("fireWebhookEvent — HTTPS delivery", () => {
     expect(deliveries[0].errorMessage).toContain("ECONNREFUSED");
   });
 
+  it("swallows DB errors when the delivery log insert fails (covers line 482)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve(""),
+    }));
+
+    await createWebhookEndpoint(user.id, ep({ name: "DB Fail EP" }));
+
+    // Intercept the next db.insert() — that will be the delivery-log insert inside
+    // deliverToEndpoint — and make its .catch() handler fire with a fake error.
+    const insertSpy = vi.spyOn(db, "insert").mockReturnValueOnce({
+      values: vi.fn().mockReturnValue({
+        catch: vi.fn((handler: (err: unknown) => void) => {
+          handler(new Error("delivery log failed"));
+          return Promise.resolve();
+        }),
+      }),
+    } as never);
+
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await fireWebhookEvent(user.id, "task.completed", makeTaskPayload());
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[webhooks] Failed to log delivery:",
+      expect.any(Error)
+    );
+
+    insertSpy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+
 });
