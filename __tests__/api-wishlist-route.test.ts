@@ -41,7 +41,7 @@ vi.mock("@/lib/wishlist", async (orig) => {
 });
 
 import { resolveApiUser } from "@/lib/api-auth";
-import { getUserWishlistItems, createWishlistItem, getBudgetSummary, updateWishlistItem, deleteWishlistItem } from "@/lib/wishlist";
+import { getUserWishlistItems, createWishlistItem, updateWishlistItem, deleteWishlistItem } from "@/lib/wishlist";
 import * as wishlistLib from "@/lib/wishlist";
 import { GET, POST } from "@/app/api/wishlist/route";
 import {

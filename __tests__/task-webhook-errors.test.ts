@@ -29,7 +29,7 @@ describe("task mutations — webhook fire-and-forget error paths", () => {
     const user = await createTestUser({ timezone: TZ });
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const task = await createTask(user.id, { title: "Webhook error task", type: "ONE_TIME" }, TZ);
+    const task = await createTask(user.id, { title: "Webhook error task", type: "ONE_TIME", priority: "NORMAL", coinValue: 1 }, TZ);
     await new Promise((r) => setTimeout(r, 50));
 
     expect(task).toBeDefined();
