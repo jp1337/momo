@@ -70,7 +70,7 @@ describe("POST /api/admin/seed", () => {
 
   it("returns 403 when using a read-only API key in development mode", async () => {
     (process.env as Record<string, string>).NODE_ENV = "development";
-    mockResolveApiUser.mockResolvedValue({ id: "user-1", readonly: true } as ApiUser);
+    mockResolveApiUser.mockResolvedValue({ userId: "user-1", readonly: true } as ApiUser);
     const res = await POST(makeRequest());
     expect(res.status).toBe(403);
   });
@@ -78,7 +78,7 @@ describe("POST /api/admin/seed", () => {
   it("returns 200 with achievement count when seeding succeeds", async () => {
     (process.env as Record<string, string>).NODE_ENV = "development";
     const user = await createTestUser({ timezone: "Europe/Berlin" });
-    mockResolveApiUser.mockResolvedValue({ id: user.id, readonly: false } as ApiUser);
+    mockResolveApiUser.mockResolvedValue({ userId: user.id, readonly: false } as ApiUser);
     const res = await POST(makeRequest());
     expect(res.status).toBe(200);
     const body = await res.json() as { message: string; count: number };
@@ -90,7 +90,7 @@ describe("POST /api/admin/seed", () => {
   it("returns 500 when seedAchievements throws", async () => {
     (process.env as Record<string, string>).NODE_ENV = "development";
     const user = await createTestUser({ timezone: "Europe/Berlin" });
-    mockResolveApiUser.mockResolvedValue({ id: user.id, readonly: false } as ApiUser);
+    mockResolveApiUser.mockResolvedValue({ userId: user.id, readonly: false } as ApiUser);
     mockSeedAchievements.mockRejectedValueOnce(new Error("seed failed"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const res = await POST(makeRequest());
