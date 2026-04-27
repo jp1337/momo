@@ -28,12 +28,16 @@ vi.mock("@/lib/daily-quest", async (orig) => {
     ...actual,
     selectDailyQuest: vi.fn(actual.selectDailyQuest),
     forceSelectDailyQuest: vi.fn(actual.forceSelectDailyQuest),
+    postponeDailyQuest: vi.fn(actual.postponeDailyQuest),
+    pinTaskAsDailyQuest: vi.fn(actual.pinTaskAsDailyQuest),
   };
 });
 
 import { resolveApiUser } from "@/lib/api-auth";
 import { GET, POST } from "@/app/api/daily-quest/route";
-import { selectDailyQuest, forceSelectDailyQuest } from "@/lib/daily-quest";
+import { POST as postponePOST } from "@/app/api/daily-quest/postpone/route";
+import { POST as restorePOST } from "@/app/api/daily-quest/restore/route";
+import { selectDailyQuest, forceSelectDailyQuest, postponeDailyQuest, pinTaskAsDailyQuest } from "@/lib/daily-quest";
 import { createTestUser, createTestTask } from "./helpers/fixtures";
 import type { ApiUser } from "@/lib/api-auth";
 
@@ -154,6 +158,65 @@ describe("GET /api/daily-quest — error path", () => {
     authAs(user.id);
     vi.mocked(selectDailyQuest).mockRejectedValueOnce(new Error("DB error"));
     const res = await GET(req("GET", "/api/daily-quest"));
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── POST /api/daily-quest/postpone ──────────────────────────────────────────
+
+describe("POST /api/daily-quest/postpone — error paths", () => {
+  it("returns 429 when postpone limit is reached", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(postponeDailyQuest).mockRejectedValueOnce(new Error("LIMIT_REACHED"));
+    const res = await postponePOST(
+      req("POST", "/api/daily-quest/postpone", {
+        taskId: "00000000-0000-0000-0000-000000000000",
+        timezone: "Europe/Berlin",
+      })
+    );
+    expect(res.status).toBe(429);
+  });
+
+  it("returns 500 when postponeDailyQuest throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(postponeDailyQuest).mockRejectedValueOnce(new Error("unexpected"));
+    const res = await postponePOST(
+      req("POST", "/api/daily-quest/postpone", {
+        taskId: "00000000-0000-0000-0000-000000000000",
+        timezone: "Europe/Berlin",
+      })
+    );
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── POST /api/daily-quest/restore ───────────────────────────────────────────
+
+describe("POST /api/daily-quest/restore — error paths", () => {
+  it("returns 400 for malformed JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badReq = new Request("http://localhost/api/daily-quest/restore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await restorePOST(badReq);
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 500 when pinTaskAsDailyQuest throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(pinTaskAsDailyQuest).mockRejectedValueOnce(new Error("DB error"));
+    const res = await restorePOST(
+      req("POST", "/api/daily-quest/restore", {
+        taskId: "00000000-0000-0000-0000-000000000000",
+        timezone: "Europe/Berlin",
+      })
+    );
     expect(res.status).toBe(500);
   });
 });

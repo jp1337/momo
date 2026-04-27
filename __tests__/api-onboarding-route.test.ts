@@ -18,8 +18,17 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
+vi.mock("@/lib/onboarding", async (orig) => {
+  const actual = await orig<typeof import("@/lib/onboarding")>();
+  return {
+    ...actual,
+    markOnboardingCompleted: vi.fn(actual.markOnboardingCompleted),
+  };
+});
+
 import { resolveApiUser } from "@/lib/api-auth";
 import { POST } from "@/app/api/onboarding/complete/route";
+import { markOnboardingCompleted } from "@/lib/onboarding";
 import { createTestUser } from "./helpers/fixtures";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
@@ -79,5 +88,13 @@ describe("POST /api/onboarding/complete", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+  });
+
+  it("returns 500 when markOnboardingCompleted throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    vi.mocked(markOnboardingCompleted).mockRejectedValueOnce(new Error("DB error"));
+    const res = await POST(req("POST", "/api/onboarding/complete"));
+    expect(res.status).toBe(500);
   });
 });
