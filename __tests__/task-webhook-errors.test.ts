@@ -107,4 +107,35 @@ describe("task mutations — webhook fire-and-forget error paths", () => {
     expect(updated.recurrenceWeekdays).toBeNull();
     consoleSpy.mockRestore();
   });
+
+  it("updateTask persists recurrenceInterval when provided (covers line 350)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, {
+      type: "RECURRING",
+      recurrenceType: "INTERVAL",
+      recurrenceInterval: 1,
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const updated = await updateTask(task.id, user.id, { recurrenceInterval: 3 });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(updated.recurrenceInterval).toBe(3);
+    consoleSpy.mockRestore();
+  });
+
+  it("updateTask persists recurrenceType when provided (covers line 352)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, {
+      type: "RECURRING",
+      recurrenceType: "INTERVAL",
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const updated = await updateTask(task.id, user.id, { recurrenceType: "WEEKDAY" });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(updated.recurrenceType).toBe("WEEKDAY");
+    consoleSpy.mockRestore();
+  });
 });
