@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
-import { taskCompletions } from "@/lib/db/schema";
+import { taskCompletions, accounts } from "@/lib/db/schema";
 import {
   computeStreakHistory,
   getUserStatistics,
@@ -302,6 +302,34 @@ describe("getAdminStatistics", () => {
 
     expect(typeof stats.wishlistStats.totalBought).toBe("number");
     expect(typeof stats.wishlistStats.totalSpent).toBe("number");
+  });
+
+  it("usersByProvider map callback is exercised when accounts table has entries", async () => {
+    const user = await createTestUser();
+    // Insert an OAuth account so providerRows is non-empty
+    await db.insert(accounts).values({
+      userId: user.id,
+      type: "oauth",
+      provider: "github",
+      providerAccountId: `test-${Date.now()}`,
+    });
+
+    const stats = await getAdminStatistics();
+    const githubEntry = stats.usersByProvider.find((p) => p.provider === "github");
+    expect(githubEntry).toBeDefined();
+    expect(typeof githubEntry!.count).toBe("number");
+  });
+
+  it("topUsersByCompletions map callback is exercised when completions exist", async () => {
+    const user = await createTestUser();
+    const task = await createTestTask(user.id, { title: "Completed task" });
+    await db.insert(taskCompletions).values({ taskId: task.id, userId: user.id });
+
+    const stats = await getAdminStatistics();
+    expect(stats.topUsersByCompletions.length).toBeGreaterThan(0);
+    const entry = stats.topUsersByCompletions[0];
+    expect(typeof entry.completions).toBe("number");
+    expect(entry.completions).toBeGreaterThan(0);
   });
 });
 

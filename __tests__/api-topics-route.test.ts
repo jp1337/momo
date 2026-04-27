@@ -99,6 +99,24 @@ describe("GET /api/topics", () => {
     expect(body.topics).toHaveLength(1);
     expect(body.topics[0].title).toBe("A's topic");
   });
+
+  it("returns archived topics when ?archived=true is passed", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    // Create a topic and archive it via the route
+    const createRes = await POST(req("POST", "/api/topics", { title: "Archived Topic" }));
+    const { topic } = await createRes.json() as { topic: { id: string } };
+    // Archive it via PATCH
+    await PATCHById(
+      req("PATCH", `/api/topics/${topic.id}`, { archived: true }),
+      { params: Promise.resolve({ id: topic.id }) }
+    );
+
+    const res = await GET(req("GET", "/api/topics?archived=true"));
+    expect(res.status).toBe(200);
+    const body = await res.json() as { topics: Array<{ title: string; archived: boolean }> };
+    expect(body.topics.some((t) => t.title === "Archived Topic")).toBe(true);
+  });
 });
 
 // ─── POST /api/topics ─────────────────────────────────────────────────────────
@@ -132,6 +150,18 @@ describe("POST /api/topics", () => {
     const body = await res.json() as { topic: { title: string; userId: string } };
     expect(body.topic.title).toBe("My Topic");
     expect(body.topic.userId).toBe(user.id);
+  });
+
+  it("returns 400 for invalid JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badJsonReq = new Request("http://localhost/api/topics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await POST(badJsonReq);
+    expect(res.status).toBe(400);
   });
 });
 

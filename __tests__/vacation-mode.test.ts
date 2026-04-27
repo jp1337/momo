@@ -60,6 +60,13 @@ describe("getVacationStatus", () => {
     expect(status.active).toBe(true);
     expect(status.endDate).toBe(endDate);
   });
+
+  it("returns active: false for a non-existent userId", async () => {
+    const status = await getVacationStatus("00000000-0000-0000-0000-000000000000");
+
+    expect(status.active).toBe(false);
+    expect(status.endDate).toBeNull();
+  });
 });
 
 // ─── activateVacationMode ─────────────────────────────────────────────────────
@@ -198,6 +205,25 @@ describe("deactivateVacationMode", () => {
     if (updated.nextDueDate) {
       expect(updated.nextDueDate >= today).toBe(true);
     }
+  });
+
+  it("clears pause columns on a recurring task with no nextDueDate", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    const tomorrow = getLocalTomorrowString(TZ);
+
+    // Create a recurring task with pausedAt/pausedUntil but nextDueDate = null
+    const recurring = await createTestRecurringTask(user.id, {
+      pausedAt: today,
+      pausedUntil: tomorrow,
+      nextDueDate: null,
+    });
+
+    await deactivateVacationMode(user.id, TZ);
+
+    const updated = await getTask(recurring.id);
+    expect(updated.pausedAt).toBeNull();
+    expect(updated.pausedUntil).toBeNull();
   });
 });
 

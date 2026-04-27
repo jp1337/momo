@@ -765,6 +765,21 @@ describe("sendToAllChannels", () => {
     expect(result.sent).toBe(0);
     expect(result.failed).toBe(1);
   });
+
+  it("counts unsupported channel type as failed (createChannel returns null)", async () => {
+    const user = await createTestUser();
+    await db.insert(notificationChannels).values({
+      userId: user.id,
+      type: "unsupported_type",
+      config: {},
+      enabled: true,
+    });
+
+    const result = await sendToAllChannels(user.id, basePayload);
+
+    expect(result.sent).toBe(0);
+    expect(result.failed).toBe(1);
+  });
 });
 
 // ─── sendTestNotification ─────────────────────────────────────────────────────
@@ -866,5 +881,19 @@ describe("sendTestNotification", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain("ntfy.sh");
+  });
+
+  it("returns false when createChannel returns null (unsupported type in DB)", async () => {
+    const user = await createTestUser();
+    await db.insert(notificationChannels).values({
+      userId: user.id,
+      type: "unsupported_type",
+      config: {},
+      enabled: true,
+    });
+
+    const result = await sendTestNotification(user.id, "unsupported_type");
+
+    expect(result).toBe(false);
   });
 });

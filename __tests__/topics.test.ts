@@ -203,6 +203,30 @@ describe("updateTopic", () => {
     const unarchived = await updateTopic(topic.id, user.id, { archived: false });
     expect(unarchived.archived).toBe(false);
   });
+
+  it("updates the color", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id);
+
+    const updated = await updateTopic(topic.id, user.id, { color: "#ff0000" });
+    expect(updated.color).toBe("#ff0000");
+  });
+
+  it("updates the icon", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id);
+
+    const updated = await updateTopic(topic.id, user.id, { icon: "faStar" });
+    expect(updated.icon).toBe("faStar");
+  });
+
+  it("updates the priority", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id);
+
+    const updated = await updateTopic(topic.id, user.id, { priority: "HIGH" });
+    expect(updated.priority).toBe("HIGH");
+  });
 });
 
 // ─── deleteTopic ──────────────────────────────────────────────────────────────

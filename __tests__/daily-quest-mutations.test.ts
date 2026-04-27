@@ -12,6 +12,7 @@ import {
   forceSelectDailyQuest,
   reselectQuestForEnergy,
   pinTaskAsDailyQuest,
+  getDailyQuestIncludingCompleted,
 } from "@/lib/daily-quest";
 import { db } from "@/lib/db";
 import { users, tasks, topics, questPostponements } from "@/lib/db/schema";
@@ -426,5 +427,44 @@ describe("pinTaskAsDailyQuest", () => {
     // today <= today, so not snoozed past today — should succeed
     expect(result).not.toBeNull();
     expect(result!.id).toBe(task.id);
+  });
+});
+
+// ─── getDailyQuestIncludingCompleted ──────────────────────────────────────────
+
+describe("getDailyQuestIncludingCompleted", () => {
+  it("returns null when no task is marked as daily quest", async () => {
+    const user = await createTestUser({ timezone: TZ });
+
+    const result = await getDailyQuestIncludingCompleted(user.id);
+    expect(result).toBeNull();
+  });
+
+  it("returns an active (incomplete) quest", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    const task = await createTestTask(user.id, {
+      isDailyQuest: true,
+      dailyQuestDate: today,
+    });
+
+    const result = await getDailyQuestIncludingCompleted(user.id);
+    expect(result).not.toBeNull();
+    expect(result!.id).toBe(task.id);
+  });
+
+  it("returns a completed quest (unlike getCurrentDailyQuest which excludes completed)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const today = getLocalDateString(TZ);
+    const task = await createTestTask(user.id, {
+      isDailyQuest: true,
+      dailyQuestDate: today,
+      completedAt: new Date(),
+    });
+
+    const result = await getDailyQuestIncludingCompleted(user.id);
+    expect(result).not.toBeNull();
+    expect(result!.id).toBe(task.id);
+    expect(result!.completedAt).not.toBeNull();
   });
 });

@@ -23,6 +23,9 @@ import { describe, it, expect } from "vitest";
 import { selectDailyQuest } from "@/lib/daily-quest";
 import { createTestUser, createTestTopic, createTestTask, createTestRecurringTask } from "./helpers/fixtures";
 import { getLocalDateString, getLocalYesterdayString, getLocalTomorrowString } from "@/lib/date-utils";
+import { db } from "@/lib/db";
+import { tasks } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 const TZ = "Europe/Berlin";
 
@@ -271,5 +274,37 @@ describe("selectDailyQuest", () => {
     const result = await selectDailyQuest(user.id, TZ);
 
     expect(result).toBeNull();
+  });
+
+  it("task group: only the first task in a group is eligible (second is blocked)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const topic = await createTestTopic(user.id);
+
+    // Create two tasks in the same topic with the same taskGroup.
+    // sortOrder ensures task1 comes first so task2 is blocked.
+    const task1 = await createTestTask(user.id, {
+      topicId: topic.id,
+      title: "Group task 1 (first)",
+      sortOrder: 0,
+    });
+    const task2 = await createTestTask(user.id, {
+      topicId: topic.id,
+      title: "Group task 2 (blocked)",
+      sortOrder: 1,
+    });
+
+    // Assign both to the same taskGroup via direct DB update
+    await db.update(tasks).set({ taskGroup: "my-group" }).where(eq(tasks.id, task1.id));
+    await db.update(tasks).set({ taskGroup: "my-group" }).where(eq(tasks.id, task2.id));
+
+    // selectDailyQuest should only ever select task1 (task2 is sequential-blocked)
+    for (let i = 0; i < 5; i++) {
+      // Clear any existing quest first so the selector runs fresh each iteration
+      await db.update(tasks).set({ isDailyQuest: false, dailyQuestDate: null }).where(eq(tasks.userId, user.id));
+
+      const result = await selectDailyQuest(user.id, TZ);
+      expect(result).not.toBeNull();
+      expect(result!.id).toBe(task1.id);
+    }
   });
 });

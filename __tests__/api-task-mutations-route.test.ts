@@ -111,6 +111,29 @@ describe("POST /api/tasks/:id/snooze", () => {
     const body = await res.json() as { task: { snoozedUntil: string | null } };
     expect(body.task.snoozedUntil).toBe(TOMORROW);
   });
+
+  it("returns 400 for invalid JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badJsonReq = new Request(`http://localhost/api/tasks/${FAKE_ID}/snooze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await POSTSnooze(badJsonReq, { params: Promise.resolve({ id: FAKE_ID }) });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 409 when trying to snooze an already-completed task", async () => {
+    const user = await createTestUser();
+    const task = await createTestTask(user.id, { completedAt: new Date() });
+    authAs(user.id);
+    const res = await POSTSnooze(
+      req("POST", `/api/tasks/${task.id}/snooze`, { snoozedUntil: TOMORROW }),
+      { params: Promise.resolve({ id: task.id }) }
+    );
+    expect(res.status).toBe(409);
+  });
 });
 
 // ─── DELETE /api/tasks/:id/snooze ────────────────────────────────────────────
@@ -149,6 +172,16 @@ describe("DELETE /api/tasks/:id/snooze", () => {
     expect(res.status).toBe(200);
     const body = await res.json() as { task: { snoozedUntil: string | null } };
     expect(body.task.snoozedUntil).toBeNull();
+  });
+
+  it("returns 404 when unsnoozing a non-existent task", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await DELETESnooze(
+      req("DELETE", `/api/tasks/${FAKE_ID}/snooze`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(404);
   });
 });
 

@@ -143,6 +143,18 @@ describe("POST /api/wishlist", () => {
     const body = await res.json() as { item: { title: string } };
     expect(body.item.title).toBe("PS5");
   });
+
+  it("returns 400 for invalid JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badJsonReq = new Request("http://localhost/api/wishlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await POST(badJsonReq);
+    expect(res.status).toBe(400);
+  });
 });
 
 // ─── PATCH /api/wishlist/:id ──────────────────────────────────────────────────

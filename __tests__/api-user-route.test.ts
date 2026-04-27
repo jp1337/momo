@@ -106,6 +106,17 @@ describe("DELETE /api/user", () => {
     const body = await res.json() as { success: boolean };
     expect(body.success).toBe(true);
   });
+
+  it("returns 429 when the delete rate limit is exceeded", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    // The rate limit is 5 per hour; exhaust it
+    for (let i = 0; i < 5; i++) {
+      await DELETEUser(req("DELETE", "/api/user"));
+    }
+    const res = await DELETEUser(req("DELETE", "/api/user"));
+    expect(res.status).toBe(429);
+  });
 });
 
 // ─── GET /api/user/profile ────────────────────────────────────────────────────

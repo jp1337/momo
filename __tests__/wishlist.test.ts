@@ -63,6 +63,18 @@ describe("getUserWishlistItems", () => {
     const result = await getUserWishlistItems(user.id);
     expect(result).toHaveLength(0);
   });
+
+  it("correctly sorts two non-open items (both BOUGHT) without throwing", async () => {
+    const user = await createTestUser({ timezone: TZ, coins: 200 });
+    const itemA = await createTestWishlistItem(user.id, { title: "Item A", status: "BOUGHT" });
+    const itemB = await createTestWishlistItem(user.id, { title: "Item B", status: "BOUGHT" });
+
+    const result = await getUserWishlistItems(user.id);
+    expect(result).toHaveLength(2);
+    const ids = result.map((i) => i.id);
+    expect(ids).toContain(itemA.id);
+    expect(ids).toContain(itemB.id);
+  });
 });
 
 // ─── createWishlistItem ───────────────────────────────────────────────────────
@@ -139,6 +151,14 @@ describe("updateWishlistItem", () => {
 
     const updated = await updateWishlistItem(item.id, user.id, { price: null });
     expect(updated.price).toBeNull();
+  });
+
+  it("sets coinUnlockThreshold to null when null is passed explicitly", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const item = await createTestWishlistItem(user.id, { coinUnlockThreshold: 50 });
+
+    const updated = await updateWishlistItem(item.id, user.id, { coinUnlockThreshold: null });
+    expect(updated.coinUnlockThreshold).toBeNull();
   });
 });
 
@@ -222,6 +242,15 @@ describe("unmarkAsBought", () => {
     const item = await createTestWishlistItem(user.id, { status: "OPEN" });
 
     await expect(unmarkAsBought(item.id, user.id)).rejects.toThrow();
+  });
+
+  it("throws when item does not exist", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const fakeId = "00000000-0000-0000-0000-000000000099";
+
+    await expect(unmarkAsBought(fakeId, user.id)).rejects.toThrow(
+      "Wishlist item not found or access denied"
+    );
   });
 });
 
