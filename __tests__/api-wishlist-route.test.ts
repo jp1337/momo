@@ -35,11 +35,13 @@ vi.mock("@/lib/wishlist", async (orig) => {
     getUserWishlistItems: vi.fn(actual.getUserWishlistItems),
     createWishlistItem: vi.fn(actual.createWishlistItem),
     getBudgetSummary: vi.fn(actual.getBudgetSummary),
+    updateWishlistItem: vi.fn(actual.updateWishlistItem),
+    deleteWishlistItem: vi.fn(actual.deleteWishlistItem),
   };
 });
 
 import { resolveApiUser } from "@/lib/api-auth";
-import { getUserWishlistItems, createWishlistItem, getBudgetSummary } from "@/lib/wishlist";
+import { getUserWishlistItems, createWishlistItem, getBudgetSummary, updateWishlistItem, deleteWishlistItem } from "@/lib/wishlist";
 import { GET, POST } from "@/app/api/wishlist/route";
 import {
   PATCH as PATCHById,
@@ -519,6 +521,50 @@ describe("POST /api/wishlist — error path", () => {
     vi.mocked(createWishlistItem).mockRejectedValueOnce(new Error("DB error"));
     const res = await POST(
       req("POST", "/api/wishlist", { title: "Boom", price: 9.99, priority: "WANT" })
+    );
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── PATCH /api/wishlist/:id — error paths ────────────────────────────────────
+
+describe("PATCH /api/wishlist/:id — error paths", () => {
+  it("returns 400 for malformed JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badReq = new Request(`http://localhost/api/wishlist/${FAKE_ID}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await PATCHById(badReq, {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 500 when updateWishlistItem throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(updateWishlistItem).mockRejectedValueOnce(new Error("DB error"));
+    const res = await PATCHById(
+      req("PATCH", `/api/wishlist/${FAKE_ID}`, { title: "Updated" }),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── DELETE /api/wishlist/:id — error path ────────────────────────────────────
+
+describe("DELETE /api/wishlist/:id — error path", () => {
+  it("returns 500 when deleteWishlistItem throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(deleteWishlistItem).mockRejectedValueOnce(new Error("DB error"));
+    const res = await DELETEById(
+      req("DELETE", `/api/wishlist/${FAKE_ID}`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
     );
     expect(res.status).toBe(500);
   });

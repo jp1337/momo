@@ -10,6 +10,7 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { createHmac } from "node:crypto";
 import { generateSecret, generateSync } from "otplib";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
@@ -382,6 +383,23 @@ describe("signSetupToken / verifySetupToken", () => {
     // both verify correctly.
     expect(verifySetupToken(t1, USER_ID)).toBe(SECRET);
     expect(verifySetupToken(t2, USER_ID)).toBe(SECRET);
+  });
+
+  it("returns null when body is valid base64url but decodes to non-JSON (covers JSON parse catch path)", () => {
+    // Craft a token where the body is correctly signed but not valid JSON.
+    // This exercises the JSON.parse catch branch inside verifySetupToken.
+    const AUTH_SECRET = process.env.AUTH_SECRET ?? "";
+    const b64urlEncode = (buf: Buffer) =>
+      buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+    const rawBody = Buffer.from("not valid json!"); // not JSON-parseable
+    const bodyPart = b64urlEncode(rawBody);
+    const sigPart = b64urlEncode(
+      createHmac("sha256", AUTH_SECRET).update(bodyPart).digest()
+    );
+
+    const result = verifySetupToken(`${bodyPart}.${sigPart}`, USER_ID);
+    expect(result).toBeNull();
   });
 });
 

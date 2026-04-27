@@ -30,11 +30,14 @@ vi.mock("@/lib/topics", async (orig) => {
     ...actual,
     getUserTopics: vi.fn(actual.getUserTopics),
     createTopic: vi.fn(actual.createTopic),
+    getTopicById: vi.fn(actual.getTopicById),
+    updateTopic: vi.fn(actual.updateTopic),
+    deleteTopic: vi.fn(actual.deleteTopic),
   };
 });
 
 import { resolveApiUser } from "@/lib/api-auth";
-import { getUserTopics, createTopic } from "@/lib/topics";
+import { getUserTopics, createTopic, getTopicById, updateTopic, deleteTopic } from "@/lib/topics";
 import { GET, POST } from "@/app/api/topics/route";
 import {
   GET as GETById,
@@ -328,6 +331,63 @@ describe("POST /api/topics — error path", () => {
     authAs(user.id);
     vi.mocked(createTopic).mockRejectedValueOnce(new Error("DB error"));
     const res = await POST(req("POST", "/api/topics", { title: "Boom" }));
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── GET /api/topics/:id — error path ────────────────────────────────────────
+
+describe("GET /api/topics/:id — error path", () => {
+  it("returns 500 when getTopicById throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(getTopicById).mockRejectedValueOnce(new Error("DB error"));
+    const res = await GETById(req("GET", `/api/topics/${FAKE_ID}`), {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── PATCH /api/topics/:id — error paths ─────────────────────────────────────
+
+describe("PATCH /api/topics/:id — error paths", () => {
+  it("returns 400 for malformed JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badReq = new Request(`http://localhost/api/topics/${FAKE_ID}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await PATCHById(badReq, {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 500 when updateTopic throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(updateTopic).mockRejectedValueOnce(new Error("DB error"));
+    const res = await PATCHById(
+      req("PATCH", `/api/topics/${FAKE_ID}`, { title: "Updated" }),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── DELETE /api/topics/:id — error path ──────────────────────────────────────
+
+describe("DELETE /api/topics/:id — error path", () => {
+  it("returns 500 when deleteTopic throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(deleteTopic).mockRejectedValueOnce(new Error("DB error"));
+    const res = await DELETEById(req("DELETE", `/api/topics/${FAKE_ID}`), {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
     expect(res.status).toBe(500);
   });
 });

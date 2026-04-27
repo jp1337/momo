@@ -110,6 +110,26 @@ describe("checkRateLimit", () => {
 
     expect(r1).toBe(r2);
   });
+
+  it("prunes expired entries from the store during an update", async () => {
+    const expiredKey = uniqueKey("expired");
+    const activeKey = uniqueKey("active");
+    const shortWindow = 50; // ms
+
+    // Create an entry that will expire shortly
+    checkRateLimit(expiredKey, 10, shortWindow);
+    // Create an active entry (long window) — first call, creates new entry
+    checkRateLimit(activeKey, 10, 60_000);
+
+    // Wait for the first entry to expire
+    await new Promise((r) => setTimeout(r, shortWindow + 20));
+
+    // Second call for the active key — hits the increment branch, which runs
+    // the prune loop and deletes the expired entry (covers line 58)
+    const result = checkRateLimit(activeKey, 10, 60_000);
+    expect(result.limited).toBe(false);
+    expect(result.remaining).toBe(8); // 10 - 2 used
+  });
 });
 
 // ─── rateLimitResponse ────────────────────────────────────────────────────────

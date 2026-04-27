@@ -31,11 +31,14 @@ vi.mock("@/lib/tasks", async (orig) => {
     ...actual,
     getUserTasks: vi.fn(actual.getUserTasks),
     createTask: vi.fn(actual.createTask),
+    getTaskById: vi.fn(actual.getTaskById),
+    updateTask: vi.fn(actual.updateTask),
+    deleteTask: vi.fn(actual.deleteTask),
   };
 });
 
 import { resolveApiUser } from "@/lib/api-auth";
-import { getUserTasks, createTask } from "@/lib/tasks";
+import { getUserTasks, createTask, getTaskById, updateTask, deleteTask } from "@/lib/tasks";
 import { GET, POST } from "@/app/api/tasks/route";
 import {
   GET as GETById,
@@ -348,6 +351,63 @@ describe("DELETE /api/tasks/:id", () => {
       params: Promise.resolve({ id: FAKE_ID }),
     });
     expect(res.status).toBe(404);
+  });
+});
+
+// ─── GET /api/tasks/:id — additional paths ────────────────────────────────────
+
+describe("GET /api/tasks/:id — additional paths", () => {
+  it("returns 500 when getTaskById throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(getTaskById).mockRejectedValueOnce(new Error("DB error"));
+    const res = await GETById(req("GET", `/api/tasks/${FAKE_ID}`), {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── PATCH /api/tasks/:id — additional paths ──────────────────────────────────
+
+describe("PATCH /api/tasks/:id — additional paths", () => {
+  it("returns 400 for malformed JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badReq = new Request(`http://localhost/api/tasks/${FAKE_ID}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: "{ not valid json }",
+    });
+    const res = await PATCHById(badReq, {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 500 when updateTask throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(updateTask).mockRejectedValueOnce(new Error("unexpected"));
+    const res = await PATCHById(
+      req("PATCH", `/api/tasks/${FAKE_ID}`, { title: "Updated" }),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(500);
+  });
+});
+
+// ─── DELETE /api/tasks/:id — additional paths ─────────────────────────────────
+
+describe("DELETE /api/tasks/:id — additional paths", () => {
+  it("returns 500 when deleteTask throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(deleteTask).mockRejectedValueOnce(new Error("unexpected"));
+    const res = await DELETEById(req("DELETE", `/api/tasks/${FAKE_ID}`), {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(500);
   });
 });
 
