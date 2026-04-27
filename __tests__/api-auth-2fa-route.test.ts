@@ -52,6 +52,7 @@ import {
   SETUP_COOKIE_NAME,
   enableTotpForUser,
 } from "@/lib/totp";
+import { serverEnv } from "@/lib/env";
 import { generateSync, generateSecret } from "otplib";
 
 const mockAuth = vi.mocked(auth);
@@ -402,6 +403,103 @@ describe("POST /api/auth/2fa/regenerate-backup-codes", () => {
       headers: { "Content-Type": "application/json" },
     });
     const res = await POSTRegenerateBackupCodes(req);
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── POST /api/auth/2fa/verify — additional paths ────────────────────────────
+
+describe("POST /api/auth/2fa/verify — additional paths", () => {
+  it("returns 500 when backup code is valid but session cookie is missing", async () => {
+    const user = await createTestUser({ timezone: "Europe/Berlin" });
+    const secret = generateSecret();
+    const setupCode = generateSync({ secret });
+    const { codes } = await enableTotpForUser(user.id, secret, setupCode);
+
+    asSession(user.id);
+    // Default cookie mock returns no session cookie → readSessionTokenFromCookieStore returns undefined
+
+    const res = await POSTVerify(jsonRequest({ backupCode: codes[0] }));
+    expect(res.status).toBe(500);
+  });
+
+  it("returns 200 with usedBackupCode=true when backup code is valid and session cookie is present", async () => {
+    const user = await createTestUser({ timezone: "Europe/Berlin" });
+    const secret = generateSecret();
+    const setupCode = generateSync({ secret });
+    const { codes } = await enableTotpForUser(user.id, secret, setupCode);
+
+    asSession(user.id);
+    mockCookies.mockResolvedValue({
+      get: (name: string) =>
+        name === "authjs.session-token"
+          ? { name: "authjs.session-token", value: "fake-session-token" }
+          : undefined,
+      set: vi.fn(),
+      delete: vi.fn(),
+    } as never);
+
+    const res = await POSTVerify(jsonRequest({ backupCode: codes[1] }));
+    expect(res.status).toBe(200);
+    const body = await res.json() as { success: boolean; usedBackupCode: boolean };
+    expect(body.success).toBe(true);
+    expect(body.usedBackupCode).toBe(true);
+  });
+
+  it("returns 200 with usedBackupCode=false when TOTP code is valid and session cookie is present", async () => {
+    const user = await createTestUser({ timezone: "Europe/Berlin" });
+    const secret = generateSecret();
+    const setupCode = generateSync({ secret });
+    await enableTotpForUser(user.id, secret, setupCode);
+
+    asSession(user.id);
+    mockCookies.mockResolvedValue({
+      get: (name: string) =>
+        name === "authjs.session-token"
+          ? { name: "authjs.session-token", value: "fake-session-token-totp" }
+          : undefined,
+      set: vi.fn(),
+      delete: vi.fn(),
+    } as never);
+
+    const freshCode = generateSync({ secret });
+    const res = await POSTVerify(jsonRequest({ code: freshCode }));
+    expect(res.status).toBe(200);
+    const body = await res.json() as { success: boolean; usedBackupCode: boolean };
+    expect(body.success).toBe(true);
+    expect(body.usedBackupCode).toBe(false);
+  });
+});
+
+// ─── POST /api/auth/2fa/disable — additional paths ───────────────────────────
+
+describe("POST /api/auth/2fa/disable — additional paths", () => {
+  it("returns 403 when REQUIRE_2FA is enforced by admin", async () => {
+    const user = await createTestUser({ timezone: "Europe/Berlin" });
+    asSession(user.id);
+    (serverEnv as Record<string, unknown>).REQUIRE_2FA = true;
+    const res = await POSTDisable(jsonRequest({ code: "123456" }));
+    (serverEnv as Record<string, unknown>).REQUIRE_2FA = false;
+    expect(res.status).toBe(403);
+    const body = await res.json() as { code: string };
+    expect(body.code).toBe("TOTP_REQUIRED_BY_ADMIN");
+  });
+
+  it("returns 400 for valid JSON with wrong schema (safeParse failure)", async () => {
+    const user = await createTestUser({ timezone: "Europe/Berlin" });
+    asSession(user.id);
+    const res = await POSTDisable(jsonRequest({}));
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── POST /api/auth/2fa/verify-setup — additional paths ──────────────────────
+
+describe("POST /api/auth/2fa/verify-setup — additional paths", () => {
+  it("returns 400 for valid JSON with wrong schema (safeParse failure)", async () => {
+    const user = await createTestUser({ timezone: "Europe/Berlin" });
+    asSession(user.id);
+    const res = await POSTVerifySetup(jsonRequest({ wrongField: "bad" }));
     expect(res.status).toBe(400);
   });
 });
