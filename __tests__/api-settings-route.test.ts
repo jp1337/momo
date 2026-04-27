@@ -44,11 +44,21 @@ vi.mock("@/lib/notifications", async (orig) => {
   };
 });
 
+vi.mock("@/lib/wishlist", async (orig) => {
+  const actual = await orig<typeof import("@/lib/wishlist")>();
+  return {
+    ...actual,
+    getBudgetSummary: vi.fn(actual.getBudgetSummary),
+    updateMonthlyBudget: vi.fn(actual.updateMonthlyBudget),
+  };
+});
+
 import { resolveApiUser, resolveVerifiedApiUser } from "@/lib/api-auth";
 import { GET as questGET, PATCH as questPATCH } from "@/app/api/settings/quest/route";
 import { GET as timezoneGET, PATCH as timezonePATCH } from "@/app/api/settings/timezone/route";
 import { GET as vacationGET, PATCH as vacationPATCH } from "@/app/api/settings/vacation-mode/route";
 import { GET as budgetGET, PATCH as budgetPATCH } from "@/app/api/settings/budget/route";
+import { getBudgetSummary, updateMonthlyBudget } from "@/lib/wishlist";
 import { GET as loginNotifGET, PATCH as loginNotifPATCH } from "@/app/api/settings/login-notification/route";
 import { GET as notifHistoryGET } from "@/app/api/settings/notification-history/route";
 import { GET as calendarGET, POST as calendarPOST, DELETE as calendarDELETE } from "@/app/api/settings/calendar-feed/route";
@@ -388,6 +398,36 @@ describe("PATCH /api/settings/budget", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+  });
+
+  it("returns 400 for a malformed JSON body", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    const badReq = new Request("http://localhost/api/settings/budget", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: "not valid json",
+    });
+    const res = await budgetPATCH(badReq as never);
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 500 when updateMonthlyBudget throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    vi.mocked(updateMonthlyBudget).mockRejectedValueOnce(new Error("DB error"));
+    const res = await budgetPATCH(req("PATCH", "/api/settings/budget", { budget: 100 }));
+    expect(res.status).toBe(500);
+  });
+});
+
+describe("GET /api/settings/budget — error path", () => {
+  it("returns 500 when getBudgetSummary throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    vi.mocked(getBudgetSummary).mockRejectedValueOnce(new Error("DB error"));
+    const res = await budgetGET(req("GET", "/api/settings/budget"));
+    expect(res.status).toBe(500);
   });
 });
 

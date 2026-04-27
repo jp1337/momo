@@ -22,8 +22,18 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
+vi.mock("@/lib/daily-quest", async (orig) => {
+  const actual = await orig<typeof import("@/lib/daily-quest")>();
+  return {
+    ...actual,
+    selectDailyQuest: vi.fn(actual.selectDailyQuest),
+    forceSelectDailyQuest: vi.fn(actual.forceSelectDailyQuest),
+  };
+});
+
 import { resolveApiUser } from "@/lib/api-auth";
 import { GET, POST } from "@/app/api/daily-quest/route";
+import { selectDailyQuest, forceSelectDailyQuest } from "@/lib/daily-quest";
 import { createTestUser, createTestTask } from "./helpers/fixtures";
 import type { ApiUser } from "@/lib/api-auth";
 
@@ -127,5 +137,23 @@ describe("POST /api/daily-quest", () => {
     expect(res.status).toBe(200);
     const body = await res.json() as { quest: unknown };
     expect(body.quest).toBeNull();
+  });
+
+  it("returns 500 when forceSelectDailyQuest throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(forceSelectDailyQuest).mockRejectedValueOnce(new Error("DB error"));
+    const res = await POST(req("POST", "/api/daily-quest", {}));
+    expect(res.status).toBe(500);
+  });
+});
+
+describe("GET /api/daily-quest — error path", () => {
+  it("returns 500 when selectDailyQuest throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(selectDailyQuest).mockRejectedValueOnce(new Error("DB error"));
+    const res = await GET(req("GET", "/api/daily-quest"));
+    expect(res.status).toBe(500);
   });
 });

@@ -13,10 +13,19 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
+vi.mock("@/lib/calendar", async (orig) => {
+  const actual = await orig<typeof import("@/lib/calendar")>();
+  return {
+    ...actual,
+    buildIcsForUser: vi.fn(actual.buildIcsForUser),
+  };
+});
+
 import { GET } from "@/app/api/calendar/[token]/route";
 import {
   createOrRotateCalendarToken,
   revokeCalendarToken,
+  buildIcsForUser,
 } from "@/lib/calendar";
 import { createTestUser, createTestTask } from "./helpers/fixtures";
 import { getLocalDateString } from "@/lib/date-utils";
@@ -156,5 +165,15 @@ describe("GET /api/calendar/:token — valid token", () => {
     const [req, ctx] = calendarReq(oldToken);
     const res = await GET(req, ctx);
     expect(res.status).toBe(404);
+  });
+
+  it("returns 500 when buildIcsForUser throws an unexpected error", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const token = await createOrRotateCalendarToken(user.id);
+    vi.mocked(buildIcsForUser).mockRejectedValueOnce(new Error("ICS build failed"));
+
+    const [req, ctx] = calendarReq(token);
+    const res = await GET(req, ctx);
+    expect(res.status).toBe(500);
   });
 });

@@ -29,6 +29,16 @@ vi.mock("@/lib/totp", () => ({
   userHasSecondFactor: vi.fn(() => Promise.resolve(false)),
 }));
 
+vi.mock("@/lib/sessions", async (orig) => {
+  const actual = await orig<typeof import("@/lib/sessions")>();
+  return {
+    ...actual,
+    listUserSessions: vi.fn(actual.listUserSessions),
+    revokeSession: vi.fn(actual.revokeSession),
+    revokeAllOtherSessions: vi.fn(actual.revokeAllOtherSessions),
+  };
+});
+
 import { resolveApiUser } from "@/lib/api-auth";
 import { GET as sessionsGET } from "@/app/api/auth/sessions/route";
 import { DELETE as sessionByIdDELETE } from "@/app/api/auth/sessions/[id]/route";
@@ -39,6 +49,7 @@ import { sessions } from "@/lib/db/schema";
 import { createHash, randomBytes } from "crypto";
 import type { ApiUser } from "@/lib/api-auth";
 import { readSessionTokenFromCookieStore } from "@/lib/totp";
+import { listUserSessions, revokeSession, revokeAllOtherSessions } from "@/lib/sessions";
 
 const mockAuth = vi.mocked(resolveApiUser);
 const mockReadSessionToken = vi.mocked(readSessionTokenFromCookieStore);
@@ -128,6 +139,14 @@ describe("GET /api/auth/sessions", () => {
     expect(currentSession).toBeDefined();
     expect(currentSession.isCurrent).toBe(true);
   });
+
+  it("returns 500 when listUserSessions throws an unexpected error", async () => {
+    const user = await createTestUser();
+    asUser(user.id);
+    vi.mocked(listUserSessions).mockRejectedValueOnce(new Error("DB error"));
+    const res = await sessionsGET(req("GET", "/api/auth/sessions"));
+    expect(res.status).toBe(500);
+  });
 });
 
 // ─── DELETE /api/auth/sessions/:id ───────────────────────────────────────────
@@ -206,6 +225,18 @@ describe("DELETE /api/auth/sessions/:id", () => {
     const body = await res.json();
     expect(body.success).toBe(true);
   });
+
+  it("returns 500 when revokeSession throws an unexpected error", async () => {
+    const user = await createTestUser();
+    const { hashId } = await createTestSession(user.id);
+    asUser(user.id);
+    vi.mocked(revokeSession).mockRejectedValueOnce(new Error("DB error"));
+    const res = await sessionByIdDELETE(
+      req("DELETE", `/api/auth/sessions/${hashId}`),
+      { params: Promise.resolve({ id: hashId }) }
+    );
+    expect(res.status).toBe(500);
+  });
 });
 
 // ─── POST /api/auth/sessions/revoke-others ───────────────────────────────────
@@ -250,5 +281,15 @@ describe("POST /api/auth/sessions/revoke-others", () => {
     expect(body).toHaveProperty("revoked");
     expect(typeof body.revoked).toBe("number");
     expect(body.revoked).toBeGreaterThanOrEqual(0);
+  });
+
+  it("returns 500 when revokeAllOtherSessions throws an unexpected error", async () => {
+    const user = await createTestUser();
+    const { token } = await createTestSession(user.id);
+    mockReadSessionToken.mockReturnValue(token);
+    asUser(user.id);
+    vi.mocked(revokeAllOtherSessions).mockRejectedValueOnce(new Error("DB error"));
+    const res = await revokeOthersPOST(req("POST", "/api/auth/sessions/revoke-others"));
+    expect(res.status).toBe(500);
   });
 });

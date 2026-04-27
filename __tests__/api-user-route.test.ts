@@ -27,6 +27,14 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
+vi.mock("@/lib/export", async (orig) => {
+  const actual = await orig<typeof import("@/lib/export")>();
+  return {
+    ...actual,
+    exportUserData: vi.fn(actual.exportUserData),
+  };
+});
+
 import { resolveApiUser } from "@/lib/api-auth";
 import { GET as GETUser, DELETE as DELETEUser } from "@/app/api/user/route";
 import {
@@ -39,6 +47,7 @@ import {
 } from "@/app/api/user/api-keys/route";
 import { DELETE as DELETEApiKey } from "@/app/api/user/api-keys/[id]/route";
 import { GET as GETExport } from "@/app/api/user/export/route";
+import { exportUserData } from "@/lib/export";
 import { createTestUser, createTestApiKey } from "./helpers/fixtures";
 import type { ApiUser } from "@/lib/api-auth";
 
@@ -389,5 +398,24 @@ describe("GET /api/user/export", () => {
     // The export should contain at minimum a user or profile field
     expect(body).toBeDefined();
     expect(typeof body).toBe("object");
+  });
+
+  it("returns 429 when the rate limit is exceeded (5 requests per hour)", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    // Rate limit is 5/hour — exhaust it
+    for (let i = 0; i < 5; i++) {
+      await GETExport(req("GET", "/api/user/export"));
+    }
+    const res = await GETExport(req("GET", "/api/user/export"));
+    expect(res.status).toBe(429);
+  });
+
+  it("returns 500 when exportUserData throws an unexpected error", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    vi.mocked(exportUserData).mockRejectedValueOnce(new Error("Export failed"));
+    const res = await GETExport(req("GET", "/api/user/export"));
+    expect(res.status).toBe(500);
   });
 });
