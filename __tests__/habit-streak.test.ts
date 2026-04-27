@@ -234,4 +234,20 @@ describe("computeHabitStreak — paused ranges", () => {
     const result = computeHabitStreak(dates, 1, TODAY, [], "INTERVAL");
     expect(result.current).toBe(1);
   });
+
+  it("MONTHLY: paused month counts as ok (no streak break)", () => {
+    // Completed 2 months ago and this month; last month was paused → streak 3
+    const twoMonthsAgo = offsetDate(TODAY, -60);
+    const paused = [{ from: offsetDate(TODAY, -30), to: offsetDate(TODAY, -30) }];
+    const result = computeHabitStreak([twoMonthsAgo, TODAY], 1, TODAY, paused, "MONTHLY");
+    expect(result.current).toBe(3);
+  });
+
+  it("YEARLY: paused year counts as ok (no streak break)", () => {
+    // Completed 2 years ago and this year; last year was paused → streak 3
+    const twoYearsAgo = offsetDate(TODAY, -730);
+    const paused = [{ from: offsetDate(TODAY, -365), to: offsetDate(TODAY, -365) }];
+    const result = computeHabitStreak([twoYearsAgo, TODAY], 1, TODAY, paused, "YEARLY");
+    expect(result.current).toBe(3);
+  });
 });

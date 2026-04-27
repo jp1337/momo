@@ -539,8 +539,11 @@ describe("notifyIfNewDevice (called from touchSessionMetadata on first touch)", 
       userAgent: "NewBrowser/99.0",
       ipAddress: "10.20.30.40",
     });
-    await expect(
-      touchSessionMetadata(newToken, headers, user.id)
-    ).resolves.toBeUndefined();
+    await touchSessionMetadata(newToken, headers, user.id);
+    // Wait for the fire-and-forget notifyIfNewDevice to complete its DB queries.
+    // Note: lines 315-317 in sessions.ts are currently unreachable because
+    // touchSessionMetadata sets createdAt before notifyIfNewDevice queries, so the
+    // current session's fingerprint is always in the known-devices set.
+    await new Promise((resolve) => setTimeout(resolve, 200));
   });
 });

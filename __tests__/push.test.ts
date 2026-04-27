@@ -339,6 +339,16 @@ describe("sendStreakShieldNotification", () => {
     await sendStreakShieldNotification(user.id, 3);
     expect(mockSendNotification).not.toHaveBeenCalled();
   });
+
+  it("catches push errors per-subscription — does not throw (covers error catch block)", async () => {
+    const user = await createTestUser({ streakCurrent: 3 });
+    await createTestPushSubscription(user.id);
+    // Non-410 error → sendPushNotification re-throws → caught by sendStreakShieldNotification
+    mockSendNotification.mockRejectedValueOnce(
+      Object.assign(new Error("push send failed"), { statusCode: 500 })
+    );
+    await expect(sendStreakShieldNotification(user.id, 3)).resolves.toBeUndefined();
+  });
 });
 
 // ─── sendPushNotification (core function) ────────────────────────────────────

@@ -291,4 +291,14 @@ describe("getHabitsWithHistory", () => {
     const habits = await getHabitsWithHistory(user.id, YEAR, TZ);
     expect(habits[0].paused).toBe(true);
   });
+
+  it("falls back to local date when no timezone is provided (covers toLocalDateString fallback)", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    await createTestRecurringTask(user.id, { title: "No-TZ Habit" });
+
+    // Omitting timezone triggers the non-timezone code path in toLocalDateString
+    const habits = await getHabitsWithHistory(user.id, YEAR);
+    expect(habits).toHaveLength(1);
+    expect(habits[0].title).toBe("No-TZ Habit");
+  });
 });
