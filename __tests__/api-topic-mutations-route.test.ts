@@ -113,6 +113,33 @@ describe("PUT /api/topics/:id/reorder", () => {
     const body = await res.json() as { success: boolean };
     expect(body.success).toBe(true);
   });
+
+  it("returns 400 for a malformed JSON body", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const badReq = new Request(`http://localhost/api/topics/${FAKE_ID}/reorder`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: "not valid json",
+    });
+    const res = await PUTReorder(badReq as never, {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 when a taskId does not belong to the topic", async () => {
+    const user = await createTestUser();
+    const topic = await createTestTopic(user.id, { title: "Empty Topic" });
+    authAs(user.id);
+    const res = await PUTReorder(
+      req("PUT", `/api/topics/${topic.id}/reorder`, {
+        taskIds: [FAKE_ID],
+      }),
+      { params: Promise.resolve({ id: topic.id }) }
+    );
+    expect(res.status).toBe(404);
+  });
 });
 
 // ─── POST /api/topics/import-template ────────────────────────────────────────

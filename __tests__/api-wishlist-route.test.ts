@@ -315,6 +315,16 @@ describe("POST /api/wishlist/:id/buy", () => {
     const body = await res.json() as { error: string };
     expect(body.error).toBe("INSUFFICIENT_COINS");
   });
+
+  it("returns 404 when item does not exist", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await POSTBuy(
+      req("POST", `/api/wishlist/${FAKE_ID}/buy`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(404);
+  });
 });
 
 // ─── DELETE /api/wishlist/:id/buy ─────────────────────────────────────────────
@@ -355,6 +365,30 @@ describe("DELETE /api/wishlist/:id/buy (unmark as bought)", () => {
     const body = await res.json() as { item: { status: string }; coinsRefunded: number };
     expect(body.item.status).toBe("OPEN");
     expect(typeof body.coinsRefunded).toBe("number");
+  });
+
+  it("returns 404 when item does not exist", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await DELETEBuy(
+      req("DELETE", `/api/wishlist/${FAKE_ID}/buy`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 409 when item is not currently marked as bought", async () => {
+    const user = await createTestUser();
+    const item = await createTestWishlistItem(user.id, {
+      title: "Open Item",
+      status: "OPEN",
+    });
+    authAs(user.id);
+    const res = await DELETEBuy(
+      req("DELETE", `/api/wishlist/${item.id}/buy`),
+      { params: Promise.resolve({ id: item.id }) }
+    );
+    expect(res.status).toBe(409);
   });
 });
 
@@ -440,5 +474,15 @@ describe("DELETE /api/wishlist/:id/discard (restore)", () => {
     expect(res.status).toBe(200);
     const body = await res.json() as { item: { status: string } };
     expect(body.item.status).toBe("OPEN");
+  });
+
+  it("returns 404 when item does not exist", async () => {
+    const user = await createTestUser();
+    authAs(user.id);
+    const res = await DELETEDiscard(
+      req("DELETE", `/api/wishlist/${FAKE_ID}/discard`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(404);
   });
 });
