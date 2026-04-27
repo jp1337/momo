@@ -86,6 +86,7 @@ import * as webauthn from "@/lib/webauthn";
 import * as totp from "@/lib/totp";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { serverEnv } from "@/lib/env";
 
 const mockAuth = auth as ReturnType<typeof vi.fn>;
 const mockCookies = cookies as ReturnType<typeof vi.fn>;
@@ -515,6 +516,18 @@ describe("PATCH /api/auth/passkey/[id]", () => {
     expect(res.status).toBe(200);
     expect(webauthn.renamePasskey).toHaveBeenCalledWith("user-abc", "cred1", "My YubiKey");
   });
+
+  it("returns 400 for a malformed JSON body", async () => {
+    mockAuth.mockResolvedValue(makeSession("user-abc"));
+    const { PATCH } = await import("@/app/api/auth/passkey/[id]/route");
+    const badReq = new NextRequest("http://localhost/api/auth/passkey/cred1", {
+      method: "PATCH",
+      body: "not valid json",
+      headers: { "content-type": "application/json" },
+    });
+    const res = await PATCH(badReq, { params: Promise.resolve({ id: "cred1" }) });
+    expect(res.status).toBe(400);
+  });
 });
 
 // ─── [id] DELETE (revoke) ─────────────────────────────────────────────────────
@@ -541,5 +554,32 @@ describe("DELETE /api/auth/passkey/[id]", () => {
     const res = await DELETE(makeDeleteRequest(), { params: Promise.resolve({ id: "cred1" }) });
     expect(res.status).toBe(200);
     expect(webauthn.deletePasskey).toHaveBeenCalledWith("user-abc", "cred1");
+  });
+
+  it("returns 403 when REQUIRE_2FA would remove the last second factor", async () => {
+    (serverEnv as Record<string, unknown>).REQUIRE_2FA = true;
+    mockAuth.mockResolvedValue(makeSession("user-abc"));
+    // First db.select: returns [{ id: "cred1" }] — one passkey (the one being deleted)
+    // Second db.select: returns [{ totpEnabledAt: null }] — no TOTP
+    vi.mocked(db.select)
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ id: "cred1" }]),
+        }),
+      } as never)
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ totpEnabledAt: null }]),
+          }),
+        }),
+      } as never);
+
+    const { DELETE } = await import("@/app/api/auth/passkey/[id]/route");
+    const res = await DELETE(makeDeleteRequest(), { params: Promise.resolve({ id: "cred1" }) });
+    expect(res.status).toBe(403);
+    const body = await res.json() as { code: string };
+    expect(body.code).toBe("SECOND_FACTOR_REQUIRED_BY_ADMIN");
+    (serverEnv as Record<string, unknown>).REQUIRE_2FA = false;
   });
 });
