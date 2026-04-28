@@ -32,7 +32,6 @@ import { WeekdayChart } from "@/components/stats/weekday-chart";
 import { StreakSparkline } from "@/components/stats/streak-sparkline";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faLock,
   faFire,
   faTrophy,
   faCircleCheck,
@@ -766,99 +765,7 @@ export default async function StatsPage() {
         </section>
       )}
 
-      {/* ── Section 9: Errungenschaften ──────────────────────────────────────── */}
-      <section>
-        <h2
-          className="text-xs font-semibold uppercase tracking-widest mb-3"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {t("section_achievements", {
-            earned: stats.achievements.filter((a) => a.earnedAt !== null).length,
-            total: stats.achievements.length,
-          })}
-        </h2>
-        {stats.achievements.length === 0 ? (
-          <p
-            className="text-sm"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {t("no_achievements")}
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {stats.achievements.map((achievement) => {
-              const earned = achievement.earnedAt !== null;
-              return (
-                <div
-                  key={achievement.id}
-                  className="rounded-xl p-4 flex items-start gap-3"
-                  style={{
-                    backgroundColor: "var(--bg-surface)",
-                    border: `1px solid ${earned ? "var(--accent-amber)" : "var(--border)"}`,
-                    opacity: earned ? 1 : 0.5,
-                  }}
-                >
-                  <span className="text-2xl flex-shrink-0" aria-hidden="true">
-                    {earned ? (
-                      achievement.icon
-                    ) : (
-                      <FontAwesomeIcon
-                        icon={faLock}
-                        className="w-5 h-5"
-                        style={{ color: "var(--text-muted)" }}
-                        aria-label={t("achievement_locked")}
-                      />
-                    )}
-                  </span>
-                  <div className="flex flex-col min-w-0">
-                    <span
-                      className="text-sm font-semibold"
-                      style={{
-                        fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                        color: earned
-                          ? "var(--text-primary)"
-                          : "var(--text-muted)",
-                      }}
-                    >
-                      {achievement.title}
-                    </span>
-                    <span
-                      className="text-xs mt-0.5"
-                      style={{
-                        fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                        color: "var(--text-muted)",
-                      }}
-                    >
-                      {achievement.description}
-                    </span>
-                    {earned && achievement.earnedAt && (
-                      <span
-                        className="text-xs mt-1"
-                        style={{
-                          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                          color: "var(--accent-amber)",
-                        }}
-                      >
-                        {t("achievement_earned_at", {
-                          date: formatDate(achievement.earnedAt),
-                        })}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* ── Section 10: Wunschliste ──────────────────────────────────────────── */}
+      {/* ── Section 9: Wunschliste ──────────────────────────────────────────── */}
       <section>
         <h2
           className="text-xs font-semibold uppercase tracking-widest mb-3"
