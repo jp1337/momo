@@ -19,7 +19,7 @@ import { getDailyQuestIncludingCompleted, selectDailyQuest } from "@/lib/daily-q
 import { getUserStats } from "@/lib/gamification";
 import { db } from "@/lib/db";
 import { taskCompletions, users, tasks } from "@/lib/db/schema";
-import { eq, count, lte, isNull, and, or } from "drizzle-orm";
+import { eq, count, lte, isNull, isNotNull, and, or, min } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { EnergyCheckinCard } from "@/components/dashboard/energy-checkin-card";
 import { getTranslations } from "next-intl/server";
@@ -83,8 +83,8 @@ export default async function DashboardPage() {
     .limit(1);
   const userTimezone = tzRow[0]?.timezone ?? null;
 
-  // Fetch quest, stats, completion count, postpone data, and quick wins in parallel
-  const [rawQuest, stats, completionCountRows, userPostponeData, quickWinTasks, fiveMinCountRows] = await Promise.all([
+  // Fetch quest, stats, completion count, postpone data, quick wins, and sequential group minimums in parallel
+  const [rawQuest, stats, completionCountRows, userPostponeData, quickWinTasks, groupMinRows] = await Promise.all([
     // Try to get (or select) the daily quest — pass timezone for consistent date handling
     selectDailyQuest(userId, userTimezone).catch(() => getDailyQuestIncludingCompleted(userId)),
     getUserStats(userId),
@@ -106,8 +106,8 @@ export default async function DashboardPage() {
       .where(eq(users.id, userId))
       .limit(1),
     // Quick wins: uncompleted, non-snoozed tasks with estimatedMinutes <= 15.
-    // We over-fetch (limit 12) so the JS sort below has room to prefer
-    // energy-matching tasks before slicing down to 3 for display.
+    // Over-fetch (limit 50) so JS can filter blocked sequential tasks and still
+    // have enough candidates for the energy-aware sort before slicing to 3.
     db
       .select({
         id: tasks.id,
@@ -115,6 +115,9 @@ export default async function DashboardPage() {
         estimatedMinutes: tasks.estimatedMinutes,
         coinValue: tasks.coinValue,
         energyLevel: tasks.energyLevel,
+        taskGroup: tasks.taskGroup,
+        sortOrder: tasks.sortOrder,
+        topicId: tasks.topicId,
       })
       .from(tasks)
       .where(
@@ -125,19 +128,26 @@ export default async function DashboardPage() {
           or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, todayStr))
         )
       )
-      .limit(12),
-    // Count of 5-minute tasks for the "5 Min" CTA
+      .limit(50),
+    // Minimum sortOrder per (topicId, taskGroup) for all active sequential groups.
+    // Used to identify blocked tasks: only the task with the minimum sortOrder
+    // in each group is available; predecessors must be completed first.
     db
-      .select({ count: count() })
+      .select({
+        topicId: tasks.topicId,
+        taskGroup: tasks.taskGroup,
+        minSortOrder: min(tasks.sortOrder),
+      })
       .from(tasks)
       .where(
         and(
           eq(tasks.userId, userId),
           isNull(tasks.completedAt),
-          lte(tasks.estimatedMinutes, 5),
-          or(isNull(tasks.snoozedUntil), lte(tasks.snoozedUntil, todayStr))
+          isNotNull(tasks.taskGroup),
+          isNotNull(tasks.topicId),
         )
-      ),
+      )
+      .groupBy(tasks.topicId, tasks.taskGroup),
   ]);
 
   // Compute actual postponesToday (reset if date differs)
@@ -179,19 +189,37 @@ export default async function DashboardPage() {
     : null;
 
   const totalCompletions = completionCountRows[0]?.count ?? 0;
-  const fiveMinCount = fiveMinCountRows[0]?.count ?? 0;
+
+  // Build a lookup of (topicId::taskGroup) -> minSortOrder for all active sequential groups.
+  // A task is "blocked" if it belongs to a sequential group but is not the first pending task.
+  const groupMinMap = new Map<string, number>();
+  for (const row of groupMinRows) {
+    if (row.topicId && row.taskGroup && row.minSortOrder !== null) {
+      groupMinMap.set(`${row.topicId}::${row.taskGroup}`, row.minSortOrder);
+    }
+  }
+
+  const unblockedQuickWins = quickWinTasks.filter((task) => {
+    if (!task.taskGroup || !task.topicId) return true; // standalone task — always available
+    const minOrder = groupMinMap.get(`${task.topicId}::${task.taskGroup}`);
+    // Available only when this task has the minimum sortOrder in its group
+    return minOrder === undefined || task.sortOrder === minOrder;
+  });
+
+  // Count of unblocked 5-minute tasks for the "5 Min" CTA
+  const fiveMinCount = unblockedQuickWins.filter((t) => (t.estimatedMinutes ?? 0) <= 5).length;
 
   // Energy-aware Quick Wins sort: tasks matching today's reported energy
   // come first, untagged tasks second, mismatched last. The same ordering
   // logic also drives the 5-min view (see app/(app)/quick/page.tsx).
-  // We over-fetched 12 above; slice to 3 after sorting.
+  // Slice to 3 after filtering and sorting.
   function energyMatchScore(taskEnergy: "HIGH" | "MEDIUM" | "LOW" | null): number {
     if (!userEnergyToday) return 1; // no check-in → preserve original order roughly
     if (taskEnergy === userEnergyToday) return 0; // perfect match
     if (taskEnergy === null) return 1; // untagged is universally OK
     return 2; // mismatch
   }
-  const sortedQuickWins = [...quickWinTasks]
+  const sortedQuickWins = [...unblockedQuickWins]
     .sort((a, b) => energyMatchScore(a.energyLevel) - energyMatchScore(b.energyLevel))
     .slice(0, 3);
 

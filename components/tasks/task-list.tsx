@@ -8,14 +8,15 @@
  *  2. Upcoming — tasks with future due dates
  *  3. No date — tasks with no due date (excluding SOMEDAY priority)
  *  4. Someday — SOMEDAY priority tasks with no due date
- *  5. Completed — tasks with completedAt set
+ *  5. Snoozed — tasks snoozed into the future (collapsible)
+ *  6. Completed — tasks with completedAt set (collapsible, collapsed by default)
  *
- * Each section renders TaskItem components and handles
- * complete/uncomplete/edit/delete actions.
+ * Also supports a "by topic" view that groups active tasks under their topic.
  */
 
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -49,6 +50,7 @@ interface Task {
   recurrenceInterval?: number | null;
   snoozedUntil?: string | null;
   taskGroup?: string | null;
+  sortOrder?: number;
 }
 
 interface TopicOption {
@@ -268,6 +270,8 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
   const [snoozedExpanded, setSnoozedExpanded] = useState(false);
+  const [completedExpanded, setCompletedExpanded] = useState(false);
+  const [groupByTopic, setGroupByTopic] = useState(false);
 
   /* ─── Search & Filter state ─────────────────────────────────────────────── */
   const [searchQuery, setSearchQuery] = useState("");
@@ -596,6 +600,88 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
       ? t("page_subtitle_empty")
       : t("page_subtitle", { active: activeCount, completed: completedCount });
 
+  /**
+   * Computes the topic-grouped view data: active tasks grouped by topic, then by sequential group.
+   * Within each sequential group (taskGroup), tasks are sorted by sortOrder.
+   */
+  const topicGroupedData = useMemo(() => {
+    if (!groupByTopic) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const topicLookup = new Map(topics.map((tp) => [tp.id, tp]));
+
+    const activeTasks = filteredTasks.filter((task) => {
+      if (task.completedAt !== null) return false;
+      if (task.snoozedUntil) {
+        const snoozeDate = new Date(task.snoozedUntil + "T00:00:00");
+        if (snoozeDate > today) return false;
+      }
+      return true;
+    });
+
+    // Group by topicId
+    const byTopic = new Map<string | null, Task[]>();
+    for (const task of activeTasks) {
+      const key = task.topicId ?? null;
+      if (!byTopic.has(key)) byTopic.set(key, []);
+      byTopic.get(key)!.push(task);
+    }
+
+    const result: Array<{
+      topicId: string | null;
+      topicTitle: string;
+      topicColor: string | undefined | null;
+      taskGroups: Array<{
+        groupName: string | null;
+        tasks: Task[];
+      }>;
+    }> = [];
+
+    for (const [topicId, topicTasks] of byTopic) {
+      const topicData = topicId ? topicLookup.get(topicId) : undefined;
+
+      // Sub-group by taskGroup
+      const byGroup = new Map<string | null, Task[]>();
+      for (const task of topicTasks) {
+        const gKey = task.taskGroup ?? null;
+        if (!byGroup.has(gKey)) byGroup.set(gKey, []);
+        byGroup.get(gKey)!.push(task);
+      }
+
+      const taskGroups: Array<{ groupName: string | null; tasks: Task[] }> = [];
+      for (const [groupName, groupTasks] of byGroup) {
+        // Sort by sortOrder so sequential order is preserved
+        const sorted = [...groupTasks].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        taskGroups.push({ groupName, tasks: sorted });
+      }
+
+      // Named groups first (sequential), ungrouped tasks last
+      taskGroups.sort((a, b) => {
+        if (a.groupName === null && b.groupName !== null) return 1;
+        if (a.groupName !== null && b.groupName === null) return -1;
+        return 0;
+      });
+
+      result.push({
+        topicId,
+        topicTitle: topicData?.title ?? t("form_no_topic"),
+        topicColor: topicData?.color,
+        taskGroups,
+      });
+    }
+
+    // Topics with IDs first (sorted by title), no-topic last
+    result.sort((a, b) => {
+      if (!a.topicId && b.topicId) return 1;
+      if (a.topicId && !b.topicId) return -1;
+      return a.topicTitle.localeCompare(b.topicTitle);
+    });
+
+    return result;
+  }, [filteredTasks, groupByTopic, topics, t]);
+
   return (
     <div>
       {/* Level-up overlay */}
@@ -626,8 +712,26 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
         {subtitle}
       </p>
 
-      {/* New Task + Select mode buttons */}
+      {/* Toolbar: Group toggle + Select mode + New Task */}
       <div className="flex justify-end gap-2 mb-6">
+        {hasAnyTasks && !selectionMode && topics.length > 0 && (
+          <button
+            onClick={() => setGroupByTopic((v) => !v)}
+            className="px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              backgroundColor: groupByTopic
+                ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-surface))"
+                : "var(--bg-surface)",
+              color: groupByTopic ? "var(--accent-amber)" : "var(--text-muted)",
+              border: groupByTopic
+                ? "1px solid color-mix(in srgb, var(--accent-amber) 40%, var(--border))"
+                : "1px solid var(--border)",
+            }}
+          >
+            {groupByTopic ? t("view_by_date") : t("view_by_topic")}
+          </button>
+        )}
         {hasAnyTasks && (
           selectionMode ? (
             <div className="flex items-center gap-2">
@@ -750,162 +854,300 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
         </div>
       )}
 
-      {/* Today */}
-      <SectionHeader title={t("section_today")} count={grouped.today.length} />
-      <AnimatePresence>
-        <div className="flex flex-col gap-2">
-          {grouped.today.map((task) => {
-            const topic = task.topicId ? topicMap.get(task.topicId) : null;
-            return (
-              <TaskItem
-                key={task.id}
-                id={task.id}
-                title={task.title}
-                type={task.type}
-                priority={task.priority}
-                completedAt={task.completedAt}
-                dueDate={task.dueDate}
-                nextDueDate={task.nextDueDate}
-                topicTitle={topic?.title}
-                topicColor={topic?.color}
-                topicId={task.topicId}
-                coinValue={task.coinValue}
-                onComplete={handleComplete}
-                onUncomplete={handleUncomplete}
-                onEdit={setEditingTaskId}
-                onDelete={handleDelete}
-                onInlineEdit={handleInlineEdit}
-                onPromote={handlePromote}
-                onGoToTopic={handleGoToTopic}
-                postponeCount={task.postponeCount}
-                estimatedMinutes={task.estimatedMinutes}
-                energyLevel={task.energyLevel}
-                onBreakdown={handleBreakdown}
-                snoozedUntil={task.snoozedUntil}
-                onSnooze={handleSnooze}
-                onUnsnooze={handleUnsnooze}
-                selectionMode={selectionMode}
-                isSelected={selectedIds.has(task.id)}
-                onToggleSelect={toggleSelect}
+      {/* ── Date-grouped view (default) ─────────────────────────────────────── */}
+      {!groupByTopic && (
+        <>
+          {/* Today */}
+          <SectionHeader title={t("section_today")} count={grouped.today.length} />
+          <AnimatePresence>
+            <div className="flex flex-col gap-2">
+              {grouped.today.map((task) => {
+                const topic = task.topicId ? topicMap.get(task.topicId) : null;
+                return (
+                  <TaskItem
+                    key={task.id}
+                    id={task.id}
+                    title={task.title}
+                    type={task.type}
+                    priority={task.priority}
+                    completedAt={task.completedAt}
+                    dueDate={task.dueDate}
+                    nextDueDate={task.nextDueDate}
+                    topicTitle={topic?.title}
+                    topicColor={topic?.color}
+                    topicId={task.topicId}
+                    coinValue={task.coinValue}
+                    onComplete={handleComplete}
+                    onUncomplete={handleUncomplete}
+                    onEdit={setEditingTaskId}
+                    onDelete={handleDelete}
+                    onInlineEdit={handleInlineEdit}
+                    onPromote={handlePromote}
+                    onGoToTopic={handleGoToTopic}
+                    postponeCount={task.postponeCount}
+                    estimatedMinutes={task.estimatedMinutes}
+                    energyLevel={task.energyLevel}
+                    onBreakdown={handleBreakdown}
+                    snoozedUntil={task.snoozedUntil}
+                    onSnooze={handleSnooze}
+                    onUnsnooze={handleUnsnooze}
+                    selectionMode={selectionMode}
+                    isSelected={selectedIds.has(task.id)}
+                    onToggleSelect={toggleSelect}
+                  />
+                );
+              })}
+            </div>
+          </AnimatePresence>
+
+          {/* Upcoming */}
+          <SectionHeader title={t("section_upcoming")} count={grouped.upcoming.length} />
+          <div className="flex flex-col gap-2">
+            {grouped.upcoming.map((task) => {
+              const topic = task.topicId ? topicMap.get(task.topicId) : null;
+              return (
+                <TaskItem
+                  key={task.id}
+                  id={task.id}
+                  title={task.title}
+                  type={task.type}
+                  priority={task.priority}
+                  completedAt={task.completedAt}
+                  dueDate={task.dueDate}
+                  nextDueDate={task.nextDueDate}
+                  topicTitle={topic?.title}
+                  topicColor={topic?.color}
+                  topicId={task.topicId}
+                  coinValue={task.coinValue}
+                  onComplete={handleComplete}
+                  onUncomplete={handleUncomplete}
+                  onEdit={setEditingTaskId}
+                  onDelete={handleDelete}
+                  onInlineEdit={handleInlineEdit}
+                  onPromote={handlePromote}
+                  onGoToTopic={handleGoToTopic}
+                  postponeCount={task.postponeCount}
+                  estimatedMinutes={task.estimatedMinutes}
+                  energyLevel={task.energyLevel}
+                  onBreakdown={handleBreakdown}
+                  snoozedUntil={task.snoozedUntil}
+                  onSnooze={handleSnooze}
+                  onUnsnooze={handleUnsnooze}
+                />
+              );
+            })}
+          </div>
+
+          {/* No date */}
+          <SectionHeader title={t("section_no_date")} count={grouped.noDate.length} />
+          <div className="flex flex-col gap-2">
+            {grouped.noDate.map((task) => {
+              const topic = task.topicId ? topicMap.get(task.topicId) : null;
+              return (
+                <TaskItem
+                  key={task.id}
+                  id={task.id}
+                  title={task.title}
+                  type={task.type}
+                  priority={task.priority}
+                  completedAt={task.completedAt}
+                  dueDate={task.dueDate}
+                  nextDueDate={task.nextDueDate}
+                  topicTitle={topic?.title}
+                  topicColor={topic?.color}
+                  topicId={task.topicId}
+                  coinValue={task.coinValue}
+                  onComplete={handleComplete}
+                  onUncomplete={handleUncomplete}
+                  onEdit={setEditingTaskId}
+                  onDelete={handleDelete}
+                  onInlineEdit={handleInlineEdit}
+                  onPromote={handlePromote}
+                  onGoToTopic={handleGoToTopic}
+                  postponeCount={task.postponeCount}
+                  estimatedMinutes={task.estimatedMinutes}
+                  energyLevel={task.energyLevel}
+                  onBreakdown={handleBreakdown}
+                  snoozedUntil={task.snoozedUntil}
+                  onSnooze={handleSnooze}
+                  onUnsnooze={handleUnsnooze}
+                />
+              );
+            })}
+          </div>
+
+          {/* Someday */}
+          <SectionHeader title={t("section_someday")} count={grouped.someday.length} />
+          <div className="flex flex-col gap-2">
+            {grouped.someday.map((task) => {
+              const topic = task.topicId ? topicMap.get(task.topicId) : null;
+              return (
+                <TaskItem
+                  key={task.id}
+                  id={task.id}
+                  title={task.title}
+                  type={task.type}
+                  priority={task.priority}
+                  completedAt={task.completedAt}
+                  dueDate={task.dueDate}
+                  nextDueDate={task.nextDueDate}
+                  topicTitle={topic?.title}
+                  topicColor={topic?.color}
+                  topicId={task.topicId}
+                  coinValue={task.coinValue}
+                  onComplete={handleComplete}
+                  onUncomplete={handleUncomplete}
+                  onEdit={setEditingTaskId}
+                  onDelete={handleDelete}
+                  onInlineEdit={handleInlineEdit}
+                  onPromote={handlePromote}
+                  onGoToTopic={handleGoToTopic}
+                  postponeCount={task.postponeCount}
+                  estimatedMinutes={task.estimatedMinutes}
+                  energyLevel={task.energyLevel}
+                  onBreakdown={handleBreakdown}
+                  snoozedUntil={task.snoozedUntil}
+                  onSnooze={handleSnooze}
+                  onUnsnooze={handleUnsnooze}
+                />
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* ── Topic-grouped view ───────────────────────────────────────────────── */}
+      {groupByTopic && topicGroupedData && topicGroupedData.length === 0 && !grouped.completed.length && !grouped.snoozed.length && (
+        <div className="mt-4" />
+      )}
+      {groupByTopic && topicGroupedData && topicGroupedData.map((topicSection) => (
+        <div key={topicSection.topicId ?? "no-topic"} className="mt-6 first:mt-0">
+          {/* Topic header */}
+          <div className="flex items-center gap-2 mb-3">
+            {topicSection.topicColor && (
+              <span
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  backgroundColor: topicSection.topicColor,
+                  flexShrink: 0,
+                }}
               />
-            );
-          })}
+            )}
+            {topicSection.topicId ? (
+              <Link
+                href={`/topics/${topicSection.topicId}`}
+                className="text-sm font-semibold uppercase tracking-wide transition-opacity hover:opacity-70"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--text-muted)",
+                  textDecoration: "none",
+                }}
+              >
+                {topicSection.topicTitle}
+              </Link>
+            ) : (
+              <span
+                className="text-sm font-semibold uppercase tracking-wide"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--text-muted)",
+                }}
+              >
+                {topicSection.topicTitle}
+              </span>
+            )}
+            <span
+              className="text-xs px-1.5 py-0.5 rounded-full"
+              style={{
+                backgroundColor: "var(--bg-elevated)",
+                color: "var(--text-muted)",
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              }}
+            >
+              {topicSection.taskGroups.reduce((sum, g) => sum + g.tasks.length, 0)}
+            </span>
+          </div>
+
+          {topicSection.taskGroups.map((group) => (
+            <div key={group.groupName ?? "__ungrouped__"}>
+              {/* Sequential group sub-header */}
+              {group.groupName && (
+                <div
+                  className="flex items-center gap-2 mb-2 mt-3 px-1"
+                >
+                  <span
+                    className="text-xs uppercase tracking-wide"
+                    style={{
+                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                      color: "var(--text-muted)",
+                      opacity: 0.7,
+                    }}
+                  >
+                    {group.groupName}
+                  </span>
+                  <span
+                    className="text-xs px-1.5 py-0.5 rounded-full"
+                    style={{
+                      backgroundColor: "color-mix(in srgb, var(--accent-amber) 12%, var(--bg-elevated))",
+                      color: "var(--accent-amber)",
+                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                      opacity: 0.85,
+                    }}
+                  >
+                    {group.tasks.length}→
+                  </span>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2 mb-2">
+                {group.tasks.map((task, taskIndex) => {
+                  // In a named sequential group, only the first task is actionable
+                  const isBlocked = group.groupName !== null && taskIndex > 0;
+                  return (
+                    <div
+                      key={task.id}
+                      style={{ opacity: isBlocked ? 0.45 : 1, pointerEvents: isBlocked ? "none" : undefined }}
+                    >
+                      <TaskItem
+                        id={task.id}
+                        title={task.title}
+                        type={task.type}
+                        priority={task.priority}
+                        completedAt={task.completedAt}
+                        dueDate={task.dueDate}
+                        nextDueDate={task.nextDueDate}
+                        topicTitle={topicSection.topicTitle !== t("form_no_topic") ? topicSection.topicTitle : undefined}
+                        topicColor={topicSection.topicColor}
+                        topicId={task.topicId}
+                        coinValue={task.coinValue}
+                        onComplete={handleComplete}
+                        onUncomplete={handleUncomplete}
+                        onEdit={setEditingTaskId}
+                        onDelete={handleDelete}
+                        onInlineEdit={handleInlineEdit}
+                        onPromote={handlePromote}
+                        onGoToTopic={handleGoToTopic}
+                        postponeCount={task.postponeCount}
+                        estimatedMinutes={task.estimatedMinutes}
+                        energyLevel={task.energyLevel}
+                        onBreakdown={handleBreakdown}
+                        snoozedUntil={task.snoozedUntil}
+                        onSnooze={handleSnooze}
+                        onUnsnooze={handleUnsnooze}
+                        selectionMode={selectionMode}
+                        isSelected={selectedIds.has(task.id)}
+                        onToggleSelect={toggleSelect}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
-      </AnimatePresence>
-
-      {/* Upcoming */}
-      <SectionHeader title={t("section_upcoming")} count={grouped.upcoming.length} />
-      <div className="flex flex-col gap-2">
-        {grouped.upcoming.map((task) => {
-          const topic = task.topicId ? topicMap.get(task.topicId) : null;
-          return (
-            <TaskItem
-              key={task.id}
-              id={task.id}
-              title={task.title}
-              type={task.type}
-              priority={task.priority}
-              completedAt={task.completedAt}
-              dueDate={task.dueDate}
-              nextDueDate={task.nextDueDate}
-              topicTitle={topic?.title}
-              topicColor={topic?.color}
-              topicId={task.topicId}
-              coinValue={task.coinValue}
-              onComplete={handleComplete}
-              onUncomplete={handleUncomplete}
-              onEdit={setEditingTaskId}
-              onDelete={handleDelete}
-              onInlineEdit={handleInlineEdit}
-              onPromote={handlePromote}
-              onGoToTopic={handleGoToTopic}
-              postponeCount={task.postponeCount}
-              estimatedMinutes={task.estimatedMinutes}
-              energyLevel={task.energyLevel}
-              onBreakdown={handleBreakdown}
-              snoozedUntil={task.snoozedUntil}
-              onSnooze={handleSnooze}
-              onUnsnooze={handleUnsnooze}
-            />
-          );
-        })}
-      </div>
-
-      {/* No date */}
-      <SectionHeader title={t("section_no_date")} count={grouped.noDate.length} />
-      <div className="flex flex-col gap-2">
-        {grouped.noDate.map((task) => {
-          const topic = task.topicId ? topicMap.get(task.topicId) : null;
-          return (
-            <TaskItem
-              key={task.id}
-              id={task.id}
-              title={task.title}
-              type={task.type}
-              priority={task.priority}
-              completedAt={task.completedAt}
-              dueDate={task.dueDate}
-              nextDueDate={task.nextDueDate}
-              topicTitle={topic?.title}
-              topicColor={topic?.color}
-              topicId={task.topicId}
-              coinValue={task.coinValue}
-              onComplete={handleComplete}
-              onUncomplete={handleUncomplete}
-              onEdit={setEditingTaskId}
-              onDelete={handleDelete}
-              onInlineEdit={handleInlineEdit}
-              onPromote={handlePromote}
-              onGoToTopic={handleGoToTopic}
-              postponeCount={task.postponeCount}
-              estimatedMinutes={task.estimatedMinutes}
-              energyLevel={task.energyLevel}
-              onBreakdown={handleBreakdown}
-              snoozedUntil={task.snoozedUntil}
-              onSnooze={handleSnooze}
-              onUnsnooze={handleUnsnooze}
-            />
-          );
-        })}
-      </div>
-
-      {/* Someday */}
-      <SectionHeader title={t("section_someday")} count={grouped.someday.length} />
-      <div className="flex flex-col gap-2">
-        {grouped.someday.map((task) => {
-          const topic = task.topicId ? topicMap.get(task.topicId) : null;
-          return (
-            <TaskItem
-              key={task.id}
-              id={task.id}
-              title={task.title}
-              type={task.type}
-              priority={task.priority}
-              completedAt={task.completedAt}
-              dueDate={task.dueDate}
-              nextDueDate={task.nextDueDate}
-              topicTitle={topic?.title}
-              topicColor={topic?.color}
-              topicId={task.topicId}
-              coinValue={task.coinValue}
-              onComplete={handleComplete}
-              onUncomplete={handleUncomplete}
-              onEdit={setEditingTaskId}
-              onDelete={handleDelete}
-              onInlineEdit={handleInlineEdit}
-              onPromote={handlePromote}
-              onGoToTopic={handleGoToTopic}
-              postponeCount={task.postponeCount}
-              estimatedMinutes={task.estimatedMinutes}
-              energyLevel={task.energyLevel}
-              onBreakdown={handleBreakdown}
-              snoozedUntil={task.snoozedUntil}
-              onSnooze={handleSnooze}
-              onUnsnooze={handleUnsnooze}
-            />
-          );
-        })}
-      </div>
+      ))}
 
       {/* Snoozed — collapsible section */}
       {grouped.snoozed.length > 0 && (
@@ -982,41 +1224,74 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
         </>
       )}
 
-      {/* Completed */}
+      {/* Completed — collapsible, collapsed by default */}
       {grouped.completed.length > 0 && (
         <>
-          <SectionHeader title={t("section_completed")} count={grouped.completed.length} />
-          <div className="flex flex-col gap-2">
-            {grouped.completed.map((task) => {
-              const topic = task.topicId ? topicMap.get(task.topicId) : null;
-              return (
-                <TaskItem
-                  key={task.id}
-                  id={task.id}
-                  title={task.title}
-                  type={task.type}
-                  priority={task.priority}
-                  completedAt={task.completedAt}
-                  dueDate={task.dueDate}
-                  nextDueDate={task.nextDueDate}
-                  topicTitle={topic?.title}
-                  topicColor={topic?.color}
-                  topicId={task.topicId}
-                  coinValue={task.coinValue}
-                  onComplete={handleComplete}
-                  onUncomplete={handleUncomplete}
-                  onEdit={setEditingTaskId}
-                  onDelete={handleDelete}
-                  onInlineEdit={handleInlineEdit}
-                  onPromote={handlePromote}
-                  onGoToTopic={handleGoToTopic}
-                  selectionMode={selectionMode}
-                  isSelected={selectedIds.has(task.id)}
-                  onToggleSelect={toggleSelect}
-                />
-              );
-            })}
+          <div
+            className="flex items-center gap-3 mb-3 mt-6 cursor-pointer select-none"
+            onClick={() => setCompletedExpanded((v) => !v)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setCompletedExpanded((v) => !v)}
+          >
+            <FontAwesomeIcon
+              icon={completedExpanded ? faChevronDown : faChevronRight}
+              className="w-3 h-3"
+              style={{ color: "var(--text-muted)" }}
+            />
+            <h2
+              className="text-sm font-semibold uppercase tracking-wide"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+              }}
+            >
+              {t("section_completed")}
+            </h2>
+            <span
+              className="text-xs px-1.5 py-0.5 rounded-full"
+              style={{
+                backgroundColor: "var(--bg-elevated)",
+                color: "var(--text-muted)",
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              }}
+            >
+              {grouped.completed.length}
+            </span>
           </div>
+          {completedExpanded && (
+            <div className="flex flex-col gap-2">
+              {grouped.completed.map((task) => {
+                const topic = task.topicId ? topicMap.get(task.topicId) : null;
+                return (
+                  <TaskItem
+                    key={task.id}
+                    id={task.id}
+                    title={task.title}
+                    type={task.type}
+                    priority={task.priority}
+                    completedAt={task.completedAt}
+                    dueDate={task.dueDate}
+                    nextDueDate={task.nextDueDate}
+                    topicTitle={topic?.title}
+                    topicColor={topic?.color}
+                    topicId={task.topicId}
+                    coinValue={task.coinValue}
+                    onComplete={handleComplete}
+                    onUncomplete={handleUncomplete}
+                    onEdit={setEditingTaskId}
+                    onDelete={handleDelete}
+                    onInlineEdit={handleInlineEdit}
+                    onPromote={handlePromote}
+                    onGoToTopic={handleGoToTopic}
+                    selectionMode={selectionMode}
+                    isSelected={selectedIds.has(task.id)}
+                    onToggleSelect={toggleSelect}
+                  />
+                );
+              })}
+            </div>
+          )}
         </>
       )}
 
