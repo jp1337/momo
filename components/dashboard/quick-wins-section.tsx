@@ -9,7 +9,6 @@
  */
 
 import { useState } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
@@ -151,18 +150,16 @@ export function QuickWinsSection({ tasks: initialTasks }: QuickWinsSectionProps)
                 }}
               />
 
-              {/* Task title — links to /tasks for full view */}
-              <Link
-                href="/tasks"
-                className="text-sm truncate flex-1 transition-opacity hover:opacity-70"
+              {/* Task title */}
+              <span
+                className="text-sm truncate flex-1"
                 style={{
                   fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
                   color: "var(--text-primary)",
-                  textDecoration: "none",
                 }}
               >
                 {task.title}
-              </Link>
+              </span>
 
               {/* Duration badge */}
               <span
