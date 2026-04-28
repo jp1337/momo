@@ -49,6 +49,9 @@ jobs:
         if: steps.nm-cache.outputs.cache-hit != 'true'
         run: npm ci
 
+      - name: Check i18n completeness
+        run: npm run check:i18n
+
       - name: Run migrations on test DB
         run: npx drizzle-kit migrate
         env:
