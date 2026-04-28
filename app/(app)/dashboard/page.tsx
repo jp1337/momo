@@ -22,6 +22,7 @@ import { taskCompletions, users, tasks } from "@/lib/db/schema";
 import { eq, count, lte, isNull, isNotNull, and, or, min } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { EnergyCheckinCard } from "@/components/dashboard/energy-checkin-card";
+import { QuickWinsSection } from "@/components/dashboard/quick-wins-section";
 import { getTranslations } from "next-intl/server";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoins, faFire, faTrophy, faCircleCheck, faBolt, faBullseye } from "@fortawesome/free-solid-svg-icons";
@@ -413,85 +414,8 @@ export default async function DashboardPage() {
         </Link>
       )}
 
-      {/* ── Quick Wins ── only shown if there are short tasks ────────────────── */}
-      {sortedQuickWins.length > 0 && (
-        <section>
-          <div className="flex items-baseline gap-3 mb-3">
-            <h2
-              className="text-xs font-semibold uppercase tracking-widest"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-              }}
-            >
-              {t("section_quick_wins")}
-            </h2>
-            <span
-              style={{
-                fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-                fontSize: "10px",
-                color: "var(--accent-green)",
-                opacity: 0.8,
-              }}
-            >
-              — {t("quick_wins_hint")}
-            </span>
-          </div>
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ border: "1px solid var(--border)" }}
-          >
-            {sortedQuickWins.map((task, i) => (
-              <div
-                key={task.id}
-                className="flex items-center justify-between px-4 py-3"
-                style={{
-                  backgroundColor: "var(--bg-surface)",
-                  borderBottom:
-                    i < sortedQuickWins.length - 1 ? "1px solid var(--border)" : "none",
-                }}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span
-                    style={{
-                      width: "6px",
-                      height: "6px",
-                      borderRadius: "50%",
-                      backgroundColor: "var(--accent-green)",
-                      flexShrink: 0,
-                      opacity: 0.7,
-                    }}
-                  />
-                  <Link
-                    href="/tasks"
-                    className="text-sm truncate"
-                    style={{
-                      fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-                      color: "var(--text-primary)",
-                      textDecoration: "none",
-                    }}
-                  >
-                    {task.title}
-                  </Link>
-                </div>
-                <span
-                  className="text-xs px-2 py-0.5 rounded ml-3 flex-shrink-0"
-                  style={{
-                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    color: "var(--accent-green)",
-                    backgroundColor:
-                      "color-mix(in srgb, var(--accent-green) 10%, transparent)",
-                    border:
-                      "1px solid color-mix(in srgb, var(--accent-green) 20%, transparent)",
-                  }}
-                >
-                  {task.estimatedMinutes} min
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {/* ── Quick Wins ── interaktiv: Tasks direkt hier abhaken ─────────────── */}
+      <QuickWinsSection tasks={sortedQuickWins} />
 
       {/* ── Stats ────────────────────────────────────────────────────────────── */}
       <section>

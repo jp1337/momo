@@ -118,7 +118,8 @@
     "energy_card_subtitle_collapsed": "Vandaag: {level}",
     "energy_card_change": "Wijzigen",
     "energy_card_swapped": "Opdracht omgewisseld voor betere match met je energie — was: {title}",
-    "energy_card_swapped_undo": "Ongedaan maken"
+    "energy_card_swapped_undo": "Ongedaan maken",
+    "quick_win_complete_aria": "Taak als voltooid markeren"
   },
   "tasks": {
     "page_title": "Taken",
@@ -251,7 +252,9 @@
     "swipe_complete": "Klaar",
     "swipe_delete": "Verwijderen",
     "undo": "Ongedaan maken",
-    "deleted_undo": "Taak verwijderd."
+    "deleted_undo": "Taak verwijderd.",
+    "view_by_topic": "Op onderwerp",
+    "view_by_date": "Op datum"
   },
   "topics": {
     "page_title": "Onderwerpen",

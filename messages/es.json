@@ -118,7 +118,8 @@
     "energy_card_subtitle_collapsed": "Hoy: {level}",
     "energy_card_change": "Cambiar",
     "energy_card_swapped": "Misión cambiada para adaptarse mejor a tu energía — era: {title}",
-    "energy_card_swapped_undo": "Deshacer"
+    "energy_card_swapped_undo": "Deshacer",
+    "quick_win_complete_aria": "Marcar tarea como completada"
   },
   "tasks": {
     "page_title": "Tareas",
@@ -251,7 +252,9 @@
     "swipe_complete": "Hecho",
     "swipe_delete": "Eliminar",
     "undo": "Deshacer",
-    "deleted_undo": "Tarea eliminada."
+    "deleted_undo": "Tarea eliminada.",
+    "view_by_topic": "Por tema",
+    "view_by_date": "Por fecha"
   },
   "topics": {
     "page_title": "Temas",

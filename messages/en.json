@@ -118,7 +118,8 @@
     "energy_card_subtitle_collapsed": "Today: {level}",
     "energy_card_change": "Change",
     "energy_card_swapped": "Quest swapped to better match your energy — was: {title}",
-    "energy_card_swapped_undo": "Undo"
+    "energy_card_swapped_undo": "Undo",
+    "quick_win_complete_aria": "Mark task as complete"
   },
   "tasks": {
     "page_title": "Tasks",
@@ -251,7 +252,9 @@
     "swipe_complete": "Done",
     "swipe_delete": "Delete",
     "undo": "Undo",
-    "deleted_undo": "Task deleted."
+    "deleted_undo": "Task deleted.",
+    "view_by_topic": "By Topic",
+    "view_by_date": "By Date"
   },
   "topics": {
     "page_title": "Topics",

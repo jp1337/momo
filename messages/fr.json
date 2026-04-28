@@ -118,7 +118,8 @@
     "energy_card_subtitle_collapsed": "Aujourd'hui : {level}",
     "energy_card_change": "Modifier",
     "energy_card_swapped": "Quête adaptée à ton énergie — précédente : {title}",
-    "energy_card_swapped_undo": "Annuler"
+    "energy_card_swapped_undo": "Annuler",
+    "quick_win_complete_aria": "Marquer la tâche comme terminée"
   },
   "tasks": {
     "page_title": "Tâches",
@@ -251,7 +252,9 @@
     "swipe_complete": "Fait",
     "swipe_delete": "Supprimer",
     "undo": "Annuler",
-    "deleted_undo": "Tâche supprimée."
+    "deleted_undo": "Tâche supprimée.",
+    "view_by_topic": "Par sujet",
+    "view_by_date": "Par date"
   },
   "topics": {
     "page_title": "Sujets",

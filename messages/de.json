@@ -118,7 +118,8 @@
     "energy_card_subtitle_collapsed": "Heute: {level}",
     "energy_card_change": "Ändern",
     "energy_card_swapped": "Quest auf deine Energie angepasst — vorher: {title}",
-    "energy_card_swapped_undo": "Rückgängig"
+    "energy_card_swapped_undo": "Rückgängig",
+    "quick_win_complete_aria": "Aufgabe als erledigt markieren"
   },
   "tasks": {
     "page_title": "Aufgaben",
@@ -251,7 +252,9 @@
     "swipe_complete": "Erledigt",
     "swipe_delete": "Löschen",
     "undo": "Rückgängig",
-    "deleted_undo": "Aufgabe gelöscht."
+    "deleted_undo": "Aufgabe gelöscht.",
+    "view_by_topic": "Nach Thema",
+    "view_by_date": "Nach Datum"
   },
   "topics": {
     "page_title": "Themen",
