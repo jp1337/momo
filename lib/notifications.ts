@@ -61,35 +61,40 @@ const NTFY_DEFAULT_SERVER = "https://ntfy.sh";
 /**
  * ntfy.sh notification channel.
  *
- * Sends notifications via HTTP POST to a ntfy.sh topic (public or self-hosted).
- * Uses headers for metadata (Title, Click, Tags) and the request body for the message.
+ * Sends notifications as JSON to the ntfy server root (POST /).
+ * Using JSON body instead of per-field headers avoids the Node.js ByteString
+ * restriction (HTTP headers are Latin-1 only, code points > 255 throw).
+ * All fields — including emoji-heavy titles and bodies — are safe as UTF-8 JSON.
  *
- * @see https://docs.ntfy.sh/publish/
+ * @see https://docs.ntfy.sh/publish/#json-body
  */
 class NtfyChannel implements NotificationChannel {
-  private readonly url: string;
+  private readonly serverUrl: string;
+  private readonly topic: string;
 
   constructor(config: NtfyConfig) {
     const server = config.server || NTFY_DEFAULT_SERVER;
-    // Strip trailing slash from server URL
-    this.url = `${server.replace(/\/+$/, "")}/${config.topic}`;
+    this.serverUrl = server.replace(/\/+$/, "");
+    this.topic = config.topic;
   }
 
   async send(payload: NotificationPayload): Promise<void> {
-    const headers: Record<string, string> = {
-      Title: payload.title,
+    const body: Record<string, string> = {
+      topic: this.topic,
+      title: payload.title,
+      message: payload.body,
     };
     if (payload.url) {
-      headers["Click"] = payload.url;
+      body.click = payload.url;
     }
     if (payload.tag) {
-      headers["Tags"] = payload.tag;
+      body.tags = payload.tag;
     }
 
-    const response = await fetch(this.url, {
+    const response = await fetch(this.serverUrl, {
       method: "POST",
-      headers,
-      body: payload.body,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {

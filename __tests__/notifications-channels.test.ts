@@ -132,7 +132,7 @@ const basePayload: NotificationPayload = {
 // ─── NtfyChannel ──────────────────────────────────────────────────────────────
 
 describe("NtfyChannel.send", () => {
-  it("makes a POST request to the default ntfy.sh server", async () => {
+  it("POSTs JSON to the ntfy server root (not the topic URL)", async () => {
     fetchMock.mockResolvedValueOnce(okResponse());
     const channel = createChannel("ntfy", { topic: "my-alerts" }) as NotificationChannel;
 
@@ -140,53 +140,59 @@ describe("NtfyChannel.send", () => {
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("https://ntfy.sh/my-alerts");
+    // JSON body approach POSTs to the server root, topic is in the body
+    expect(url).toBe("https://ntfy.sh");
     expect(options.method).toBe("POST");
-    expect(options.body).toBe(basePayload.body);
+    const body = JSON.parse(options.body as string) as Record<string, string>;
+    expect(body.topic).toBe("my-alerts");
+    expect(body.title).toBe(basePayload.title);
+    expect(body.message).toBe(basePayload.body);
   });
 
-  it("includes Title header in the request", async () => {
+  it("includes title and message in JSON body (enables emoji support)", async () => {
+    fetchMock.mockResolvedValueOnce(okResponse());
+    const channel = createChannel("ntfy", { topic: "alerts" }) as NotificationChannel;
+    const emojiPayload = { title: "🔥 Quest erledigt!", body: "Du hast 10 Münzen verdient ✨", url: "https://app.example.com" };
+
+    await channel.send(emojiPayload);
+
+    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(options.body as string) as Record<string, string>;
+    expect(body.title).toBe(emojiPayload.title);
+    expect(body.message).toBe(emojiPayload.body);
+  });
+
+  it("includes click in JSON body when url is present", async () => {
     fetchMock.mockResolvedValueOnce(okResponse());
     const channel = createChannel("ntfy", { topic: "alerts" }) as NotificationChannel;
 
     await channel.send(basePayload);
 
     const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const headers = options.headers as Record<string, string>;
-    expect(headers["Title"]).toBe(basePayload.title);
+    const body = JSON.parse(options.body as string) as Record<string, string>;
+    expect(body.click).toBe(basePayload.url);
   });
 
-  it("includes Click header when url is present", async () => {
+  it("includes tags in JSON body when tag is present", async () => {
     fetchMock.mockResolvedValueOnce(okResponse());
     const channel = createChannel("ntfy", { topic: "alerts" }) as NotificationChannel;
 
     await channel.send(basePayload);
 
     const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const headers = options.headers as Record<string, string>;
-    expect(headers["Click"]).toBe(basePayload.url);
+    const body = JSON.parse(options.body as string) as Record<string, string>;
+    expect(body.tags).toBe(basePayload.tag);
   });
 
-  it("includes Tags header when tag is present", async () => {
-    fetchMock.mockResolvedValueOnce(okResponse());
-    const channel = createChannel("ntfy", { topic: "alerts" }) as NotificationChannel;
-
-    await channel.send(basePayload);
-
-    const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const headers = options.headers as Record<string, string>;
-    expect(headers["Tags"]).toBe(basePayload.tag);
-  });
-
-  it("omits Click header when url is absent", async () => {
+  it("omits click field when url is absent", async () => {
     fetchMock.mockResolvedValueOnce(okResponse());
     const channel = createChannel("ntfy", { topic: "alerts" }) as NotificationChannel;
 
     await channel.send({ title: "No URL", body: "Just body" });
 
     const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const headers = options.headers as Record<string, string>;
-    expect(headers["Click"]).toBeUndefined();
+    const body = JSON.parse(options.body as string) as Record<string, string>;
+    expect(body.click).toBeUndefined();
   });
 
   it("uses a custom server URL when provided", async () => {
@@ -198,8 +204,10 @@ describe("NtfyChannel.send", () => {
 
     await channel.send(basePayload);
 
-    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("https://ntfy.myserver.example.com/alerts");
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://ntfy.myserver.example.com");
+    const body = JSON.parse(options.body as string) as Record<string, string>;
+    expect(body.topic).toBe("alerts");
   });
 
   it("strips trailing slash from custom server URL", async () => {
@@ -212,7 +220,7 @@ describe("NtfyChannel.send", () => {
     await channel.send(basePayload);
 
     const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("https://ntfy.myserver.example.com/alerts");
+    expect(url).toBe("https://ntfy.myserver.example.com");
   });
 
   it("throws when the server responds with a non-2xx status", async () => {
@@ -845,7 +853,7 @@ describe("sendTestNotification", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  it("sends the standard test payload title via the ntfy Title header", async () => {
+  it("sends the standard test payload title in the JSON body", async () => {
     fetchMock.mockResolvedValueOnce(okResponse());
     const user = await createTestUser();
     await db.insert(notificationChannels).values({
@@ -858,8 +866,8 @@ describe("sendTestNotification", () => {
     await sendTestNotification(user.id, "ntfy");
 
     const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const headers = options.headers as Record<string, string>;
-    expect(headers["Title"]).toBe("Momo Test");
+    const body = JSON.parse(options.body as string) as Record<string, string>;
+    expect(body.title).toBe("Momo Test");
   });
 
   it("returns false when the channel send() throws — no uncaught rejection", async () => {
