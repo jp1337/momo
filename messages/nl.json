@@ -320,7 +320,8 @@
     "archived_empty": "Geen gearchiveerde onderwerpen.",
     "all_done_archive_hint": "Alle taken klaar — dit onderwerp archiveren?",
     "template_picker_start_blank": "Leeg onderwerp",
-    "template_picker_or": "of direct starten"
+    "template_picker_or": "of direct starten",
+    "picker_close": "Sluiten"
   },
   "wishlist": {
     "page_title": "Verlanglijst",

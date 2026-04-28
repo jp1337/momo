@@ -320,7 +320,8 @@
     "archived_empty": "Keine archivierten Themen.",
     "all_done_archive_hint": "Alle Aufgaben erledigt — Thema archivieren?",
     "template_picker_start_blank": "Leeres Thema",
-    "template_picker_or": "oder direkt starten"
+    "template_picker_or": "oder direkt starten",
+    "picker_close": "Schließen"
   },
   "wishlist": {
     "page_title": "Wunschliste",

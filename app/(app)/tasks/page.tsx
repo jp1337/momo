@@ -68,6 +68,10 @@ export default async function TasksPage() {
     postponeCount: t.postponeCount ?? 0,
     estimatedMinutes: t.estimatedMinutes ?? null,
     recurrenceInterval: t.recurrenceInterval ?? null,
+    snoozedUntil: t.snoozedUntil ?? null,
+    energyLevel: t.energyLevel ?? null,
+    taskGroup: t.taskGroup ?? null,
+    sortOrder: t.sortOrder,
   }));
 
   const serializedTopics = topics.map((t) => ({
