@@ -77,19 +77,12 @@ test.describe("Dashboard", () => {
     await deleteTask(request, task.id);
   });
 
-  test("5-Minute CTA link appears when ≤5 min tasks exist", async ({
-    page,
-    request,
-  }) => {
-    const task = await createTask(request, `5 Min Task ${Date.now()}`, {
-      estimatedMinutes: 5,
-    });
+  test("Focus Mode CTA is present (replaces 5-Min CTA)", async ({ page }) => {
+    // The 5-Min CTA was removed from the dashboard in favour of the Focus Mode CTA.
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
-    // 5-Min CTA may or may not appear (depending on state), but page should not error
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
-    // Cleanup
-    await deleteTask(request, task.id);
+    const focusLink = page.locator('a[href="/focus"]');
+    await expect(focusLink).toBeVisible();
   });
 
   test("page renders without JavaScript errors", async ({ page }) => {
