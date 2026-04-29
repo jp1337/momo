@@ -53,6 +53,8 @@ Die Lücke: nach dem Onboarding landen Nutzer auf einem leeren Dashboard ohne kl
 nächste Aktion. Bessere Empty States die erklären *warum* man was tun soll, nicht nur *dass*
 noch nichts da ist.
 
+→ Dashboard Empty State mit CTA zu /topics hinzugefügt ✅ (seit 0.4.0)
+
 **Daily Quest Algorithm**
 Der Quest-Algorithmus ist das Herzstück. Wird er regelmäßig hinterfragt?
 Fühlt sich die ausgewählte Quest immer sinnvoll an — oder manchmal zufällig?
@@ -63,6 +65,8 @@ Die Stats-Seite zeigt Zahlen. Aber: "Du erledigst Aufgaben am häufigsten dienst
 ist mehr wert als ein Balkenchart. Kleine, kontextuelle Hinweise auf dem Dashboard
 ("Dein stärkster Wochentag ist Dienstag — guter Tag für die große Aufgabe") machen
 bestehende Daten nützlicher ohne neue Seiten zu bauen.
+
+→ Best-Day Insight Chip auf dem Dashboard ✅ (seit 0.4.0, ab ≥10 Erledigungen)
 
 ---
 
@@ -84,9 +88,11 @@ Kein Marketing-Video — eine echte 3-Minuten-Demo: Momo installieren mit Docker
 erste Task anlegen, Daily Quest erledigen. Auf YouTube, verlinkt von der Doku-Seite.
 Senkt die Hürde für Selbsthosting massiv.
 
-**GitHub-Präsenz pflegen**
+**GitHub-Präsenz pflegen** ✅
 README ist gut. Aber: Topics, Good-First-Issues, Contributors-Guide.
 Wer Momo auf GitHub findet, soll sofort wissen wie er mitmachen kann.
+
+→ CONTRIBUTING.md hinzugefügt, README Contributing-Sektion erweitert ✅ (seit 0.4.0)
 
 ---
 
@@ -107,9 +113,9 @@ nicht wenn sie Funktionsumfang erhöhen.
 
 Kleine Dinge die irgendwann erledigt werden sollten — kein eigenes Feature, aber wichtig:
 
-- **Automatische DB-Backups** — pg_dump-Cronjob in Docker Compose für Selfhoster
+- **Automatische DB-Backups** ✅ — pg_dump-Cronjob in Docker Compose (`profiles: [backup]`), aktiviert via `BACKUP_ENABLED=true` (seit 0.4.0)
+- **E2E-Tests** ✅ — Playwright für kritische User Journeys: Task-Lifecycle, Quest-Flow, Quick-Add-Shortcut, Topic-Scope (seit 0.4.0)
 - **Error-Tracking** — GlitchTip (self-hostbar) oder Sentry für Produktionsfehler-Visibility
-- **E2E-Tests** — Playwright für die wichtigsten User Journeys als Regressions-Sicherung
 - **Offline-Queue** — Tasks offline erfassen via PWA Service Worker Background Sync
 
 ---
