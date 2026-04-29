@@ -44,10 +44,13 @@ export function EmotionalClosureSettings({ initialEnabled }: EmotionalClosureSet
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex gap-2">
+      <div className="flex gap-2" role="radiogroup" aria-label={t("setting_label")}>
         {[true, false].map((value) => (
           <button
             key={String(value)}
+            type="button"
+            role="radio"
+            aria-checked={enabled === value}
             onClick={() => handleToggle(value)}
             disabled={status === "saving"}
             className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 disabled:opacity-50"

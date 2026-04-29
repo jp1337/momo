@@ -347,6 +347,10 @@ export function PushDevicesSection() {
                 <div className="flex items-center gap-1 shrink-0">
                   {/* Enable/disable toggle */}
                   <button
+                    type="button"
+                    role="switch"
+                    aria-checked={device.enabled}
+                    aria-label={device.enabled ? t("push_device_notif_disable") : t("push_device_notif_enable")}
                     onClick={() => handleToggle(device)}
                     disabled={isToggling || isRemoving}
                     className="p-2 rounded-lg transition-colors"
