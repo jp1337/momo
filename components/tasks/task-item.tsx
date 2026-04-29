@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoins, faLayerGroup, faClock } from "@fortawesome/free-solid-svg-icons";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 
@@ -676,61 +677,62 @@ export function TaskItem({
                   <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
                 </button>
               ) : !isSnoozed ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowSnoozeMenu((v) => !v)}
-                    className="p-1.5 rounded-lg transition-colors"
-                    style={{
-                      color: "var(--text-muted)",
-                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    }}
-                    aria-label={t("snooze_btn")}
-                    title={t("snooze_btn")}
-                  >
-                    <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
-                  </button>
-                  {showSnoozeMenu && (
-                    <>
-                      {/* Backdrop to close menu */}
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowSnoozeMenu(false)}
-                      />
-                      <div
-                        className="absolute left-0 top-full mt-1 z-50 py-1 rounded-lg shadow-lg min-w-[160px]"
-                        style={{
-                          backgroundColor: "var(--bg-elevated)",
-                          border: "1px solid var(--border)",
-                        }}
-                      >
-                        {[
-                          { label: t("snooze_tomorrow"), days: 1 },
-                          { label: t("snooze_next_week"), days: 7 },
-                          { label: t("snooze_next_month"), days: 30 },
-                        ].map(({ label, days }) => (
-                          <button
-                            key={days}
-                            onClick={() => {
-                              onSnooze(id, daysFromNow(days));
-                              setShowSnoozeMenu(false);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm transition-colors hover:opacity-80"
-                            style={{
-                              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                              color: "var(--text-primary)",
-                            }}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                        <div style={{ borderTop: "1px solid var(--border)", margin: "2px 0" }} />
-                        <label
-                          className="w-full text-left px-3 py-2 text-sm cursor-pointer block transition-colors hover:opacity-80"
+                <DropdownMenu.Root open={showSnoozeMenu} onOpenChange={setShowSnoozeMenu}>
+                  <DropdownMenu.Trigger asChild>
+                    <button
+                      className="p-1.5 rounded-lg transition-colors"
+                      style={{
+                        color: "var(--text-muted)",
+                        fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                      }}
+                      aria-label={t("snooze_btn")}
+                      title={t("snooze_btn")}
+                    >
+                      <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
+                    </button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      align="start"
+                      sideOffset={4}
+                      className="py-1 rounded-lg shadow-lg min-w-[160px] z-50"
+                      style={{
+                        backgroundColor: "var(--bg-elevated)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      {[
+                        { label: t("snooze_tomorrow"), days: 1 },
+                        { label: t("snooze_next_week"), days: 7 },
+                        { label: t("snooze_next_month"), days: 30 },
+                      ].map(({ label, days }) => (
+                        <DropdownMenu.Item
+                          key={days}
+                          onSelect={() => onSnooze(id, daysFromNow(days))}
+                          className="w-full text-left px-3 py-2 text-sm cursor-pointer outline-none data-[highlighted]:bg-[color-mix(in_srgb,var(--accent-amber)_15%,transparent)]"
                           style={{
                             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                            color: "var(--text-muted)",
+                            color: "var(--text-primary)",
                           }}
                         >
+                          {label}
+                        </DropdownMenu.Item>
+                      ))}
+                      <DropdownMenu.Separator
+                        style={{ borderTop: "1px solid var(--border)", margin: "2px 0" }}
+                      />
+                      <DropdownMenu.Item
+                        // Keep the menu open while the user picks a date — closing happens
+                        // explicitly after onChange fires on the underlying date input.
+                        onSelect={(e) => e.preventDefault()}
+                        className="px-3 py-2 text-sm cursor-pointer outline-none data-[highlighted]:bg-[color-mix(in_srgb,var(--accent-amber)_15%,transparent)]"
+                        style={{
+                          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                          color: "var(--text-muted)",
+                        }}
+                        asChild
+                      >
+                        <label className="block">
                           {t("snooze_pick_date")}
                           <input
                             type="date"
@@ -744,10 +746,10 @@ export function TaskItem({
                             }}
                           />
                         </label>
-                      </div>
-                    </>
-                  )}
-                </div>
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
               ) : null
             )}
           </div>
