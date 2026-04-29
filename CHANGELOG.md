@@ -7,37 +7,48 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [0.4.0] - 2026-04-29
+
 ### Added
 
-- **Umfassende Test-Suite** — 1 294 Tests in 55 Dateien, davon: WebAuthn/Passkey-Logik (`lib/webauthn.ts`, alle 7 Passkey-Routen), Auth-2FA-Routen, Calendar-Feed, Sessions-Throttling, Webhook-Delivery, Update-Checker, Cron-Dispatcher, Push-Notifications, sämtliche API-Routen und alle Lib-Funktionen. Gesamtabdeckung: ~72 % Statements / ~65 % Branches / ~77 % Functions.
-- **Bug: `createPasskeyLoginSession` – leeres `db.update().set({})`** — Drizzle ORM wirft „No values to set" bei leerem `set({})`; das nutzlose no-op-Update wurde entfernt.
-
-### Added
-
-- **Quick Add Modal (N-Shortcut)** — Neue Aufgaben können jetzt mit `N` oder `/` per Tastatur direkt erstellt werden, ohne die aktuelle Seite zu verlassen. Das Modal öffnet sich global, fokussiert sofort das Titel-Feld, unterstützt Enter zum Speichern und Escape zum Schließen. „Mehr Optionen" klappt Thema, Priorität und Energie-Level auf.
-- **Progress-Seite** — Habits, Errungenschaften und Wochenrückblick sind jetzt unter `/progress` in einer einzigen Seite mit Tab-Navigation zusammengeführt (`?tab=habits|achievements|review`). Sidebar und Mobile-Nav zeigen einen einzigen „Progress"-Eintrag statt drei separaten Links.
-- **ConfirmButton-Komponente** — Neue `ConfirmButton`-Komponente ersetzt alle `window.confirm()`-Dialoge im gesamten Projekt. Klick zeigt inline ein Bestätigungs-Prompt (Ja/Abbrechen) direkt neben dem auslösenden Button — kein Browser-Dialog mehr.
+- **Dashboard: Empty State für neue Nutzer** — Nach dem Onboarding landen neue Nutzer (keine Topics, keine Completions) nicht mehr auf einer leeren Seite. Ein 🌱-Card erklärt den nächsten Schritt und verlinkt direkt auf `/topics`.
+- **Dashboard: Best-Day Insight** — Ab 10 abgeschlossenen Aufgaben erscheint ein Amber-Chip mit dem stärksten Wochentag des Nutzers, berechnet aus der tatsächlichen Completion-Historie (`GROUP BY ISODOW`). Macht bestehende Daten ohne neue Seite nützlicher.
+- **E-Mail-Templates mehrsprachig** — E-Mail-Benachrichtigungen (CTA-Button, Footer, Settings-Link) werden jetzt in der Sprache des Empfängers gerendert (DE/EN/FR/ES/NL). Die Locale wird in `users.locale` persistiert, wenn die Sprache in den Einstellungen gewechselt wird — kein Request-Kontext zur Laufzeit nötig.
+- **Automatische DB-Backups (opt-in)** — Neuer `backup`-Service in `docker-compose.yml` (Docker Compose Profile `backup`). Aktivierung via `BACKUP_ENABLED=true`. Schreibt täglich ein `pg_dump`-Archiv nach `./backups/` als `.sql.gz`, bereinigt Dumps älter als 30 Tage automatisch. Restore-Anleitung steht als Kommentar im Service.
+- **Quick Wins direkt abhaken** — Tasks im Quick-Wins-Bereich auf dem Dashboard können jetzt direkt dort als erledigt markiert werden (Kreis-Button links). Konfetti, Münzen, Level-Up und Achievement-Toast wie überall sonst. Task verschwindet mit Framer-Motion-Animation aus der Liste.
+- **Task-Gruppen mit sequenziellem Blocking** — Aufgaben innerhalb eines Themas können einer benannten Gruppe zugewiesen werden. Nur die Aufgabe mit dem niedrigsten `sortOrder` in der Gruppe ist aktiv — alle nachfolgenden erscheinen gesperrt (🔒). Gilt im Topic-View, in der Daily-Quest-Auswahl und bei den Quick Wins auf dem Dashboard.
+- **Topic-View: Gruppierung nach Thema** — Auf der `/tasks`-Seite kann per Button zwischen Datums-Gruppen und Themen-Gruppen gewechselt werden. Im Themen-Modus erscheinen gesperrte Aufgaben gedimmt mit `pointer-events: none`.
+- **Erledigte Aufgaben kollabiert** — Die „Erledigt"-Sektion auf `/tasks` startet eingeklappt (Chevron zum Aufklappen), wie die Snoozed-Sektion. Verhindert, dass die Liste bei vielen Completions unübersichtlich wird.
+- **i18n CI-Audit** — `scripts/check-i18n.mjs` prüft alle `useTranslations`/`getTranslations`-Aufrufe gegen alle 5 Sprachdateien. Läuft als eigener Schritt in `.github/workflows/test.yml` vor dem Test-Run. Erkennt fehlende Keys wie `topics.picker_close` und die ntfy-Emoji-Regression automatisch.
+- **Test-Suite erweitert: 1 683 Tests** — Neue Integrationstests für `touchSessionMetadata`, Gamification-Achievements, Statistik-Queries, Topic-Archivierung, `retroactivelyGrantAchievements`. Neue E2E-Tests für kritische User Journeys (Task-Lifecycle, Quest-Ansicht, N-Shortcut-Flow, Topic-Detail). `__tests__/email-template.test.ts` deckt jetzt alle 5 Locales ab.
+- **Umfassende Test-Suite (1 294 → 1 683)** — WebAuthn/Passkey-Logik, Auth-2FA-Routen, Calendar-Feed, Sessions-Throttling, Webhook-Delivery, Update-Checker, Cron-Dispatcher, Push-Notifications, sämtliche API-Routen und alle Lib-Funktionen.
+- **Quick Add Modal (N-Shortcut)** — Neue Aufgaben mit `N` oder `/` global erstellen.
+- **Progress-Seite** — Habits, Errungenschaften und Wochenrückblick unter `/progress` mit Tab-Navigation zusammengeführt.
+- **ConfirmButton-Komponente** — Ersetzt alle `window.confirm()`-Dialoge durch Inline-Bestätigung.
 
 ### Changed
 
-- **Topic-Archivierung** — Topics können jetzt archiviert werden statt nur gelöscht. Archivieren-Button (📦) im Topic-Card-Menü; wenn alle Aufgaben erledigt sind, erscheint ein grüner Banner direkt auf der Karte mit Einladung zum Archivieren. Archivierte Topics verschwinden aus der Hauptliste, sind aber in einer ausklappbaren "Archiviert (N)"-Sektion am Seitenende wieder zugänglich — mit Wiederherstellen- und Löschen-Option.
-- **Vorlage-Flow in Topic-Erstellung integriert** — Der "Neues Thema"-Button öffnet jetzt zuerst den Template-Picker (mit allen 5 Vorlagen), der einen "Leer starten"-Eintrag unten hat. Der separate "Aus Vorlage"-Button fällt weg. Außerdem wurde das fehlende "Artikel verkaufen"-Template nachgetragen.
-- **Energie-Heatmap (90 Tage)** — Die Energie-Statistik auf der Stats-Seite zeigt jetzt ein 13-Wochen-GitHub-Style-Heatmap (statt bisherigem 14-Tage-Balkendiagramm). Jeder Tag wird als farbiges Kästchen dargestellt: Amber für HIGH, Grün für MEDIUM, Indigo für LOW; leere Tage zeigen einen gerahmten Platzhalter. Monatsbeschriftung oben, Wochentag-Labels links, kompakte Legende darunter.
-- **Aufgaben-Gruppen (Task Groups)** — Aufgaben innerhalb eines Themas können jetzt einem optionalen **Gruppen-Namen** zugewiesen werden. Aufgaben derselben Gruppe werden automatisch sequenziell behandelt (nach Sortierreihenfolge): nur die erste offene Aufgabe pro Gruppe ist für die Daily Quest und im Topic-View freigeschalten — die nachfolgenden zeigen ein 🔒-Icon. Das Gruppen-Feld im Task-Formular schlägt automatisch den Titel-Präfix vor (alles vor „: " oder „ - ") und listet bestehende Gruppen im selben Thema zur Auswahl auf.
-- **Template: Artikel verkaufen** — Neues sequenzielles Template für den Verkauf von Gebrauchtartikeln: Marktpreis recherchieren → Zustand prüfen & fotografieren → Inserat erstellen → Anfragen beantworten → Versand. Für jeden zu verkaufenden Artikel einmal importieren.
+- **Dashboard aufgeräumt** — 5-Min-CTA-Dopplung entfernt (war redundant mit dem interaktiven Quick-Wins-Bereich). Focus-Mode-CTA bleibt als einziger sekundärer CTA.
+- **Achievements aus Stats-Seite entfernt** — Achievements leben ausschließlich auf `/progress?tab=achievements`, nicht mehr zusätzlich auf `/stats`. Vermeidet Duplizierung.
+- **ntfy-Kanal: JSON-Body statt HTTP-Header** — Behebt `ByteString`-Fehler bei Emoji-Titeln (HTTP-Header sind Latin-1-beschränkt, JSON ist UTF-8). Payload wird jetzt als `{ topic, title, message, click?, tags? }` JSON-Body an den Server-Root gesendet.
+- **Topic-Archivierung** — Topics können archiviert werden; ausklappbare „Archiviert"-Sektion am Seitenende.
+- **Vorlage-Flow integriert** — Template-Picker direkt im „Neues Thema"-Button.
+- **Energie-Heatmap (90 Tage)** — GitHub-Style-Heatmap auf der Stats-Seite.
+- **Aufgaben-Gruppen (Task Groups)** — Sequenzielles Blocking via Gruppen-Name und `sortOrder`.
+- **Settings: strukturierte Unter-Seiten** — 6 thematische Unter-Seiten mit persistenter Sub-Navigation.
+- **CONTRIBUTING.md** — Neue Datei mit Entwicklungs-Setup, Qualitätsgates, Commit-Konvention und Good-First-Issues-Tabelle.
 
 ### Fixed
 
-- **Doppelte Aufgaben-Erledigung verhindert** — Race Condition in `TaskItem`: Checkbox-Klick und Swipe-Right konnten innerhalb des 300ms-Animations-Fensters beide `onComplete()` auslösen. Ein `isCompletingRef`-Guard verhindert jetzt den zweiten Aufruf.
-- **`handleNotToday` las Response-Body zweimal** — `res.json()` in `daily-quest-card.tsx` wurde einmal vor und einmal nach dem `!res.ok`-Check aufgerufen. Da ein HTTP-Response-Body nur einmal konsumiert werden kann, schlug der zweite Aufruf lautlos fehl. Der Body wird jetzt vor dem `ok`-Check einmalig geparst.
-- **Topic-Detail fehlende Task-Felder** — `energyLevel` und `postponeCount` fehlten im `serializedTasks`-Mapping in `app/(app)/topics/[id]/page.tsx`, weshalb Energie-Badges und „Oft verschoben"-Badge im Topic-Detail-View nicht angezeigt wurden.
-- **Aktive Sessions: englische Zeitangaben** — Relative Zeitstempel in der Session-Liste (z. B. „2m ago", „1h ago") wurden als hartcodierte englische Strings gerendert. Jetzt verwendet `Intl.RelativeTimeFormat` mit dem UI-Locale des Benutzers.
-
-- **Errungenschaften-Seite zeigte „0 von 0 freigeschaltet"** — Die `achievements`-Tabelle wurde nie automatisch befüllt. `scripts/migrate.mjs` seeded jetzt alle 31 Achievement-Definitionen nach jeder Migration (idempotent per `ON CONFLICT DO UPDATE`). Beim ersten Aufruf der Errungenschaften-Seite werden außerdem retroaktiv alle Achievements freigeschaltet, die der Nutzer bereits verdient hat (ohne Coin-Doppelzählung). Die Seite zeigt jetzt auch eine „Zuletzt freigeschaltet"-Sektion mit den neuesten 3 Errungenschaften.
-
-### Changed
-
-- **Settings: strukturierte Unter-Seiten** — Die monolithische Settings-Seite (750+ Zeilen) wurde in 6 thematische Unter-Seiten mit persistenter Sub-Navigation aufgeteilt: **Account** (Profil, Sprache, Zeitzone, Verknüpfte Accounts), **Benachrichtigungen** (Push, Channels, Morning Briefing, Verlauf), **Quest & Aufgaben** (Quest-Limit, Urlaubsmodus, Emotional Closure), **Sicherheit** (2FA, Passkeys, Aktive Sessions, Login-Alerts), **Integrationen** (Kalender-Feed, Webhooks, API-Key-Link), **Daten & Datenschutz** (Export, Account löschen). Desktop: vertikale Sidebar-Nav mit Amber-Akzent; Mobile: horizontale scrollbare Tab-Leiste.
+- **Doppelte Aufgaben-Erledigung verhindert** — Race Condition in `TaskItem` mit `isCompletingRef`-Guard behoben.
+- **`handleNotToday` las Response-Body zweimal** — Body wird jetzt einmalig vor dem `ok`-Check geparst.
+- **Topic-Detail fehlende Task-Felder** — `energyLevel`, `postponeCount`, `taskGroup`, `sortOrder`, `snoozedUntil` im `serializedTasks`-Mapping ergänzt.
+- **Aktive Sessions: englische Zeitangaben** — `Intl.RelativeTimeFormat` statt hartkodierten englischen Strings.
+- **Errungenschaften-Seite zeigte „0 von 0"** — `scripts/migrate.mjs` seeded jetzt alle Achievement-Definitionen idempotent.
+- **`tasks.view_by_topic` als Literal-Text** — Fehlende i18n-Keys wurden nicht committet; CI-Audit verhindert zukünftig solche Regressionen.
+- **`topics.picker_close` fehlte in allen 5 Sprachen** — Vom neuen i18n-Audit entdeckt und behoben.
 
 ## [0.3.3] - 2026-04-22
 
