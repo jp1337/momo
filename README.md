@@ -318,7 +318,60 @@ See the full [Deployment Guide](docs/deployment.md) for AUTH_SECRET rotation pro
 
 ## 🤝 Contributing
 
-Momo is open source and welcomes contributions. Please open an issue or pull request on [GitHub](https://github.com/jp1337/momo).
+Momo is open source — every contribution is welcome, from a one-line typo fix to a full feature.
+
+### Good First Issues
+
+Looking for a place to start? These areas are well-scoped and don't require deep knowledge of the whole codebase:
+
+| Area | What to do |
+|---|---|
+| **Translations** | Add missing keys or improve phrasing in `messages/*.json`. Run `npm run check:i18n` to find gaps. |
+| **Tests** | Add unit tests in `__tests__/` for an uncovered `lib/` function. Run `npm test` to verify. |
+| **Docs** | Improve or expand pages in `docs-site/` (user-facing) or `docs/` (operator-facing). |
+| **Accessibility** | Audit components for missing `aria-label`, keyboard navigation, or colour-contrast issues. |
+| **New template** | Add a new topic template in `lib/templates.ts` + translation strings in `messages/*.json`. |
+
+Browse [open issues](https://github.com/jp1337/momo/issues) — issues tagged **`good first issue`** are specifically chosen for newcomers.
+
+### Development Setup
+
+```bash
+# 1 — Clone and install
+git clone https://github.com/jp1337/momo.git
+cd momo
+npm install
+
+# 2 — Start the database
+docker compose up db -d
+
+# 3 — Copy and fill in environment variables
+cp .env.example .env.local
+
+# 4 — Run migrations
+npx drizzle-kit migrate
+
+# 5 — Start the dev server
+npm run dev
+```
+
+The app is then available at `http://localhost:3000`.
+
+### Before opening a PR
+
+```bash
+npm test          # all 1 680+ integration tests must pass
+npm run check:i18n  # no missing translation keys
+npx eslint .      # no lint errors
+npx tsc --noEmit  # no TypeScript errors
+```
+
+### Commit convention
+
+Momo uses [Conventional Commits](https://www.conventionalcommits.org/):
+`feat(scope): description` / `fix(scope): description` / `test(scope): ...`
+
+Scopes: `auth`, `tasks`, `topics`, `daily-quest`, `gamification`, `wishlist`, `push`, `ui`, `db`, `api`, `docs`.
 
 ---
 
