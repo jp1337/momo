@@ -119,7 +119,18 @@
     "energy_card_change": "Cambiar",
     "energy_card_swapped": "Misión cambiada para adaptarse mejor a tu energía — era: {title}",
     "energy_card_swapped_undo": "Deshacer",
-    "quick_win_complete_aria": "Marcar tarea como completada"
+    "quick_win_complete_aria": "Marcar tarea como completada",
+    "empty_state_title": "Bienvenido a Momo.",
+    "empty_state_body": "Crea tu primer tema y comienza — una tarea es suficiente para hoy.",
+    "empty_state_cta": "Crear primer tema",
+    "insight_best_day": "Tu día más fuerte es {day} — ideal para la tarea importante.",
+    "insight_day_mon": "Lunes",
+    "insight_day_tue": "Martes",
+    "insight_day_wed": "Miércoles",
+    "insight_day_thu": "Jueves",
+    "insight_day_fri": "Viernes",
+    "insight_day_sat": "Sábado",
+    "insight_day_sun": "Domingo"
   },
   "tasks": {
     "page_title": "Tareas",

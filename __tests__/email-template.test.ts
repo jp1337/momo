@@ -58,7 +58,8 @@ describe("renderEmailTemplate", () => {
   it("includes a CTA button when payload.url is provided (relative path)", () => {
     const html = renderEmailTemplate(
       { title: "Hey", body: "Go check.", url: "/dashboard" },
-      APP_URL
+      APP_URL,
+      "en"
     );
     expect(html).toContain("Open Momo");
     expect(html).toContain(`${APP_URL}/dashboard`);
@@ -67,21 +68,49 @@ describe("renderEmailTemplate", () => {
   it("includes a CTA button when payload.url is an absolute URL", () => {
     const html = renderEmailTemplate(
       { title: "Hey", body: "Go check.", url: "https://external.example.com/link" },
-      APP_URL
+      APP_URL,
+      "en"
     );
     expect(html).toContain("https://external.example.com/link");
     expect(html).toContain("Open Momo");
   });
 
   it("does NOT include a CTA button when no url is provided", () => {
-    const html = renderEmailTemplate({ title: "Hey", body: "Just info." }, APP_URL);
+    const html = renderEmailTemplate({ title: "Hey", body: "Just info." }, APP_URL, "en");
     expect(html).not.toContain("Open Momo");
   });
 
   it("includes a settings link in the footer", () => {
-    const html = renderEmailTemplate({ title: "Hi", body: "Hello." }, APP_URL);
+    const html = renderEmailTemplate({ title: "Hi", body: "Hello." }, APP_URL, "en");
     expect(html).toContain(`${APP_URL}/settings`);
     expect(html).toContain("Manage notification settings");
+  });
+
+  it("renders German CTA and footer when locale is 'de'", () => {
+    const html = renderEmailTemplate(
+      { title: "Hi", body: "Hallo.", url: "/dashboard" },
+      APP_URL,
+      "de"
+    );
+    expect(html).toContain("Momo öffnen");
+    expect(html).toContain("Benachrichtigungseinstellungen verwalten");
+    expect(html).toContain('lang="de"');
+  });
+
+  it("renders French CTA when locale is 'fr'", () => {
+    const html = renderEmailTemplate(
+      { title: "Salut", body: "Bonjour.", url: "/dashboard" },
+      APP_URL,
+      "fr"
+    );
+    expect(html).toContain("Ouvrir Momo");
+    expect(html).toContain('lang="fr"');
+  });
+
+  it("defaults to German strings when no locale is provided", () => {
+    const html = renderEmailTemplate({ title: "Hi", body: "Hello." }, APP_URL);
+    expect(html).toContain('lang="de"');
+    expect(html).toContain("Benachrichtigungseinstellungen verwalten");
   });
 
   it("strips trailing slashes from appUrl before building links", () => {

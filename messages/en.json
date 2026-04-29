@@ -119,7 +119,18 @@
     "energy_card_change": "Change",
     "energy_card_swapped": "Quest swapped to better match your energy — was: {title}",
     "energy_card_swapped_undo": "Undo",
-    "quick_win_complete_aria": "Mark task as complete"
+    "quick_win_complete_aria": "Mark task as complete",
+    "empty_state_title": "Welcome to Momo.",
+    "empty_state_body": "Create your first topic and get going — one task is enough for today.",
+    "empty_state_cta": "Create first topic",
+    "insight_best_day": "Your strongest day is {day} — perfect for the big task.",
+    "insight_day_mon": "Monday",
+    "insight_day_tue": "Tuesday",
+    "insight_day_wed": "Wednesday",
+    "insight_day_thu": "Thursday",
+    "insight_day_fri": "Friday",
+    "insight_day_sat": "Saturday",
+    "insight_day_sun": "Sunday"
   },
   "tasks": {
     "page_title": "Tasks",

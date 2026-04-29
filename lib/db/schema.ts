@@ -148,6 +148,14 @@ export const users = pgTable("users", {
   timezone: text("timezone"),
 
   /**
+   * User's preferred UI language (e.g. "de", "en", "fr", "es", "nl").
+   * Persisted to DB so server-side cron notifications (email, push) can be
+   * sent in the user's language. Updated whenever the locale cookie is set.
+   * NULL falls back to the app default ("de").
+   */
+  locale: text("locale"),
+
+  /**
    * Opt-in flag for the "Due today" reminder (see sendDueTodayNotifications in lib/push.ts).
    * When true, the cron dispatcher sends a notification at the user's
    * configured notificationTime *if* there is at least one non-completed,

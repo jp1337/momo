@@ -239,6 +239,13 @@
       "when": 1777139617893,
       "tag": "0033_workable_whirlwind",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1777441591490,
+      "tag": "0034_add_user_locale",
+      "breakpoints": true
     }
   ]
 }

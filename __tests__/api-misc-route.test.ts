@@ -14,6 +14,12 @@ vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
 }));
 
+// locale/route.ts now calls auth() to persist the locale for authenticated users.
+// Mock it so unit tests don't pull in next-auth's full module graph.
+vi.mock("@/lib/auth", () => ({
+  auth: vi.fn().mockResolvedValue(null), // unauthenticated — locale-cookie path still works
+}));
+
 import { GET as GETHealth } from "@/app/api/health/route";
 import { POST as POSTLocale } from "@/app/api/locale/route";
 import { POST as POSTCron } from "@/app/api/cron/route";

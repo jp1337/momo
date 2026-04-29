@@ -119,7 +119,18 @@
     "energy_card_change": "Modifier",
     "energy_card_swapped": "Quête adaptée à ton énergie — précédente : {title}",
     "energy_card_swapped_undo": "Annuler",
-    "quick_win_complete_aria": "Marquer la tâche comme terminée"
+    "quick_win_complete_aria": "Marquer la tâche comme terminée",
+    "empty_state_title": "Bienvenue sur Momo.",
+    "empty_state_body": "Créez votre premier sujet et commencez — une tâche suffit pour aujourd'hui.",
+    "empty_state_cta": "Créer le premier sujet",
+    "insight_best_day": "Votre meilleur jour est {day} — idéal pour la grande tâche.",
+    "insight_day_mon": "Lundi",
+    "insight_day_tue": "Mardi",
+    "insight_day_wed": "Mercredi",
+    "insight_day_thu": "Jeudi",
+    "insight_day_fri": "Vendredi",
+    "insight_day_sat": "Samedi",
+    "insight_day_sun": "Dimanche"
   },
   "tasks": {
     "page_title": "Tâches",

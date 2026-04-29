@@ -9,12 +9,41 @@
  * Lora serif heading, system sans body. Header shows the Momo wordmark,
  * footer carries an unsubscribe-style hint pointing back to /settings.
  *
- * TODO(i18n): All copy is currently English. Notifications are dispatched
- * server-side from cron without a per-user locale in the payload. When the
- * notification pipeline carries locale, replace the static strings here.
+ * Locale is provided by the caller. For cron-dispatched notifications it comes
+ * from users.locale (persisted when the language switcher is used). Falls back
+ * to "de" (the app default).
  */
 
 import type { NotificationPayload } from "@/lib/notifications";
+
+/** Static strings localised per supported locale. */
+const EMAIL_STRINGS: Record<string, { openMomo: string; footer: string; manageSettings: string }> = {
+  de: {
+    openMomo: "Momo öffnen",
+    footer: "Du erhältst diese E-Mail, weil E-Mail-Benachrichtigungen in Momo aktiviert sind.",
+    manageSettings: "Benachrichtigungseinstellungen verwalten",
+  },
+  en: {
+    openMomo: "Open Momo",
+    footer: "You're receiving this because email notifications are enabled in Momo.",
+    manageSettings: "Manage notification settings",
+  },
+  fr: {
+    openMomo: "Ouvrir Momo",
+    footer: "Vous recevez ceci car les notifications par e-mail sont activées dans Momo.",
+    manageSettings: "Gérer les paramètres de notification",
+  },
+  es: {
+    openMomo: "Abrir Momo",
+    footer: "Recibes esto porque las notificaciones por correo están activadas en Momo.",
+    manageSettings: "Gestionar ajustes de notificación",
+  },
+  nl: {
+    openMomo: "Momo openen",
+    footer: "Je ontvangt dit omdat e-mailmeldingen zijn ingeschakeld in Momo.",
+    manageSettings: "Meldingsinstellingen beheren",
+  },
+};
 
 /** HTML-escape a value for safe interpolation into the template literal. */
 function escapeHtml(input: string): string {
@@ -33,12 +62,15 @@ function escapeHtml(input: string): string {
  * @param appUrl  - Public app URL used to build absolute links to /settings
  *                  and the optional click-through URL when payload.url is
  *                  a relative path.
+ * @param locale  - BCP 47 language tag (e.g. "de", "en"). Falls back to "de".
  * @returns Complete `<!doctype html>` document as a string.
  */
 export function renderEmailTemplate(
   payload: NotificationPayload,
-  appUrl: string
+  appUrl: string,
+  locale = "de"
 ): string {
+  const strings = EMAIL_STRINGS[locale] ?? EMAIL_STRINGS.de;
   const title = escapeHtml(payload.title);
   const body = escapeHtml(payload.body).replace(/\n/g, "<br />");
 
@@ -76,7 +108,7 @@ export function renderEmailTemplate(
                             color: #ffffff; text-decoration: none;
                             border-radius: 6px;
                             border: 1px solid ${accentDark};">
-                    Open Momo
+                    ${strings.openMomo}
                   </a>
                 </td>
               </tr>
@@ -86,7 +118,7 @@ export function renderEmailTemplate(
     : "";
 
   return `<!doctype html>
-<html lang="en">
+<html lang="${locale}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -159,10 +191,10 @@ export function renderEmailTemplate(
                          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                          font-size: 12px; line-height: 1.5; color: ${textMuted};
                          text-align: center;">
-                You're receiving this because email notifications are enabled in Momo.<br />
+                ${strings.footer}<br />
                 <a href="${escapeHtml(settingsUrl)}"
                    style="color: ${accent}; text-decoration: underline;">
-                  Manage notification settings
+                  ${strings.manageSettings}
                 </a>
               </td>
             </tr>

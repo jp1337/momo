@@ -119,7 +119,18 @@
     "energy_card_change": "Ändern",
     "energy_card_swapped": "Quest auf deine Energie angepasst — vorher: {title}",
     "energy_card_swapped_undo": "Rückgängig",
-    "quick_win_complete_aria": "Aufgabe als erledigt markieren"
+    "quick_win_complete_aria": "Aufgabe als erledigt markieren",
+    "empty_state_title": "Willkommen bei Momo.",
+    "empty_state_body": "Erstelle dein erstes Thema und leg los — eine Aufgabe reicht für heute.",
+    "empty_state_cta": "Erstes Thema erstellen",
+    "insight_best_day": "Dein stärkster Tag ist {day} — ideal für die große Aufgabe.",
+    "insight_day_mon": "Montag",
+    "insight_day_tue": "Dienstag",
+    "insight_day_wed": "Mittwoch",
+    "insight_day_thu": "Donnerstag",
+    "insight_day_fri": "Freitag",
+    "insight_day_sat": "Samstag",
+    "insight_day_sun": "Sonntag"
   },
   "tasks": {
     "page_title": "Aufgaben",

@@ -21,7 +21,7 @@
  */
 
 import { db } from "@/lib/db";
-import { notificationChannels } from "@/lib/db/schema";
+import { notificationChannels, users } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import nodemailer, { type Transporter } from "nodemailer";
 import { serverEnv, clientEnv } from "@/lib/env";
@@ -40,6 +40,8 @@ export interface NotificationPayload {
   url?: string;
   /** Dedup tag — channels that support it use this to replace prior notifications */
   tag?: string;
+  /** BCP 47 locale of the recipient (e.g. "de", "en"). Used by channels that render their own copy (email). */
+  locale?: string;
 }
 
 /** Interface every notification channel must implement. */
@@ -299,13 +301,14 @@ class EmailChannel implements NotificationChannel {
 
     const transporter = getTransporter();
     const appUrl = clientEnv.NEXT_PUBLIC_APP_URL;
-    const html = renderEmailTemplate(payload, appUrl);
+    const locale = payload.locale ?? "de";
+    const html = renderEmailTemplate(payload, appUrl, locale);
     const textParts = [payload.title, "", payload.body];
     if (payload.url) textParts.push("", payload.url);
     textParts.push(
       "",
       "—",
-      `You're receiving this because email notifications are enabled in Momo. Manage settings: ${appUrl}/settings`
+      `${appUrl}/settings`
     );
 
     await transporter.sendMail({
@@ -442,22 +445,31 @@ export async function sendToAllChannels(
   userId: string,
   payload: NotificationPayload
 ): Promise<{ sent: number; failed: number }> {
-  const channels = await db
-    .select({
-      type: notificationChannels.type,
-      config: notificationChannels.config,
-    })
-    .from(notificationChannels)
-    .where(
-      and(
-        eq(notificationChannels.userId, userId),
-        eq(notificationChannels.enabled, true)
-      )
-    );
+  const [channels, userRows] = await Promise.all([
+    db
+      .select({
+        type: notificationChannels.type,
+        config: notificationChannels.config,
+      })
+      .from(notificationChannels)
+      .where(
+        and(
+          eq(notificationChannels.userId, userId),
+          eq(notificationChannels.enabled, true)
+        )
+      ),
+    db.select({ locale: users.locale }).from(users).where(eq(users.id, userId)).limit(1),
+  ]);
 
   if (channels.length === 0) {
     return { sent: 0, failed: 0 };
   }
+
+  // Enrich payload with user locale so email templates render in the right language.
+  const enrichedPayload: NotificationPayload = {
+    ...payload,
+    locale: payload.locale ?? userRows[0]?.locale ?? "de",
+  };
 
   let sent = 0;
   let failed = 0;
@@ -469,7 +481,7 @@ export async function sendToAllChannels(
         throw new Error(`Unsupported channel type: ${ch.type}`);
       }
       try {
-        await channel.send(payload);
+        await channel.send(enrichedPayload);
         logNotification({ userId, channel: ch.type, title: payload.title, body: payload.body, status: "sent" });
       } catch (err) {
         logNotification({

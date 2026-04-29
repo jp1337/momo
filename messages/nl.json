@@ -119,7 +119,18 @@
     "energy_card_change": "Wijzigen",
     "energy_card_swapped": "Opdracht omgewisseld voor betere match met je energie — was: {title}",
     "energy_card_swapped_undo": "Ongedaan maken",
-    "quick_win_complete_aria": "Taak als voltooid markeren"
+    "quick_win_complete_aria": "Taak als voltooid markeren",
+    "empty_state_title": "Welkom bij Momo.",
+    "empty_state_body": "Maak je eerste onderwerp aan en begin — één taak is genoeg voor vandaag.",
+    "empty_state_cta": "Eerste onderwerp maken",
+    "insight_best_day": "Je sterkste dag is {day} — perfect voor de grote taak.",
+    "insight_day_mon": "Maandag",
+    "insight_day_tue": "Dinsdag",
+    "insight_day_wed": "Woensdag",
+    "insight_day_thu": "Donderdag",
+    "insight_day_fri": "Vrijdag",
+    "insight_day_sat": "Zaterdag",
+    "insight_day_sun": "Zondag"
   },
   "tasks": {
     "page_title": "Taken",
