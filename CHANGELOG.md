@@ -7,6 +7,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Admin-Panel: Top 10 zeigt auch Nutzer ohne Abschlüsse** — Die Top-10-Tabelle benutzt jetzt `LEFT JOIN` statt `INNER JOIN`. Sortierung weiterhin nach Completions absteigend, bei Gleichstand nach Coins. Frische Accounts erscheinen jetzt mit `0` statt komplett ausgeblendet zu werden.
+- **Radix UI Primitives für Accessibility** — Fünf Radix-Primitives integriert, ohne Momos Design-System anzutasten. Alle Wrapper liegen unter `components/ui/` und nutzen ausschließlich die bestehenden CSS-Variablen (kein neues Design-Token-System):
+  - **Dialog** (`@radix-ui/react-dialog`) — alle 5 Modals (TaskBreakdownModal, WishlistForm, TopicForm, TemplatePicker, QuickAddModal). Bringt Focus-Trap, Body-Scroll-Lock, Esc-Handling und korrekte ARIA-Semantik out of the box.
+  - **DropdownMenu** (`@radix-ui/react-dropdown-menu`) — UserMenu (Avatar-Menü), BulkActionBar (Topic- + Priority-Picker), Task-Snooze-Menü. Pfeiltasten-Navigation und Type-Ahead inklusive.
+  - **Popover** (`@radix-ui/react-popover`) — IconPicker (vorher gar keine Keyboard-Nav).
+  - **Tooltip** (`@radix-ui/react-tooltip`) — ersetzt native `title=`-Attribute auf Icon-Buttons (TopicCard, TopicDetailActions, TopicsGrid, ThemeToggle). Erscheint jetzt auch bei Tab-Fokus und ist im Dark-Mode korrekt gestyled. TooltipProvider mit 300ms Delay einmalig im Root-Layout.
+  - **ToggleGroup** (`@radix-ui/react-toggle-group`) — Segmentierte Controls (LanguageSwitcher, QuestSettings Postpone-Limit, TopicForm Energy-Picker). Roving-Tabindex (eine Tab-Stelle pro Group statt N), Pfeiltasten-Navigation, automatische `aria-checked`-Semantik.
+
+### Changed
+
+- **A11y-Hygiene auf Toggle-Buttons** — Button-basierte Toggles, die vorher als generische Buttons angekündigt wurden, haben jetzt korrekte Switch- bzw. Radio-Semantik. EmotionalClosure-Settings sind jetzt eine `radiogroup` mit `role=radio`/`aria-checked`, der Push-Device Bell/Bell-Slash-Toggle hat `role=switch`/`aria-checked`. Screenreader sagen jetzt „Schalter, ein/aus" statt „Schaltfläche".
+
+### Fixed
+
+- *(keine in dieser Periode)*
+
 ---
 
 ## [0.4.0] - 2026-04-29
