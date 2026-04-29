@@ -1,8 +1,10 @@
 # Docker Compose configuration for Momo
 #
 # Services:
-#   db  — PostgreSQL 18 database
-#   app — The Next.js application (built from Dockerfile)
+#   db     — PostgreSQL 18 database
+#   app    — The Next.js application (built from Dockerfile)
+#   cron   — 5-minute cron dispatcher (calls /api/cron)
+#   backup — Daily pg_dump to ./backups/ (opt-in: set BACKUP_ENABLED=true)
 #
 # Usage:
 #   docker compose up -d          — Start all services
@@ -113,6 +115,54 @@ services:
           else
             echo "[cron] FAILED (HTTP $$HTTP_CODE) at $$(date -u)"
             cat /tmp/cron-resp.json 2>/dev/null
+          fi
+        done
+
+  # ─── Backup — daily pg_dump ─────────────────────────────────────────────────
+  # Disabled by default. Enable by setting BACKUP_ENABLED=true in your .env file.
+  # Dumps are written to ./backups/ on the host as timestamped .sql.gz files.
+  # Keeps the last 30 dumps (older ones are pruned automatically).
+  #
+  # To restore a backup:
+  #   gunzip -c backups/momo_YYYY-MM-DD_HH-MM.sql.gz | \
+  #     docker compose exec -T db psql -U momo momo
+  backup:
+    image: postgres:18-alpine
+    container_name: momo-backup
+    restart: unless-stopped
+    profiles:
+      - backup
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-password}
+      BACKUP_ENABLED: ${BACKUP_ENABLED:-false}
+    volumes:
+      - ./backups:/backups
+    entrypoint:
+      - sh
+      - -c
+      - |
+        if [ "$$BACKUP_ENABLED" != "true" ]; then
+          echo "[backup] BACKUP_ENABLED is not 'true' — sleeping indefinitely"
+          sleep infinity
+        fi
+        echo "[backup] Starting daily backup service"
+        while true; do
+          # Sleep until next UTC midnight
+          now=$$(date -u +%s)
+          tomorrow=$$(( (now / 86400 + 1) * 86400 ))
+          sleep $$(( tomorrow - now ))
+          FILENAME="momo_$$(date -u +%Y-%m-%d_%H-%M).sql.gz"
+          echo "[backup] Writing $$FILENAME"
+          pg_dump -h db -U momo momo | gzip > /backups/$$FILENAME
+          if [ $$? -eq 0 ]; then
+            echo "[backup] OK — $$FILENAME"
+            # Prune dumps older than 30 days
+            find /backups -name "momo_*.sql.gz" -mtime +30 -delete
+          else
+            echo "[backup] FAILED — check pg_dump output above"
           fi
         done
 
