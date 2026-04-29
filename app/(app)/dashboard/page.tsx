@@ -18,8 +18,8 @@ import Link from "next/link";
 import { getDailyQuestIncludingCompleted, selectDailyQuest } from "@/lib/daily-quest";
 import { getUserStats } from "@/lib/gamification";
 import { db } from "@/lib/db";
-import { taskCompletions, users, tasks } from "@/lib/db/schema";
-import { eq, count, lte, isNull, isNotNull, and, or, min } from "drizzle-orm";
+import { taskCompletions, users, tasks, topics } from "@/lib/db/schema";
+import { eq, count, lte, isNull, isNotNull, and, or, min, sql } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { EnergyCheckinCard } from "@/components/dashboard/energy-checkin-card";
 import { QuickWinsSection } from "@/components/dashboard/quick-wins-section";
@@ -84,8 +84,9 @@ export default async function DashboardPage() {
     .limit(1);
   const userTimezone = tzRow[0]?.timezone ?? null;
 
-  // Fetch quest, stats, completion count, postpone data, quick wins, and sequential group minimums in parallel
-  const [rawQuest, stats, completionCountRows, userPostponeData, quickWinTasks, groupMinRows] = await Promise.all([
+  // Fetch quest, stats, completion count, postpone data, quick wins, sequential group minimums,
+  // weekday completion pattern and topic count in parallel.
+  const [rawQuest, stats, completionCountRows, userPostponeData, quickWinTasks, groupMinRows, weekdayRows, topicCountRows] = await Promise.all([
     // Try to get (or select) the daily quest — pass timezone for consistent date handling
     selectDailyQuest(userId, userTimezone).catch(() => getDailyQuestIncludingCompleted(userId)),
     getUserStats(userId),
@@ -149,6 +150,17 @@ export default async function DashboardPage() {
         )
       )
       .groupBy(tasks.topicId, tasks.taskGroup),
+    // Completions by ISO weekday (1=Mon … 7=Sun) — used for the best-day insight chip.
+    db
+      .select({
+        dow: sql<number>`EXTRACT(ISODOW FROM ${taskCompletions.completedAt})::int`,
+        n: count(),
+      })
+      .from(taskCompletions)
+      .where(eq(taskCompletions.userId, userId))
+      .groupBy(sql`EXTRACT(ISODOW FROM ${taskCompletions.completedAt})`),
+    // Topic count — used to detect brand-new users (no topics → show empty state).
+    db.select({ count: count() }).from(topics).where(eq(topics.userId, userId)),
   ]);
 
   // Compute actual postponesToday (reset if date differs)
@@ -235,6 +247,23 @@ export default async function DashboardPage() {
 
   const coinTier = getCoinTier(stats.coins);
 
+  // Empty-state detection — no topics means a brand-new user who just completed onboarding.
+  const topicCount = topicCountRows[0]?.count ?? 0;
+  const isNewUser = topicCount === 0 && totalCompletions === 0;
+
+  // Best-day insight — only show when the user has meaningful history (≥10 completions).
+  // ISO weekday keys: 1=Mon … 7=Sun. Map to translation keys.
+  const dowKeys = ["insight_day_mon","insight_day_tue","insight_day_wed","insight_day_thu","insight_day_fri","insight_day_sat","insight_day_sun"] as const;
+  let bestDayInsight: string | null = null;
+  if (totalCompletions >= 10 && weekdayRows.length > 0) {
+    const best = weekdayRows.reduce((a, b) => (b.n > a.n ? b : a));
+    const dayKey = dowKeys[best.dow - 1]; // dow 1=Mon → index 0
+    if (dayKey) {
+      const dayName = t(dayKey as Parameters<typeof t>[0]);
+      bestDayInsight = t("insight_best_day" as Parameters<typeof t>[0], { day: dayName });
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-8">
       {/* ── Greeting ─────────────────────────────────────────────────────────── */}
@@ -278,6 +307,66 @@ export default async function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* ── Best-day insight chip ─────────────────────────────────────────────── */}
+      {bestDayInsight && (
+        <div
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm"
+          style={{
+            backgroundColor: "color-mix(in srgb, var(--accent-amber) 8%, var(--bg-surface))",
+            border: "1px solid color-mix(in srgb, var(--accent-amber) 20%, var(--border))",
+            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            color: "var(--text-muted)",
+          }}
+        >
+          <span style={{ color: "var(--accent-amber)" }}>✦</span>
+          <span>{bestDayInsight}</span>
+        </div>
+      )}
+
+      {/* ── New-user empty state ──────────────────────────────────────────────── */}
+      {isNewUser && (
+        <div
+          className="rounded-xl px-6 py-8 flex flex-col items-center text-center gap-4"
+          style={{
+            backgroundColor: "var(--bg-surface)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+            style={{ backgroundColor: "color-mix(in srgb, var(--accent-green) 12%, transparent)" }}
+            aria-hidden="true"
+          >
+            🌱
+          </div>
+          <div>
+            <p
+              className="text-lg font-semibold mb-1"
+              style={{ fontFamily: "var(--font-display, 'Lora', serif)", fontStyle: "italic", color: "var(--text-primary)" }}
+            >
+              {t("empty_state_title" as Parameters<typeof t>[0])}
+            </p>
+            <p
+              className="text-sm max-w-sm"
+              style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
+            >
+              {t("empty_state_body" as Parameters<typeof t>[0])}
+            </p>
+          </div>
+          <Link
+            href="/topics"
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 no-underline"
+            style={{
+              backgroundColor: "var(--accent-green)",
+              color: "#ffffff",
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+            }}
+          >
+            {t("empty_state_cta" as Parameters<typeof t>[0])}
+          </Link>
+        </div>
+      )}
 
       {/* ── Energy Check-in (above quest) ───────────────────────────────────── */}
       <section className="-mb-4">
