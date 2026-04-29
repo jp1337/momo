@@ -3,16 +3,10 @@
 /**
  * UserMenu — avatar dropdown in the navbar.
  *
- * Clicking the user avatar opens a dropdown with:
- *  - User name + email
- *  - Settings link
- *  - API Keys link
- *  - Sign out button
- *
- * Closes on outside click.
+ * Built on Radix UI DropdownMenu primitive — arrow-key navigation, type-ahead,
+ * focus management, Esc/outside-click, ARIA all handled by the library.
  */
 
-import { useEffect, useRef, useState } from "react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -25,6 +19,8 @@ import {
   faCalendarWeek,
   faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import type { CSSProperties, ReactNode } from "react";
 
 interface UserMenuProps {
   userName?: string | null;
@@ -34,18 +30,53 @@ interface UserMenuProps {
   isAdmin?: boolean;
 }
 
+const itemBaseStyle: CSSProperties = {
+  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+  color: "var(--text-primary)",
+  backgroundColor: "transparent",
+  border: "none",
+  cursor: "pointer",
+};
+
+const itemClass =
+  "flex items-center gap-3 px-4 py-2.5 text-sm no-underline outline-none data-[highlighted]:bg-[var(--bg-surface)]";
+
+interface MenuLinkItemProps {
+  href: string;
+  icon: typeof faChartBar;
+  iconColor?: string;
+  textColor?: string;
+  children: ReactNode;
+}
+
+/**
+ * MenuLinkItem — internal helper that wraps Next.js Link inside a Radix MenuItem.
+ * `asChild` lets Radix forward keyboard handling to the link element.
+ */
+function MenuLinkItem({ href, icon, iconColor, textColor, children }: MenuLinkItemProps) {
+  return (
+    <DropdownMenu.Item asChild>
+      <Link
+        href={href}
+        className={itemClass}
+        style={{ ...itemBaseStyle, color: textColor ?? itemBaseStyle.color }}
+      >
+        <FontAwesomeIcon
+          icon={icon}
+          className="w-4 h-4 flex-shrink-0"
+          style={{ color: iconColor ?? "var(--text-muted)" }}
+          aria-hidden="true"
+        />
+        {children}
+      </Link>
+    </DropdownMenu.Item>
+  );
+}
+
 /**
  * Avatar-triggered dropdown menu for user actions.
- *
- * @param userName  - Display name from the session
- * @param userImage - Avatar URL from the OAuth provider
- * @param userEmail - Email address (shown in the menu header)
- * @param isAdmin   - If true, shows the Admin link in the menu
  */
 export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuProps) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
   const initials = userName
     ? userName
         .split(" ")
@@ -55,74 +86,45 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
         .toUpperCase()
     : "?";
 
-  /** Close menu on click outside */
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    }
-    if (open) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
-
-  /** Close menu on Escape key */
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    if (open) {
-      document.addEventListener("keydown", handleKeyDown);
-    }
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
-
   return (
-    <div ref={containerRef} className="relative">
-      {/* Avatar trigger */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="true"
-        aria-expanded={open}
-        aria-label="User menu"
-        className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium flex-shrink-0 transition-opacity hover:opacity-80"
-        style={{
-          backgroundColor: "var(--accent-green)",
-          color: "var(--bg-primary)",
-          border: "2px solid var(--border)",
-        }}
-      >
-        {userImage ? (
-          <Image
-            src={userImage}
-            alt={userName ?? "User avatar"}
-            width={32}
-            height={32}
-            className="object-cover"
-          />
-        ) : (
-          <span>{initials}</span>
-        )}
-      </button>
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          aria-label="User menu"
+          className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium flex-shrink-0 transition-opacity hover:opacity-80"
+          style={{
+            backgroundColor: "var(--accent-green)",
+            color: "var(--bg-primary)",
+            border: "2px solid var(--border)",
+          }}
+        >
+          {userImage ? (
+            <Image
+              src={userImage}
+              alt={userName ?? "User avatar"}
+              width={32}
+              height={32}
+              className="object-cover"
+            />
+          ) : (
+            <span>{initials}</span>
+          )}
+        </button>
+      </DropdownMenu.Trigger>
 
-      {/* Dropdown */}
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-10 w-56 rounded-xl overflow-hidden z-50"
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={6}
+          className="w-56 rounded-xl overflow-hidden z-50"
           style={{
             backgroundColor: "var(--bg-elevated)",
             border: "1px solid var(--border)",
             boxShadow: "var(--shadow-lg)",
           }}
         >
-          {/* User identity header */}
-          <div
+          {/* Identity header — DropdownMenu.Label is non-focusable + non-interactive */}
+          <DropdownMenu.Label
             className="px-4 py-3 border-b"
             style={{ borderColor: "var(--border)" }}
           >
@@ -146,178 +148,43 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
                 {userEmail}
               </p>
             )}
-          </div>
+          </DropdownMenu.Label>
 
-          {/* Navigation items */}
           <div className="py-1">
-            <Link
-              href="/stats"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100 no-underline"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-primary)",
-              }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "var(--bg-surface)")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "transparent")
-              }
-            >
-              <FontAwesomeIcon
-                icon={faChartBar}
-                className="w-4 h-4 flex-shrink-0"
-                style={{ color: "var(--text-muted)" }}
-                aria-hidden="true"
-              />
+            <MenuLinkItem href="/stats" icon={faChartBar}>
               Statistiken
-            </Link>
-
-            <Link
-              href="/review"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100 no-underline"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-primary)",
-              }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "var(--bg-surface)")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "transparent")
-              }
-            >
-              <FontAwesomeIcon
-                icon={faCalendarWeek}
-                className="w-4 h-4 flex-shrink-0"
-                style={{ color: "var(--text-muted)" }}
-                aria-hidden="true"
-              />
+            </MenuLinkItem>
+            <MenuLinkItem href="/review" icon={faCalendarWeek}>
               Wochenrückblick
-            </Link>
-
-            <Link
-              href="/settings"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100 no-underline"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-primary)",
-              }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "var(--bg-surface)")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "transparent")
-              }
-            >
-              <FontAwesomeIcon
-                icon={faGear}
-                className="w-4 h-4 flex-shrink-0"
-                style={{ color: "var(--text-muted)" }}
-                aria-hidden="true"
-              />
+            </MenuLinkItem>
+            <MenuLinkItem href="/settings" icon={faGear}>
               Einstellungen
-            </Link>
-
-            <Link
-              href="/api-keys"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100 no-underline"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-primary)",
-              }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "var(--bg-surface)")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "transparent")
-              }
-            >
-              <FontAwesomeIcon
-                icon={faKey}
-                className="w-4 h-4 flex-shrink-0"
-                style={{ color: "var(--text-muted)" }}
-                aria-hidden="true"
-              />
+            </MenuLinkItem>
+            <MenuLinkItem href="/api-keys" icon={faKey}>
               API Keys
-            </Link>
-
+            </MenuLinkItem>
             {isAdmin && (
-              <Link
+              <MenuLinkItem
                 href="/admin"
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100 no-underline"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: "var(--accent-amber)",
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLElement).style.backgroundColor =
-                    "var(--bg-surface)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLElement).style.backgroundColor =
-                    "transparent")
-                }
+                icon={faShieldHalved}
+                iconColor="var(--accent-amber)"
+                textColor="var(--accent-amber)"
               >
-                <FontAwesomeIcon
-                  icon={faShieldHalved}
-                  className="w-4 h-4 flex-shrink-0"
-                  style={{ color: "var(--accent-amber)" }}
-                  aria-hidden="true"
-                />
                 Admin
-              </Link>
+              </MenuLinkItem>
             )}
           </div>
 
-          {/* Divider */}
-          <div
+          <DropdownMenu.Separator
             className="border-t"
             style={{ borderColor: "var(--border)" }}
           />
 
-          {/* Sign out */}
           <div className="py-1">
-            <button
-              role="menuitem"
-              onClick={() => {
-                setOpen(false);
-                signOut({ callbackUrl: "/login" });
-              }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-primary)",
-                backgroundColor: "transparent",
-                border: "none",
-                cursor: "pointer",
-              }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "var(--bg-surface)")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.backgroundColor =
-                  "transparent")
-              }
+            <DropdownMenu.Item
+              onSelect={() => signOut({ callbackUrl: "/login" })}
+              className={`w-full ${itemClass}`}
+              style={itemBaseStyle}
             >
               <FontAwesomeIcon
                 icon={faRightFromBracket}
@@ -326,10 +193,10 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
                 aria-hidden="true"
               />
               Abmelden
-            </button>
+            </DropdownMenu.Item>
           </div>
-        </div>
-      )}
-    </div>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }

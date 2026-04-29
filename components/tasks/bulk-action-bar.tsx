@@ -5,10 +5,10 @@
  *
  * Renders action buttons for: complete all, delete, change topic, set priority.
  * Slides up from the bottom with Framer Motion animation.
- * Dumb component — all actions are callbacks from the parent.
+ * Topic + priority pickers are Radix UI DropdownMenus (arrow-key nav, focus
+ * management, ARIA, type-ahead all from the library).
  */
 
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -19,6 +19,7 @@ import {
   faFlag,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 
 interface TopicOption {
@@ -38,6 +39,16 @@ interface BulkActionBarProps {
   onClearSelection: () => void;
 }
 
+const menuContentClass =
+  "py-1 rounded-lg shadow-lg z-50 min-w-[180px] max-h-[240px] overflow-y-auto";
+const menuContentStyle: React.CSSProperties = {
+  backgroundColor: "var(--bg-elevated)",
+  border: "1px solid var(--border)",
+};
+
+const menuItemClass =
+  "w-full text-left px-3 py-2 text-xs cursor-pointer outline-none data-[highlighted]:bg-[color-mix(in_srgb,var(--accent-amber)_15%,transparent)]";
+
 /**
  * Floating action bar for bulk task operations.
  * Appears at the bottom of the viewport when tasks are selected.
@@ -54,13 +65,6 @@ export function BulkActionBar({
 }: BulkActionBarProps) {
   const t = useTranslations("tasks");
   const tCommon = useTranslations("common");
-  const [showTopicMenu, setShowTopicMenu] = useState(false);
-  const [showPriorityMenu, setShowPriorityMenu] = useState(false);
-
-  const closeMenus = () => {
-    setShowTopicMenu(false);
-    setShowPriorityMenu(false);
-  };
 
   return (
     <AnimatePresence>
@@ -104,7 +108,7 @@ export function BulkActionBar({
               {/* Complete */}
               {hasNonCompleted && (
                 <button
-                  onClick={() => { closeMenus(); onComplete(); }}
+                  onClick={onComplete}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
                   style={{
                     backgroundColor: "color-mix(in srgb, var(--accent-green) 15%, transparent)",
@@ -117,107 +121,103 @@ export function BulkActionBar({
                 </button>
               )}
 
-              {/* Change topic — dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => { setShowPriorityMenu(false); setShowTopicMenu((v) => !v); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
-                  style={{
-                    backgroundColor: "color-mix(in srgb, var(--text-muted) 10%, transparent)",
-                    color: "var(--text-primary)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  <FontAwesomeIcon icon={faFolderOpen} className="w-3 h-3" />
-                  {t("bulk_change_topic")}
-                </button>
-                {showTopicMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowTopicMenu(false)} />
-                    <div
-                      className="absolute bottom-full mb-2 left-0 z-50 py-1 rounded-lg shadow-lg min-w-[180px] max-h-[240px] overflow-y-auto"
-                      style={{
-                        backgroundColor: "var(--bg-elevated)",
-                        border: "1px solid var(--border)",
-                      }}
+              {/* Change topic — Radix DropdownMenu */}
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
+                    style={{
+                      backgroundColor: "color-mix(in srgb, var(--text-muted) 10%, transparent)",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faFolderOpen} className="w-3 h-3" />
+                    {t("bulk_change_topic")}
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    side="top"
+                    align="start"
+                    sideOffset={6}
+                    className={menuContentClass}
+                    style={menuContentStyle}
+                  >
+                    <DropdownMenu.Item
+                      onSelect={() => onChangeTopic(null)}
+                      className={menuItemClass}
+                      style={{ color: "var(--text-muted)" }}
                     >
-                      <button
-                        onClick={() => { onChangeTopic(null); setShowTopicMenu(false); }}
-                        className="w-full text-left px-3 py-2 text-xs transition-colors hover:opacity-80"
-                        style={{ color: "var(--text-muted)" }}
+                      {t("bulk_no_topic")}
+                    </DropdownMenu.Item>
+                    {topics.map((topic) => (
+                      <DropdownMenu.Item
+                        key={topic.id}
+                        onSelect={() => onChangeTopic(topic.id)}
+                        className={`${menuItemClass} flex items-center gap-2`}
+                        style={{ color: "var(--text-primary)" }}
                       >
-                        {t("bulk_no_topic")}
-                      </button>
-                      {topics.map((topic) => (
-                        <button
-                          key={topic.id}
-                          onClick={() => { onChangeTopic(topic.id); setShowTopicMenu(false); }}
-                          className="w-full text-left px-3 py-2 text-xs transition-colors hover:opacity-80 flex items-center gap-2"
-                          style={{ color: "var(--text-primary)" }}
-                        >
-                          {topic.color && (
-                            <span
-                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: topic.color }}
-                            />
-                          )}
-                          {topic.title}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+                        {topic.color && (
+                          <span
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: topic.color }}
+                          />
+                        )}
+                        {topic.title}
+                      </DropdownMenu.Item>
+                    ))}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
 
-              {/* Set priority — dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => { setShowTopicMenu(false); setShowPriorityMenu((v) => !v); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
-                  style={{
-                    backgroundColor: "color-mix(in srgb, var(--text-muted) 10%, transparent)",
-                    color: "var(--text-primary)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  <FontAwesomeIcon icon={faFlag} className="w-3 h-3" />
-                  {t("bulk_set_priority")}
-                </button>
-                {showPriorityMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowPriorityMenu(false)} />
-                    <div
-                      className="absolute bottom-full mb-2 right-0 z-50 py-1 rounded-lg shadow-lg min-w-[140px]"
-                      style={{
-                        backgroundColor: "var(--bg-elevated)",
-                        border: "1px solid var(--border)",
-                      }}
-                    >
-                      {(["HIGH", "NORMAL", "SOMEDAY"] as const).map((p) => (
-                        <button
-                          key={p}
-                          onClick={() => { onSetPriority(p); setShowPriorityMenu(false); }}
-                          className="w-full text-left px-3 py-2 text-xs transition-colors hover:opacity-80"
-                          style={{
-                            color:
-                              p === "HIGH"
-                                ? "var(--accent-red)"
-                                : p === "NORMAL"
-                                ? "var(--accent-amber)"
-                                : "var(--text-muted)",
-                          }}
-                        >
-                          {tCommon(`priority_${p.toLowerCase()}` as "priority_high" | "priority_normal" | "priority_someday")}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+              {/* Set priority — Radix DropdownMenu */}
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
+                    style={{
+                      backgroundColor: "color-mix(in srgb, var(--text-muted) 10%, transparent)",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faFlag} className="w-3 h-3" />
+                    {t("bulk_set_priority")}
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    side="top"
+                    align="end"
+                    sideOffset={6}
+                    className={`${menuContentClass} min-w-[140px]`}
+                    style={menuContentStyle}
+                  >
+                    {(["HIGH", "NORMAL", "SOMEDAY"] as const).map((p) => (
+                      <DropdownMenu.Item
+                        key={p}
+                        onSelect={() => onSetPriority(p)}
+                        className={menuItemClass}
+                        style={{
+                          color:
+                            p === "HIGH"
+                              ? "var(--accent-red)"
+                              : p === "NORMAL"
+                              ? "var(--accent-amber)"
+                              : "var(--text-muted)",
+                        }}
+                      >
+                        {tCommon(`priority_${p.toLowerCase()}` as "priority_high" | "priority_normal" | "priority_someday")}
+                      </DropdownMenu.Item>
+                    ))}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
 
               {/* Delete */}
               <ConfirmButton
-                onConfirm={() => { closeMenus(); onDelete(); }}
+                onConfirm={onDelete}
                 confirmPrompt={t("bulk_confirm_delete", { count: selectedCount })}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
                 style={{
