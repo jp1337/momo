@@ -13,6 +13,7 @@ import { Lora, JetBrains_Mono, DM_Sans } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import "./globals.css";
@@ -183,7 +184,9 @@ export default async function RootLayout({
           disableTransitionOnChange={false}
         >
           <NextIntlClientProvider messages={messages}>
-            {children}
+            <TooltipProvider delayDuration={300} skipDelayDuration={150}>
+              {children}
+            </TooltipProvider>
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>

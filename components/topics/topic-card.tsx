@@ -18,6 +18,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faListOl, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
 import { resolveTopicIcon } from "@/lib/topic-icons";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface TopicCardProps {
   id: string;
@@ -138,24 +139,32 @@ export function TopicCard({
 
         {/* Action buttons */}
         <div className="flex gap-1 flex-shrink-0">
-          <button
-            onClick={() => onEdit(id)}
-            className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "var(--text-muted)" }}
-            aria-label={t("aria_edit")}
-            title={t("aria_edit")}
-          >
-            ✎
-          </button>
-          <button
-            onClick={() => onArchive(id)}
-            className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "var(--text-muted)" }}
-            aria-label={t("aria_archive")}
-            title={t("aria_archive")}
-          >
-            <FontAwesomeIcon icon={faBoxArchive} style={{ fontSize: 13 }} />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onEdit(id)}
+                className="p-1.5 rounded-lg transition-colors"
+                style={{ color: "var(--text-muted)" }}
+                aria-label={t("aria_edit")}
+              >
+                ✎
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{t("aria_edit")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onArchive(id)}
+                className="p-1.5 rounded-lg transition-colors"
+                style={{ color: "var(--text-muted)" }}
+                aria-label={t("aria_archive")}
+              >
+                <FontAwesomeIcon icon={faBoxArchive} style={{ fontSize: 13 }} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{t("aria_archive")}</TooltipContent>
+          </Tooltip>
           <ConfirmButton
             onConfirm={() => onDelete(id)}
             confirmPrompt={t("confirm_delete")}

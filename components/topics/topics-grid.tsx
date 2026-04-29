@@ -18,6 +18,7 @@ import { TopicCard } from "./topic-card";
 import { TopicForm } from "./topic-form";
 import { TemplatePicker } from "./template-picker";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface Topic {
   id: string;
@@ -383,19 +384,23 @@ function ArchivedTopicCard({
       </div>
 
       <div className="flex gap-1 flex-shrink-0">
-        <button
-          onClick={() => onUnarchive(id)}
-          className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            backgroundColor: "var(--bg-elevated)",
-            border: "1px solid var(--border)",
-            color: "var(--text-primary)",
-          }}
-          title={t("aria_unarchive")}
-        >
-          {t("unarchive_btn")}
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => onUnarchive(id)}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                backgroundColor: "var(--bg-elevated)",
+                border: "1px solid var(--border)",
+                color: "var(--text-primary)",
+              }}
+            >
+              {t("unarchive_btn")}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{t("aria_unarchive")}</TooltipContent>
+        </Tooltip>
         <ConfirmButton
           onConfirm={() => onDelete(id)}
           confirmPrompt={t("confirm_delete")}

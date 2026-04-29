@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { TopicForm } from "@/components/topics/topic-form";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface TopicDetailActionsProps {
   topic: {
@@ -49,15 +50,19 @@ export function TopicDetailActions({ topic }: TopicDetailActionsProps) {
   return (
     <>
       <div className="flex gap-1 flex-shrink-0">
-        <button
-          onClick={() => setShowEditForm(true)}
-          className="p-2 rounded-lg transition-colors"
-          style={{ color: "var(--text-muted)" }}
-          aria-label={t("aria_edit")}
-          title={t("aria_edit")}
-        >
-          ✎
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setShowEditForm(true)}
+              className="p-2 rounded-lg transition-colors"
+              style={{ color: "var(--text-muted)" }}
+              aria-label={t("aria_edit")}
+            >
+              ✎
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{t("aria_edit")}</TooltipContent>
+        </Tooltip>
         <ConfirmButton
           onConfirm={handleDelete}
           confirmPrompt={t("confirm_delete")}
