@@ -5,11 +5,14 @@
  *
  * User enters 2–10 subtask titles. On confirm, calls POST /api/tasks/:id/breakdown.
  * The original task is deleted and the user is redirected to the new topic.
+ *
+ * Built on Radix UI Dialog primitive — focus trap, scroll lock, Esc key, ARIA.
  */
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 
 interface TaskBreakdownModalProps {
   /** The task to break down */
@@ -93,39 +96,8 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
-    >
-      <div
-        className="w-full max-w-lg rounded-2xl p-6 shadow-lg"
-        style={{
-          backgroundColor: "var(--bg-surface)",
-          border: "1px solid var(--border)",
-          boxShadow: "var(--shadow-lg)",
-          maxHeight: "90vh",
-          overflowY: "auto",
-        }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <h2
-            className="text-xl font-semibold"
-            style={{ fontFamily: "var(--font-display, 'Lora', serif)", color: "var(--text-primary)" }}
-          >
-            {t("breakdown_title")}
-          </h2>
-          <button
-            onClick={onCancel}
-            className="p-1 rounded-lg transition-colors"
-            style={{ color: "var(--text-muted)" }}
-            aria-label={tc("close")}
-          >
-            ✕
-          </button>
-        </div>
-
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onCancel(); }}>
+      <DialogContent title={t("breakdown_title")} size="md">
         {/* Original task name */}
         <p
           className="text-sm mb-1"
@@ -176,7 +148,6 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
                 placeholder={`${t("breakdown_subtask_label", { n: index + 1 })}...`}
                 style={inputStyle}
                 maxLength={255}
-                autoFocus={index === 0}
               />
               {steps.length > 2 && (
                 <button
@@ -209,20 +180,21 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
 
           {/* Footer buttons */}
           <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-                border: "1px solid var(--border)",
-                backgroundColor: "transparent",
-              }}
-            >
-              {tc("cancel")}
-            </button>
+            <DialogClose asChild>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--border)",
+                  backgroundColor: "transparent",
+                }}
+              >
+                {tc("cancel")}
+              </button>
+            </DialogClose>
             <button
               type="submit"
               disabled={isSubmitting}
@@ -237,7 +209,7 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

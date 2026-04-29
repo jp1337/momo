@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 
 interface WishlistFormData {
   title: string;
@@ -165,46 +166,11 @@ export function WishlistForm({
   };
 
   return (
-    /* Backdrop */
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
-      {/* Modal */}
-      <div
-        className="w-full max-w-lg rounded-2xl p-6 shadow-lg"
-        style={{
-          backgroundColor: "var(--bg-surface)",
-          border: "1px solid var(--border)",
-          boxShadow: "var(--shadow-lg)",
-          maxHeight: "90vh",
-          overflowY: "auto",
-        }}
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onCancel(); }}>
+      <DialogContent
+        title={isEditing ? t("form_title_edit") : t("form_title_new")}
+        size="md"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2
-            className="text-xl font-semibold"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              color: "var(--text-primary)",
-            }}
-          >
-            {isEditing ? t("form_title_edit") : t("form_title_new")}
-          </h2>
-          <button
-            onClick={onCancel}
-            className="p-1 rounded-lg transition-colors"
-            style={{ color: "var(--text-muted)" }}
-            aria-label={tc("close")}
-          >
-            ✕
-          </button>
-        </div>
-
         {/* Error */}
         {error && (
           <div
@@ -325,20 +291,21 @@ export function WishlistForm({
 
           {/* Footer buttons */}
           <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-                border: "1px solid var(--border)",
-                backgroundColor: "transparent",
-              }}
-            >
-              {tc("cancel")}
-            </button>
+            <DialogClose asChild>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                style={{
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--border)",
+                  backgroundColor: "transparent",
+                }}
+              >
+                {tc("cancel")}
+              </button>
+            </DialogClose>
             <button
               type="submit"
               disabled={isSubmitting}
@@ -359,7 +326,7 @@ export function WishlistForm({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

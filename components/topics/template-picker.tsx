@@ -13,6 +13,7 @@ import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faListOl, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { resolveTopicIcon } from "@/lib/topic-icons";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 type TemplateKey = "moving" | "taxes" | "fitness" | "household" | "selling";
 
@@ -67,54 +68,18 @@ export function TemplatePicker({ onImported, onStartBlank, onCancel }: TemplateP
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !importingKey) onCancel();
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        // Block close while a template import is in flight
+        if (!open && !importingKey) onCancel();
       }}
     >
-      <div
-        className="w-full max-w-2xl rounded-2xl p-6 shadow-lg"
-        style={{
-          backgroundColor: "var(--bg-surface)",
-          border: "1px solid var(--border)",
-          boxShadow: "var(--shadow-lg)",
-          maxHeight: "90vh",
-          overflowY: "auto",
-        }}
+      <DialogContent
+        title={t("picker_title")}
+        description={t("picker_subtitle")}
+        size="lg"
       >
-        {/* Header */}
-        <div className="flex items-start justify-between mb-2 gap-4">
-          <h2
-            className="text-xl font-semibold"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              color: "var(--text-primary)",
-            }}
-          >
-            {t("picker_title")}
-          </h2>
-          <button
-            onClick={onCancel}
-            disabled={!!importingKey}
-            className="p-1 rounded-lg"
-            style={{ color: "var(--text-muted)" }}
-            aria-label={tc("picker_close")}
-          >
-            ✕
-          </button>
-        </div>
-        <p
-          className="text-sm mb-5"
-          style={{
-            color: "var(--text-muted)",
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          }}
-        >
-          {t("picker_subtitle")}
-        </p>
-
         {/* Error */}
         {error && (
           <div
@@ -249,7 +214,7 @@ export function TemplatePicker({ onImported, onStartBlank, onCancel }: TemplateP
           <FontAwesomeIcon icon={faPlus} style={{ fontSize: 14, color: "var(--accent-amber)" }} />
           {tc("start_blank")}
         </button>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
