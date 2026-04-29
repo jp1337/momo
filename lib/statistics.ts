@@ -635,7 +635,7 @@ export async function getAdminStatistics(): Promise<AdminStatistics> {
       })
       .from(users),
 
-    // Top 10 users by completions
+    // Top 10 users by completions — LEFT JOIN so users with 0 completions are included
     db
       .select({
         name: users.name,
@@ -644,10 +644,10 @@ export async function getAdminStatistics(): Promise<AdminStatistics> {
         coins: users.coins,
         level: users.level,
       })
-      .from(taskCompletions)
-      .innerJoin(users, eq(taskCompletions.userId, users.id))
+      .from(users)
+      .leftJoin(taskCompletions, eq(taskCompletions.userId, users.id))
       .groupBy(users.id, users.name, users.email, users.coins, users.level)
-      .orderBy(desc(count(taskCompletions.id)))
+      .orderBy(desc(count(taskCompletions.id)), desc(users.coins))
       .limit(10),
 
     // Achievement distribution (how many users earned each)

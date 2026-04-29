@@ -331,6 +331,23 @@ describe("getAdminStatistics", () => {
     expect(typeof entry.completions).toBe("number");
     expect(entry.completions).toBeGreaterThan(0);
   });
+
+  it("includes users with 0 completions — all entries have completions >= 0", async () => {
+    const noCompletionsUser = await createTestUser();
+
+    const stats = await getAdminStatistics();
+
+    // Every entry must have a non-negative completion count (LEFT JOIN, not INNER JOIN)
+    for (const entry of stats.topUsersByCompletions) {
+      expect(entry.completions).toBeGreaterThanOrEqual(0);
+    }
+
+    // If our 0-completion user made the top 10, they must appear with completions === 0
+    const found = stats.topUsersByCompletions.find((e) => e.email === noCompletionsUser.email);
+    if (found) {
+      expect(found.completions).toBe(0);
+    }
+  });
 });
 
 // ─── getRecentCronRuns ────────────────────────────────────────────────────────

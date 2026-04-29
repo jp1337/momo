@@ -678,7 +678,7 @@ export default async function AdminPage() {
                 color: "var(--text-muted)",
               }}
             >
-              Noch keine Abschlüsse vorhanden.
+              Noch keine Nutzer registriert.
             </p>
           ) : (
             <div className="overflow-x-auto">
