@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import * as ToggleGroup from "@radix-ui/react-toggle-group";
 
 interface QuestSettingsProps {
   /** Current configured postpone limit from DB (1–5) */
@@ -58,27 +59,35 @@ export function QuestSettings({ initialPostponeLimit }: QuestSettingsProps) {
         </p>
       </div>
 
-      {/* Segmented control for 1–5 */}
+      {/* Segmented control for 1–5 — Radix ToggleGroup gives arrow-key nav */}
       <div className="flex gap-2">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            onClick={() => handleChange(n)}
-            disabled={status === "saving"}
-            className="w-10 h-10 rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-50"
-            style={{
-              fontFamily: "var(--font-ui)",
-              border: limit === n ? "1px solid var(--accent-amber)" : "1px solid var(--border)",
-              backgroundColor:
-                limit === n
-                  ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-elevated))"
-                  : "var(--bg-elevated)",
-              color: limit === n ? "var(--accent-amber)" : "var(--text-muted)",
-            }}
-          >
-            {n}
-          </button>
-        ))}
+        <ToggleGroup.Root
+          type="single"
+          value={String(limit)}
+          onValueChange={(v) => v && handleChange(Number(v))}
+          aria-label={t("quest_postpone_limit_label")}
+          className="flex gap-2"
+          disabled={status === "saving"}
+        >
+          {[1, 2, 3, 4, 5].map((n) => (
+            <ToggleGroup.Item
+              key={n}
+              value={String(n)}
+              className="w-10 h-10 rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-50 outline-none focus-visible:ring-2"
+              style={{
+                fontFamily: "var(--font-ui)",
+                border: limit === n ? "1px solid var(--accent-amber)" : "1px solid var(--border)",
+                backgroundColor:
+                  limit === n
+                    ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-elevated))"
+                    : "var(--bg-elevated)",
+                color: limit === n ? "var(--accent-amber)" : "var(--text-muted)",
+              }}
+            >
+              {n}
+            </ToggleGroup.Item>
+          ))}
+        </ToggleGroup.Root>
 
         {status !== "idle" && (
           <span

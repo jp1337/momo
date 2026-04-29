@@ -9,8 +9,12 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { IconPicker } from "@/components/topics/icon-picker";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+
+/** Sentinel value for the "no default energy" choice — ToggleGroup needs a string. */
+const ENERGY_NONE = "__none__";
 
 interface TopicFormData {
   title: string;
@@ -263,17 +267,27 @@ export function TopicForm({
           {/* Default energy level — inherited by new tasks in this topic */}
           <div>
             <label style={labelStyle}>{t("form_label_default_energy")}</label>
-            <div className="flex gap-2 flex-wrap">
+            <ToggleGroup.Root
+              type="single"
+              value={formData.defaultEnergyLevel ?? ENERGY_NONE}
+              onValueChange={(v) => {
+                // Empty value means user clicked the active item — keep the previous selection.
+                if (!v) return;
+                setFormData((prev) => ({
+                  ...prev,
+                  defaultEnergyLevel: v === ENERGY_NONE ? null : (v as "HIGH" | "MEDIUM" | "LOW"),
+                }));
+              }}
+              aria-label={t("form_label_default_energy")}
+              className="flex gap-2 flex-wrap"
+            >
               {([null, "HIGH", "MEDIUM", "LOW"] as const).map((level) => {
                 const isSelected = formData.defaultEnergyLevel === level;
                 return (
-                  <button
+                  <ToggleGroup.Item
                     key={String(level)}
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, defaultEnergyLevel: level }))
-                    }
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150"
+                    value={level ?? ENERGY_NONE}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 outline-none focus-visible:ring-2"
                     style={{
                       fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
                       border: isSelected
@@ -289,10 +303,10 @@ export function TopicForm({
                     {level === null
                       ? t("form_default_energy_none")
                       : t(`energy_${level.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low")}
-                  </button>
+                  </ToggleGroup.Item>
                 );
               })}
-            </div>
+            </ToggleGroup.Root>
             <p
               className="text-xs mt-1.5"
               style={{

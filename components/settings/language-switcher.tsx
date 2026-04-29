@@ -3,12 +3,15 @@
 /**
  * LanguageSwitcher — language selection buttons shown on the settings page.
  *
- * Calls POST /api/locale to persist the locale cookie, then
+ * Uses Radix UI ToggleGroup (single-select) — gives roving tabindex (one Tab
+ * stop per group, arrow keys to move between items) and ARIA radiogroup
+ * semantics. Calls POST /api/locale to persist the locale cookie, then
  * refreshes the router so server components re-render with the new locale.
  */
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { LOCALES } from "@/i18n/locales";
 import type { Locale } from "@/i18n/locales";
 
@@ -40,23 +43,30 @@ export function LanguageSwitcher({ currentLocale }: LanguageSwitcherProps) {
   const router = useRouter();
   const t = useTranslations("language");
 
-  const setLocale = async (locale: Locale) => {
+  const setLocale = async (value: string) => {
+    if (!value || value === currentLocale) return;
     await fetch("/api/locale", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ locale }),
+      body: JSON.stringify({ locale: value }),
     });
     router.refresh();
   };
 
   return (
-    <div className="flex gap-2 flex-wrap">
+    <ToggleGroup.Root
+      type="single"
+      value={currentLocale}
+      onValueChange={setLocale}
+      aria-label={t("label")}
+      className="flex gap-2 flex-wrap"
+    >
       {LOCALES.map((locale) => (
-        <button
+        <ToggleGroup.Item
           key={locale}
-          onClick={() => setLocale(locale)}
-          disabled={locale === currentLocale}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150"
+          value={locale}
+          aria-label={t(locale as Locale)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 outline-none focus-visible:ring-2"
           style={{
             fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             backgroundColor:
@@ -70,13 +80,11 @@ export function LanguageSwitcher({ currentLocale }: LanguageSwitcherProps) {
             border: `1px solid ${locale === currentLocale ? "var(--accent-amber)" : "var(--border)"}`,
             cursor: locale === currentLocale ? "default" : "pointer",
           }}
-          aria-pressed={locale === currentLocale}
-          aria-label={t(locale)}
         >
           <span>{LOCALE_FLAGS[locale] ?? locale.toUpperCase()}</span>
           <span>{LOCALE_LABELS[locale] ?? locale.toUpperCase()}</span>
-        </button>
+        </ToggleGroup.Item>
       ))}
-    </div>
+    </ToggleGroup.Root>
   );
 }
