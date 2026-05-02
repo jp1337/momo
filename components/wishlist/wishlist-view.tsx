@@ -375,20 +375,48 @@ export function WishlistView({
       {/* Open items grid */}
       {openItems.length === 0 && !isFiltering ? (
         <div
-          className="rounded-2xl p-8 text-center"
+          className="relative rounded-2xl p-12 sm:p-16 text-center overflow-hidden"
           style={{
             backgroundColor: "var(--bg-surface)",
-            border: "1px solid var(--border)",
+            border: "1px dashed var(--border)",
           }}
         >
-          <p
-            className="text-base"
+          {/* Soft amber halo behind the icon — same atmospheric pattern as the tasks empty state */}
+          <div
+            aria-hidden="true"
             style={{
-              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-              color: "var(--text-muted)",
+              position: "absolute",
+              top: "20%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "240px",
+              height: "240px",
+              borderRadius: "50%",
+              background: "radial-gradient(circle, color-mix(in srgb, var(--accent-amber) 12%, transparent) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }}
+          />
+          <p className="relative text-6xl mb-5 select-none" role="img" aria-label="🎁">
+            🎁
+          </p>
+          <p
+            className="relative text-xl font-semibold mb-2"
+            style={{
+              fontFamily: "var(--font-display, 'Lora', serif)",
+              color: "var(--text-primary)",
             }}
           >
             {t("view_empty")}
+          </p>
+          <p
+            className="relative text-sm max-w-sm mx-auto"
+            style={{
+              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              color: "var(--text-muted)",
+              lineHeight: 1.6,
+            }}
+          >
+            {t("view_empty_sub")}
           </p>
         </div>
       ) : openItems.length > 0 ? (

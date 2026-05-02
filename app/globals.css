@@ -121,12 +121,47 @@ html {
 
 body {
   background-color: var(--bg-primary);
+  /*
+   * Two soft radial glows give the page atmosphere without demanding attention:
+   *   • muted green halo near the top — picks up the brand accent
+   *   • warm amber wash bottom-right — pulls the eye through the layout
+   * Fixed attachment keeps the gradients steady while scrolling.
+   * Opacity is intentionally low (4–6%) — the effect should register subliminally,
+   * never compete with content.
+   */
+  background-image:
+    radial-gradient(ellipse 80% 55% at 50% -10%, color-mix(in srgb, var(--accent-green) 8%, transparent), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 100% 110%, color-mix(in srgb, var(--accent-amber) 6%, transparent), transparent 70%);
+  background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-ui, "DM Sans", system-ui, sans-serif);
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Reusable interaction primitives ───────────────────────────────────────── */
+
+/*
+ * Card hover lift — subtle Y-translation + shadow elevation.
+ * Used on TopicCard and other "interactive surface" cards.
+ * Disabled at the user's request via prefers-reduced-motion.
+ */
+.card-hover {
+  transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-hover {
+    transition: none;
+  }
+  .card-hover:hover {
+    transform: none;
+  }
 }
 
 /* ─── Typography ────────────────────────────────────────────────────────────── */

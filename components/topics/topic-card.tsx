@@ -87,7 +87,7 @@ export function TopicCard({
 
   return (
     <div
-      className="group rounded-2xl p-5 flex flex-col gap-4 transition-shadow duration-200"
+      className="group card-hover rounded-2xl p-5 flex flex-col gap-4"
       style={{
         backgroundColor: "var(--bg-surface)",
         border: `1px solid ${isAllDone ? "color-mix(in srgb, var(--accent-green) 40%, var(--border))" : "var(--border)"}`,

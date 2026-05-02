@@ -215,17 +215,33 @@ function EmptyState() {
 
   return (
     <div
-      className="rounded-2xl p-12 text-center"
+      className="relative rounded-2xl p-12 sm:p-16 text-center overflow-hidden"
       style={{
         backgroundColor: "var(--bg-surface)",
         border: "1px dashed var(--border)",
       }}
     >
-      <p className="text-2xl mb-3" role="img" aria-label={headline}>
+      {/* Soft amber halo behind the emoji — adds atmosphere without competing with content */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: "20%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "240px",
+          height: "240px",
+          borderRadius: "50%",
+          background: "radial-gradient(circle, color-mix(in srgb, var(--accent-amber) 12%, transparent) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }}
+      />
+
+      <p className="relative text-6xl mb-5 select-none" role="img" aria-label={headline}>
         {emoji}
       </p>
       <p
-        className="text-base font-medium mb-1"
+        className="relative text-xl font-semibold mb-2"
         style={{
           fontFamily: "var(--font-display, 'Lora', serif)",
           color: "var(--text-primary)",
@@ -234,13 +250,39 @@ function EmptyState() {
         {headline}
       </p>
       <p
-        className="text-sm"
+        className="relative text-sm max-w-sm mx-auto"
         style={{
           fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
           color: "var(--text-muted)",
+          lineHeight: 1.6,
         }}
       >
         {sub}
+      </p>
+
+      {/* Inline keyboard hint — encourages discovering the N shortcut */}
+      <p
+        className="relative text-xs mt-6"
+        style={{
+          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+          color: "var(--text-muted)",
+          opacity: 0.7,
+        }}
+      >
+        {t("empty_kbd_hint")}{" "}
+        <kbd
+          style={{
+            padding: "2px 7px",
+            fontSize: "0.7rem",
+            borderRadius: "4px",
+            border: "1px solid var(--border)",
+            background: "var(--bg-elevated)",
+            color: "var(--text-primary)",
+            fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+          }}
+        >
+          N
+        </kbd>
       </p>
     </div>
   );

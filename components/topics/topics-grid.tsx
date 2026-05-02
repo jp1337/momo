@@ -45,17 +45,32 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   const t = useTranslations("topics");
   return (
     <div
-      className="rounded-2xl p-12 text-center"
+      className="relative rounded-2xl p-12 sm:p-16 text-center overflow-hidden"
       style={{
         backgroundColor: "var(--bg-surface)",
         border: "1px dashed var(--border)",
       }}
     >
-      <p className="text-2xl mb-3" role="img" aria-label="Folder">
+      {/* Soft green halo behind the icon — same atmospheric pattern as tasks/wishlist */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: "20%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "240px",
+          height: "240px",
+          borderRadius: "50%",
+          background: "radial-gradient(circle, color-mix(in srgb, var(--accent-green) 14%, transparent) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }}
+      />
+      <p className="relative text-6xl mb-5 select-none" role="img" aria-label="Folder">
         📂
       </p>
       <p
-        className="text-base font-medium mb-1"
+        className="relative text-xl font-semibold mb-2"
         style={{
           fontFamily: "var(--font-display, 'Lora', serif)",
           color: "var(--text-primary)",
@@ -64,17 +79,18 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         {t("page_subtitle_empty")}
       </p>
       <p
-        className="text-sm mb-4"
+        className="relative text-sm max-w-sm mx-auto mb-6"
         style={{
           fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
           color: "var(--text-muted)",
+          lineHeight: 1.6,
         }}
       >
         {t("empty_hint")}
       </p>
       <button
         onClick={onAdd}
-        className="px-4 py-2 rounded-lg text-sm font-medium"
+        className="relative px-5 py-2.5 rounded-lg text-sm font-semibold transition-transform duration-150 hover:scale-105"
         style={{
           fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
           backgroundColor: "var(--accent-amber)",
