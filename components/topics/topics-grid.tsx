@@ -12,6 +12,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronRight, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
 import { TopicCard } from "./topic-card";
@@ -214,25 +215,37 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
         <EmptyState onAdd={() => setShowTemplatePicker(true)} />
       )}
 
-      {/* Active topics grid */}
+      {/* Active topics grid — staggered fade-up on initial mount */}
       {activeTopics.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {activeTopics.map((topic) => (
-            <TopicCard
+          {activeTopics.map((topic, idx) => (
+            <motion.div
               key={topic.id}
-              id={topic.id}
-              title={topic.title}
-              description={topic.description}
-              color={topic.color}
-              icon={topic.icon}
-              priority={topic.priority}
-              sequential={topic.sequential}
-              taskCount={topic.taskCount}
-              completedCount={topic.completedCount}
-              onEdit={setEditingTopicId}
-              onDelete={handleDelete}
-              onArchive={handleArchive}
-            />
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.28,
+                ease: "easeOut",
+                // 40ms stagger feels choreographed without dragging out the load.
+                // Cap the delay at 12 cards so very long lists never feel slow.
+                delay: Math.min(idx, 12) * 0.04,
+              }}
+            >
+              <TopicCard
+                id={topic.id}
+                title={topic.title}
+                description={topic.description}
+                color={topic.color}
+                icon={topic.icon}
+                priority={topic.priority}
+                sequential={topic.sequential}
+                taskCount={topic.taskCount}
+                completedCount={topic.completedCount}
+                onEdit={setEditingTopicId}
+                onDelete={handleDelete}
+                onArchive={handleArchive}
+              />
+            </motion.div>
           ))}
         </div>
       )}
