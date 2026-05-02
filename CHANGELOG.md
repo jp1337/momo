@@ -19,6 +19,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **TaskForm radikal vereinfacht (Progressive Disclosure)** — Statt 13 Felder gleichzeitig zeigt das Formular jetzt nur noch die Essentials (Titel groß, Thema, Priorität-Chips, Datum). „Wiederkehrend machen" und „Mehr Optionen" liegen hinter Disclosure-Toggles und klappen mit Framer-Motion-Animation aus. Edit-Modus expandiert beide Sektionen automatisch wenn die Aufgabe schon Werte enthält. Die Type-Auswahl ist verschwunden — sie wird jetzt durch den Recurring-Toggle gesteuert. Alle Chip-Gruppen (Priorität, Energy, Zeit, Wochentage, Recurrence-Type) nutzen Radix ToggleGroup für Pfeiltasten-Navigation.
+- **Atmosphärische Backgrounds** — Body bekommt zwei dezente Radial-Halos (gedämpftes Grün oben, warmes Amber unten-rechts, je 6–8% Opazität, fixed-attached). Liest sich als Atmosphäre, nicht als Dekoration.
+- **Card-Hover-Lift** — Neue `.card-hover` Utility (translateY(-2px) + shadow-md, 180ms ease-out, deaktiviert bei prefers-reduced-motion). Auf TopicCard angewendet.
+- **Empty States mit Persönlichkeit** — `/tasks`, `/wishlist`, `/topics` haben jetzt großzügigere Empty-States: 6xl Emoji, Lora-Display-Headline, max-width Sub-Text, weicher Halo-Glow im Akzent. Tasks-Empty zeigt zusätzlich den `N`-Keyboard-Hint.
+- **Gestaffelte TopicsGrid-Animation** — Jede Topic-Karte fadet/sliced auf bei Mount mit 40ms Staffelung. Cap bei 12 Karten damit lange Listen nicht zäh wirken.
 - **A11y-Hygiene auf Toggle-Buttons** — Button-basierte Toggles, die vorher als generische Buttons angekündigt wurden, haben jetzt korrekte Switch- bzw. Radio-Semantik. EmotionalClosure-Settings sind jetzt eine `radiogroup` mit `role=radio`/`aria-checked`, der Push-Device Bell/Bell-Slash-Toggle hat `role=switch`/`aria-checked`. Screenreader sagen jetzt „Schalter, ein/aus" statt „Schaltfläche".
 
 ### Fixed
