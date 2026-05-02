@@ -3,13 +3,21 @@
 /**
  * TaskForm component — modal form for creating and editing tasks.
  *
- * Handles both create (no initialData) and edit (with initialData) modes.
- * Validates inputs client-side before submitting to the API.
- * Closes the modal on successful save.
+ * Designed for procrastination users: only the essentials (title, topic,
+ * priority, date) are visible by default. Coins, time estimate, energy,
+ * notes, task group live behind a "More options" disclosure. Recurrence
+ * is its own toggle section that swaps the task type between ONE_TIME
+ * and RECURRING.
+ *
+ * Validates inputs client-side before submitting; closes on success.
  */
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { motion, AnimatePresence } from "framer-motion";
+import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronDown, faRotate, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 interface TopicOption {
   id: string;
@@ -63,9 +71,6 @@ const WEEKDAYS = [
   { idx: 6, key: "recurrence_weekday_sun" },
 ] as const;
 
-/**
- * Default empty form state.
- */
 const DEFAULT_FORM: TaskFormData = {
   title: "",
   topicId: null,
@@ -93,9 +98,20 @@ function detectGroupFromTitle(title: string): string {
 }
 
 /**
- * Modal form for creating or editing a task.
- * Submits to POST /api/tasks or PATCH /api/tasks/:id.
+ * Detects whether the form has any "advanced" data that should auto-expand
+ * the "More options" section in edit mode (so saved values stay visible).
  */
+function hasAdvancedData(data: Partial<TaskFormData>): boolean {
+  return Boolean(
+    (data.notes && data.notes.length > 0) ||
+      data.estimatedMinutes ||
+      data.energyLevel ||
+      (data.taskGroup && data.taskGroup.length > 0) ||
+      (data.coinValue && data.coinValue !== "1") ||
+      data.type === "DAILY_ELIGIBLE",
+  );
+}
+
 export function TaskForm({
   initialData,
   topics,
@@ -118,6 +134,12 @@ export function TaskForm({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Disclosure state — auto-expanded when relevant data is present (edit mode)
+  const [showMore, setShowMore] = useState(() => hasAdvancedData(initialData ?? {}));
+  const [showRecurrence, setShowRecurrence] = useState(
+    () => initialData?.type === "RECURRING",
+  );
+
   // Reset form when initialData changes
   useEffect(() => {
     setFormData({
@@ -125,7 +147,20 @@ export function TaskForm({
       topicId: defaultTopicId ?? null,
       ...initialData,
     });
+    setShowMore(hasAdvancedData(initialData ?? {}));
+    setShowRecurrence(initialData?.type === "RECURRING");
   }, [initialData, defaultTopicId]);
+
+  // Toggling the recurrence switch flips the underlying type field.
+  // We default to RECURRING when expanding (the most common reason to expand),
+  // but preserve DAILY_ELIGIBLE if the user had it set.
+  const handleRecurrenceToggle = (next: boolean) => {
+    setShowRecurrence(next);
+    setFormData((prev) => ({
+      ...prev,
+      type: next ? "RECURRING" : prev.type === "RECURRING" ? "ONE_TIME" : prev.type,
+    }));
+  };
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -213,7 +248,7 @@ export function TaskForm({
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
-    padding: "8px 12px",
+    padding: "10px 12px",
     borderRadius: "8px",
     border: "1px solid var(--border)",
     backgroundColor: "var(--bg-elevated)",
@@ -225,18 +260,52 @@ export function TaskForm({
 
   const labelStyle: React.CSSProperties = {
     display: "block",
-    fontSize: "13px",
-    fontWeight: 500,
+    fontSize: "12px",
+    fontWeight: 600,
     marginBottom: "6px",
     color: "var(--text-muted)",
     fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+  };
+
+  // Reusable chip-button style for ToggleGroup items
+  const chipStyle = (isSelected: boolean): React.CSSProperties => ({
+    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+    fontSize: "13px",
+    fontWeight: 500,
+    padding: "8px 14px",
+    borderRadius: "8px",
+    border: isSelected
+      ? "1px solid var(--accent-amber)"
+      : "1px solid var(--border)",
+    backgroundColor: isSelected
+      ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-elevated))"
+      : "var(--bg-elevated)",
+    color: isSelected ? "var(--accent-amber)" : "var(--text-muted)",
+    cursor: "pointer",
+    outline: "none",
+  });
+
+  // Disclosure-row trigger (shared style for "More" and "Recurring" toggles)
+  const disclosureRowStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: "10px",
+    border: "1px solid var(--border)",
+    backgroundColor: "var(--bg-elevated)",
+    color: "var(--text-primary)",
+    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+    fontSize: "14px",
+    fontWeight: 500,
+    cursor: "pointer",
+    outline: "none",
   };
 
   return (
-    /*
-      Backdrop — only provides the dimmed overlay on sm+.
-      On mobile the form is fixed full-screen, so the backdrop is just cosmetic.
-    */
     <div
       className="fixed inset-0 z-[60] sm:flex sm:items-center sm:justify-center sm:p-4"
       style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
@@ -244,11 +313,6 @@ export function TaskForm({
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      {/*
-        Mobile  : fixed inset-0 → explicit 100dvh height → flex-1 resolves correctly
-        Desktop : static, max-h-[90dvh], centered by the backdrop flex container
-        The header and footer use flex-shrink-0; only the fields div scrolls.
-      */}
       <form
         onSubmit={handleSubmit}
         className="
@@ -262,7 +326,7 @@ export function TaskForm({
           boxShadow: "var(--shadow-lg)",
         }}
       >
-        {/* Header — never scrolls */}
+        {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
           <h2
             className="text-xl font-semibold"
@@ -276,16 +340,16 @@ export function TaskForm({
           <button
             type="button"
             onClick={onCancel}
-            className="p-1 rounded-lg transition-colors"
+            className="p-1.5 rounded-lg transition-colors"
             style={{ color: "var(--text-muted)" }}
             aria-label={tc("close")}
           >
-            ✕
+            <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
           </button>
         </div>
 
         {/* Scrollable fields area */}
-        <div className="flex flex-col gap-4 overflow-y-auto px-6 pb-2 flex-1">
+        <div className="flex flex-col gap-5 overflow-y-auto px-6 pb-2 flex-1">
           {/* Error */}
           {error && (
             <div
@@ -301,11 +365,9 @@ export function TaskForm({
             </div>
           )}
 
-          {/* Title */}
+          {/* ── Essentials: title, topic, priority, date ─────────────── */}
+
           <div>
-            <label htmlFor="task-title" style={labelStyle}>
-              {t("form_label_title")} <span style={{ color: "var(--accent-red)" }}>*</span>
-            </label>
             <input
               id="task-title"
               name="title"
@@ -314,202 +376,21 @@ export function TaskForm({
               onChange={handleChange}
               placeholder={t("form_placeholder_title")}
               autoFocus
-              style={{
-                ...inputStyle,
-                fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-              }}
               maxLength={255}
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                borderRadius: "10px",
+                border: "1px solid var(--border)",
+                backgroundColor: "var(--bg-elevated)",
+                color: "var(--text-primary)",
+                fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+                fontSize: "17px",
+                fontWeight: 500,
+                outline: "none",
+              }}
             />
           </div>
-
-          {/* Type + Priority row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="task-type" style={labelStyle}>
-                {t("form_label_type")}
-              </label>
-              <select
-                id="task-type"
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-                style={inputStyle}
-              >
-                <option value="ONE_TIME">{t("form_type_onetime")}</option>
-                <option value="RECURRING">{t("form_type_recurring")}</option>
-                <option value="DAILY_ELIGIBLE">{t("form_type_daily")}</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="task-priority" style={labelStyle}>
-                {t("form_label_priority")}
-              </label>
-              <select
-                id="task-priority"
-                name="priority"
-                value={formData.priority}
-                onChange={handleChange}
-                style={inputStyle}
-              >
-                <option value="HIGH">{t("priority_high")}</option>
-                <option value="NORMAL">{t("priority_normal")}</option>
-                <option value="SOMEDAY">{t("priority_someday")}</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Recurrence configuration — only for RECURRING */}
-          {formData.type === "RECURRING" && (
-            <div className="flex flex-col gap-3">
-              {/* Recurrence type selector */}
-              <div>
-                <label style={labelStyle}>
-                  {t("recurrence_type_label")}{" "}
-                  <span style={{ color: "var(--accent-red)" }}>*</span>
-                </label>
-                <div className="flex gap-1.5 flex-wrap">
-                  {(["INTERVAL", "WEEKDAY", "MONTHLY", "YEARLY"] as const).map((rType) => {
-                    const isSelected = formData.recurrenceType === rType;
-                    const labelKey = `recurrence_type_${rType.toLowerCase()}` as
-                      | "recurrence_type_interval"
-                      | "recurrence_type_weekday"
-                      | "recurrence_type_monthly"
-                      | "recurrence_type_yearly";
-                    return (
-                      <button
-                        key={rType}
-                        type="button"
-                        onClick={() =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            recurrenceType: rType,
-                            // Reset weekdays when switching away from WEEKDAY
-                            recurrenceWeekdays: rType === "WEEKDAY" ? prev.recurrenceWeekdays : [],
-                          }))
-                        }
-                        className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150"
-                        style={{
-                          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                          border: isSelected
-                            ? "1px solid var(--accent-amber)"
-                            : "1px solid var(--border)",
-                          backgroundColor: isSelected
-                            ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-elevated))"
-                            : "var(--bg-elevated)",
-                          color: isSelected ? "var(--accent-amber)" : "var(--text-muted)",
-                        }}
-                      >
-                        {t(labelKey)}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* INTERVAL: days input */}
-              {formData.recurrenceType === "INTERVAL" && (
-                <div>
-                  <label htmlFor="task-recurrence" style={labelStyle}>
-                    {t("form_label_interval")}
-                  </label>
-                  <input
-                    id="task-recurrence"
-                    name="recurrenceInterval"
-                    type="number"
-                    value={formData.recurrenceInterval}
-                    onChange={handleChange}
-                    min={1}
-                    max={365}
-                    style={inputStyle}
-                  />
-                </div>
-              )}
-
-              {/* WEEKDAY: day toggle buttons */}
-              {formData.recurrenceType === "WEEKDAY" && (
-                <div>
-                  <label style={labelStyle}>{t("recurrence_weekday_label")}</label>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {WEEKDAYS.map(({ idx, key }) => {
-                      const isSelected = formData.recurrenceWeekdays.includes(idx);
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              recurrenceWeekdays: isSelected
-                                ? prev.recurrenceWeekdays.filter((d) => d !== idx)
-                                : [...prev.recurrenceWeekdays, idx].sort((a, b) => a - b),
-                            }))
-                          }
-                          className="w-10 h-10 rounded-lg text-sm font-semibold transition-all duration-150"
-                          style={{
-                            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                            border: isSelected
-                              ? "1px solid var(--accent-amber)"
-                              : "1px solid var(--border)",
-                            backgroundColor: isSelected
-                              ? "color-mix(in srgb, var(--accent-amber) 20%, var(--bg-elevated))"
-                              : "var(--bg-elevated)",
-                            color: isSelected ? "var(--accent-amber)" : "var(--text-muted)",
-                          }}
-                        >
-                          {t(key as Parameters<typeof t>[0])}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* MONTHLY / YEARLY: fixed vs. rolling toggle */}
-              {(formData.recurrenceType === "MONTHLY" || formData.recurrenceType === "YEARLY") && (
-                <div>
-                  <p
-                    className="text-sm mb-2"
-                    style={{
-                      color: "var(--text-muted)",
-                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    }}
-                  >
-                    {formData.recurrenceType === "MONTHLY"
-                      ? t("recurrence_monthly_hint")
-                      : t("recurrence_yearly_hint")}
-                  </p>
-                  <label
-                    className="flex items-center gap-2 cursor-pointer"
-                    style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)" }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.recurrenceFixed}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, recurrenceFixed: e.target.checked }))
-                      }
-                      style={{ accentColor: "var(--accent-amber)" }}
-                    />
-                    <span style={{ fontSize: "13px", color: "var(--text-primary)" }}>
-                      {t("recurrence_fixed_label")}
-                    </span>
-                  </label>
-                  <p
-                    className="text-xs mt-1"
-                    style={{
-                      color: "var(--text-muted)",
-                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    }}
-                  >
-                    {formData.recurrenceFixed
-                      ? t("recurrence_fixed_hint")
-                      : t("recurrence_rolling_hint")}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Topic */}
           <div>
@@ -537,6 +418,30 @@ export function TaskForm({
             </select>
           </div>
 
+          {/* Priority chips */}
+          <div>
+            <label style={labelStyle}>{t("form_label_priority")}</label>
+            <ToggleGroup.Root
+              type="single"
+              value={formData.priority}
+              onValueChange={(v) =>
+                v && setFormData((prev) => ({ ...prev, priority: v as TaskFormData["priority"] }))
+              }
+              className="flex gap-2 flex-wrap"
+              aria-label={t("form_label_priority")}
+            >
+              {(["HIGH", "NORMAL", "SOMEDAY"] as const).map((p) => (
+                <ToggleGroup.Item
+                  key={p}
+                  value={p}
+                  style={chipStyle(formData.priority === p)}
+                >
+                  {t(`priority_${p.toLowerCase()}` as "priority_high" | "priority_normal" | "priority_someday")}
+                </ToggleGroup.Item>
+              ))}
+            </ToggleGroup.Root>
+          </div>
+
           {/* Due date */}
           <div>
             <label htmlFor="task-due" style={labelStyle}>
@@ -552,185 +457,412 @@ export function TaskForm({
             />
           </div>
 
-          {/* Coin value */}
+          {/* ── Recurrence disclosure ─────────────────────────────────── */}
           <div>
-            <label htmlFor="task-coins" style={labelStyle}>
-              {t("form_label_coins")}
-            </label>
-            <input
-              id="task-coins"
-              name="coinValue"
-              type="number"
-              value={formData.coinValue}
-              onChange={handleChange}
-              min={1}
-              max={10}
-              style={inputStyle}
-            />
-          </div>
-
-          {/* Time estimate */}
-          <div>
-            <label style={labelStyle}>{t("form_label_duration")}</label>
-            <div className="flex gap-2 flex-wrap">
-              {([null, 5, 15, 30, 60] as const).map((min) => {
-                const isSelected = formData.estimatedMinutes === min;
-                return (
-                  <button
-                    key={String(min)}
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, estimatedMinutes: min }))
-                    }
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150"
-                    style={{
-                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                      border: isSelected
-                        ? "1px solid var(--accent-amber)"
-                        : "1px solid var(--border)",
-                      backgroundColor: isSelected
-                        ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-elevated))"
-                        : "var(--bg-elevated)",
-                      color: isSelected ? "var(--accent-amber)" : "var(--text-muted)",
-                    }}
-                  >
-                    {min === null ? t("duration_unknown") : `${min} min`}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Energy level */}
-          <div>
-            <label style={labelStyle}>{t("form_label_energy")}</label>
-            <div className="flex gap-2 flex-wrap">
-              {([null, "HIGH", "MEDIUM", "LOW"] as const).map((level) => {
-                const isSelected = formData.energyLevel === level;
-                return (
-                  <button
-                    key={String(level)}
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, energyLevel: level }))
-                    }
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150"
-                    style={{
-                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                      border: isSelected
-                        ? "1px solid var(--accent-amber)"
-                        : "1px solid var(--border)",
-                      backgroundColor: isSelected
-                        ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-elevated))"
-                        : "var(--bg-elevated)",
-                      color: isSelected ? "var(--accent-amber)" : "var(--text-muted)",
-                    }}
-                  >
-                    {level === null
-                      ? t("energy_any")
-                      : t(`energy_${level.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low")}
-                  </button>
-                );
-              })}
-            </div>
-            {/* Topic-default hint: if the picked topic has a defaultEnergyLevel
-                and the user has not picked one for this task, show what will
-                be inherited on save. */}
-            {formData.energyLevel === null && formData.topicId && (() => {
-              const selectedTopic = topics.find((tp) => tp.id === formData.topicId);
-              if (!selectedTopic?.defaultEnergyLevel) return null;
-              return (
-                <p
-                  className="text-xs mt-1.5"
-                  style={{
-                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    color: "var(--accent-amber)",
-                  }}
-                >
-                  {t("form_energy_topic_default_hint", {
-                    level: t(`energy_${selectedTopic.defaultEnergyLevel.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low"),
-                    topic: selectedTopic.title,
-                  })}
-                </p>
-              );
-            })()}
-          </div>
-
-          {/* Task Group — only shown when a topic is selected */}
-          {formData.topicId && (
-            <div>
-              <label htmlFor="task-group" style={labelStyle}>
-                {tg("label")}
-              </label>
-              <div style={{ position: "relative" }}>
-                <input
-                  id="task-group"
-                  name="taskGroup"
-                  type="text"
-                  list="task-group-suggestions"
-                  value={formData.taskGroup}
-                  onChange={handleChange}
-                  placeholder={tg("placeholder")}
-                  style={inputStyle}
-                  autoComplete="off"
-                />
-                <datalist id="task-group-suggestions">
-                  {existingGroups.map((g) => (
-                    <option key={g} value={g} />
-                  ))}
-                </datalist>
-              </div>
-              {/* Auto-detect from title */}
-              {!formData.taskGroup && detectGroupFromTitle(formData.title) && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      taskGroup: detectGroupFromTitle(prev.title),
-                    }))
-                  }
-                  style={{
-                    marginTop: "4px",
-                    fontSize: "12px",
-                    color: "var(--accent-amber)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  }}
-                >
-                  ↳ {tg("auto_detect")}: &bdquo;{detectGroupFromTitle(formData.title)}&ldquo;
-                </button>
-              )}
-              <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px", fontFamily: "var(--font-ui)" }}>
-                {tg("hint")}
-              </p>
-            </div>
-          )}
-
-          {/* Notes */}
-          <div>
-            <label htmlFor="task-notes" style={labelStyle}>
-              {t("form_label_notes")}
-            </label>
-            <textarea
-              id="task-notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              rows={3}
-              placeholder={t("form_placeholder_notes")}
+            <button
+              type="button"
+              onClick={() => handleRecurrenceToggle(!showRecurrence)}
               style={{
-                ...inputStyle,
-                resize: "vertical",
+                ...disclosureRowStyle,
+                ...(showRecurrence
+                  ? {
+                      borderColor: "var(--accent-amber)",
+                      backgroundColor: "color-mix(in srgb, var(--accent-amber) 10%, var(--bg-elevated))",
+                      color: "var(--accent-amber)",
+                    }
+                  : {}),
               }}
-            />
+              aria-expanded={showRecurrence}
+            >
+              <FontAwesomeIcon
+                icon={faRotate}
+                className="w-4 h-4"
+                style={{ color: showRecurrence ? "var(--accent-amber)" : "var(--text-muted)" }}
+              />
+              <span className="flex-1 text-left">{t("form_toggle_recurring")}</span>
+              <FontAwesomeIcon
+                icon={faChevronDown}
+                className="w-3.5 h-3.5"
+                style={{
+                  transform: showRecurrence ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.15s ease",
+                  color: "var(--text-muted)",
+                }}
+              />
+            </button>
+
+            <AnimatePresence initial={false}>
+              {showRecurrence && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <div className="flex flex-col gap-3 pt-3 px-1">
+                    {/* Recurrence type chips */}
+                    <ToggleGroup.Root
+                      type="single"
+                      value={formData.recurrenceType}
+                      onValueChange={(v) => {
+                        if (!v) return;
+                        const next = v as TaskFormData["recurrenceType"];
+                        setFormData((prev) => ({
+                          ...prev,
+                          recurrenceType: next,
+                          recurrenceWeekdays: next === "WEEKDAY" ? prev.recurrenceWeekdays : [],
+                        }));
+                      }}
+                      aria-label={t("recurrence_type_label")}
+                      className="flex gap-1.5 flex-wrap"
+                    >
+                      {(["INTERVAL", "WEEKDAY", "MONTHLY", "YEARLY"] as const).map((rType) => (
+                        <ToggleGroup.Item
+                          key={rType}
+                          value={rType}
+                          style={chipStyle(formData.recurrenceType === rType)}
+                        >
+                          {t(`recurrence_type_${rType.toLowerCase()}` as
+                            | "recurrence_type_interval"
+                            | "recurrence_type_weekday"
+                            | "recurrence_type_monthly"
+                            | "recurrence_type_yearly")}
+                        </ToggleGroup.Item>
+                      ))}
+                    </ToggleGroup.Root>
+
+                    {/* INTERVAL: days input */}
+                    {formData.recurrenceType === "INTERVAL" && (
+                      <div>
+                        <label htmlFor="task-recurrence" style={labelStyle}>
+                          {t("form_label_interval")}
+                        </label>
+                        <input
+                          id="task-recurrence"
+                          name="recurrenceInterval"
+                          type="number"
+                          value={formData.recurrenceInterval}
+                          onChange={handleChange}
+                          min={1}
+                          max={365}
+                          style={inputStyle}
+                        />
+                      </div>
+                    )}
+
+                    {/* WEEKDAY: day toggle buttons */}
+                    {formData.recurrenceType === "WEEKDAY" && (
+                      <div>
+                        <label style={labelStyle}>{t("recurrence_weekday_label")}</label>
+                        <ToggleGroup.Root
+                          type="multiple"
+                          value={formData.recurrenceWeekdays.map(String)}
+                          onValueChange={(values) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              recurrenceWeekdays: values
+                                .map((v) => parseInt(v, 10))
+                                .sort((a, b) => a - b),
+                            }))
+                          }
+                          aria-label={t("recurrence_weekday_label")}
+                          className="flex gap-1.5 flex-wrap"
+                        >
+                          {WEEKDAYS.map(({ idx, key }) => (
+                            <ToggleGroup.Item
+                              key={idx}
+                              value={String(idx)}
+                              style={{
+                                ...chipStyle(formData.recurrenceWeekdays.includes(idx)),
+                                width: "44px",
+                                padding: "10px 0",
+                                textAlign: "center",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {t(key as Parameters<typeof t>[0])}
+                            </ToggleGroup.Item>
+                          ))}
+                        </ToggleGroup.Root>
+                      </div>
+                    )}
+
+                    {/* MONTHLY / YEARLY: fixed vs. rolling toggle */}
+                    {(formData.recurrenceType === "MONTHLY" || formData.recurrenceType === "YEARLY") && (
+                      <div>
+                        <p
+                          className="text-sm mb-2"
+                          style={{
+                            color: "var(--text-muted)",
+                            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                          }}
+                        >
+                          {formData.recurrenceType === "MONTHLY"
+                            ? t("recurrence_monthly_hint")
+                            : t("recurrence_yearly_hint")}
+                        </p>
+                        <label
+                          className="flex items-center gap-2 cursor-pointer"
+                          style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)" }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.recurrenceFixed}
+                            onChange={(e) =>
+                              setFormData((prev) => ({ ...prev, recurrenceFixed: e.target.checked }))
+                            }
+                            style={{ accentColor: "var(--accent-amber)" }}
+                          />
+                          <span style={{ fontSize: "13px", color: "var(--text-primary)" }}>
+                            {t("recurrence_fixed_label")}
+                          </span>
+                        </label>
+                        <p
+                          className="text-xs mt-1"
+                          style={{
+                            color: "var(--text-muted)",
+                            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                          }}
+                        >
+                          {formData.recurrenceFixed
+                            ? t("recurrence_fixed_hint")
+                            : t("recurrence_rolling_hint")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* ── More options disclosure ──────────────────────────────── */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowMore((v) => !v)}
+              style={disclosureRowStyle}
+              aria-expanded={showMore}
+            >
+              <span className="flex-1 text-left" style={{ color: "var(--text-muted)" }}>
+                {t("form_toggle_more")}
+              </span>
+              <FontAwesomeIcon
+                icon={faChevronDown}
+                className="w-3.5 h-3.5"
+                style={{
+                  transform: showMore ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.15s ease",
+                  color: "var(--text-muted)",
+                }}
+              />
+            </button>
+
+            <AnimatePresence initial={false}>
+              {showMore && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <div className="flex flex-col gap-4 pt-4 px-1">
+                    {/* Time estimate */}
+                    <div>
+                      <label style={labelStyle}>{t("form_label_duration")}</label>
+                      <ToggleGroup.Root
+                        type="single"
+                        value={formData.estimatedMinutes === null ? "any" : String(formData.estimatedMinutes)}
+                        onValueChange={(v) => {
+                          if (!v) return;
+                          setFormData((prev) => ({
+                            ...prev,
+                            estimatedMinutes: v === "any" ? null : (parseInt(v, 10) as 5 | 15 | 30 | 60),
+                          }));
+                        }}
+                        aria-label={t("form_label_duration")}
+                        className="flex gap-2 flex-wrap"
+                      >
+                        {([
+                          { value: "any", label: t("duration_unknown") },
+                          { value: "5", label: "5 min" },
+                          { value: "15", label: "15 min" },
+                          { value: "30", label: "30 min" },
+                          { value: "60", label: "60 min" },
+                        ] as const).map(({ value, label }) => {
+                          const isSelected =
+                            (value === "any" && formData.estimatedMinutes === null) ||
+                            (value !== "any" && String(formData.estimatedMinutes) === value);
+                          return (
+                            <ToggleGroup.Item key={value} value={value} style={chipStyle(isSelected)}>
+                              {label}
+                            </ToggleGroup.Item>
+                          );
+                        })}
+                      </ToggleGroup.Root>
+                    </div>
+
+                    {/* Energy level */}
+                    <div>
+                      <label style={labelStyle}>{t("form_label_energy")}</label>
+                      <ToggleGroup.Root
+                        type="single"
+                        value={formData.energyLevel ?? "any"}
+                        onValueChange={(v) => {
+                          if (!v) return;
+                          setFormData((prev) => ({
+                            ...prev,
+                            energyLevel: v === "any" ? null : (v as "HIGH" | "MEDIUM" | "LOW"),
+                          }));
+                        }}
+                        aria-label={t("form_label_energy")}
+                        className="flex gap-2 flex-wrap"
+                      >
+                        {(["any", "HIGH", "MEDIUM", "LOW"] as const).map((level) => (
+                          <ToggleGroup.Item
+                            key={level}
+                            value={level}
+                            style={chipStyle(
+                              (level === "any" && formData.energyLevel === null) ||
+                                formData.energyLevel === level,
+                            )}
+                          >
+                            {level === "any"
+                              ? t("energy_any")
+                              : t(`energy_${level.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low")}
+                          </ToggleGroup.Item>
+                        ))}
+                      </ToggleGroup.Root>
+                      {/* Topic-default hint */}
+                      {formData.energyLevel === null && formData.topicId && (() => {
+                        const selectedTopic = topics.find((tp) => tp.id === formData.topicId);
+                        if (!selectedTopic?.defaultEnergyLevel) return null;
+                        return (
+                          <p
+                            className="text-xs mt-1.5"
+                            style={{
+                              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                              color: "var(--accent-amber)",
+                            }}
+                          >
+                            {t("form_energy_topic_default_hint", {
+                              level: t(`energy_${selectedTopic.defaultEnergyLevel.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low"),
+                              topic: selectedTopic.title,
+                            })}
+                          </p>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Coin value (compact) */}
+                    <div>
+                      <label htmlFor="task-coins" style={labelStyle}>
+                        {t("form_label_coins")}
+                      </label>
+                      <input
+                        id="task-coins"
+                        name="coinValue"
+                        type="number"
+                        value={formData.coinValue}
+                        onChange={handleChange}
+                        min={1}
+                        max={10}
+                        style={{ ...inputStyle, maxWidth: "120px" }}
+                      />
+                    </div>
+
+                    {/* Task Group — only when topic selected */}
+                    {formData.topicId && (
+                      <div>
+                        <label htmlFor="task-group" style={labelStyle}>
+                          {tg("label")}
+                        </label>
+                        <input
+                          id="task-group"
+                          name="taskGroup"
+                          type="text"
+                          list="task-group-suggestions"
+                          value={formData.taskGroup}
+                          onChange={handleChange}
+                          placeholder={tg("placeholder")}
+                          style={inputStyle}
+                          autoComplete="off"
+                        />
+                        <datalist id="task-group-suggestions">
+                          {existingGroups.map((g) => (
+                            <option key={g} value={g} />
+                          ))}
+                        </datalist>
+                        {!formData.taskGroup && detectGroupFromTitle(formData.title) && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                taskGroup: detectGroupFromTitle(prev.title),
+                              }))
+                            }
+                            style={{
+                              marginTop: "4px",
+                              fontSize: "12px",
+                              color: "var(--accent-amber)",
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: 0,
+                              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                            }}
+                          >
+                            ↳ {tg("auto_detect")}: &bdquo;{detectGroupFromTitle(formData.title)}&ldquo;
+                          </button>
+                        )}
+                        <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px", fontFamily: "var(--font-ui)" }}>
+                          {tg("hint")}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Daily-eligible — kept accessible only via the existing data path */}
+                    {formData.type === "DAILY_ELIGIBLE" && (
+                      <p
+                        className="text-xs"
+                        style={{
+                          color: "var(--text-muted)",
+                          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                        }}
+                      >
+                        {t("form_type_daily_hint")}
+                      </p>
+                    )}
+
+                    {/* Notes */}
+                    <div>
+                      <label htmlFor="task-notes" style={labelStyle}>
+                        {t("form_label_notes")}
+                      </label>
+                      <textarea
+                        id="task-notes"
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleChange}
+                        rows={3}
+                        placeholder={t("form_placeholder_notes")}
+                        style={{
+                          ...inputStyle,
+                          resize: "vertical",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
-        {/* Footer buttons — always visible, never scrolls */}
+        {/* Footer buttons */}
         <div
           className="flex gap-3 px-6 py-4 flex-shrink-0"
           style={{ borderTop: "1px solid var(--border)" }}
@@ -752,7 +884,7 @@ export function TaskForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
+            className="flex-1 px-4 py-3 rounded-lg text-sm font-semibold transition-colors"
             style={{
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
               backgroundColor: "var(--accent-amber)",
