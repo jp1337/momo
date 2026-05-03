@@ -403,6 +403,7 @@ export function WishlistView({
             className="relative text-xl font-semibold mb-2"
             style={{
               fontFamily: "var(--font-display, 'Lora', serif)",
+              fontStyle: "italic",
               color: "var(--text-primary)",
             }}
           >

@@ -264,6 +264,7 @@ export function FiveMinuteView({ initialTasks, topics }: FiveMinuteViewProps) {
             className="text-base font-medium mb-1"
             style={{
               fontFamily: "var(--font-display, 'Lora', serif)",
+              fontStyle: "italic",
               color: "var(--text-primary)",
             }}
           >
@@ -301,6 +302,7 @@ export function FiveMinuteView({ initialTasks, topics }: FiveMinuteViewProps) {
             className="text-base font-medium mb-1"
             style={{
               fontFamily: "var(--font-display, 'Lora', serif)",
+              fontStyle: "italic",
               color: "var(--text-primary)",
             }}
           >
