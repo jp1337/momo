@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { CalendarFeedSection } from "@/components/settings/calendar-feed-section";
 import { OutboundWebhooks } from "@/components/settings/webhooks";
+import { SettingsSection } from "@/components/settings/settings-section";
 import { getCalendarFeedStatus } from "@/lib/calendar";
 import { listWebhookEndpoints } from "@/lib/webhooks";
 import { getTranslations } from "next-intl/server";
@@ -27,37 +28,27 @@ export default async function IntegrationsSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Calendar Feed */}
-      <section
-        className="rounded-xl p-6 flex flex-col gap-4"
-        style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
+      <SettingsSection
+        title={t("section_calendar_feed")}
+        hint={t("calendar_feed_hint")}
       >
-        <div className="flex flex-col gap-1">
-          <h2
-            className="text-base font-semibold"
-            style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
-          >
-            {t("section_calendar_feed")}
-          </h2>
-          <p className="text-sm" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-            {t("calendar_feed_hint")}
-          </p>
-        </div>
         <CalendarFeedSection
           initialActive={calendarFeed.active}
           initialCreatedAt={calendarFeed.createdAt ? calendarFeed.createdAt.toISOString() : null}
         />
-      </section>
+      </SettingsSection>
 
-      {/* Outbound Webhooks */}
       <section
-        className="rounded-xl p-6 flex flex-col gap-4"
+        className="rounded-2xl p-6 flex flex-col gap-4"
         style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
       >
         <div className="flex flex-col gap-1">
           <h2
-            className="text-base font-semibold"
-            style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
+            className="text-lg font-semibold"
+            style={{
+              fontFamily: "var(--font-display, 'Lora', serif)",
+              color: "var(--text-primary)",
+            }}
           >
             {t("section_outbound_webhooks")}
           </h2>
@@ -82,22 +73,7 @@ export default async function IntegrationsSettingsPage() {
         />
       </section>
 
-      {/* API Keys info card */}
-      <section
-        className="rounded-xl p-6 flex flex-col gap-3"
-        style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
-      >
-        <div className="flex flex-col gap-1">
-          <h2
-            className="text-base font-semibold"
-            style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
-          >
-            {t("section_api_keys")}
-          </h2>
-          <p className="text-sm" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-            {t("api_keys_hint")}
-          </p>
-        </div>
+      <SettingsSection title={t("section_api_keys")} hint={t("api_keys_hint")}>
         <Link
           href="/api-keys"
           className="self-start px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -111,7 +87,7 @@ export default async function IntegrationsSettingsPage() {
         >
           {t("api_keys_link")}
         </Link>
-      </section>
+      </SettingsSection>
     </div>
   );
 }

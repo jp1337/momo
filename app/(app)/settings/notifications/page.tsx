@@ -8,6 +8,7 @@ import { NotificationChannels } from "@/components/settings/notification-channel
 import { NotificationHistory } from "@/components/settings/notification-history";
 import { MorningBriefingSettings } from "@/components/settings/morning-briefing-settings";
 import { PushDevicesSection } from "@/components/settings/push-devices-section";
+import { SettingsSection } from "@/components/settings/settings-section";
 import { isEmailChannelAvailable } from "@/lib/notifications";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -68,22 +69,10 @@ export default async function NotificationsSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Push Notifications */}
-      <section
-        className="rounded-xl p-6 flex flex-col gap-4"
-        style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
+      <SettingsSection
+        title={t("section_notifications")}
+        hint={t("notifications_hint")}
       >
-        <div className="flex flex-col gap-1">
-          <h2
-            className="text-base font-semibold"
-            style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
-          >
-            {t("section_notifications")}
-          </h2>
-          <p className="text-sm" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-            {t("notifications_hint")}
-          </p>
-        </div>
         <NotificationSettings
           initialTime={user.notificationTime ?? "08:00"}
           initialDueTodayEnabled={user.dueTodayReminderEnabled}
@@ -115,48 +104,22 @@ export default async function NotificationsSettingsPage() {
             <PushDevicesSection />
           </>
         )}
-      </section>
+      </SettingsSection>
 
       {/* Morning Briefing — directly after Push, only when at least one delivery method exists */}
       {hasPushOrChannel && (
-        <section
-          className="rounded-xl p-6 flex flex-col gap-4"
-          style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
+        <SettingsSection
+          title={t("section_morning_briefing")}
+          hint={t("morning_briefing_hint")}
         >
-          <div className="flex flex-col gap-1">
-            <h2
-              className="text-base font-semibold"
-              style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
-            >
-              {t("section_morning_briefing")}
-            </h2>
-            <p className="text-sm" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-              {t("morning_briefing_hint")}
-            </p>
-          </div>
           <MorningBriefingSettings
             initialEnabled={user.morningBriefingEnabled}
             initialTime={user.morningBriefingTime ?? "08:00"}
           />
-        </section>
+        </SettingsSection>
       )}
 
-      {/* Notification Channels */}
-      <section
-        className="rounded-xl p-6 flex flex-col gap-4"
-        style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
-      >
-        <div className="flex flex-col gap-1">
-          <h2
-            className="text-base font-semibold"
-            style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
-          >
-            {t("section_channels")}
-          </h2>
-          <p className="text-sm" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-            {t("channels_hint")}
-          </p>
-        </div>
+      <SettingsSection title={t("section_channels")} hint={t("channels_hint")}>
         <NotificationChannels
           initialChannels={channelRows.map((ch) => ({
             type: ch.type,
@@ -166,28 +129,16 @@ export default async function NotificationsSettingsPage() {
           emailAvailable={isEmailChannelAvailable()}
           defaultEmailAddress={user.email ?? ""}
         />
-      </section>
+      </SettingsSection>
 
-      {/* Notification History */}
-      <section
-        className="rounded-xl p-6 flex flex-col gap-4"
-        style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
+      <SettingsSection
+        title={t("section_notification_history")}
+        hint={t("notification_history_hint")}
       >
-        <div className="flex flex-col gap-1">
-          <h2
-            className="text-base font-semibold"
-            style={{ fontFamily: "var(--font-ui)", color: "var(--text-primary)" }}
-          >
-            {t("section_notification_history")}
-          </h2>
-          <p className="text-sm" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-            {t("notification_history_hint")}
-          </p>
-        </div>
         <Suspense fallback={null}>
           <NotificationHistory />
         </Suspense>
-      </section>
+      </SettingsSection>
     </div>
   );
 }
