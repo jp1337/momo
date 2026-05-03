@@ -94,6 +94,7 @@
     "quest_postpones_none": "No more postponements today",
     "quest_bonus_coins": "×2 bonus — long avoided!",
     "quest_no_quest": "✦ No quest for today yet.",
+    "quest_eyebrow_label": "Today's Quest",
     "quest_no_quest_hint": "Head to Tasks to add your first task — Momo will pick one for you each day.",
     "quest_done": "Quest complete! ✨",
     "quest_done_hint": "+{coins} coins earned — come back tomorrow.",

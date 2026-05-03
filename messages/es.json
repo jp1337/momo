@@ -94,6 +94,7 @@
     "quest_postpones_none": "No quedan más aplazamientos hoy",
     "quest_bonus_coins": "×2 bonus — ¡lleva mucho tiempo evitado!",
     "quest_no_quest": "✦ Todavía no hay misión para hoy.",
+    "quest_eyebrow_label": "Misión de hoy",
     "quest_no_quest_hint": "Ve a Tareas para añadir tu primera tarea — Momo elegirá una por ti cada día.",
     "quest_done": "¡Misión completada! ✨",
     "quest_done_hint": "+{coins} monedas ganadas — vuelve mañana.",

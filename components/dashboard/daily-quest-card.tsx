@@ -333,6 +333,18 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
         <>
           {/* Quest header */}
           <div className="flex flex-col gap-2">
+            {/* Eyebrow label — gives the card hero theatricality */}
+            <span
+              className="text-xs font-semibold uppercase tracking-[0.18em] self-start"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--accent-amber)",
+                opacity: 0.85,
+              }}
+            >
+              {t("quest_eyebrow_label")}
+            </span>
+
             {/* Topic tag */}
             {quest.topic && (
               <span
@@ -357,9 +369,9 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
               </span>
             )}
 
-            {/* Task title */}
+            {/* Task title — bumped to text-2xl/3xl for hero presence */}
             <h3
-              className="text-xl font-semibold leading-snug"
+              className="text-2xl sm:text-3xl font-semibold leading-snug"
               style={{
                 fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
                 color: "var(--text-primary)",

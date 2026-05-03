@@ -94,6 +94,7 @@
     "quest_postpones_none": "Plus de reports possibles aujourd'hui",
     "quest_bonus_coins": "×2 bonus — longtemps évité !",
     "quest_no_quest": "✦ Pas encore de quête pour aujourd'hui.",
+    "quest_eyebrow_label": "Quête du jour",
     "quest_no_quest_hint": "Va dans Tâches pour ajouter ta première tâche — Momo en choisira une chaque jour.",
     "quest_done": "Quête accomplie ! ✨",
     "quest_done_hint": "+{coins} coins gagnés — reviens demain.",

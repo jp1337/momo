@@ -202,10 +202,22 @@ h6 {
 }
 
 /* ─── Focus styles ──────────────────────────────────────────────────────────── */
+/*
+ * Two-layer focus indicator — solid outline for AAA-compliance + a soft amber
+ * glow halo via box-shadow for visual richness. The shadow uses color-mix so it
+ * remains readable in both dark and light themes.
+ */
 :focus-visible {
   outline: 2px solid var(--accent-amber);
   outline-offset: 2px;
   border-radius: 4px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent-amber) 22%, transparent);
+  transition: box-shadow 0.12s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  :focus-visible {
+    transition: none;
+  }
 }
 
 /* ─── Selection ─────────────────────────────────────────────────────────────── */
