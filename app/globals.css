@@ -183,6 +183,39 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── Daily Quest "breathing" glow ──────────────────────────────────────────── */
+/*
+ * Subtle pulse on the amber border + halo of the Daily Quest card. Period
+ * is intentionally slow (5s) and amplitude small (~5% opacity variation)
+ * so it reads as "the card is alive" rather than "look at me, look at me".
+ *
+ * Disabled completely under prefers-reduced-motion — for ADHS users who
+ * are sensitive to motion, the breathing would be the opposite of calm.
+ */
+@keyframes quest-breathe {
+  0%, 100% {
+    box-shadow:
+      0 0 16px color-mix(in srgb, var(--accent-amber) 12%, transparent),
+      var(--shadow-md);
+  }
+  50% {
+    box-shadow:
+      0 0 28px color-mix(in srgb, var(--accent-amber) 22%, transparent),
+      var(--shadow-md);
+  }
+}
+.quest-card-breathing {
+  animation: quest-breathe 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .quest-card-breathing {
+    animation: none;
+    box-shadow:
+      0 0 16px color-mix(in srgb, var(--accent-amber) 15%, transparent),
+      var(--shadow-md);
+  }
+}
+
 /* ─── Frosted-glass utility ─────────────────────────────────────────────────── */
 /*
  * Targeted glassmorphism for surfaces that float over scrolling content

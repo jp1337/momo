@@ -246,12 +246,17 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="rounded-2xl p-6 flex flex-col gap-4"
+      // Breathing glow only on the active-quest state — completed/empty
+      // states don't need the live indicator. Inline boxShadow is removed
+      // because the .quest-card-breathing keyframes own it.
+      className={`rounded-2xl p-6 sm:p-8 flex flex-col gap-4 ${quest && !isCompleted ? "quest-card-breathing" : ""}`}
       style={{
         backgroundColor: "var(--bg-surface)",
         border: "1px solid var(--accent-amber)",
-        boxShadow:
-          "0 0 20px color-mix(in srgb, var(--accent-amber) 15%, transparent), var(--shadow-md)",
+        // Static glow for completed/empty states (no animation)
+        boxShadow: quest && !isCompleted
+          ? undefined
+          : "0 0 16px color-mix(in srgb, var(--accent-amber) 12%, transparent), var(--shadow-md)",
       }}
     >
       {/* No quest — empty state */}
@@ -369,9 +374,11 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
               </span>
             )}
 
-            {/* Task title — bumped to text-2xl/3xl for hero presence */}
+            {/* Task title — display-scale typography for true hero presence.
+                The Daily Quest is THE one thing today; it should read like
+                a headline, not like a list item. */}
             <h3
-              className="text-2xl sm:text-3xl font-semibold leading-snug"
+              className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight tracking-tight"
               style={{
                 fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
                 color: "var(--text-primary)",
