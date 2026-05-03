@@ -95,7 +95,7 @@ export function BulkActionBar({
               </span>
               <button
                 onClick={onClearSelection}
-                className="p-1 rounded transition-colors hover:opacity-70"
+                className="p-2.5 -m-1 rounded transition-colors hover:opacity-70"
                 aria-label={t("bulk_exit_select")}
                 style={{ color: "var(--text-muted)" }}
               >

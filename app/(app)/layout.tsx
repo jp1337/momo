@@ -107,9 +107,15 @@ export default async function AppLayout({
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <Sidebar />
 
-        {/* Main content area — pb-16 prevents content hiding behind mobile bottom nav */}
+        {/*
+          Main content area
+          - px-4 on mobile (16px), px-6 from sm+ (24px) for tighter density on phones
+          - pb-24 on mobile so the last item never disappears behind the fixed
+            bottom nav (~64px tall + safe-area). Reduced to pb-6 from md+ where
+            the bottom nav is hidden.
+        */}
         <main
-          className="flex-1 overflow-y-auto p-6"
+          className="flex-1 overflow-y-auto px-4 pt-6 pb-24 sm:px-6 md:pb-6"
           style={{ backgroundColor: "var(--bg-primary)" }}
         >
           {children}

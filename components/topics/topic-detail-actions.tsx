@@ -54,7 +54,7 @@ export function TopicDetailActions({ topic }: TopicDetailActionsProps) {
           <TooltipTrigger asChild>
             <button
               onClick={() => setShowEditForm(true)}
-              className="p-2 rounded-lg transition-colors"
+              className="p-3 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               style={{ color: "var(--text-muted)" }}
               aria-label={t("aria_edit")}
             >
@@ -67,7 +67,7 @@ export function TopicDetailActions({ topic }: TopicDetailActionsProps) {
           onConfirm={handleDelete}
           confirmPrompt={t("confirm_delete")}
           disabled={isDeleting}
-          className="p-2 rounded-lg transition-colors disabled:opacity-50"
+          className="p-3 rounded-lg transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
           style={{ color: "var(--text-muted)" }}
           aria-label={t("aria_delete")}
         >

@@ -79,8 +79,8 @@ export function Navbar({ userName, userImage, userEmail, initialCoins = 0, initi
         </span>
       </Link>
 
-      {/* Right-side actions */}
-      <div className="flex items-center gap-3">
+      {/* Right-side actions — tighter gap on mobile to fit on 320–375px viewports */}
+      <div className="flex items-center gap-1.5 sm:gap-3">
         <LevelBadge level={initialLevel} title={levelTitle} />
         <CoinCounter initialCoins={initialCoins} />
         <ThemeToggle />

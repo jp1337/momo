@@ -101,7 +101,7 @@ export function DialogContent({
           </div>
           {!hideClose && (
             <RadixDialog.Close
-              className="p-1.5 rounded-lg transition-colors flex-shrink-0"
+              className="p-2.5 -m-1.5 rounded-lg transition-colors flex-shrink-0"
               style={{ color: "var(--text-muted)" }}
               aria-label={tc("close")}
             >
