@@ -309,6 +309,7 @@
     "energy_low": "Low",
     "form_label_sequential": "Sequential tasks",
     "form_sequential_hint": "Only the first still-open task is eligible for the daily quest. Set the order via drag & drop.",
+    "form_toggle_more": "More options (priority, energy, sequential, description)",
     "sequential_badge": "Sequential",
     "detail_sequential_hint": "Sequential: the drag & drop order determines which task is eligible as today's quest.",
     "form_label_description": "Description",

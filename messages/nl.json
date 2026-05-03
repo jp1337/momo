@@ -309,6 +309,7 @@
     "energy_low": "Laag",
     "form_label_sequential": "Opeenvolgende taken",
     "form_sequential_hint": "Alleen de eerste nog openstaande taak is geschikt voor de dagelijkse opdracht. Stel de volgorde in via slepen en neerzetten.",
+    "form_toggle_more": "Meer opties (prioriteit, energie, sequentieel, beschrijving)",
     "sequential_badge": "Opeenvolgend",
     "detail_sequential_hint": "Opeenvolgend: de volgorde bij slepen en neerzetten bepaalt welke taak geschikt is als opdracht van vandaag.",
     "form_label_description": "Beschrijving",

@@ -309,6 +309,7 @@
     "energy_low": "Niedrig",
     "form_label_sequential": "Sequenzielle Aufgaben",
     "form_sequential_hint": "Nur die erste offene Aufgabe kann als tägliche Quest gewählt werden. Reihenfolge per Drag & Drop festlegen.",
+    "form_toggle_more": "Mehr Optionen (Priorität, Energy, Sequenziell, Beschreibung)",
     "sequential_badge": "Sequenziell",
     "detail_sequential_hint": "Sequenziell: Die Drag-&-Drop-Reihenfolge entscheidet, welche Aufgabe als tägliche Quest wählbar ist.",
     "form_label_description": "Beschreibung",

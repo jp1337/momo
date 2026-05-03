@@ -309,6 +309,7 @@
     "energy_low": "Baja",
     "form_label_sequential": "Tareas secuenciales",
     "form_sequential_hint": "Solo la primera tarea abierta es apta para la misión diaria. Establece el orden con arrastrar y soltar.",
+    "form_toggle_more": "Más opciones (prioridad, energía, secuencial, descripción)",
     "sequential_badge": "Secuencial",
     "detail_sequential_hint": "Secuencial: el orden de arrastrar y soltar determina qué tarea es apta como misión de hoy.",
     "form_label_description": "Descripción",

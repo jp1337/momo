@@ -309,6 +309,7 @@
     "energy_low": "Bas",
     "form_label_sequential": "Tâches séquentielles",
     "form_sequential_hint": "Seule la première tâche encore ouverte peut être choisie comme quête quotidienne. Définissez l'ordre par glisser-déposer.",
+    "form_toggle_more": "Plus d'options (priorité, énergie, séquentiel, description)",
     "sequential_badge": "Séquentiel",
     "detail_sequential_hint": "Séquentiel : l'ordre par glisser-déposer détermine quelle tâche est éligible comme quête du jour.",
     "form_label_description": "Description",
