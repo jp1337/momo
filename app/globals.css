@@ -216,6 +216,30 @@ body {
   }
 }
 
+/* ─── Page transitions (native View Transitions API) ───────────────────────── */
+/*
+ * Soft cross-fade between routes on browsers that support the View
+ * Transitions API (Chrome 111+, Safari 18+). Firefox falls back to
+ * instant navigation, which is also fine.
+ *
+ * Disabled under prefers-reduced-motion — instant snap is the right
+ * behaviour for users who opt out of motion.
+ */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+  animation-timing-function: ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0s;
+  }
+}
+
 /* ─── Frosted-glass utility ─────────────────────────────────────────────────── */
 /*
  * Targeted glassmorphism for surfaces that float over scrolling content

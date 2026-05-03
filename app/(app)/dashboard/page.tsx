@@ -265,7 +265,11 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-8">
+    // Wider on lg+ and bigger gaps between sections — gives the dashboard
+    // breathing room on desktop without restructuring the natural top-down
+    // reading order. Anti-procrastination users do better with a single
+    // linear scan path than with a multi-column dashboard.
+    <div className="max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-8 lg:gap-12">
       {/* ── Greeting ─────────────────────────────────────────────────────────── */}
       <div className="relative">
         {/* Atmospheric background glow behind greeting */}
