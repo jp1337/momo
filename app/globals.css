@@ -16,24 +16,25 @@
 
 @import "tailwindcss";
 
-/* ─── Dark Mode (default) — "Warme Dämmerung" ──────────────────────────────── */
+/* ─── Dark Mode (default) — "Wald nach dem Regen" ──────────────────────────── */
 /*                                                                               */
-/* Konzept: Tannenwald zur blauen Stunde. Nicht Mitternacht, sondern Dämmerung. */
-/* Die Backgrounds liegen bei L 12–28 % — deutlich unterscheidbare Ebenen,     */
-/* kein erdrückendes Schwarz. Warme Grüntöne, weiches Creme-Weiß.              */
+/* Konzept: Entsättigte Forest-Charcoals. Grün ist ein Akzent, nicht die       */
+/* Grundtemperatur — die Backgrounds sind warmes Steingrau mit einem Hauch    */
+/* Tannengrün, sodass die Akzente (Amber/Grün/Rot) richtig zur Geltung kommen */
+/* statt sich an den Wänden zu reiben.                                         */
 :root,
 [data-theme="dark"] {
-  /* Backgrounds — Ebenen mit klarem Kontrast (~10 % L-Abstand je Stufe) */
-  --bg-primary: #1a1f1b;   /* L 12 % — Seitengrund */
-  --bg-surface: #2e3d30;   /* L 23 % — Karten, Listen (war #222820, L 16 %) */
-  --bg-elevated: #3a4e3c;  /* L 28 % — Modals, Dropdowns (war #2b3429, L 20 %) */
+  /* Backgrounds — Steingrau mit subtiler Forest-Note, ~30 % weniger Sättigung als zuvor */
+  --bg-primary: #181c1a;   /* L 11 % — Seitengrund */
+  --bg-surface: #242a26;   /* L 17 % — Karten, Listen */
+  --bg-elevated: #2d342f;  /* L 21 % — Modals, Dropdowns */
 
-  /* Borders — deutlich sichtbarer */
-  --border: #52735a;       /* L 38 %  (war #3d5342, L 30 %) */
+  /* Borders — sichtbar aber neutral, nicht mehr „grün auf grün auf grün" */
+  --border: #3d4842;       /* L 28 % */
 
-  /* Text — sanftes Creme, kein hartes Weiß */
+  /* Text — sanftes Creme bleibt, der Muted-Ton wird wärmer und weniger grün */
   --text-primary: #eedfc6;
-  --text-muted: #9db89f;   /* etwas heller für bessere Lesbarkeit auf helleren Surfaces */
+  --text-muted: #9aa39c;   /* warmes Steingrau mit Hauch Grün */
 
   /* Accent colours */
   --accent-amber: #f0a500;
