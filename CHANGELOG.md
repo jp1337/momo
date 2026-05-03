@@ -9,6 +9,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Onboarding: Abschluss-Moment** — Nach dem Notifications-Schritt erscheint ein fünfter „Complete"-Step mit doppeltem Konfetti-Burst, animiertem Amber-Glow-Kreis, Lora-italic-Begrüßung und einer 3-s-Fortschrittsbar die automatisch zum Dashboard weiterleitet. Alle 4 Fortschritts-Punkte wechseln auf grün. Der API-Call läuft parallel zur Transition (non-blocking).
+- **Wishlist: Coin-Progress-Ring** — Jede Wunschlisten-Karte mit `coinUnlockThreshold` zeigt jetzt einen 52px SVG-Kreis-Ring (gold = gesperrt, grün = entsperrbar) plus einen goldenen linearen Fortschrittsbalken mit „X Coins noch" / „Entsperrbar!" — aspirational statt blockierend.
+- **Wishlist-Karten visuell aufgewertet** — Größeres Padding (`p-5`), Titel auf 0.9375rem, Preis auf 1.625rem, `card-hover` auf Desktop. FA-Icon-Buttons (`faPen`/`faXmark`) ersetzen Unicode-Glyphen. Erledigt-Sektion splittet in Gekauft-Galerie (grüner linker Rand) + Abgelegt-Sub-Sektion mit Eyebrow-Label.
+- **Skeleton Loading States** — `loading.tsx` für Dashboard, Aufgaben, Themen und Wunschliste. Verwendet `animate-pulse` mit `var(--bg-elevated)`-Platzhaltern; keine Cumulative Layout Shifts beim ersten Render auf langsamen Verbindungen.
+- **Focus Mode als Tempel** — `TempleHalos`-Komponente mit zwei überlagerten Radial-Gradienten (Amber 12/20% Zentrum, Forest Green 6/10% unten). `intense=true` bei Work- und Done-Phase. Task-Card bekommt Amber-22%-Rand + äußeren Glow-Ring. SelectionPhase mit `scale(0.98)→1`-Entry + Amber-Eyebrow-Label über dem Lora-Heading.
+
+### Changed
+
+- **Typografie: Lora italic in Human-Moments** — `fontStyle: "italic"` auf Lora-Display-Headings überall wo Momo „spricht": Task-Empty-State (zeitbasiert: Guten Morgen!/Perfekt!), Wunschliste-Empty, Themen-Empty, 5-Min-„Alles erledigt" und „Keine 5-Min-Aufgaben". Strukturelle Headings (Settings, Navigation) bleiben nicht-kursiv.
+- **Unicode-Glyphen durch FontAwesome ersetzt** — `✎` → `faPen`, `✕` → `faXmark`, `▶` → `faChevronRight` in `topic-card.tsx`, `topic-detail-actions.tsx`, `topics-grid.tsx`, `wishlist-view.tsx`. Verbessert Accessibility (Screenreader) und konsistentes Icon-Rendering.
+
 - **Russisch und Chinesisch (vereinfacht) als neue UI-Sprachen** — Momo spricht jetzt 7 Sprachen. Alle 1030 Übersetzungsschlüssel sind in `ru.json` und `zh.json` gepflegt (kyrillisch für RU, 简体中文 für ZH). E-Mail-Templates unterstützen die neuen Locales, Language-Switcher zeigt 🇷🇺 Русский und 🇨🇳 中文. Russische Pluralformen (one/few/many/other) korrekt umgesetzt; Chinesisch nutzt erwartungsgemäß nur `other`. Initial AI-assistierte Übersetzungen — Native-Speaker-PRs willkommen.
 - **Admin-Panel: Top 10 zeigt auch Nutzer ohne Abschlüsse** — Die Top-10-Tabelle benutzt jetzt `LEFT JOIN` statt `INNER JOIN`. Sortierung weiterhin nach Completions absteigend, bei Gleichstand nach Coins. Frische Accounts erscheinen jetzt mit `0` statt komplett ausgeblendet zu werden.
 - **Radix UI Primitives für Accessibility** — Fünf Radix-Primitives integriert, ohne Momos Design-System anzutasten. Alle Wrapper liegen unter `components/ui/` und nutzen ausschließlich die bestehenden CSS-Variablen (kein neues Design-Token-System):

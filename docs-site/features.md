@@ -18,6 +18,7 @@ When you sign in to Momo for the first time, a short guided wizard helps you get
 2. **Create your first topic** — a simplified form lets you pick a name, icon, and color for your first topic. Topics group related tasks together (e.g. "Moving", "Health", "Side Project").
 3. **Add a few tasks** — a quick-add field lets you type task titles and hit Enter. Each task is added to the topic you just created.
 4. **Notifications** — Momo detects your timezone and offers to enable push notifications so you receive a daily quest reminder.
+5. **Celebration moment** — a confetti burst and animated amber screen confirm you are ready. Momo redirects to the dashboard after 3 seconds (or immediately when you click the CTA button).
 
 Every step can be skipped — the wizard is a gentle guide, not a gate. Once you finish (or skip through), Momo marks your onboarding as done and you land on the dashboard. The wizard never appears again.
 
@@ -128,18 +129,19 @@ If your dashboard has qualifying tasks, a prominent **"I only have 5 minutes"** 
 
 When you want to block out everything except what matters right now, switch to **Focus Mode**. Open it from the sidebar (bullseye icon), the dashboard banner, or the avatar menu.
 
-Focus Mode shows exactly two things:
+Focus Mode is designed as a visual sanctuary. When you enter it, the interface shifts to a full-screen, immersive view with ambient amber and forest-green lighting — a deliberate signal that you have left the regular app and entered a focused space. You select up to three tasks to work through, then tackle them one at a time on a centered card.
 
-1. **Your Daily Quest** — the hero card with complete, postpone, and energy check-in
-2. **Quick Wins** — up to 10 uncompleted tasks with a time estimate of 15 minutes or less
+**How it works:**
 
-There are no stats, no quick links, no search bar. Just the quest and the short tasks. All completion animations still work — confetti, coins, level-up, and achievements fire normally.
+1. **Select phase** — choose 1–3 tasks from your open task list. Tasks are sorted by priority then coin value.
+2. **Work phase** — one task at a time on a full-screen card with a large amber "Done" button and a skip option. Progress dots at the top track how far along you are.
+3. **Done phase** — a celebration screen shows how many tasks you completed and how many coins you earned.
 
-When you complete the quest and all quick wins, a calm celebration message appears with a link back to the dashboard.
+All completion animations still work — confetti, coins, level-up, and achievements fire normally.
 
 On mobile, Focus Mode replaces the 5-Minute Mode in the bottom navigation bar. On desktop, both are available in the sidebar.
 
-> **Tip:** Use Focus Mode on days when your task list feels overwhelming. Seeing only the quest and a few quick wins removes the wall that triggers avoidance.
+> **Tip:** Use Focus Mode on days when your task list feels overwhelming. The act of selecting just three tasks removes the paralysis that comes from seeing everything at once.
 
 ### Snooze — pause a task
 
@@ -426,7 +428,9 @@ Click **Add Item** and fill in:
 
 When you are ready to purchase, click **Buy**. Momo marks the item as bought, deducts the price from your monthly budget, and triggers a confetti animation.
 
-If the item has a **coin threshold**, the buy button shows the coin cost (e.g. "🪙 Buy (50 coins)"). Purchasing atomically deducts those coins from your balance — the coin counter in the navigation bar updates immediately. If you don't have enough coins yet, the buy button is disabled and a lock indicator shows how many more coins you need. Spending coins does **not** reduce your level — levels reflect cumulative effort and never go down.
+If the item has a **coin threshold**, the buy button shows the coin cost (e.g. "🪙 Buy (50 coins)"). Purchasing atomically deducts those coins from your balance — the coin counter in the navigation bar updates immediately.
+
+When you haven't reached the threshold yet, each wishlist card shows a **coin progress ring** (a circular SVG indicator) and a progress bar showing exactly how far along you are — for example "340 coins to go" with a bar at 67%. This makes the goal feel achievable rather than blocking. Once you have enough coins, the ring and bar turn green and the buy button unlocks. Spending coins does **not** reduce your level — levels reflect cumulative effort and never go down.
 
 ### Discarding an item
 
