@@ -191,30 +191,45 @@ async function HabitsTab({
 
       {habits.length === 0 ? (
         <div
-          className="rounded-xl p-8 flex flex-col items-center gap-3 text-center"
+          className="relative rounded-2xl p-12 sm:p-16 flex flex-col items-center gap-3 text-center overflow-hidden"
           style={{ backgroundColor: "var(--bg-surface)", border: "1px dashed var(--border)" }}
         >
+          {/* Soft green halo behind the icon — same atmospheric pattern as the other empty states */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: "20%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "240px",
+              height: "240px",
+              borderRadius: "50%",
+              background: "radial-gradient(circle, color-mix(in srgb, var(--accent-green) 14%, transparent) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }}
+          />
           <FontAwesomeIcon
             icon={faSeedling}
-            className="w-8 h-8"
-            style={{ color: "var(--accent-green)", opacity: 0.5 }}
+            className="relative mb-2"
+            style={{ color: "var(--accent-green)", opacity: 0.7, fontSize: "2.75rem" }}
             aria-hidden="true"
           />
           <h3
-            className="text-lg"
+            className="relative text-xl font-semibold"
             style={{ fontFamily: "var(--font-display, 'Lora', serif)", color: "var(--text-primary)" }}
           >
             {t("empty_title")}
           </h3>
           <p
-            className="text-sm max-w-md"
-            style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
+            className="relative text-sm max-w-md"
+            style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)", lineHeight: 1.6 }}
           >
             {t("empty_body")}
           </p>
           <Link
             href="/tasks"
-            className="mt-2 px-4 py-2 rounded-lg text-sm font-medium no-underline"
+            className="relative mt-2 px-5 py-2.5 rounded-lg text-sm font-semibold no-underline transition-transform duration-150 hover:scale-105"
             style={{
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
               backgroundColor: "var(--accent-green)",
@@ -525,7 +540,7 @@ async function ReviewTab({ userId }: { userId: string }) {
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {/* Completed */}
-          <div className="rounded-xl p-5 flex flex-col gap-2" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
+          <div className="card-hover rounded-2xl p-5 flex flex-col gap-2" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium uppercase tracking-wider" style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}>{t("completed")}</span>
               <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4" style={{ color: "var(--accent-green)" }} aria-hidden="true" />
@@ -534,7 +549,7 @@ async function ReviewTab({ userId }: { userId: string }) {
             <span className="text-xs font-medium" style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: deltaColor }}>{deltaText}</span>
           </div>
           {/* Postponed */}
-          <div className="rounded-xl p-5 flex flex-col gap-2" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
+          <div className="card-hover rounded-2xl p-5 flex flex-col gap-2" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium uppercase tracking-wider" style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}>{t("postponed")}</span>
               <FontAwesomeIcon icon={faForward} className="w-4 h-4" style={{ color: "var(--text-muted)" }} aria-hidden="true" />
@@ -542,7 +557,7 @@ async function ReviewTab({ userId }: { userId: string }) {
             <span className="text-2xl font-bold" style={{ fontFamily: "var(--font-display, 'Lora', serif)", color: "var(--text-primary)" }}>{review.postponementsThisWeek}</span>
           </div>
           {/* Coins */}
-          <div className="rounded-xl p-5 flex flex-col gap-2" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
+          <div className="card-hover rounded-2xl p-5 flex flex-col gap-2" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium uppercase tracking-wider" style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}>{t("coins_earned")}</span>
               <FontAwesomeIcon icon={faCoins} className="w-4 h-4" style={{ color: "var(--coin-gold)" }} aria-hidden="true" />
@@ -550,7 +565,7 @@ async function ReviewTab({ userId }: { userId: string }) {
             <span className="text-2xl font-bold" style={{ fontFamily: "var(--font-display, 'Lora', serif)", color: "var(--coin-gold)" }}>{review.coinsEarnedThisWeek}</span>
           </div>
           {/* Streak */}
-          <div className="rounded-xl p-5 flex flex-col gap-2" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
+          <div className="card-hover rounded-2xl p-5 flex flex-col gap-2" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium uppercase tracking-wider" style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}>{t("streak")}</span>
               <FontAwesomeIcon icon={faFire} className="w-4 h-4" style={{ color: "var(--accent-red)" }} aria-hidden="true" />
@@ -559,7 +574,7 @@ async function ReviewTab({ userId }: { userId: string }) {
             <span className="text-xs" style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}>{t("streak_max")}: {review.streakMax}d</span>
           </div>
           {/* Tasks created */}
-          <div className="rounded-xl p-5 flex flex-col gap-2" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
+          <div className="card-hover rounded-2xl p-5 flex flex-col gap-2" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow-sm)" }}>
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium uppercase tracking-wider" style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}>{t("tasks_created")}</span>
               <FontAwesomeIcon icon={faPlus} className="w-4 h-4" style={{ color: "var(--text-muted)" }} aria-hidden="true" />
@@ -575,14 +590,14 @@ async function ReviewTab({ userId }: { userId: string }) {
           {t("section_topics")}
         </h3>
         {review.topTopics.length === 0 ? (
-          <div className="rounded-xl p-6 text-center" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}>
+          <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}>
             <FontAwesomeIcon icon={faFolderOpen} className="w-8 h-8 mb-2" style={{ color: "var(--text-muted)", opacity: 0.5 }} aria-hidden="true" />
             <p className="text-sm" style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}>{t("no_topics")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {review.topTopics.map((topic) => (
-              <div key={topic.title} className="rounded-xl p-5 flex items-center gap-3" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}>
+              <div key={topic.title} className="card-hover rounded-2xl p-5 flex items-center gap-3" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}>
                 <FontAwesomeIcon icon={resolveTopicIcon(topic.icon)} className="w-5 h-5 flex-shrink-0" style={{ color: "var(--accent-amber)" }} aria-hidden="true" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate" style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-primary)" }}>{topic.title}</p>
@@ -596,7 +611,7 @@ async function ReviewTab({ userId }: { userId: string }) {
 
       {/* Motivational message */}
       <section>
-        <div className="rounded-xl p-6 text-center" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderLeft: "4px solid var(--accent-amber)" }}>
+        <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderLeft: "4px solid var(--accent-amber)" }}>
           <p className="text-lg italic" style={{ fontFamily: "var(--font-display, 'Lora', serif)", color: "var(--text-primary)" }}>
             {t(motivationKey)}
           </p>
