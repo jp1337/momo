@@ -37,6 +37,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Onboarding-Wizard polished** — Welcome-Concept-Cards mit `.card-hover`, größere Title-Inputs (17px JetBrains Mono) in Topic- und Tasks-Steps, echte Loading-Labels statt „...".
 - **API-Keys-Page neuer Look** — Karten auf rounded-2xl, Empty-State im Halo-Pattern wie /tasks /wishlist /topics, Form-Header in Lora Display 18px.
 - **Polish-Runde 3: Detail-Seiten** — Topic-Detail-Empty-State im einheitlichen Halo-Pattern (Halo-Farbe nimmt Topic-Akzent auf), Stats-Page-Karten alle auf `rounded-2xl`, Top-4-Metric-Karten in Stats und Dashboard mit `.card-hover`.
+- **Progress-Page polished** — Habits/Achievements/Review-Tabs auf gleichem Visual-Standard wie Stats/Dashboard. 9 Karten auf `rounded-2xl`, 5 Stat-Tiles und Topic-Activity-Rows mit `.card-hover`. Habits-Empty-State im Halo-Pattern.
+
+### Fixed
+
+- **Mobile: Tap-Targets, Content-Padding, Navbar-Gap** — Main-Content hat jetzt `pb-24` damit der letzte Task nicht hinter der MobileNav verschwindet. Mobile-Padding auf `px-4` (statt `px-6`) für mehr Atemraum. Dialog-Close-Button, TopicDetailActions-Buttons (✎/✕) und BulkActionBar-Close auf 44px-Tap-Target erweitert. Navbar-Gap auf Mobile von `gap-3` auf `gap-1.5` reduziert um Overflow auf 320–375px-Geräten zu vermeiden.
 - **A11y-Hygiene auf Toggle-Buttons** — Button-basierte Toggles, die vorher als generische Buttons angekündigt wurden, haben jetzt korrekte Switch- bzw. Radio-Semantik. EmotionalClosure-Settings sind jetzt eine `radiogroup` mit `role=radio`/`aria-checked`, der Push-Device Bell/Bell-Slash-Toggle hat `role=switch`/`aria-checked`. Screenreader sagen jetzt „Schalter, ein/aus" statt „Schaltfläche".
 
 ### Fixed
