@@ -57,6 +57,9 @@ export default async function ProgressPage({
               <Link
                 key={key}
                 href={`/progress?tab=${key}`}
+                // Tab nav follows the same monochromatic rule — bg tint for
+                // active state, no amber accent. The bolder weight + filled
+                // background already make the active tab unambiguous.
                 style={{
                   padding: "6px 16px",
                   borderRadius: "8px",
@@ -65,10 +68,7 @@ export default async function ProgressPage({
                   fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
                   textDecoration: "none",
                   background: isActive ? "var(--bg-elevated)" : "transparent",
-                  color: isActive ? "var(--accent-amber)" : "var(--text-muted)",
-                  borderBottom: isActive
-                    ? "2px solid var(--accent-amber)"
-                    : "2px solid transparent",
+                  color: isActive ? "var(--text-primary)" : "var(--text-muted)",
                   transition: "all 0.15s",
                 }}
               >

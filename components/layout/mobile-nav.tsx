@@ -61,9 +61,12 @@ export function MobileNav() {
           <Link
             key={item.href}
             href={item.href}
+            // Active nav items use text-primary + bolder weight only — no amber.
+            // Same monochromatic-hierarchy rule as the desktop sidebar.
             className="flex-1 flex flex-col items-center gap-1 py-2.5 px-1 no-underline transition-colors duration-150"
             style={{
-              color: isActive ? "var(--accent-amber)" : "var(--text-muted)",
+              color: isActive ? "var(--text-primary)" : "var(--text-muted)",
+              fontWeight: isActive ? 600 : 400,
             }}
           >
             <FontAwesomeIcon

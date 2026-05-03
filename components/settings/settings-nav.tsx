@@ -39,15 +39,14 @@ export function SettingsNav() {
             <Link
               key={item.href}
               href={item.href}
+              // Same monochromatic-hierarchy rule as the main sidebar:
+              // active nav items get a bg tint, not a colored border.
               className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
               style={{
                 fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
                 fontWeight: isActive ? 600 : 400,
                 backgroundColor: isActive ? "var(--bg-elevated)" : "transparent",
                 color: isActive ? "var(--text-primary)" : "var(--text-muted)",
-                borderLeft: isActive
-                  ? "2px solid var(--accent-amber)"
-                  : "2px solid transparent",
                 textDecoration: "none",
               }}
             >
@@ -79,9 +78,6 @@ export function SettingsNav() {
                 fontWeight: isActive ? 600 : 400,
                 backgroundColor: isActive ? "var(--bg-elevated)" : "transparent",
                 color: isActive ? "var(--text-primary)" : "var(--text-muted)",
-                borderBottom: isActive
-                  ? "2px solid var(--accent-amber)"
-                  : "2px solid transparent",
                 textDecoration: "none",
               }}
             >

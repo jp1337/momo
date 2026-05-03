@@ -70,6 +70,10 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              // Active nav items use a subtle bg tint only — no amber border.
+              // Per the monochromatic-hierarchy rule, amber is reserved for
+              // the Daily Quest and primary CTAs; navigation is structural
+              // and shouldn't compete for attention.
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 no-underline"
               style={{
                 fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
@@ -77,9 +81,6 @@ export function Sidebar() {
                   ? "var(--bg-elevated)"
                   : "transparent",
                 color: isActive ? "var(--text-primary)" : "var(--text-muted)",
-                borderLeft: isActive
-                  ? "2px solid var(--accent-amber)"
-                  : "2px solid transparent",
               }}
             >
               <FontAwesomeIcon

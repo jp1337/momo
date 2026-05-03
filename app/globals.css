@@ -43,6 +43,39 @@
   --coin-gold: #ffd060;
   --rarity-legendary: #c084fc; /* Violett für Legendary-Achievements */
 
+  /*
+   * Monochromatic Hierarchy Tokens
+   * ───────────────────────────────────────────────────────────────────────
+   * Inspired by 2026 calm-design recommendations for ADHD/neurodiversity
+   * audiences: instead of using multiple notification colors for hierarchy,
+   * use shades of a SINGLE color. Amber's the chosen authority colour.
+   *
+   * Usage rules:
+   *   --accent-amber-100 (= --accent-amber)  →  THE one most-important thing
+   *                                              on the current screen.
+   *                                              ONE per page maximum
+   *                                              (Daily Quest, primary CTA,
+   *                                              active sequential step).
+   *   --accent-amber-60                       →  Secondary accents — chips,
+   *                                              selected toggles, ToggleGroup
+   *                                              items. May appear several
+   *                                              times but never compete with
+   *                                              the 100% element.
+   *   --accent-amber-25                       →  Tints — soft backgrounds,
+   *                                              hover states, badges,
+   *                                              insight chips.
+   *   --accent-amber-10                       →  Whisper — subtle borders,
+   *                                              barely-perceptible accents.
+   *
+   * Anti-pattern: multiple --accent-amber-100 elements on one page. If you
+   * need to highlight more than one thing equally, neither is THE one — use
+   * --accent-amber-60 for both.
+   */
+  --accent-amber-100: var(--accent-amber);
+  --accent-amber-60:  color-mix(in srgb, var(--accent-amber) 60%, transparent);
+  --accent-amber-25:  color-mix(in srgb, var(--accent-amber) 25%, transparent);
+  --accent-amber-10:  color-mix(in srgb, var(--accent-amber) 10%, transparent);
+
   /* Semantic tokens */
   --color-background: var(--bg-primary);
   --color-surface: var(--bg-surface);
