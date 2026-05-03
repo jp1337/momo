@@ -105,10 +105,7 @@ export function QuickAddModal() {
   return (
     <RadixDialog.Root open={open} onOpenChange={setOpen}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay
-          className="fixed inset-0 z-40"
-          style={{ background: "rgba(0,0,0,0.5)" }}
-        />
+        <RadixDialog.Overlay className="fixed inset-0 z-40 frosted-overlay" />
         <RadixDialog.Content
           aria-label={t("title")}
           onOpenAutoFocus={(e) => {

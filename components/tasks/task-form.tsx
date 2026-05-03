@@ -307,8 +307,8 @@ export function TaskForm({
 
   return (
     <div
-      className="fixed inset-0 z-[60] sm:flex sm:items-center sm:justify-center sm:p-4"
-      style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+      // Frosted overlay — same treatment as the Radix Dialog wrapper.
+      className="fixed inset-0 z-[60] frosted-overlay sm:flex sm:items-center sm:justify-center sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}

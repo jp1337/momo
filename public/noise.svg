@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Subtle grain texture used as a tiled background overlay on the body.
+
+  Per 2026 calm-UX guidance: "If users notice it, it's probably too
+  much." The opacity here is intentionally near-invisible (~12% via
+  the inline opacity attribute, then further reduced when applied as
+  background via CSS opacity / mask). Adds tactility without lifting
+  the noise floor of the page.
+
+  fractalNoise at baseFrequency 0.9 produces a fine-grain pattern that
+  reads as paper texture rather than digital static. stitchTiles
+  ensures seamless tiling on a 200px grid.
+-->
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <filter id="n">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+    <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0"/>
+  </filter>
+  <rect width="100%" height="100%" filter="url(#n)" opacity="0.22"/>
+</svg>

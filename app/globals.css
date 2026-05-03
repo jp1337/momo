@@ -156,16 +156,24 @@ html {
 body {
   background-color: var(--bg-primary);
   /*
-   * Two soft radial glows give the page atmosphere without demanding attention:
-   *   • muted green halo near the top — picks up the brand accent
-   *   • warm amber wash bottom-right — pulls the eye through the layout
-   * Fixed attachment keeps the gradients steady while scrolling.
-   * Opacity is intentionally low (4–6%) — the effect should register subliminally,
-   * never compete with content.
+   * Three layered backgrounds, drawn back-to-front:
+   *   1. Tiled grain texture (`/noise.svg`) — adds tactility, almost
+   *      invisible. Per 2026 calm-UX guidance: "If users notice it,
+   *      it's probably too much."
+   *   2. Two soft radial glows give the page atmosphere without
+   *      demanding attention:
+   *        • muted green halo near the top — picks up the brand accent
+   *        • warm amber wash bottom-right — pulls the eye through
+   *      Fixed attachment keeps the gradients steady while scrolling.
+   *      Opacity is intentionally low (4–6%) — registers subliminally,
+   *      never competes with content.
    */
   background-image:
+    url("/noise.svg"),
     radial-gradient(ellipse 80% 55% at 50% -10%, color-mix(in srgb, var(--accent-green) 8%, transparent), transparent 70%),
     radial-gradient(ellipse 60% 50% at 100% 110%, color-mix(in srgb, var(--accent-amber) 6%, transparent), transparent 70%);
+  background-repeat: repeat, no-repeat, no-repeat;
+  background-size: 200px 200px, auto, auto;
   background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-ui, "DM Sans", system-ui, sans-serif);
@@ -173,6 +181,24 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Frosted-glass utility ─────────────────────────────────────────────────── */
+/*
+ * Targeted glassmorphism for surfaces that float over scrolling content
+ * (Dialog overlay, MobileNav, BulkActionBar). NOT for ordinary cards —
+ * frost-everything is the 2021-Apple cliché the calm-design articles
+ * specifically warn against.
+ */
+.frosted-surface {
+  background-color: color-mix(in srgb, var(--bg-surface) 75%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+.frosted-overlay {
+  background-color: color-mix(in srgb, var(--bg-primary) 55%, transparent);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
 
 /* ─── Reusable interaction primitives ───────────────────────────────────────── */

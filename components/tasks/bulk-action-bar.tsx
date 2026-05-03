@@ -78,9 +78,10 @@ export function BulkActionBar({
           style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
         >
           <div
-            className="pointer-events-auto mx-auto max-w-2xl rounded-xl px-4 py-3 shadow-lg flex items-center gap-3 flex-wrap"
+            // Frosted-surface treatment: this bar floats over the task list
+            // and the bg blur emphasizes the layering.
+            className="pointer-events-auto mx-auto max-w-2xl rounded-xl px-4 py-3 shadow-lg flex items-center gap-3 flex-wrap frosted-surface"
             style={{
-              backgroundColor: "var(--bg-elevated)",
               border: "1px solid var(--border)",
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
             }}

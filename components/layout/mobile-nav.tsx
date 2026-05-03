@@ -45,9 +45,11 @@ export function MobileNav() {
 
   return (
     <nav
-      className="md:hidden flex-shrink-0 flex border-t"
+      // Frosted glass — sits over scrolling content, blurs the layer behind.
+      // Background-color falls back to var(--bg-surface) where backdrop-filter
+      // isn't supported (older Firefox), via the .frosted-surface utility.
+      className="md:hidden flex-shrink-0 flex border-t frosted-surface"
       style={{
-        backgroundColor: "var(--bg-surface)",
         borderColor: "var(--border)",
         boxShadow: "0 -1px 8px rgba(0,0,0,.12)",
         paddingBottom: "env(safe-area-inset-bottom)",

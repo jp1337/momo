@@ -62,8 +62,10 @@ export function DialogContent({
   return (
     <RadixDialog.Portal>
       <RadixDialog.Overlay
-        className="fixed inset-0 z-40 data-[state=open]:animate-in data-[state=closed]:animate-out"
-        style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+        // Frosted overlay — blurs the page behind the modal instead of just
+        // dimming it. Per the calm-design references, this creates layering
+        // depth without aggressive contrast.
+        className="fixed inset-0 z-40 frosted-overlay data-[state=open]:animate-in data-[state=closed]:animate-out"
       />
       <RadixDialog.Content
         className={`fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 ${SIZE_MAP[size]}`}
