@@ -403,7 +403,8 @@
     "budget_edit": "Budget bewerken",
     "budget_label": "Maandbudget (€):",
     "budget_placeholder": "bijv. 500",
-    "budget_error_invalid": "Voer een geldig positief getal in"
+    "budget_error_invalid": "Voer een geldig positief getal in",
+    "view_discarded": "Verwijderd"
   },
   "settings": {
     "page_title": "Instellingen",

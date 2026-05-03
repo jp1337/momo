@@ -445,8 +445,8 @@ export function WishlistView({
         </div>
       ) : null}
 
-      {/* History section */}
-      {historyItems.length > 0 && (
+      {/* Bought gallery — shown when there are purchased items */}
+      {historyItems.filter((i) => i.status === "BOUGHT").length > 0 && (
         <div className="flex flex-col gap-4">
           <button
             onClick={() => setShowHistory((prev) => !prev)}
@@ -470,36 +470,130 @@ export function WishlistView({
             >
               ▶
             </span>
-            {t("view_history")} ({t("view_history_count", { count: historyItems.length })})
+            <span>
+              {t("view_history")}{" "}
+              <span style={{ color: "var(--accent-green)", fontWeight: 600 }}>
+                ({historyItems.filter((i) => i.status === "BOUGHT").length})
+              </span>
+            </span>
           </button>
 
           {showHistory && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {historyItems.map((item) => (
-                <WishlistCard
-                  key={item.id}
-                  id={item.id}
-                  title={item.title}
-                  price={item.price}
-                  url={item.url}
-                  priority={item.priority}
-                  status={item.status}
-                  coinUnlockThreshold={item.coinUnlockThreshold}
-                  userCoins={coins}
-                  monthlyBudget={budget.monthlyBudget}
-                  remainingBudget={budget.remaining}
-                  onBuy={handleBuy}
-                  onUnbuy={handleUnbuy}
-                  onDiscard={handleDiscard}
-                  onUndiscard={handleUndiscard}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
+            <div className="flex flex-col gap-3">
+              {/* Bought items — compact green-tinted row layout */}
+              {historyItems
+                .filter((i) => i.status === "BOUGHT")
+                .map((item) => (
+                  <WishlistCard
+                    key={item.id}
+                    id={item.id}
+                    title={item.title}
+                    price={item.price}
+                    url={item.url}
+                    priority={item.priority}
+                    status={item.status}
+                    coinUnlockThreshold={item.coinUnlockThreshold}
+                    userCoins={coins}
+                    monthlyBudget={budget.monthlyBudget}
+                    remainingBudget={budget.remaining}
+                    onBuy={handleBuy}
+                    onUnbuy={handleUnbuy}
+                    onDiscard={handleDiscard}
+                    onUndiscard={handleUndiscard}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+
+              {/* Discarded items — even more muted */}
+              {historyItems.filter((i) => i.status === "DISCARDED").length > 0 && (
+                <div className="flex flex-col gap-2 mt-2">
+                  <p
+                    className="text-xs uppercase tracking-widest"
+                    style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
+                  >
+                    {t("view_discarded")}
+                  </p>
+                  {historyItems
+                    .filter((i) => i.status === "DISCARDED")
+                    .map((item) => (
+                      <WishlistCard
+                        key={item.id}
+                        id={item.id}
+                        title={item.title}
+                        price={item.price}
+                        url={item.url}
+                        priority={item.priority}
+                        status={item.status}
+                        coinUnlockThreshold={item.coinUnlockThreshold}
+                        userCoins={coins}
+                        monthlyBudget={budget.monthlyBudget}
+                        remainingBudget={budget.remaining}
+                        onBuy={handleBuy}
+                        onUnbuy={handleUnbuy}
+                        onDiscard={handleDiscard}
+                        onUndiscard={handleUndiscard}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                      />
+                    ))}
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
+
+      {/* Discarded-only section when no bought items */}
+      {historyItems.filter((i) => i.status === "BOUGHT").length === 0 &&
+        historyItems.filter((i) => i.status === "DISCARDED").length > 0 && (
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={() => setShowHistory((prev) => !prev)}
+              className="flex items-center gap-2 text-sm font-medium"
+              style={{
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                color: "var(--text-muted)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+              }}
+            >
+              <span style={{ display: "inline-block", transform: showHistory ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s ease" }}>
+                ▶
+              </span>
+              {t("view_discarded")} ({historyItems.filter((i) => i.status === "DISCARDED").length})
+            </button>
+            {showHistory && (
+              <div className="flex flex-col gap-2">
+                {historyItems
+                  .filter((i) => i.status === "DISCARDED")
+                  .map((item) => (
+                    <WishlistCard
+                      key={item.id}
+                      id={item.id}
+                      title={item.title}
+                      price={item.price}
+                      url={item.url}
+                      priority={item.priority}
+                      status={item.status}
+                      coinUnlockThreshold={item.coinUnlockThreshold}
+                      userCoins={coins}
+                      monthlyBudget={budget.monthlyBudget}
+                      remainingBudget={budget.remaining}
+                      onBuy={handleBuy}
+                      onUnbuy={handleUnbuy}
+                      onDiscard={handleDiscard}
+                      onUndiscard={handleUndiscard}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
 
       {/* Create/Edit form modal */}
       {showForm && (

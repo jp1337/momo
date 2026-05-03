@@ -403,7 +403,8 @@
     "budget_edit": "Изменить бюджет",
     "budget_label": "Месячный бюджет (€):",
     "budget_placeholder": "напр. 500",
-    "budget_error_invalid": "Введите корректное положительное число"
+    "budget_error_invalid": "Введите корректное положительное число",
+    "view_discarded": "Отложенные"
   },
   "settings": {
     "page_title": "Настройки",

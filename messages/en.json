@@ -403,7 +403,8 @@
     "budget_edit": "Edit budget",
     "budget_label": "Monthly budget (€):",
     "budget_placeholder": "e.g. 500",
-    "budget_error_invalid": "Please enter a valid positive number"
+    "budget_error_invalid": "Please enter a valid positive number",
+    "view_discarded": "Discarded"
   },
   "settings": {
     "page_title": "Settings",
