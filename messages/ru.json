@@ -1097,7 +1097,8 @@
     "notifications_push_unsupported": "Push-уведомления не поддерживаются в этом браузере.",
     "notifications_push_enabled": "Уведомления включены!",
     "complete_title": "Всё готово!",
-    "complete_subtitle": "Ваш первый квест ждёт на главной. Удачи!"
+    "complete_subtitle": "Ваш первый квест ждёт на главной. Удачи!",
+    "complete_cta": "Поехали"
   },
   "achievements": {
     "page_title": "Достижения",

@@ -1097,7 +1097,8 @@
     "notifications_push_unsupported": "此浏览器不支持推送通知。",
     "notifications_push_enabled": "通知已启用!",
     "complete_title": "全部就绪!",
-    "complete_subtitle": "你的第一个任务正在仪表盘等你。祝好运!"
+    "complete_subtitle": "你的第一个任务正在仪表盘等你。祝好运!",
+    "complete_cta": "出发"
   },
   "achievements": {
     "page_title": "成就",

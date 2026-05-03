@@ -7,23 +7,28 @@
 
 import { motion } from "framer-motion";
 
-const STEPS = ["welcome", "topic", "tasks", "notifications"] as const;
+const PROGRESS_STEPS = ["welcome", "topic", "tasks", "notifications"] as const;
+type AnyStep = (typeof PROGRESS_STEPS)[number] | "complete";
 
 interface OnboardingProgressProps {
-  currentStep: (typeof STEPS)[number];
+  currentStep: AnyStep;
 }
 
 /**
  * 4-dot progress indicator with animated active dot.
+ * On the "complete" step, all dots render as completed (green).
  *
  * @param currentStep - The currently active step key
  */
 export function OnboardingProgress({ currentStep }: OnboardingProgressProps) {
-  const currentIndex = STEPS.indexOf(currentStep);
+  const isComplete = currentStep === "complete";
+  const currentIndex = isComplete
+    ? PROGRESS_STEPS.length
+    : PROGRESS_STEPS.indexOf(currentStep as (typeof PROGRESS_STEPS)[number]);
 
   return (
     <div className="flex items-center justify-center gap-3 py-4">
-      {STEPS.map((step, i) => {
+      {PROGRESS_STEPS.map((step, i) => {
         const isCompleted = i < currentIndex;
         const isCurrent = i === currentIndex;
 
@@ -45,7 +50,7 @@ export function OnboardingProgress({ currentStep }: OnboardingProgressProps) {
                 borderRadius: "50%",
               }}
             />
-            {i < STEPS.length - 1 && (
+            {i < PROGRESS_STEPS.length - 1 && (
               <div
                 style={{
                   width: 32,

@@ -1097,7 +1097,8 @@
     "notifications_push_unsupported": "Les notifications push ne sont pas supportées dans ce navigateur.",
     "notifications_push_enabled": "Notifications activées !",
     "complete_title": "Tout est prêt !",
-    "complete_subtitle": "Votre première quête vous attend sur le tableau de bord. Bonne chance !"
+    "complete_subtitle": "Votre première quête vous attend sur le tableau de bord. Bonne chance !",
+    "complete_cta": "C'est parti"
   },
   "achievements": {
     "page_title": "Succès",

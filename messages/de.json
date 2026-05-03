@@ -1097,7 +1097,8 @@
     "notifications_push_unsupported": "Push-Benachrichtigungen werden in diesem Browser nicht unterstützt.",
     "notifications_push_enabled": "Benachrichtigungen aktiviert!",
     "complete_title": "Alles bereit!",
-    "complete_subtitle": "Deine erste Quest wartet auf dem Dashboard. Viel Erfolg!"
+    "complete_subtitle": "Deine erste Quest wartet auf dem Dashboard. Viel Erfolg!",
+    "complete_cta": "Jetzt loslegen"
   },
   "achievements": {
     "page_title": "Errungenschaften",

@@ -1097,7 +1097,8 @@
     "notifications_push_unsupported": "Pushmeldingen worden niet ondersteund in deze browser.",
     "notifications_push_enabled": "Meldingen ingeschakeld!",
     "complete_title": "Je bent er klaar voor!",
-    "complete_subtitle": "Je eerste opdracht wacht op het dashboard. Veel succes!"
+    "complete_subtitle": "Je eerste opdracht wacht op het dashboard. Veel succes!",
+    "complete_cta": "Aan de slag"
   },
   "achievements": {
     "page_title": "Prestaties",

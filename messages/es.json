@@ -1097,7 +1097,8 @@
     "notifications_push_unsupported": "Las notificaciones push no son compatibles con este navegador.",
     "notifications_push_enabled": "¡Notificaciones activadas!",
     "complete_title": "¡Todo listo!",
-    "complete_subtitle": "Tu primera misión te espera en el panel. ¡Buena suerte!"
+    "complete_subtitle": "Tu primera misión te espera en el panel. ¡Buena suerte!",
+    "complete_cta": "¡Vamos!"
   },
   "achievements": {
     "page_title": "Logros",

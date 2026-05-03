@@ -17,10 +17,11 @@ import { WelcomeStep } from "./steps/welcome-step";
 import { CreateTopicStep } from "./steps/create-topic-step";
 import { AddTasksStep } from "./steps/add-tasks-step";
 import { NotificationStep } from "./steps/notification-step";
+import { CompletionStep } from "./steps/completion-step";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faFeather } from "@fortawesome/free-solid-svg-icons";
 
-const STEPS = ["welcome", "topic", "tasks", "notifications"] as const;
+const STEPS = ["welcome", "topic", "tasks", "notifications", "complete"] as const;
 type Step = (typeof STEPS)[number];
 
 interface OnboardingWizardProps {
@@ -81,7 +82,12 @@ export function OnboardingWizard({ userName }: OnboardingWizardProps) {
   }
 
   function handleSkipOrNext() {
-    if (isLastStep) {
+    if (currentStep === "notifications") {
+      // Transition to celebration step, fire API call in parallel
+      setDirection(1);
+      setCurrentStep("complete");
+      fetch("/api/onboarding/complete", { method: "POST" }).catch(() => {});
+    } else if (isLastStep) {
       handleFinish();
     } else {
       goForward();
@@ -158,73 +164,79 @@ export function OnboardingWizard({ userName }: OnboardingWizardProps) {
               <AddTasksStep topicId={topicId} topicName={topicName} />
             )}
             {currentStep === "notifications" && <NotificationStep />}
+            {currentStep === "complete" && (
+              <CompletionStep onNavigate={() => router.push("/dashboard")} />
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Footer with navigation buttons */}
-      <div
-        className="px-6 py-4 flex items-center justify-between"
-        style={{ borderTop: "1px solid var(--border)" }}
-      >
-        {/* Left: Back button */}
-        <div>
-          {!isFirstStep && (
-            <button
-              type="button"
-              onClick={goBack}
-              className="text-sm transition-opacity hover:opacity-80"
-              style={{
-                fontFamily: "var(--font-ui)",
-                color: "var(--text-muted)",
-              }}
-            >
-              {t("back")}
-            </button>
-          )}
-        </div>
-
-        {/* Right: Skip + Next/Finish */}
-        <div className="flex items-center gap-3">
-          {/* Skip (shown on topic and tasks steps, not on welcome or notifications) */}
-          {(currentStep === "topic" || currentStep === "tasks") && (
-            <button
-              type="button"
-              onClick={goForward}
-              className="text-sm transition-opacity hover:opacity-80"
-              style={{
-                fontFamily: "var(--font-ui)",
-                color: "var(--text-muted)",
-              }}
-            >
-              {t("skip")}
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={handleSkipOrNext}
-            disabled={isCompleting}
-            className="rounded-lg px-5 py-2 text-sm font-medium transition-opacity disabled:opacity-40 flex items-center gap-2"
-            style={{
-              backgroundColor: isLastStep
-                ? "var(--accent-green)"
-                : "var(--accent-amber)",
-              color: "#1a1f1b",
-              fontFamily: "var(--font-ui)",
-            }}
-          >
-            {isLastStep ? (
-              <>
-                <FontAwesomeIcon icon={faCheck} size="sm" />
-                {isCompleting ? "..." : t("finish")}
-              </>
-            ) : (
-              t("next")
+      {/* Footer with navigation buttons — hidden on completion step */}
+      {currentStep !== "complete" && (
+        <div
+          className="px-6 py-4 flex items-center justify-between"
+          style={{ borderTop: "1px solid var(--border)" }}
+        >
+          {/* Left: Back button */}
+          <div>
+            {!isFirstStep && (
+              <button
+                type="button"
+                onClick={goBack}
+                className="text-sm transition-opacity hover:opacity-80"
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  color: "var(--text-muted)",
+                }}
+              >
+                {t("back")}
+              </button>
             )}
-          </button>
+          </div>
+
+          {/* Right: Skip + Next/Finish */}
+          <div className="flex items-center gap-3">
+            {/* Skip (shown on topic and tasks steps, not on welcome or notifications) */}
+            {(currentStep === "topic" || currentStep === "tasks") && (
+              <button
+                type="button"
+                onClick={goForward}
+                className="text-sm transition-opacity hover:opacity-80"
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  color: "var(--text-muted)",
+                }}
+              >
+                {t("skip")}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleSkipOrNext}
+              disabled={isCompleting}
+              className="rounded-lg px-5 py-2 text-sm font-medium transition-opacity disabled:opacity-40 flex items-center gap-2"
+              style={{
+                backgroundColor:
+                  currentStep === "notifications"
+                    ? "var(--accent-green)"
+                    : "var(--accent-amber)",
+                color: "#1a1f1b",
+                fontFamily: "var(--font-ui)",
+              }}
+            >
+              {currentStep === "notifications" ? (
+                <>
+                  <FontAwesomeIcon icon={faCheck} size="sm" />
+                  {isCompleting ? "..." : t("finish")}
+                </>
+              ) : (
+                t("next")
+              )}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
