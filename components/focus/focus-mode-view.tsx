@@ -55,6 +55,54 @@ const PRIORITY_COLOR: Record<string, string> = {
   SOMEDAY: "var(--text-muted)",
 };
 
+// ─── Temple Halos ─────────────────────────────────────────────────────────────
+
+/**
+ * Dual ambient radial halos that create the "Focus Temple" atmosphere.
+ * `intense` prop doubles the opacity for the work phase.
+ */
+function TempleHalos({ intense = false }: { intense?: boolean }) {
+  const amberAlpha = intense ? "20%" : "12%";
+  const greenAlpha = intense ? "10%" : "6%";
+
+  return (
+    <>
+      {/* Primary amber halo — center */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          top: "38%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "700px",
+          height: "500px",
+          borderRadius: "50%",
+          background: `radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-amber) ${amberAlpha}, transparent) 0%, transparent 68%)`,
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+      {/* Secondary forest-green halo — bottom */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          bottom: "-10%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "600px",
+          height: "420px",
+          borderRadius: "50%",
+          background: `radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-green) ${greenAlpha}, transparent) 0%, transparent 65%)`,
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+    </>
+  );
+}
+
 // ─── Selection Phase ─────────────────────────────────────────────────────────
 
 function SelectionPhase({
@@ -84,7 +132,10 @@ function SelectionPhase({
 
   if (tasks.length === 0) {
     return (
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
         style={{
           minHeight: "100dvh",
           display: "flex",
@@ -94,9 +145,13 @@ function SelectionPhase({
           padding: "32px 20px",
           textAlign: "center",
           gap: "16px",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        <span style={{ fontSize: "3rem" }}>☀️</span>
+        {/* Temple halos */}
+        <TempleHalos />
+        <span style={{ fontSize: "3rem", position: "relative", zIndex: 1 }}>☀️</span>
         <h1
           style={{
             fontFamily: "var(--font-display)",
@@ -105,11 +160,13 @@ function SelectionPhase({
             fontStyle: "italic",
             color: "var(--text-primary)",
             margin: 0,
+            position: "relative",
+            zIndex: 1,
           }}
         >
           {t("empty_title")}
         </h1>
-        <p style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)", margin: 0 }}>
+        <p style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)", margin: 0, position: "relative", zIndex: 1 }}>
           {t("empty_subtitle")}
         </p>
         <button
@@ -124,23 +181,33 @@ function SelectionPhase({
             border: "none",
             cursor: "pointer",
             textDecoration: "underline",
+            position: "relative",
+            zIndex: 1,
           }}
         >
           {t("empty_back")}
         </button>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       style={{
         minHeight: "100dvh",
         display: "flex",
         flexDirection: "column",
         backgroundColor: "var(--bg-primary)",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      {/* Temple halos — immersive ambient lighting */}
+      <TempleHalos />
+
       {/* Header */}
       <div
         style={{
@@ -149,9 +216,24 @@ function SelectionPhase({
           alignItems: "flex-start",
           justifyContent: "space-between",
           gap: "16px",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <div>
+          <p
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "var(--accent-amber)",
+              margin: "0 0 6px",
+            }}
+          >
+            Fokus
+          </p>
           <h1
             style={{
               fontFamily: "var(--font-display)",
@@ -208,6 +290,8 @@ function SelectionPhase({
           display: "flex",
           flexDirection: "column",
           gap: "8px",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         {tasks.map((task) => {
@@ -351,6 +435,7 @@ function SelectionPhase({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          zIndex: 2,
           gap: "12px",
         }}
       >
@@ -388,7 +473,7 @@ function SelectionPhase({
           <FontAwesomeIcon icon={faFire} style={{ fontSize: "0.85rem" }} />
         </motion.button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -429,23 +514,8 @@ function WorkPhase({
         overflow: "hidden",
       }}
     >
-      {/* Ambient glow behind the card */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "600px",
-          height: "400px",
-          borderRadius: "50%",
-          background:
-            "radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-amber) 8%, transparent) 0%, transparent 70%)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
+      {/* Intensified temple halos for work phase */}
+      <TempleHalos intense />
 
       {/* Top bar: progress dots + exit */}
       <div
@@ -535,10 +605,10 @@ function WorkPhase({
               width: "100%",
               maxWidth: "560px",
               backgroundColor: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
+              border: "1px solid color-mix(in srgb, var(--accent-amber) 22%, var(--border))",
               borderRadius: "20px",
               padding: "36px 32px",
-              boxShadow: "0 8px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+              boxShadow: "0 8px 48px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px color-mix(in srgb, var(--accent-amber) 10%, transparent)",
             }}
           >
             {/* Topic + meta row */}
@@ -711,22 +781,8 @@ function DonePhase({
         overflow: "hidden",
       }}
     >
-      {/* Ambient glow */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "500px",
-          height: "500px",
-          borderRadius: "50%",
-          background:
-            "radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-amber) 12%, transparent) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }}
-      />
+      {/* Celebration halos */}
+      <TempleHalos intense />
 
       <motion.div
         initial={{ scale: 0, rotate: -10 }}
