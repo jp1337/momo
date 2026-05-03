@@ -9,9 +9,12 @@ next-intl translation files. One JSON file per supported locale.
 - `fr.json` — French
 - `es.json` — Spanish
 - `nl.json` — Dutch
+- `ru.json` — Russian
+- `zh.json` — Chinese (Simplified)
 
 ## Patterns
 - Keys are namespaced by feature: `tasks.*`, `settings.*`, `dashboard.*`, etc.
-- All five files must have identical key sets — missing keys fall back to the key name
-- When adding a new UI string: add the key to **all five** locale files simultaneously
+- All seven files must have identical key sets — missing keys fall back to the key name
+- When adding a new UI string: add the key to **all seven** locale files simultaneously
 - Never hardcode user-visible strings in components — always use `useTranslations()` / `getTranslations()`
+- Russian uses 4-form plurals (one / few / many / other or =0); Chinese has no plural forms (always `other`)

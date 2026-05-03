@@ -25,6 +25,8 @@ const LOCALE_FLAGS: Record<string, string> = {
   fr: "🇫🇷",
   es: "🇪🇸",
   nl: "🇳🇱",
+  ru: "🇷🇺",
+  zh: "🇨🇳",
 };
 
 const LOCALE_LABELS: Record<string, string> = {
@@ -33,6 +35,8 @@ const LOCALE_LABELS: Record<string, string> = {
   fr: "Français",
   es: "Español",
   nl: "Nederlands",
+  ru: "Русский",
+  zh: "中文",
 };
 
 /**

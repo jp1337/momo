@@ -43,6 +43,16 @@ const EMAIL_STRINGS: Record<string, { openMomo: string; footer: string; manageSe
     footer: "Je ontvangt dit omdat e-mailmeldingen zijn ingeschakeld in Momo.",
     manageSettings: "Meldingsinstellingen beheren",
   },
+  ru: {
+    openMomo: "Открыть Momo",
+    footer: "Вы получили это письмо, потому что в Momo включены уведомления по email.",
+    manageSettings: "Управлять настройками уведомлений",
+  },
+  zh: {
+    openMomo: "打开 Momo",
+    footer: "您收到此邮件是因为您在 Momo 中启用了邮件通知。",
+    manageSettings: "管理通知设置",
+  },
 };
 
 /** HTML-escape a value for safe interpolation into the template literal. */
