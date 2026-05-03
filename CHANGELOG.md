@@ -24,6 +24,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Card-Hover-Lift** — Neue `.card-hover` Utility (translateY(-2px) + shadow-md, 180ms ease-out, deaktiviert bei prefers-reduced-motion). Auf TopicCard angewendet.
 - **Empty States mit Persönlichkeit** — `/tasks`, `/wishlist`, `/topics` haben jetzt großzügigere Empty-States: 6xl Emoji, Lora-Display-Headline, max-width Sub-Text, weicher Halo-Glow im Akzent. Tasks-Empty zeigt zusätzlich den `N`-Keyboard-Hint.
 - **Gestaffelte TopicsGrid-Animation** — Jede Topic-Karte fadet/sliced auf bei Mount mit 40ms Staffelung. Cap bei 12 Karten damit lange Listen nicht zäh wirken.
+- **Focus-Indikator mit Glow-Halo** — `:focus-visible` bekommt zusätzlich zur Outline einen weichen 6px Box-Shadow-Halo (22% Amber). Smoother 120ms-Übergang. Deaktiviert bei `prefers-reduced-motion`.
+- **DailyQuestCard mit mehr Hero-Präsenz** — Eyebrow-Label „Heutige Quest" über dem Topic-Tag (Small Caps, Amber, 0.18em Tracking). Task-Titel von `text-xl` auf `text-2xl`/`text-3xl` (sm+) — die Daily Quest soll wie eine Headline lesen, nicht wie ein Listeneintrag.
+- **WishlistForm vereinfacht (Progressive Disclosure)** — Nur noch Titel sichtbar. Preis, Priorität, URL, Coin-Sperre liegen hinter „Mehr Optionen". Priorität ist jetzt ein Chip-Toggle-Group statt Dropdown. Edit-Modus expandiert automatisch wenn Werte gesetzt sind.
+- **TopicForm vereinfacht (Progressive Disclosure)** — Sichtbar: Titel + Icon + Farbe (visuelle Identität). Hinter „Mehr Optionen": Priorität, Default-Energy, Sequenziell, Beschreibung.
 - **A11y-Hygiene auf Toggle-Buttons** — Button-basierte Toggles, die vorher als generische Buttons angekündigt wurden, haben jetzt korrekte Switch- bzw. Radio-Semantik. EmotionalClosure-Settings sind jetzt eine `radiogroup` mit `role=radio`/`aria-checked`, der Push-Device Bell/Bell-Slash-Toggle hat `role=switch`/`aria-checked`. Screenreader sagen jetzt „Schalter, ein/aus" statt „Schaltfläche".
 
 ### Fixed
