@@ -349,20 +349,38 @@ export function TopicDetailView({
         </button>
       </div>
 
-      {/* Empty state */}
+      {/* Empty state — same atmospheric pattern as /tasks, /wishlist, /topics */}
       {tasks.length === 0 && (
         <div
-          className="rounded-xl p-8 text-center"
+          className="relative rounded-2xl p-12 sm:p-16 text-center overflow-hidden"
           style={{
             backgroundColor: "var(--bg-surface)",
             border: "1px dashed var(--border)",
           }}
         >
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: "20%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "240px",
+              height: "240px",
+              borderRadius: "50%",
+              background: `radial-gradient(circle, color-mix(in srgb, ${accentColor} 14%, transparent) 0%, transparent 70%)`,
+              pointerEvents: "none",
+            }}
+          />
+          <p className="relative text-6xl mb-5 select-none" role="img" aria-label="📝">
+            📝
+          </p>
           <p
-            className="text-sm"
+            className="relative text-sm max-w-sm mx-auto"
             style={{
               fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
               color: "var(--text-muted)",
+              lineHeight: 1.6,
             }}
           >
             {t("detail_empty")}

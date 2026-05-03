@@ -186,7 +186,7 @@ export default async function StatsPage() {
           ].map((card) => (
             <div
               key={card.label}
-              className="rounded-xl p-5 flex flex-col gap-2"
+              className="card-hover rounded-2xl p-5 flex flex-col gap-2"
               style={{
                 backgroundColor: "var(--bg-surface)",
                 border: "1px solid var(--border)",
@@ -256,7 +256,7 @@ export default async function StatsPage() {
           {t("section_progress")}
         </h2>
         <div
-          className="rounded-xl p-6 flex flex-col gap-5"
+          className="rounded-2xl p-6 flex flex-col gap-5"
           style={{
             backgroundColor: "var(--bg-surface)",
             border: "1px solid var(--border)",
@@ -434,7 +434,7 @@ export default async function StatsPage() {
           ].map((item) => (
             <div
               key={item.label}
-              className="rounded-xl p-5"
+              className="rounded-2xl p-5"
               style={{
                 backgroundColor: "var(--bg-surface)",
                 border: "1px solid var(--border)",
@@ -514,7 +514,7 @@ export default async function StatsPage() {
           {t("section_tasks_by_type")}
         </h2>
         <div
-          className="rounded-xl p-6 flex flex-col gap-4"
+          className="rounded-2xl p-6 flex flex-col gap-4"
           style={{
             backgroundColor: "var(--bg-surface)",
             border: "1px solid var(--border)",
@@ -589,7 +589,7 @@ export default async function StatsPage() {
           {t("section_tasks_by_priority")}
         </h2>
         <div
-          className="rounded-xl p-6 flex flex-col gap-4"
+          className="rounded-2xl p-6 flex flex-col gap-4"
           style={{
             backgroundColor: "var(--bg-surface)",
             border: "1px solid var(--border)",
@@ -679,7 +679,7 @@ export default async function StatsPage() {
               return (
                 <div
                   key={topic.id}
-                  className="rounded-xl p-5"
+                  className="rounded-2xl p-5"
                   style={{
                     backgroundColor: "var(--bg-surface)",
                     border: "1px solid var(--border)",
@@ -801,7 +801,7 @@ export default async function StatsPage() {
           ].map((card) => (
             <div
               key={card.label}
-              className="rounded-xl p-5"
+              className="rounded-2xl p-5"
               style={{
                 backgroundColor: "var(--bg-surface)",
                 border: "1px solid var(--border)",
