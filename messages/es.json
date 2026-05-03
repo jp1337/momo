@@ -23,7 +23,10 @@
     "focus_mode": "Enfoque",
     "habits": "Hábitos",
     "achievements": "Logros",
-    "progress": "Progreso"
+    "progress": "Progreso",
+    "section_today": "Hoy",
+    "section_plan": "Planificar",
+    "section_reward": "Recompensar"
   },
   "auth": {
     "app_name": "🪶 Momo",

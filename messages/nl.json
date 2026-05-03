@@ -23,7 +23,10 @@
     "focus_mode": "Focus",
     "habits": "Gewoonten",
     "achievements": "Prestaties",
-    "progress": "Voortgang"
+    "progress": "Voortgang",
+    "section_today": "Vandaag",
+    "section_plan": "Plannen",
+    "section_reward": "Belonen"
   },
   "auth": {
     "app_name": "🪶 Momo",

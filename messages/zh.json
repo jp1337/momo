@@ -23,7 +23,10 @@
     "focus_mode": "专注",
     "habits": "习惯",
     "achievements": "成就",
-    "progress": "进度"
+    "progress": "进度",
+    "section_today": "今天",
+    "section_plan": "规划",
+    "section_reward": "奖励"
   },
   "auth": {
     "app_name": "🪶 Momo",
