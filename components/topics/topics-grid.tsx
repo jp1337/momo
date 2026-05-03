@@ -14,7 +14,7 @@ import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faChevronRight, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronRight, faBoxArchive, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { TopicCard } from "./topic-card";
 import { TopicForm } from "./topic-form";
 import { TemplatePicker } from "./template-picker";
@@ -438,7 +438,7 @@ function ArchivedTopicCard({
           style={{ color: "var(--accent-red)" }}
           aria-label={t("aria_delete")}
         >
-          ✕
+          <FontAwesomeIcon icon={faXmark} style={{ fontSize: 12 }} />
         </ConfirmButton>
       </div>
     </div>

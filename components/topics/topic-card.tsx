@@ -15,7 +15,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faListOl, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
+import { faListOl, faBoxArchive, faPen, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { resolveTopicIcon } from "@/lib/topic-icons";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -147,7 +147,7 @@ export function TopicCard({
                 style={{ color: "var(--text-muted)" }}
                 aria-label={t("aria_edit")}
               >
-                ✎
+                <FontAwesomeIcon icon={faPen} style={{ fontSize: 11 }} />
               </button>
             </TooltipTrigger>
             <TooltipContent>{t("aria_edit")}</TooltipContent>
@@ -172,7 +172,7 @@ export function TopicCard({
             style={{ color: "var(--accent-red)" }}
             aria-label={t("aria_delete")}
           >
-            ✕
+            <FontAwesomeIcon icon={faXmark} style={{ fontSize: 12 }} />
           </ConfirmButton>
         </div>
       </div>

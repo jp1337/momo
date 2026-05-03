@@ -15,7 +15,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { BudgetBar } from "@/components/wishlist/budget-bar";
 import { WishlistCard } from "@/components/wishlist/wishlist-card";
 import { WishlistForm } from "@/components/wishlist/wishlist-form";
@@ -469,7 +469,7 @@ export function WishlistView({
                 transition: "transform 0.15s ease",
               }}
             >
-              ▶
+              <FontAwesomeIcon icon={faChevronRight} style={{ fontSize: 9 }} />
             </span>
             <span>
               {t("view_history")}{" "}

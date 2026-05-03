@@ -10,6 +10,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPen, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { TopicForm } from "@/components/topics/topic-form";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -58,7 +60,7 @@ export function TopicDetailActions({ topic }: TopicDetailActionsProps) {
               style={{ color: "var(--text-muted)" }}
               aria-label={t("aria_edit")}
             >
-              ✎
+              <FontAwesomeIcon icon={faPen} style={{ fontSize: 13 }} />
             </button>
           </TooltipTrigger>
           <TooltipContent>{t("aria_edit")}</TooltipContent>
@@ -71,7 +73,7 @@ export function TopicDetailActions({ topic }: TopicDetailActionsProps) {
           style={{ color: "var(--text-muted)" }}
           aria-label={t("aria_delete")}
         >
-          ✕
+          <FontAwesomeIcon icon={faXmark} style={{ fontSize: 13 }} />
         </ConfirmButton>
       </div>
 
