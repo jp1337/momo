@@ -125,7 +125,7 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
       {/* One-time key display modal */}
       {newKeyPlaintext && (
         <div
-          className="rounded-xl p-5 flex flex-col gap-4"
+          className="rounded-2xl p-6 flex flex-col gap-4"
           style={{
             backgroundColor: "var(--bg-surface)",
             border: "2px solid var(--accent-amber)",
@@ -197,14 +197,14 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
       {/* Create new key form */}
       {showForm ? (
         <div
-          className="rounded-xl p-5 flex flex-col gap-4"
+          className="rounded-2xl p-6 flex flex-col gap-4"
           style={{
             backgroundColor: "var(--bg-surface)",
             border: "1px solid var(--border)",
           }}
         >
           <h2
-            className="text-base font-semibold"
+            className="text-lg font-semibold"
             style={{
               fontFamily: "var(--font-display, 'Lora', serif)",
               color: "var(--text-primary)",
@@ -362,22 +362,38 @@ export function ApiKeysView({ initialKeys }: ApiKeysViewProps) {
       <div className="flex flex-col gap-3">
         {keys.length === 0 ? (
           <div
-            className="rounded-xl p-8 text-center"
+            className="relative rounded-2xl p-12 sm:p-16 text-center overflow-hidden"
             style={{
               backgroundColor: "var(--bg-surface)",
               border: "1px dashed var(--border)",
             }}
           >
+            {/* Soft amber halo behind the icon — same atmospheric pattern as other empty states */}
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                top: "20%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "240px",
+                height: "240px",
+                borderRadius: "50%",
+                background: "radial-gradient(circle, color-mix(in srgb, var(--accent-amber) 12%, transparent) 0%, transparent 70%)",
+                pointerEvents: "none",
+              }}
+            />
             <FontAwesomeIcon
               icon={faKey}
-              className="w-8 h-8 mb-3"
-              style={{ color: "var(--text-muted)" }}
+              className="relative mb-4"
+              style={{ color: "var(--accent-amber)", opacity: 0.7, fontSize: "2.75rem" }}
             />
             <p
-              className="text-sm"
+              className="relative text-sm max-w-sm mx-auto"
               style={{
                 fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
                 color: "var(--text-muted)",
+                lineHeight: 1.6,
               }}
             >
               {t("empty_hint")}
