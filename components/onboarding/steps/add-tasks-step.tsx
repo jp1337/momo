@@ -126,7 +126,7 @@ export function AddTasksStep({ topicId, topicName }: AddTasksStepProps) {
           border: "1px solid var(--border)",
         }}
       >
-        {/* Input row */}
+        {/* Input row — larger autofocus input matching the new TaskForm style */}
         <div className="flex gap-2">
           <input
             type="text"
@@ -139,19 +139,22 @@ export function AddTasksStep({ topicId, topicName }: AddTasksStepProps) {
             maxLength={200}
             autoFocus
             disabled={isAdding}
-            className="flex-1 rounded-lg px-3 py-2.5 text-sm outline-none"
+            className="flex-1 rounded-lg outline-none"
             style={{
+              padding: "14px 16px",
               backgroundColor: "var(--bg-elevated)",
               border: "1px solid var(--border)",
               color: "var(--text-primary)",
               fontFamily: "var(--font-body)",
+              fontSize: "17px",
+              fontWeight: 500,
             }}
           />
           <button
             type="button"
             onClick={handleAdd}
             disabled={!input.trim() || isAdding}
-            className="rounded-lg px-4 py-2.5 text-sm font-medium transition-opacity disabled:opacity-40"
+            className="rounded-lg px-5 py-3 text-sm font-semibold transition-opacity disabled:opacity-40"
             style={{
               backgroundColor: "var(--accent-amber)",
               color: "#1a1f1b",

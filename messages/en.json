@@ -1064,6 +1064,8 @@
     "concept_streaks_title": "Streaks",
     "concept_streaks_desc": "Complete your daily quest every day to build a streak. A Cassiopeia protects you once a month.",
     "topic_title": "Create your first topic",
+    "topic_create_btn": "Create topic",
+    "topic_creating": "Creating …",
     "topic_subtitle": "Topics are buckets for your tasks — like \"Moving\", \"Health\", or \"Side Project\".",
     "topic_name_label": "Topic name",
     "topic_name_placeholder": "e.g. Moving, Health, Work...",

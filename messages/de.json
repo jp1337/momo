@@ -1064,6 +1064,8 @@
     "concept_streaks_title": "Streaks",
     "concept_streaks_desc": "Erledige täglich deine Quest und baue einen Streak auf. Eine Cassiopeia schützt dich einmal im Monat.",
     "topic_title": "Erstelle dein erstes Thema",
+    "topic_create_btn": "Thema anlegen",
+    "topic_creating": "Wird angelegt …",
     "topic_subtitle": "Themen sind Ordner für deine Aufgaben — wie „Umzug“, „Gesundheit“ oder „Nebenprojekt“.",
     "topic_name_label": "Themenname",
     "topic_name_placeholder": "z.B. Umzug, Gesundheit, Arbeit...",

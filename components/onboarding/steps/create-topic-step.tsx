@@ -106,7 +106,7 @@ export function CreateTopicStep({ onTopicCreated }: CreateTopicStepProps) {
           border: "1px solid var(--border)",
         }}
       >
-        {/* Title */}
+        {/* Title — larger autofocus input matching the new TaskForm style */}
         <div className="flex flex-col gap-1.5">
           <label style={labelStyle}>{t("topic_name_label")}</label>
           <input
@@ -119,12 +119,15 @@ export function CreateTopicStep({ onTopicCreated }: CreateTopicStepProps) {
             onKeyDown={(e) => {
               if (e.key === "Enter" && title.trim()) handleCreate();
             }}
-            className="rounded-lg px-3 py-2.5 text-sm outline-none"
+            className="rounded-lg outline-none"
             style={{
+              padding: "14px 16px",
               backgroundColor: "var(--bg-elevated)",
               border: "1px solid var(--border)",
               color: "var(--text-primary)",
               fontFamily: "var(--font-body)",
+              fontSize: "17px",
+              fontWeight: 500,
             }}
           />
         </div>
@@ -167,14 +170,14 @@ export function CreateTopicStep({ onTopicCreated }: CreateTopicStepProps) {
           type="button"
           onClick={handleCreate}
           disabled={!title.trim() || isSubmitting}
-          className="rounded-lg px-4 py-2.5 text-sm font-medium transition-opacity disabled:opacity-40"
+          className="rounded-lg px-4 py-3 text-sm font-semibold transition-opacity disabled:opacity-40"
           style={{
             backgroundColor: "var(--accent-amber)",
             color: "#1a1f1b",
             fontFamily: "var(--font-ui)",
           }}
         >
-          {isSubmitting ? "..." : t("topic_title")}
+          {isSubmitting ? t("topic_creating") : t("topic_create_btn")}
         </button>
 
         {error && (

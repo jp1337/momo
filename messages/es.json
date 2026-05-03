@@ -1064,6 +1064,8 @@
     "concept_streaks_title": "Rachas",
     "concept_streaks_desc": "Completa tu misión diaria cada día para construir una racha. Una Cassiopeia te protege una vez al mes.",
     "topic_title": "Crea tu primer tema",
+    "topic_create_btn": "Crear tema",
+    "topic_creating": "Creando …",
     "topic_subtitle": "Los temas son contenedores para tus tareas — como «Mudanza», «Salud» o «Proyecto paralelo».",
     "topic_name_label": "Nombre del tema",
     "topic_name_placeholder": "ej. Mudanza, Salud, Trabajo...",

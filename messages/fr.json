@@ -1064,6 +1064,8 @@
     "concept_streaks_title": "Séries",
     "concept_streaks_desc": "Complétez votre quête chaque jour pour maintenir votre série. Une Cassiopeia vous protège une fois par mois.",
     "topic_title": "Créez votre premier sujet",
+    "topic_create_btn": "Créer le sujet",
+    "topic_creating": "Création …",
     "topic_subtitle": "Les sujets regroupent vos tâches — comme « Déménagement », « Santé » ou « Projet perso ».",
     "topic_name_label": "Nom du sujet",
     "topic_name_placeholder": "ex. Déménagement, Santé, Travail...",

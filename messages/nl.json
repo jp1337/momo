@@ -1064,6 +1064,8 @@
     "concept_streaks_title": "Reeksen",
     "concept_streaks_desc": "Voltooi elke dag je dagelijkse opdracht om een reeks op te bouwen. Een Cassiopeia beschermt je één keer per maand.",
     "topic_title": "Maak je eerste onderwerp aan",
+    "topic_create_btn": "Onderwerp aanmaken",
+    "topic_creating": "Bezig met aanmaken …",
     "topic_subtitle": "Onderwerpen zijn containers voor je taken — zoals «Verhuizing», «Gezondheid» of «Zijproject».",
     "topic_name_label": "Onderwerpnaam",
     "topic_name_placeholder": "bijv. Verhuizing, Gezondheid, Werk...",

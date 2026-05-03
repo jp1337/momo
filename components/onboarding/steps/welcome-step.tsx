@@ -104,7 +104,7 @@ export function WelcomeStep({ userName }: WelcomeStepProps) {
               visible: { opacity: 1, y: 0 },
             }}
             transition={{ type: "spring", stiffness: 350, damping: 28 }}
-            className="rounded-xl p-5 flex flex-col gap-3"
+            className="card-hover rounded-xl p-5 flex flex-col gap-3"
             style={{
               backgroundColor: "var(--bg-elevated)",
               border: "1px solid var(--border)",
