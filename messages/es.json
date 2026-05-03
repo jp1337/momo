@@ -149,6 +149,8 @@
     "empty_latenight_sub": "Retómalo mañana — buenas noches.",
     "empty_kbd_hint": "Nueva tarea con",
     "section_today": "Hoy y atrasadas",
+    "sequential_label": "Paso a paso",
+    "sequential_progress": "Paso {current} de {total}",
     "section_upcoming": "Próximas",
     "section_no_date": "Sin fecha",
     "section_someday": "Algún día",

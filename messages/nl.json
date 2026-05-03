@@ -149,6 +149,8 @@
     "empty_latenight_sub": "Pak het morgen op — welterusten.",
     "empty_kbd_hint": "Nieuwe taak met",
     "section_today": "Vandaag & Achterstallig",
+    "sequential_label": "Stap voor stap",
+    "sequential_progress": "Stap {current} van {total}",
     "section_upcoming": "Aankomend",
     "section_no_date": "Geen datum",
     "section_someday": "Ooit",

@@ -20,7 +20,7 @@ import Link from "next/link";
 import { AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faChevronDown, faChevronRight, faCheckDouble } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faChevronDown, faChevronRight, faCheckDouble, faListOl, faLock } from "@fortawesome/free-solid-svg-icons";
 import { TaskItem } from "./task-item";
 import { TaskForm } from "./task-form";
 import { BulkActionBar } from "./bulk-action-bar";
@@ -1112,46 +1112,112 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
             </span>
           </div>
 
-          {topicSection.taskGroups.map((group) => (
+          {topicSection.taskGroups.map((group) => {
+            const isSequential = group.groupName !== null;
+            return (
             <div key={group.groupName ?? "__ungrouped__"}>
-              {/* Sequential group sub-header */}
+              {/* Sequential group header — explicit "step-by-step" visual */}
               {group.groupName && (
                 <div
                   className="flex items-center gap-2 mb-2 mt-3 px-1"
                 >
+                  <FontAwesomeIcon
+                    icon={faListOl}
+                    className="w-3 h-3"
+                    style={{ color: "var(--accent-amber)" }}
+                    aria-hidden="true"
+                  />
                   <span
-                    className="text-xs uppercase tracking-wide"
+                    className="text-sm font-semibold"
                     style={{
                       fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                      color: "var(--text-muted)",
-                      opacity: 0.7,
+                      color: "var(--text-primary)",
                     }}
                   >
                     {group.groupName}
                   </span>
                   <span
-                    className="text-xs px-1.5 py-0.5 rounded-full"
+                    className="text-[10px] uppercase tracking-[0.12em] font-semibold"
                     style={{
-                      backgroundColor: "color-mix(in srgb, var(--accent-amber) 12%, var(--bg-elevated))",
                       color: "var(--accent-amber)",
                       fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
                       opacity: 0.85,
                     }}
                   >
-                    {group.tasks.length}→
+                    {t("sequential_label")}
+                  </span>
+                  <span className="text-xs ml-auto" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
+                    {t("sequential_progress", { current: 1, total: group.tasks.length })}
                   </span>
                 </div>
               )}
 
-              <div className="flex flex-col gap-2 mb-2">
+              {/*
+                Sequential groups get a left "stepper" rail: a thin amber line
+                with circular index badges next to each task. Non-sequential
+                groups stay flat.
+              */}
+              <div
+                className={`flex flex-col gap-2 mb-2 ${isSequential ? "relative pl-8" : ""}`}
+                style={isSequential ? { borderLeft: "0px" } : undefined}
+              >
+                {/* Connecting rail line for sequential groups */}
+                {isSequential && (
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      left: "11px",
+                      top: "16px",
+                      bottom: "16px",
+                      width: "2px",
+                      backgroundColor: "color-mix(in srgb, var(--accent-amber) 25%, var(--border))",
+                      borderRadius: "1px",
+                    }}
+                  />
+                )}
                 {group.tasks.map((task, taskIndex) => {
                   // In a named sequential group, only the first task is actionable
-                  const isBlocked = group.groupName !== null && taskIndex > 0;
+                  const isBlocked = isSequential && taskIndex > 0;
+                  const isActiveStep = isSequential && taskIndex === 0;
                   return (
                     <div
                       key={task.id}
-                      style={{ opacity: isBlocked ? 0.45 : 1, pointerEvents: isBlocked ? "none" : undefined }}
+                      className="relative"
+                      style={{ opacity: isBlocked ? 0.55 : 1, pointerEvents: isBlocked ? "none" : undefined }}
                     >
+                      {/* Step index badge for sequential groups */}
+                      {isSequential && (
+                        <div
+                          aria-hidden="true"
+                          style={{
+                            position: "absolute",
+                            left: "-32px",
+                            top: "14px",
+                            width: "24px",
+                            height: "24px",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: isActiveStep
+                              ? "var(--accent-amber)"
+                              : "var(--bg-surface)",
+                            color: isActiveStep ? "var(--bg-primary)" : "var(--text-muted)",
+                            border: `2px solid ${isActiveStep ? "var(--accent-amber)" : "var(--border)"}`,
+                            fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            zIndex: 1,
+                          }}
+                        >
+                          {isBlocked ? (
+                            <FontAwesomeIcon icon={faLock} style={{ fontSize: "9px" }} />
+                          ) : (
+                            taskIndex + 1
+                          )}
+                        </div>
+                      )}
                       <TaskItem
                         id={task.id}
                         title={task.title}
@@ -1187,7 +1253,8 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
                 })}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       ))}
 

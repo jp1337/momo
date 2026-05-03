@@ -149,6 +149,8 @@
     "empty_latenight_sub": "Pick it up tomorrow — good night.",
     "empty_kbd_hint": "Add a task with",
     "section_today": "Today & Overdue",
+    "sequential_label": "Step by step",
+    "sequential_progress": "Step {current} of {total}",
     "section_upcoming": "Upcoming",
     "section_no_date": "No due date",
     "section_someday": "Someday",

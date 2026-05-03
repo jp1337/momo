@@ -149,6 +149,8 @@
     "empty_latenight_sub": "On reprend demain — bonne nuit.",
     "empty_kbd_hint": "Nouvelle tâche avec",
     "section_today": "Aujourd'hui & En retard",
+    "sequential_label": "Étape par étape",
+    "sequential_progress": "Étape {current} sur {total}",
     "section_upcoming": "À venir",
     "section_no_date": "Sans date d'échéance",
     "section_someday": "Un jour",

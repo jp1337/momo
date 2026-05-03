@@ -149,6 +149,8 @@
     "empty_latenight_sub": "Morgen geht's weiter — gute Nacht.",
     "empty_kbd_hint": "Neue Aufgabe mit",
     "section_today": "Heute & Überfällig",
+    "sequential_label": "Schritt für Schritt",
+    "sequential_progress": "Schritt {current} von {total}",
     "section_upcoming": "Demnächst",
     "section_no_date": "Kein Fälligkeitsdatum",
     "section_someday": "Irgendwann",
