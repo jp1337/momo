@@ -376,6 +376,7 @@
     "form_label_url": "Produkt-URL (optional)",
     "form_label_coins": "Münz-Entsperrgrenze (optional)",
     "form_help_coins": "Du musst so viele Münzen haben, bevor du diesen Artikel kaufen kannst.",
+    "form_toggle_more": "Mehr Optionen (Preis, Priorität, URL, Coin-Sperre)",
     "form_placeholder_title": "Was wünschst du dir?",
     "form_placeholder_price": "0.00",
     "form_placeholder_url": "https://example.com/produkt",

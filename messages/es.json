@@ -376,6 +376,7 @@
     "form_label_url": "URL del producto (opcional)",
     "form_label_coins": "Umbral de monedas para desbloquear (opcional)",
     "form_help_coins": "Debes tener esta cantidad de monedas antes de comprar este elemento.",
+    "form_toggle_more": "Más opciones (precio, prioridad, URL, bloqueo de monedas)",
     "form_placeholder_title": "¿Qué quieres?",
     "form_placeholder_price": "0.00",
     "form_placeholder_url": "https://ejemplo.com/producto",

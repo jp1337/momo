@@ -376,6 +376,7 @@
     "form_label_url": "URL du produit (optionnel)",
     "form_label_coins": "Seuil de déblocage en pièces (optionnel)",
     "form_help_coins": "Tu dois avoir autant de pièces avant de pouvoir acheter cet article.",
+    "form_toggle_more": "Plus d'options (prix, priorité, URL, verrou de pièces)",
     "form_placeholder_title": "Qu'est-ce que tu veux ?",
     "form_placeholder_price": "0.00",
     "form_placeholder_url": "https://example.com/produit",

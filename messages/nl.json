@@ -376,6 +376,7 @@
     "form_label_url": "Product-URL (optioneel)",
     "form_label_coins": "Muntdrempel om te ontgrendelen (optioneel)",
     "form_help_coins": "Je moet dit aantal munten hebben voordat je dit item kunt kopen.",
+    "form_toggle_more": "Meer opties (prijs, prioriteit, URL, muntenslot)",
     "form_placeholder_title": "Wat wil je?",
     "form_placeholder_price": "0.00",
     "form_placeholder_url": "https://voorbeeld.nl/product",

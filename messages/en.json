@@ -376,6 +376,7 @@
     "form_label_url": "Product URL (optional)",
     "form_label_coins": "Coin unlock threshold (optional)",
     "form_help_coins": "You must have this many coins before buying this item.",
+    "form_toggle_more": "More options (price, priority, URL, coin lock)",
     "form_placeholder_title": "What do you want?",
     "form_placeholder_price": "0.00",
     "form_placeholder_url": "https://example.com/product",
