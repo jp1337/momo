@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Russisch und Chinesisch (vereinfacht) als neue UI-Sprachen** — Momo spricht jetzt 7 Sprachen. Alle 1030 Übersetzungsschlüssel sind in `ru.json` und `zh.json` gepflegt (kyrillisch für RU, 简体中文 für ZH). E-Mail-Templates unterstützen die neuen Locales, Language-Switcher zeigt 🇷🇺 Русский und 🇨🇳 中文. Russische Pluralformen (one/few/many/other) korrekt umgesetzt; Chinesisch nutzt erwartungsgemäß nur `other`. Initial AI-assistierte Übersetzungen — Native-Speaker-PRs willkommen.
 - **Admin-Panel: Top 10 zeigt auch Nutzer ohne Abschlüsse** — Die Top-10-Tabelle benutzt jetzt `LEFT JOIN` statt `INNER JOIN`. Sortierung weiterhin nach Completions absteigend, bei Gleichstand nach Coins. Frische Accounts erscheinen jetzt mit `0` statt komplett ausgeblendet zu werden.
 - **Radix UI Primitives für Accessibility** — Fünf Radix-Primitives integriert, ohne Momos Design-System anzutasten. Alle Wrapper liegen unter `components/ui/` und nutzen ausschließlich die bestehenden CSS-Variablen (kein neues Design-Token-System):
   - **Dialog** (`@radix-ui/react-dialog`) — alle 5 Modals (TaskBreakdownModal, WishlistForm, TopicForm, TemplatePicker, QuickAddModal). Bringt Focus-Trap, Body-Scroll-Lock, Esc-Handling und korrekte ARIA-Semantik out of the box.
@@ -31,6 +32,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Sequentielle Task-Gruppen mit visuellem Stepper** — Statt nur opaker Locked-Tasks gibt es jetzt eine linke Stepper-Schiene (Amber-Linie) mit nummerierten Index-Badges. Aktive Stufe ist Amber-gefüllt, gesperrte Stufen tragen ein Lock-Icon. Header bekommt einen „SCHRITT FÜR SCHRITT"-Eyebrow + Schritt-Zähler.
 - **Onboarding-Polish** — Welcome-Concept-Cards mit `.card-hover`-Lift, Title-Inputs in Onboarding-Schritten auf 17px JetBrains Mono vergrößert (matching Forms), Submit-Button im Topic-Step nutzt `Wird angelegt …` statt `...`-Platzhalter.
 - **Settings-Pages: einheitliche `SettingsSection`-Komponente** — Wiederholtes Card-Wrapper-Markup (4 settings-Pages × bis zu 5 Sektionen) durch eine zentrale `<SettingsSection title= hint= eyebrow=>`-Komponente ersetzt. Headlines jetzt in Lora Display 18px statt DM Sans 16px — wirkt stärker als Page-Hierarchie.
+- **Dark Mode entsättigt** — Neue Palette „Wald nach dem Regen": Backgrounds um ~30% entsättigt, Borders und text-muted gehen Richtung warmes Steingrau. Forest-Identität bleibt durch subtile Grün-Note erhalten, aber die Akzente (Amber/Grün/Rot) leuchten jetzt richtig statt mit der Wand zu konkurrieren. Light Mode unangetastet.
+- **Sequentielle Task-Gruppen mit Stepper-Visual** — Statt nur opaker Locked-Tasks: linke Amber-Schiene mit nummerierten Index-Badges (aktive Stufe Amber-gefüllt, gesperrte mit Lock-Icon), Eyebrow-Header „SCHRITT FÜR SCHRITT" + „Schritt N von M"-Zähler.
+- **Onboarding-Wizard polished** — Welcome-Concept-Cards mit `.card-hover`, größere Title-Inputs (17px JetBrains Mono) in Topic- und Tasks-Steps, echte Loading-Labels statt „...".
+- **API-Keys-Page neuer Look** — Karten auf rounded-2xl, Empty-State im Halo-Pattern wie /tasks /wishlist /topics, Form-Header in Lora Display 18px.
+- **Polish-Runde 3: Detail-Seiten** — Topic-Detail-Empty-State im einheitlichen Halo-Pattern (Halo-Farbe nimmt Topic-Akzent auf), Stats-Page-Karten alle auf `rounded-2xl`, Top-4-Metric-Karten in Stats und Dashboard mit `.card-hover`.
 - **A11y-Hygiene auf Toggle-Buttons** — Button-basierte Toggles, die vorher als generische Buttons angekündigt wurden, haben jetzt korrekte Switch- bzw. Radio-Semantik. EmotionalClosure-Settings sind jetzt eine `radiogroup` mit `role=radio`/`aria-checked`, der Push-Device Bell/Bell-Slash-Toggle hat `role=switch`/`aria-checked`. Screenreader sagen jetzt „Schalter, ein/aus" statt „Schaltfläche".
 
 ### Fixed
