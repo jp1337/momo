@@ -79,14 +79,29 @@ Die bekannteste kuratierte Liste für Self-Hosting. Ein erfolgreicher PR dort br
 echte Nutzer als jedes Feature. Frühestmöglich einreichen (aktuell: August 2026 nach
 Richtlinien-Anforderungen).
 
-**alternativeto.net**
+**alternativeto.net** ✅
 Kostenloses Listing als Alternative zu Todoist, Things, TickTick, Habitica.
 Jemand der googelt "Todoist Alternative self-hosted" soll Momo finden.
 
-**Ein kurzes Video**
-Kein Marketing-Video — eine echte 3-Minuten-Demo: Momo installieren mit Docker,
-erste Task anlegen, Daily Quest erledigen. Auf YouTube, verlinkt von der Doku-Seite.
-Senkt die Hürde für Selbsthosting massiv.
+→ Listing eingereicht (seit 2026-04-29), 9 Alternativen verlinkt — Habitica, Vikunja, Super Productivity, LifeRPG, Loop, HabitTrove, Beaver, Finch, EpicWin, SuperBetter.
+
+**Backlinks aufbauen — der eigentliche SEO-Hebel**
+Mehr Listings auf alternativeto bringen wenig wenn Google Momo niemand verlinkt sieht.
+Hochwertige Backlinks von themenrelevanten Communities ranken besser als jedes On-Page-SEO.
+
+Konkrete Targets in Reihenfolge der Wichtigkeit:
+- **r/selfhosted** — eigener Showcase-Post mit Screenshots + Docker-Compose-Snippet (kein Spam-Post, ehrliche Story: „self-hosted task manager für ADHS-Nutzer"). Beste Engagement-Zeiten Mo–Mi morgens EU-Zeit
+- **r/selfhostable**, **r/opensource**, **r/ProductivityApps**, **r/ADHD** (in r/ADHD nur dezent, dort sind Self-Promo-Regeln strikt)
+- **HackerNews Show HN** — eigener „Show HN: Momo, self-hosted task manager for ADHD" Post; Wochenende oder Sonntagabend US-Zeit
+- **awesome-selfhosted-data** PR (das eigentliche Repo, nicht nur die Webseite) — frühestens Aug 2026 nach Richtlinien
+- **awesome-stars Listen** auf GitHub — viele kuratieren persönliche „awesome ADHD tools" oder „awesome productivity"
+- **Lobste.rs** wenn Invite vorhanden
+- **dev.to / hashnode Artikel** über Engineering-Themen aus Momo („How we built energy-aware task scheduling", „Radix UI vs custom components — what we learned") — bringt indirekt Backlinks zur Live-Demo
+- **product hunt** — einmaliger größerer Push, gut planbar
+- **GitHub README Badges** für jede Verlinkung die wir bekommen → reziprozierter Backlink
+
+**Ein kurzes Video** ❌ (gestrichen)
+Erkenntnis: ein 3-Minuten-Demovideo bringt weniger als ein gut platzierter Reddit-Post mit Screenshots. Demovideos werden selten geteilt, Backlinks ranken nachhaltig.
 
 **GitHub-Präsenz pflegen** ✅
 README ist gut. Aber: Topics, Good-First-Issues, Contributors-Guide.
