@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-10
+
 ### Added
 
 - **Onboarding: Abschluss-Moment** — Nach dem Notifications-Schritt erscheint ein fünfter „Complete"-Step mit doppeltem Konfetti-Burst, animiertem Amber-Glow-Kreis, Lora-italic-Begrüßung und einer 3-s-Fortschrittsbar die automatisch zum Dashboard weiterleitet. Alle 4 Fortschritts-Punkte wechseln auf grün. Der API-Call läuft parallel zur Transition (non-blocking).
@@ -643,7 +645,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Bought items shown with green left border and "Bought" badge
 - Discarded items shown with 50% opacity and strikethrough title
 
-[Unreleased]: https://github.com/jp1337/momo/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/jp1337/momo/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/jp1337/momo/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/jp1337/momo/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/jp1337/momo/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/jp1337/momo/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/jp1337/momo/compare/v0.3.0...v0.3.1
