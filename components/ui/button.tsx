@@ -19,7 +19,7 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "secondary", size = "md", asChild = false, style, children, ...props }, ref) => {
-    const Comp = asChild ? Slot : motion.button;
+    const Comp = (asChild ? Slot : motion.button) as typeof motion.button;
 
     const baseStyles = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 

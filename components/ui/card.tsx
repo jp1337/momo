@@ -16,7 +16,7 @@ interface CardProps extends HTMLMotionProps<"div"> {
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, hover = false, asChild = false, style, children, ...props }, ref) => {
-    const Comp = asChild ? Slot : motion.div;
+    const Comp = (asChild ? Slot : motion.div) as typeof motion.div;
 
     const combinedStyle = {
       backgroundColor: "var(--bg-surface)",

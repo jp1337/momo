@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  * Label component - Styled label for form inputs.
  */
 
-export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {}
+export type LabelProps = React.LabelHTMLAttributes<HTMLLabelElement>;
 
 const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
   ({ className, style, children, ...props }, ref) => {
