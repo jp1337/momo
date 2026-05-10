@@ -14,7 +14,7 @@ import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faChevronRight, faBoxArchive, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronRight, faBoxArchive, faXmark, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
 import { TopicCard } from "./topic-card";
 import { TopicForm } from "./topic-form";
 import { TemplatePicker } from "./template-picker";
@@ -67,9 +67,19 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
           pointerEvents: "none",
         }}
       />
-      <p className="relative text-6xl mb-5 select-none" role="img" aria-label="Folder">
-        📂
-      </p>
+      <div
+        className="relative mx-auto mb-5 flex items-center justify-center"
+        style={{
+          width: 72,
+          height: 72,
+          borderRadius: "50%",
+          backgroundColor: "color-mix(in srgb, var(--accent-green) 14%, transparent)",
+        }}
+        role="img"
+        aria-label="Folder"
+      >
+        <FontAwesomeIcon icon={faFolderOpen} style={{ fontSize: 28, color: "var(--accent-green)" }} />
+      </div>
       <p
         className="relative text-xl font-semibold mb-2"
         style={{

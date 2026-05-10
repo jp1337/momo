@@ -16,7 +16,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBolt } from "@fortawesome/free-solid-svg-icons";
+import { faBolt, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { TaskItem } from "@/components/tasks/task-item";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
 import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
@@ -257,9 +257,19 @@ export function FiveMinuteView({ initialTasks, topics }: FiveMinuteViewProps) {
             border: "1px solid color-mix(in srgb, var(--accent-green) 30%, var(--border))",
           }}
         >
-          <p className="text-2xl mb-3" role="img" aria-label={t("completed_all")}>
-            {tTasks("empty_evening").includes("Perfekt") ? "🎉" : "🎉"}
-          </p>
+          <div
+            className="mx-auto mb-5 flex items-center justify-center"
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: "50%",
+              backgroundColor: "color-mix(in srgb, var(--accent-green) 14%, transparent)",
+            }}
+            role="img"
+            aria-label={t("completed_all")}
+          >
+            <FontAwesomeIcon icon={faCheck} style={{ fontSize: 28, color: "var(--accent-green)" }} />
+          </div>
           <p
             className="text-base font-medium mb-1"
             style={{

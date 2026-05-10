@@ -15,7 +15,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faChevronRight, faGift } from "@fortawesome/free-solid-svg-icons";
 import { BudgetBar } from "@/components/wishlist/budget-bar";
 import { WishlistCard } from "@/components/wishlist/wishlist-card";
 import { WishlistForm } from "@/components/wishlist/wishlist-form";
@@ -396,9 +396,19 @@ export function WishlistView({
               pointerEvents: "none",
             }}
           />
-          <p className="relative text-6xl mb-5 select-none" role="img" aria-label="🎁">
-            🎁
-          </p>
+          <div
+            className="relative mx-auto mb-5 flex items-center justify-center"
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: "50%",
+              backgroundColor: "color-mix(in srgb, var(--accent-amber) 14%, transparent)",
+            }}
+            role="img"
+            aria-label="Gift"
+          >
+            <FontAwesomeIcon icon={faGift} style={{ fontSize: 28, color: "var(--accent-amber)" }} />
+          </div>
           <p
             className="relative text-xl font-semibold mb-2"
             style={{
@@ -562,7 +572,7 @@ export function WishlistView({
               }}
             >
               <span style={{ display: "inline-block", transform: showHistory ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s ease" }}>
-                ▶
+                <FontAwesomeIcon icon={faChevronRight} style={{ fontSize: 9 }} />
               </span>
               {t("view_discarded")} ({historyItems.filter((i) => i.status === "DISCARDED").length})
             </button>

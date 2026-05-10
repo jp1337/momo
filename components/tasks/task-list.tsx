@@ -20,7 +20,7 @@ import Link from "next/link";
 import { AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faChevronDown, faChevronRight, faCheckDouble, faListOl, faLock } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faChevronDown, faChevronRight, faCheckDouble, faListOl, faLock, faMoon, faSun, faLeaf, faStar } from "@fortawesome/free-solid-svg-icons";
 import { TaskItem } from "./task-item";
 import { TaskForm } from "./task-form";
 import { BulkActionBar } from "./bulk-action-bar";
@@ -187,31 +187,30 @@ function SectionHeader({
 function EmptyState() {
   const t = useTranslations("tasks");
   const hour = new Date().getHours();
-  let emoji: string;
-  let headline: string;
-  let sub: string;
+
+  type EmptyConfig = {
+    icon: typeof faMoon;
+    iconColor: string;
+    haloColor: string;
+    headline: string;
+    sub: string;
+  };
+
+  let config: EmptyConfig;
 
   if (hour < 5) {
-    emoji = "🌙";
-    headline = t("empty_night");
-    sub = t("empty_night_sub");
+    config = { icon: faMoon, iconColor: "var(--text-secondary)", haloColor: "var(--text-muted)", headline: t("empty_night"), sub: t("empty_night_sub") };
   } else if (hour < 12) {
-    emoji = "☀️";
-    headline = t("empty_morning");
-    sub = t("empty_morning_sub");
+    config = { icon: faSun, iconColor: "var(--accent-amber)", haloColor: "var(--accent-amber)", headline: t("empty_morning"), sub: t("empty_morning_sub") };
   } else if (hour < 17) {
-    emoji = "🌿";
-    headline = t("empty_afternoon");
-    sub = t("empty_afternoon_sub");
+    config = { icon: faLeaf, iconColor: "var(--accent-green)", haloColor: "var(--accent-green)", headline: t("empty_afternoon"), sub: t("empty_afternoon_sub") };
   } else if (hour < 22) {
-    emoji = "🎉";
-    headline = t("empty_evening");
-    sub = t("empty_evening_sub");
+    config = { icon: faStar, iconColor: "var(--accent-amber)", haloColor: "var(--accent-amber)", headline: t("empty_evening"), sub: t("empty_evening_sub") };
   } else {
-    emoji = "🌙";
-    headline = t("empty_latenight");
-    sub = t("empty_latenight_sub");
+    config = { icon: faMoon, iconColor: "var(--text-secondary)", haloColor: "var(--text-muted)", headline: t("empty_latenight"), sub: t("empty_latenight_sub") };
   }
+
+  const { icon, iconColor, haloColor, headline, sub } = config;
 
   return (
     <div
@@ -221,7 +220,7 @@ function EmptyState() {
         border: "1px dashed var(--border)",
       }}
     >
-      {/* Soft amber halo behind the emoji — adds atmosphere without competing with content */}
+      {/* Soft halo behind the icon */}
       <div
         aria-hidden="true"
         style={{
@@ -232,14 +231,25 @@ function EmptyState() {
           width: "240px",
           height: "240px",
           borderRadius: "50%",
-          background: "radial-gradient(circle, color-mix(in srgb, var(--accent-amber) 12%, transparent) 0%, transparent 70%)",
+          background: `radial-gradient(circle, color-mix(in srgb, ${haloColor} 12%, transparent) 0%, transparent 70%)`,
           pointerEvents: "none",
         }}
       />
 
-      <p className="relative text-6xl mb-5 select-none" role="img" aria-label={headline}>
-        {emoji}
-      </p>
+      {/* FA icon in a styled circle */}
+      <div
+        className="relative mx-auto mb-5 flex items-center justify-center"
+        style={{
+          width: 72,
+          height: 72,
+          borderRadius: "50%",
+          backgroundColor: `color-mix(in srgb, ${iconColor} 14%, transparent)`,
+        }}
+        role="img"
+        aria-label={headline}
+      >
+        <FontAwesomeIcon icon={icon} style={{ fontSize: 28, color: iconColor }} />
+      </div>
       <p
         className="relative text-xl font-semibold mb-2"
         style={{
