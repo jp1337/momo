@@ -285,6 +285,13 @@ jobs:
   # After the multi-arch manifest is published, trigger an immediate Watchtower update
   # on the intranet server so the new :latest image is rolled out without waiting for
   # the nightly schedule. Runs only on main-branch pushes (where :latest is updated).
+  #
+  # ⚠️ SECURITY: this repo is public and this job runs on a self-hosted runner.
+  # The whole workflow only triggers on push:main/tags (direct push only — merges
+  # are now gated by branch protection). NEVER add a `pull_request` or
+  # `pull_request_target` trigger to this workflow, or to any job that runs on
+  # `self-hosted` — that turns any fork PR into arbitrary code execution on the
+  # intranet runner.
   deploy:
     needs: [merge]
     if: github.ref == 'refs/heads/main'
