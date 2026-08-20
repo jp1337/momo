@@ -18,8 +18,10 @@ kein einziges `TODO`, kein `ts-ignore`, zehn `any` auf 244 Dateien, 1684 Unit-Te
 Die schlechte: **das Fundament hat gebröckelt, während vorne poliert wurde.** 19 Dependabot-PRs
 hatten sich angestaut, und mit ihnen 75 offene Security-Alerts (3 critical, 36 high). Das ist
 jetzt aufgeräumt — **5 Alerts, davon 1 high, und 0 offene Dependency-PRs**. Aber es war kein
-Zufall, und es kommt wieder, solange die Ursachen stehen. Der eine verbleibende High ist
-nodemailer, und der ist genau der, den Dependabot nicht liefern kann.
+Zufall, und es kommt wieder, solange die Ursachen stehen. Vier der fünf verbleibenden Alerts
+gehören zu `nodemailer` — und genau die kann Dependabot nicht liefern, weil der Fix einen
+Major-Bump braucht. Keiner der vier ist in Momos Nutzung erreichbar; die Begründung steht
+unten.
 
 Die nächste Phase heißt deshalb: **absichern, verbreiten, polieren.** In dieser Reihenfolge.
 
@@ -29,13 +31,67 @@ Die nächste Phase heißt deshalb: **absichern, verbreiten, polieren.** In diese
 
 ### 1. Absichern — das Fundament halten
 
-Nicht spannend. Aber alles andere ist wertlos, wenn Momo als „die Self-Hosted-App mit den
-36 High-Alerts" bekannt wird. Und genau jetzt beginnt die Verbreitungs-Phase.
+Nicht spannend. Aber vor zwei Wochen wäre Momo als „die Self-Hosted-App mit den 36
+High-Alerts" auffindbar gewesen — und genau jetzt beginnt die Verbreitungs-Phase, die
+Besucher auf den Security-Tab schickt. Der Rest dieser Liste hält das so.
 
-**nodemailer 8 → 9 — der Fix, den Dependabot niemals liefern wird**
+Die Reihenfolge hier ist bewusst nach *Erreichbarkeit* sortiert, nicht nach
+Alert-Severity: was ein Nutzer heute anfassen kann, steht vor dem, was nur im
+Advisory-Feed steht.
 
-`nodemailer` ist bis einschließlich 9.0.0 für CRLF-Injection in `List-*`-Header-Kommentaren
-verwundbar (Angreifer können beliebige Mail-Header setzen). Im Projekt steht `^8.0.7`.
+**Rate-Limiting auf 17 Mutation-Routen — der real erreichbare Befund**
+
+`CLAUDE.md` schreibt vor: *„Rate limiting on all mutation API routes."* Tatsächlich haben
+17 von 57 Mutation-Routen keins. Authentifiziert sind sie alle korrekt — nur ungebremst.
+Die zwei, die am meisten wehtun:
+
+- `app/api/wishlist/[id]/buy/route.ts` — bucht **atomar Coins ab**. Eine ungebremste
+  Schreiboperation direkt auf dem Währungssystem.
+- `app/api/auth/link-request/route.ts` — erzeugt unbegrenzt `linking_request`-Records.
+
+Das steht hier oben, weil es der einzige Befund auf dieser Seite ist, den ein
+authentifizierter Nutzer **heute tatsächlich anfassen kann**. Das Muster dafür existiert
+schon (`checkRateLimit` / `rateLimitResponse` aus `lib/rate-limit`, siehe
+`app/api/settings/calendar-feed/route.ts` als Vorbild) — es ist konsistentes Nachziehen,
+kein Neubau.
+
+Die Auth-Lage selbst ist sauber: `/api/cron` ist per `CRON_SECRET` mit `timingSafeEqual`
+geschützt, `calendar-feed` hinter `resolveVerifiedApiUser` samt 2FA-Gate. Hier fehlt nur
+die Bremse, nicht die Tür.
+
+**nodemailer 8 → 9 — vier von fünf Alerts, alle nicht erreichbar**
+
+Von den fünf offenen Dependabot-Alerts gehören **vier** zu `nodemailer` (im Projekt steht
+`^8.0.7`). `npm audit` fasst sie zu einem Paket-Eintrag zusammen und zeigt deshalb nur „2" —
+GitHub listet jedes Advisory einzeln:
+
+| Severity | Advisory |
+| --- | --- |
+| **HIGH** | Message-level `raw`-Option umgeht `disableFileAccess` / `disableUrlAccess` |
+| MEDIUM | Improper TLS Certificate Validation im OAuth2-Token-Fetch |
+| MEDIUM | CRLF-Injection in `List-*`-Header-Kommentaren |
+| MEDIUM | `jsonTransport` umgeht `disableFileAccess` / `disableUrlAccess` |
+
+**Wichtig für die Einordnung: keiner dieser vier Pfade ist in Momo erreichbar.** Es gibt im
+ganzen Projekt genau einen `sendMail`-Aufruf (`lib/notifications.ts:314`), und der setzt
+ausschließlich `from`, `to`, `subject`, `text` und `html`. Eine Suche über den Mail-Code
+findet **null** Vorkommen von `raw`, `attachments`, `jsonTransport`, `oauth2`,
+`disableFileAccess` oder `disableUrlAccess`. Konkret:
+
+- **`raw`-Bypass (HIGH)** — Momo übergibt kein `raw` und nutzt überhaupt keine Attachments.
+- **OAuth2-TLS** — die SMTP-Auth läuft über `SMTP_USER` / `SMTP_PASS`, nicht über OAuth2.
+- **CRLF in `List-*`** — Momo setzt kein einziges `List-*`-Header.
+- **`jsonTransport`** — Momo nutzt einen echten SMTP-Transport über `host` / `port`.
+
+Momo hat außerdem keinen Email-Auth-Provider: die Provider sind GitHub, Discord, Google,
+MicrosoftEntraID, Keycloak und Credentials. Die `verificationTokens`-Tabelle existiert nur,
+weil der Drizzle-Adapter sie im Schema verlangt — kein Provider nutzt sie. nodemailer
+transportiert also ausschließlich Notification-Mails, nicht Auth.
+
+Der Grund, es trotzdem zu tun, ist ein anderer: es räumt **vier der fünf Alerts** auf einen
+Schlag ab, und die Verbreitungs-Phase schickt Besucher auf den Security-Tab des Repos. Das
+ist ein Reputations- und Hygiene-Argument, kein Sicherheits-Notfall. Danach bleibt nur noch
+der `@babel/core`-Low übrig.
 
 Der Fix verlangt einen Major-Bump. `.github/dependabot.yml` ignoriert aber pauschal *jeden*
 Major für *jedes* Paket:
@@ -46,16 +102,15 @@ ignore:
     update-types: ["version-update:semver-major"]
 ```
 
-Dieser Security-Fix wird also **strukturell nie als PR erscheinen**. Er muss von Hand kommen.
-Momo verschickt darüber Magic-Links und Notification-Mails — das ist der Auth-Kern, nicht
-ein Randfeature. Höchste Priorität von allem auf dieser Seite.
+Dieser Fix wird also **strukturell nie als PR erscheinen**. Er muss von Hand kommen.
 
 Eine Falle dabei: `nodemailer` steht **zweimal** in `package.json` — als Dependency (Zeile 49)
 und als `overrides`-Eintrag (Zeile 67), beide auf `^8.0.7`. Der Override pinnt die 8.x-Linie
 über den ganzen Abhängigkeitsbaum. Wer nur die Dependency auf 9 hebt, wird vom Override
 still zurückgezogen und wundert sich. **Beide Stellen müssen gleichzeitig ändern** — und
-danach gehören die Mail-Pfade (Magic-Link-Versand, Notification-Mails) manuell getestet,
-weil ein Major-Bump am Transport nichts ist, was `npm test` vollständig abdeckt.
+danach gehört der Notification-Mail-Versand manuell verifiziert, weil `npm test` den echten
+SMTP-Transport nicht abdeckt. Die Oberfläche ist dabei winzig: ein `createTransport` mit
+Singleton-Cache, ein `sendMail`. Beides in `lib/notifications.ts`.
 
 **next 16.3.1** ✅ (2026-08-20, #65)
 
@@ -67,20 +122,6 @@ vorbestehende Stellen, die `window.location.href` für interne Navigation nutzen
 `components/auth/passkey-login-button.tsx:62` und
 `components/auth/passkey-second-factor-button.tsx:52`. Beides Warnungen, keine Errors;
 der Fix ist `useRouter().push()`.
-
-**Rate-Limiting auf 17 Mutation-Routen**
-
-`CLAUDE.md` schreibt vor: *„Rate limiting on all mutation API routes."* Tatsächlich haben
-17 von 57 Mutation-Routen keins. Authentifiziert sind sie alle korrekt — nur ungebremst.
-Die zwei, die am meisten wehtun:
-
-- `app/api/wishlist/[id]/buy/route.ts` — bucht **atomar Coins ab**. Eine ungebremste
-  Schreiboperation direkt auf dem Währungssystem.
-- `app/api/auth/link-request/route.ts` — erzeugt unbegrenzt `linking_request`-Records.
-
-Die Auth-Lage selbst ist sauber: `/api/cron` ist per `CRON_SECRET` mit `timingSafeEqual`
-geschützt, `calendar-feed` hinter `resolveVerifiedApiUser` samt 2FA-Gate. Hier fehlt nur
-die Bremse, nicht die Tür.
 
 **`dependabot.yml` reparieren, damit der Stau nicht wiederkommt**
 
