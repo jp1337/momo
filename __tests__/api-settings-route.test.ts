@@ -717,6 +717,24 @@ describe("GET /api/settings/calendar-feed", () => {
     const body = await res.json();
     expect(body).toHaveProperty("active");
   });
+
+  it("consults resolveVerifiedApiUser, not resolveSessionOnlyApiUser — GET stays Bearer-accepting", async () => {
+    const user = await createTestUser();
+    // Diverge the two mocks on purpose: if GET is ever switched to the
+    // session-only resolver, this pins that regression by failing here
+    // instead of silently passing (asVerifiedUser sets both identically,
+    // which would mask exactly that regression).
+    mockVerifiedAuth.mockResolvedValue({
+      ok: true,
+      user: { userId: user.id, readonly: false },
+    });
+    mockSessionOnlyAuth.mockResolvedValue({
+      ok: false,
+      reason: "BEARER_SESSION_REQUIRED",
+    });
+    const res = await calendarGET(req("GET", "/api/settings/calendar-feed"));
+    expect(res.status).toBe(200);
+  });
 });
 
 describe("POST /api/settings/calendar-feed", () => {

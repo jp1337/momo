@@ -745,6 +745,22 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           },
         },
       },
+      SessionRequired: {
+        description:
+          "Authenticated via a Bearer/API key, but this endpoint is deliberately " +
+          "restricted to a signed-in browser session — API keys (read-write or " +
+          "read-only alike) are refused outright, not just checked for the " +
+          "read-only flag.",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/Error" },
+            example: {
+              error:
+                "This endpoint can only be managed from a signed-in browser session — API keys are not accepted here",
+            },
+          },
+        },
+      },
       NotFound: {
         description: "The requested resource does not exist or belongs to another user.",
         content: {
@@ -2912,6 +2928,7 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
             },
           },
           "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/SessionRequired" },
           "429": { $ref: "#/components/responses/TooManyRequests" },
           "500": { $ref: "#/components/responses/InternalServerError" },
         },
@@ -2937,6 +2954,7 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
             },
           },
           "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/SessionRequired" },
           "429": { $ref: "#/components/responses/TooManyRequests" },
           "500": { $ref: "#/components/responses/InternalServerError" },
         },

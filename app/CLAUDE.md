@@ -66,7 +66,7 @@ api/
   topics/[id]/reorder/route.ts       → PUT (reorder tasks within topic, body: {taskIds: string[]})
   topics/import-template/route.ts    → POST (import a curated topic template; body: {templateKey: "moving"|"taxes"|"fitness"}, resolves titles via current UI locale, creates topic + tasks atomically, 10/min)
   calendar/[token]/route.ts          → GET (public iCal feed; token in path IS the auth, `.ics` suffix stripped; 60/min per token; unknown/revoked tokens → 404, not 401)
-  settings/calendar-feed/route.ts    → GET (status), POST (create or rotate token, returns plaintext URL once), DELETE (revoke). 2FA-verified session required for the mutation methods
+  settings/calendar-feed/route.ts    → GET (status), POST (create or rotate token, returns plaintext URL once), DELETE (revoke). 2FA-verified session required for the mutation methods; Bearer/API-key callers are refused there with 403 BEARER_SESSION_REQUIRED (GET still accepts Bearer)
   daily-quest/route.ts               → GET (fetch today's quest, returns completed quest all day), POST (force new quest)
   daily-quest/postpone/route.ts      → POST (postpone quest, body: {taskId, timezone?}, enforces daily limit)
   daily-quest/restore/route.ts       → POST (pin a specific task as today's quest — used as Undo for the energy auto-reroll, body: {taskId, timezone?})

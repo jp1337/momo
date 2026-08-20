@@ -162,13 +162,19 @@ export async function resolveVerifiedApiUser(
  * rotating/revoking the calendar feed token, which is equivalent in
  * sensitivity to creating an API key).
  *
- * A Bearer/API-key caller is refused outright — before any key lookup — with
- * reason `BEARER_SESSION_REQUIRED`. This is intentionally checked ahead of
- * (and instead of) calling `resolveApiKeyUser`:
+ * A caller presenting an `Authorization: Bearer ...` header is refused
+ * outright — before any key lookup — with reason `BEARER_SESSION_REQUIRED`.
+ * This is intentionally checked ahead of (and instead of) calling
+ * `resolveApiKeyUser`:
  *  - a valid key and an invalid key are refused identically, so the response
  *    leaks nothing about key validity;
  *  - no needless DB round-trip is made for a caller that can never succeed
  *    here regardless of what the lookup would return.
+ * The refusal keys on the header *prefix* alone, deliberately not on
+ * whether a token follows it. This is stricter than `resolveVerifiedApiUser`,
+ * which falls through to the cookie session for an empty `Bearer ` header
+ * (see below) — here an empty token is refused too, rather than silently
+ * treated as "no Bearer header".
  *
  * When no Bearer header is present, this delegates entirely to
  * `resolveVerifiedApiUser` for the cookie-session / 2FA-gate logic — a

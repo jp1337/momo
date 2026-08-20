@@ -244,6 +244,19 @@ describe("resolveSessionOnlyApiUser", () => {
     expect(result).toEqual({ ok: false, reason: "BEARER_SESSION_REQUIRED" });
   });
 
+  it("refuses a Bearer token even when a fully valid, 2FA-verified session also exists — Bearer loses to everything", async () => {
+    mockResolveApiKeyUser.mockResolvedValue({ userId: "user-uuid-bearer", readonly: false });
+    // A session that resolveVerifiedApiUser would happily accept on its own:
+    mockAuth.mockResolvedValue({ user: { id: "session-user" } } as never);
+    mockUserHasSecondFactor.mockResolvedValue(true);
+    mockReadSessionToken.mockReturnValue("verified-session-token");
+    mockIsSessionSecondFactorVerified.mockResolvedValue(true);
+
+    const result = await resolveSessionOnlyApiUser(bearerRequest("momo_live_valid"));
+
+    expect(result).toEqual({ ok: false, reason: "BEARER_SESSION_REQUIRED" });
+  });
+
   it("returns { ok: false, reason: 'BEARER_SESSION_REQUIRED' } for a read-only bearer token too", async () => {
     mockResolveApiKeyUser.mockResolvedValue({
       userId: "user-uuid-readonly",
