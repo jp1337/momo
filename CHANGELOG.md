@@ -7,6 +7,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Dependency-Konsolidierung: 19 offene Dependabot-PRs abgearbeitet** — Sieben PRs (GitHub Actions + `alexa-skill`) wurden einzeln gemergt; die zwölf konkurrierenden `package-lock.json`-PRs sind hier zu einem verifizierten Commit zusammengefasst, weil jeder Einzel-Merge die übrigen elf invalidiert hätte. Enthalten sind u. a. next 16.2.6 → 16.2.12, React 19.2.6 → 19.2.8, next-auth beta.31 → beta.32, sharp 0.34.5 → 0.35.3, swagger-ui-react 5.32.5 → 5.32.14, next-intl 4.11.1 → 4.13.7, pg 8.20 → 8.23, framer-motion 12.38 → 12.43, alle Radix- und FontAwesome-Primitives sowie die Security-Bumps von dompurify, fast-uri, brace-expansion, axios, form-data, js-yaml, immutable und vite.
+- **GitHub Actions aktualisiert** — `actions/checkout` 6 → 7, `actions/setup-node` 6 → 7, `actions/cache` 5 → 6, `codecov/codecov-action` 6 → 7.
+
+### Fixed
+
+- **`npm audit`-Fläche reduziert** — Die transitiven Security-Advisories (dompurify, brace-expansion, form-data, axios, js-yaml, fast-uri, vite) sind durch den konsolidierten Lockfile-Sweep geschlossen.
+
 ## [0.5.0] - 2026-05-10
 
 ### Added
