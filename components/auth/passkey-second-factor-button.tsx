@@ -4,7 +4,9 @@
  * PasskeySecondFactorButton — rendered on `/login/2fa` as an alternative to
  * (or alongside) the TOTP code input. Triggers an assertion against the
  * user's registered passkeys and, on success, marks the current session
- * as second-factor-verified before hard-navigating to /dashboard.
+ * as second-factor-verified, then calls `router.refresh()` followed by
+ * `router.push("/dashboard")` so the dashboard renders with the newly
+ * verified session — see the inline comment at the call site for the full why.
  */
 
 import { useState } from "react";

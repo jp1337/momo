@@ -10,8 +10,10 @@
  *  1. Click → POST /api/auth/passkey/login/options (public endpoint).
  *  2. startAuthentication() → OS/browser prompts user.
  *  3. POST /api/auth/passkey/login/verify with the assertion.
- *  4. On success the server sets the Auth.js session cookie and we hard-
- *     navigate to /dashboard so middleware/layouts see the new session.
+ *  4. On success the server sets the Auth.js session cookie, then we call
+ *     `router.refresh()` (invalidates the stale Router Cache) followed by
+ *     `router.push("/dashboard")` so the dashboard renders with the new
+ *     session — see the inline comment at the call site for the full why.
  */
 
 import { useState } from "react";
