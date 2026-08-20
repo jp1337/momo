@@ -6,7 +6,7 @@
  * Returns: { success: true }
  */
 
-import { resolveApiUser } from "@/lib/api-auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { markOnboardingCompleted } from "@/lib/onboarding";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
@@ -17,6 +17,7 @@ import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 export async function POST(request: Request) {
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   // Rate limit: 10 completions per minute per user
   const rateCheck = checkRateLimit(

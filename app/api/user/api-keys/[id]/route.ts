@@ -5,7 +5,7 @@
  * Only the key's owner can revoke it.
  */
 
-import { resolveApiUser } from "@/lib/api-auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { revokeApiKey } from "@/lib/api-keys";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
@@ -20,6 +20,7 @@ export async function DELETE(
 ) {
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse();
 
   const rate = checkRateLimit(`api-keys-delete:${user.userId}`, 10, 60_000);
   if (rate.limited) return rateLimitResponse(rate.resetAt);

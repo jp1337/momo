@@ -48,8 +48,8 @@ function req(method: string, url: string): Request {
   return new Request(`http://localhost${url}`, { method });
 }
 
-function authAs(userId: string): void {
-  mockAuth.mockResolvedValue({ userId, readonly: false } as ApiUser);
+function authAs(userId: string, readonly = false): void {
+  mockAuth.mockResolvedValue({ userId, readonly } as ApiUser);
 }
 
 const FAKE_ID = "00000000-0000-0000-0000-000000000000";
@@ -112,5 +112,14 @@ describe("POST /api/settings/webhooks/:id/test", () => {
       params: Promise.resolve({ id: FAKE_ID }),
     });
     expect(res.status).toBe(429);
+  });
+
+  it("returns 403 for a readonly key", async () => {
+    const user = await createTestUser();
+    authAs(user.id, true);
+    const res = await POST(req("POST", `/api/settings/webhooks/${FAKE_ID}/test`) as never, {
+      params: Promise.resolve({ id: FAKE_ID }),
+    });
+    expect(res.status).toBe(403);
   });
 });

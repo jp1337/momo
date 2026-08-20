@@ -9,7 +9,7 @@
  * Requires: authentication
  */
 
-import { resolveApiUser } from "@/lib/api-auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { testWebhookEndpoint } from "@/lib/webhooks";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
@@ -24,6 +24,7 @@ export async function POST(
 ): Promise<NextResponse> {
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (user.readonly) return readonlyKeyResponse() as NextResponse;
 
   // Strict rate limit — prevents using this as a DDoS vector
   const rateCheck = checkRateLimit(`webhooks-test:${user.userId}`, 5, 60_000);
