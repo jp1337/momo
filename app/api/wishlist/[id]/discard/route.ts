@@ -13,6 +13,7 @@
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { discardWishlistItem, restoreWishlistItem } from "@/lib/wishlist";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * POST /api/wishlist/:id/discard
@@ -25,6 +26,9 @@ export async function POST(
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
+
+  const rate = checkRateLimit(`wishlist-discard:${user.userId}`, 30, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
 
@@ -52,6 +56,9 @@ export async function DELETE(
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
+
+  const rate = checkRateLimit(`wishlist-discard:${user.userId}`, 30, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
 

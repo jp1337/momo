@@ -7,6 +7,12 @@
  * For development use only. In production, call seedAchievements() at app startup.
  *
  * Returns: { message: string, count: number }
+ *
+ * Deliberately NOT rate limited, unlike every other mutation route. The first
+ * statement rejects anything outside `NODE_ENV=development` with a 403, before
+ * auth and before the database — in production this route does not exist as far
+ * as a caller is concerned, so a limit would guard a door that is already
+ * bricked up. See also app/api/cron/route.ts for the other exemption.
  */
 
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";

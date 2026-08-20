@@ -13,8 +13,21 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  // Keyed by IP rather than by user: this is the only mutation route that also
+  // answers unauthenticated callers (it then just sets the cookie), so there is
+  // no user id to key on for half the traffic. The limit sits before the body
+  // parse and the session lookup so a flood costs neither a DB round-trip nor
+  // an `auth()` call.
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
+  const rate = checkRateLimit(`locale:${ip}`, 20, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt);
+
   let body: unknown;
   try {
     body = await req.json();
