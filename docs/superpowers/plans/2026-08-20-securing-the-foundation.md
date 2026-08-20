@@ -25,6 +25,8 @@
     -e POSTGRES_USER=momo -e POSTGRES_PASSWORD=password -e POSTGRES_DB=momo_test \
     -p 5432:5432 docker.io/library/postgres:16
   ```
+- **Lint baseline:** on `main` at `ab5cfab`, `npm run lint` reports **three** warnings, not two: the two `no-location-assign-relative-destination` in the passkey components (Task 4 removes them) plus a pre-existing `jsx-a11y/role-supports-aria-props` at `components/ui/checkbox.tsx:31`. That third one is unrelated to anything here and is **out of scope** — do not fix it, do not treat it as a failure. The gate everywhere in this plan is **no new warnings**, never "zero warnings".
+- **Branches are independent, and that has two consequences.** Every task cuts from `origin/main`; none stacks on another. So (a) each task's `CHANGELOG.md` bullet will conflict with its siblings' at merge time — expected, resolves by keeping both bullets, and each PR body says so; and (b) Tasks 1–4 do **not** contain Task 0's fix, because Task 0's PR is not merged during this session. Their test gate is therefore "everything passes except `__tests__/webhooks.test.ts` → *aborts fetch via AbortController*". **Any other failure is yours.** Only Task 5, which runs after the merges, gates on a fully green suite.
 - **Known baseline:** on `main` at `ab5cfab`, `npm test` is **1683 passed / 1 failed / 1684 total**. The single failure is `__tests__/webhooks.test.ts > "aborts fetch via AbortController when delivery takes longer than timeout"`. It is a pre-existing race, documented in ROADMAP.md § "Offene technische Schulden" → "Flaky Webhook-Test". Task 0 fixes it. Until Task 0 lands, "the suite is green" means "1 failure, and it is that one".
 - **Rate-limit window default** is `60_000` ms. Deviations (`5 * 60 * 1000`) are called out per route and must carry a comment saying why.
 - **Verification is evidence, not assertion.** Every step that says "run X" means run it and read the output before ticking the box.
@@ -177,11 +179,21 @@ Under `## [Unreleased]` → `### Fixed`, add as the first bullet:
 - **Flaky Webhook-Delivery-Test entschärft** — Der Test „aborts fetch via AbortController when delivery takes longer than timeout" hat gegen den absichtlich nicht `await`-eten `db.insert` in `lib/webhooks.ts` gerannt: lokal verlor er das Rennen zuverlässig, in CI gewann er es meistens. Der Test wartet den Insert jetzt mit einem 2-s-Polling ab, statt ihn zu erwischen. Produktionscode unverändert — fire-and-forget beim Delivery-Log ist gewollt, damit ein langsames Log keine Webhook-Auslieferung aufhält.
 ```
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Add `.superpowers/` to `.gitignore`**
+
+Unrelated to the flake, folded in here because this task lands first. The subagent-driven workflow writes its ledger, briefs and review packages to `<repo>/.superpowers/`, which `.gitignore` does not cover — one `git add -A` and that scratch state lands in the repository. Append to `.gitignore`:
+
+```gitignore
+
+# superpowers subagent-driven-development scratch state
+.superpowers/
+```
+
+- [ ] **Step 8: Commit**
 
 ```bash
 git checkout -b test/webhook-delivery-race origin/main
-git add __tests__/webhooks.test.ts CHANGELOG.md
+git add __tests__/webhooks.test.ts CHANGELOG.md .gitignore
 git commit -m "test(api): wait for the fire-and-forget delivery insert instead of racing it"
 git push -u origin test/webhook-delivery-race
 gh pr create --title "test(api): fix the flaky webhook delivery-log race" --body "$(cat <<'EOF'
@@ -534,7 +546,7 @@ Expected: `tsc` silent. Lint shows at most the two pre-existing `no-location-ass
 npm test 2>&1 | tail -20
 ```
 
-Expected: all pass. The count is 1684 + 23 = **1707** if Task 0 landed first; if Task 0 was skipped, 1706 passed / 1 failed with the known webhooks flake.
+Expected: **1706 passed / 1 failed**, the failure being the known `webhooks.test.ts` flake and nothing else (1684 baseline − 1 flake + 23 new = 1706 passing). Task 0 fixes that flake on its own branch, which this branch does not contain. Any *other* failure belongs to this task.
 
 Watch specifically for **new** failures in `api-task-mutations-route.test.ts`, `api-topic-mutations-route.test.ts`, `api-wishlist-route.test.ts`, `api-push-route.test.ts`, `api-daily-quest-route.test.ts`, `api-settings-route.test.ts` and `api-keys.test.ts`. Those files exercise the newly guarded handlers for real, against the real limiter, whose store is a module-level `Map` shared across a file. Each test creates a fresh user via `createTestUser()`, so the bucket key differs per test and the limits (10–60/min) are far above what any single test spends — but if one of those files does reuse a user id across more calls than its limit allows, it will now go 429. The fix in that case is in the test (fresh user per case), not a raised limit.
 
@@ -680,7 +692,7 @@ Expected: every `nodemailer` in the tree on 9.0.5. If any 8.x remains, the overr
 npx tsc --noEmit && npm run lint 2>&1 | tail -5 && npm test 2>&1 | tail -20
 ```
 
-Expected: `tsc` silent, no new lint warnings, suite green. Note what this does **not** prove: `__tests__/notifications-channels.test.ts:45` does `vi.mock("nodemailer", ...)`, so the real transport is never exercised. A green suite here means the types and the call shapes still line up, nothing more.
+Expected: `tsc` silent; lint unchanged from the three-warning baseline; suite green except the known webhooks flake (see Global Constraints). Note what this does **not** prove: `__tests__/notifications-channels.test.ts:45` does `vi.mock("nodemailer", ...)`, so the real transport is never exercised. A green suite here means the types and the call shapes still line up, nothing more.
 
 - [ ] **Step 6: Check the advisory count actually moved**
 
@@ -1078,7 +1090,7 @@ with:
 npx tsc --noEmit && npm run lint 2>&1 | tail -10 && npm test 2>&1 | tail -10
 ```
 
-Expected: `tsc` silent; **zero** lint warnings now (these two were the only ones); suite green. `npm test` does not cover these components — it is a regression check, not evidence for this change.
+Expected: `tsc` silent; **one** warning left — the pre-existing `jsx-a11y/role-supports-aria-props` at `components/ui/checkbox.tsx:31`, which is unrelated and out of scope. The two passkey warnings are gone. Suite green except the known webhooks flake. `npm test` does not cover these components — it is a regression check, not evidence for this change.
 
 - [ ] **Step 5: Verify both flows by hand — mandatory, nothing automated covers them**
 
@@ -1138,7 +1150,7 @@ Dead render node in `passkey-login-button.tsx` whose only job was to keep an unu
 ## Verification
 
 - `npx tsc --noEmit` — clean.
-- `npm run lint` — zero warnings (these two were the last).
+- `npm run lint` — the two passkey warnings are gone; one unrelated pre-existing warning remains (`jsx-a11y/role-supports-aria-props`, `components/ui/checkbox.tsx:31`), untouched by design.
 - `npm test` — green, though nothing in the suite covers these components.
 - **Manual:** passkey login and the passkey second-factor step, each on a cold and a warm Router Cache. Note that `e2e/` touches passkeys only in `settings.spec.ts` (registration) — **no E2E test exercises passkey login**, so the manual pass is the only real evidence here.
 
@@ -1160,8 +1172,10 @@ EOF
 - Modify: `README.md` — see below; likely no change
 
 **Interfaces:**
-- Consumes: Tasks 1–4 must be **merged to `main`** first. Task 0 too, if it was approved.
+- Consumes: Tasks 0–4 must be **merged to `main`** first.
 - Produces: tag `v0.6.0`, which is what `.github/workflows/build-and-publish.yml` triggers on (`tags: ["v*"]`).
+
+> **This task is the repository owner's, not an agent's.** It depends on five PRs being merged into a protected `main`, and Step 7 pushes a tag that triggers image publication to GHCR, DockerHub and Quay. Merging and publishing are not an agent's calls to make. An agent executing this plan prepares everything up to and including the release PR's content, then stops and hands over — it does not merge the four PRs, and it does not push the tag.
 
 **Why minor and not patch.** Rate limiting adds a 429 response to 15 routes of a public, documented REST API. A client that has never had to handle 429 on `PATCH /api/tasks/{id}` now can. That is a behavioural change in the public contract, so `0.5.0` → `0.6.0`.
 
@@ -1191,7 +1205,7 @@ npm test 2>&1 | tail -20
 npm run build 2>&1 | tail -20
 ```
 
-Expected: `tsc` silent, zero lint warnings, suite green, build succeeds. `npm run build` matters here and nowhere else: it is the only step that proves the Docker image will build.
+Expected: `tsc` silent; exactly one lint warning (the `components/ui/checkbox.tsx` one, unchanged from baseline); suite **fully** green — this is the one place that gate applies, because Task 0's fix is merged by now; build succeeds. `npm run build` matters here and nowhere else: it is the only step that proves the Docker image will build.
 
 - [ ] **Step 3: Bump the version**
 
