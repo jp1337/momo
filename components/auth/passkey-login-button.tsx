@@ -58,8 +58,15 @@ export function PasskeyLoginButton() {
         setError(t("passkey_err_generic"));
         return;
       }
-      // Hard navigate so server components re-run with the new session cookie.
-      window.location.href = "/dashboard";
+      // `refresh()` before `push()`, not `push()` alone: the fetch above just
+      // set a new session cookie, and /dashboard is server-rendered from it.
+      // A bare push can be served from the Router Cache — i.e. a dashboard
+      // rendered for the pre-login session, which bounces the user straight
+      // back here. refresh() invalidates that cache first. This replaces a
+      // `window.location.href` hard navigation, which achieved the same thing
+      // by reloading the world.
+      router.refresh();
+      router.push("/dashboard");
     } catch (err) {
       console.error(err);
       setError(t("passkey_err_network"));
@@ -89,8 +96,6 @@ export function PasskeyLoginButton() {
         />
         {submitting ? t("passkey_signing_in") : t("passkey_sign_in_btn")}
       </button>
-      {/* Silence the Next hook by still using router — ensures push is valid */}
-      <span hidden>{router ? "" : ""}</span>
       {error && (
         <p
           className="text-xs text-center"
