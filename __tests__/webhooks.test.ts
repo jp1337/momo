@@ -40,7 +40,8 @@ function ep(overrides: Partial<CreateWebhookEndpointInput> = {}): CreateWebhookE
 }
 
 /**
- * Waits for the fire-and-forget delivery log in `fireWebhookEvent` to land.
+ * Waits for the fire-and-forget delivery log in `fireWebhookEvent` to land
+ * for a specific endpoint.
  *
  * `lib/webhooks.ts` deliberately does not await its `db.insert` for the
  * delivery record, so that a slow or broken log never delays a webhook
@@ -48,11 +49,18 @@ function ep(overrides: Partial<CreateWebhookEndpointInput> = {}): CreateWebhookE
  * return, and asserting it directly is a race the test loses locally and
  * usually wins in CI. Polling turns the race into a bounded wait.
  *
+ * Scoped to `endpointId` rather than "the newest row in the table" so it
+ * stays correct if a test ever has more than one delivery in flight —
+ * unscoped, it would silently resolve on whichever row happens to be
+ * newest.
+ *
+ * @param endpointId - The webhook endpoint whose delivery row to wait for
  * @param timeoutMs - How long to keep polling before giving up
- * @returns The most recent webhook delivery row
- * @throws If no delivery row appears within the timeout
+ * @returns The most recent delivery row for that endpoint
+ * @throws If no delivery row for that endpoint appears within the timeout
  */
-async function waitForLatestDelivery(
+async function waitForEndpointDelivery(
+  endpointId: string,
   timeoutMs = 2_000
 ): Promise<typeof webhookDeliveries.$inferSelect> {
   const deadline = Date.now() + timeoutMs;
@@ -60,13 +68,15 @@ async function waitForLatestDelivery(
     const [row] = await db
       .select()
       .from(webhookDeliveries)
+      .where(eq(webhookDeliveries.endpointId, endpointId))
       .orderBy(desc(webhookDeliveries.deliveredAt))
       .limit(1);
     if (row) return row;
     if (Date.now() >= deadline) {
       throw new Error(
-        `No webhook delivery row appeared within ${timeoutMs}ms — the ` +
-          `fire-and-forget insert in lib/webhooks.ts never completed.`
+        `No webhook delivery row for endpoint ${endpointId} appeared within ` +
+          `${timeoutMs}ms — the fire-and-forget insert in lib/webhooks.ts ` +
+          `never completed.`
       );
     }
     await new Promise((resolve) => setTimeout(resolve, 25));
@@ -694,7 +704,7 @@ describe("fireWebhookEvent — HTTPS delivery", () => {
 
   it("aborts fetch via AbortController when delivery takes longer than timeout (covers line 440)", async () => {
     const user = await createTestUser({ timezone: TZ });
-    await createWebhookEndpoint(user.id, ep({ name: "Timeout EP" }));
+    const created = await createWebhookEndpoint(user.id, ep({ name: "Timeout EP" }));
 
     // Intercept setTimeout to call the delivery-timeout callback immediately.
     // DELIVERY_TIMEOUT_MS = 5000; we identify it by delay value.
@@ -733,8 +743,8 @@ describe("fireWebhookEvent — HTTPS delivery", () => {
     setTimeoutSpy.mockRestore();
 
     // Delivery should be logged as a failure. The insert is fire-and-forget,
-    // so wait for it rather than racing it — see waitForLatestDelivery.
-    const delivery = await waitForLatestDelivery();
+    // so wait for it rather than racing it — see waitForEndpointDelivery.
+    const delivery = await waitForEndpointDelivery(created.id);
 
     expect(delivery.status).toBe("failure");
     expect(delivery.errorMessage).toContain("aborted");
