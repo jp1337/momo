@@ -49,7 +49,6 @@ export async function PATCH(request: Request) {
   const rate = checkRateLimit(`settings-budget:${user.userId}`, 10, 60_000);
   if (rate.limited) return rateLimitResponse(rate.resetAt);
 
-
   let body: unknown;
   try {
     body = await request.json();

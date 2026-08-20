@@ -41,9 +41,10 @@ export async function PATCH(
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  if (user.readonly) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const rate = checkRateLimit(`push-device-mutate:${user.userId}`, 20, 60_000);
   if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
-  if (user.readonly) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
 
@@ -99,9 +100,10 @@ export async function DELETE(
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  if (user.readonly) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const rate = checkRateLimit(`push-device-mutate:${user.userId}`, 20, 60_000);
   if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
-  if (user.readonly) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
 
