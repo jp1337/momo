@@ -5,11 +5,19 @@
  *
  * Manages the per-user iCal calendar feed token.
  *
- * Auth: cookie session, 2FA-verified (the token grants read access to every
- * task's metadata without any further challenge — equivalent sensitivity to
- * creating an API key, which is also behind the 2FA gate). Bearer/API-key
- * callers are rejected — feed tokens must be managed from a trusted browser
- * session, not programmatically.
+ * Auth:
+ *  - GET: cookie session, 2FA-verified — OR a Bearer/API-key caller (exempt
+ *    from the 2FA gate, same as any other read endpoint). It never returns
+ *    the token itself, only { active, createdAt }, so this is low-stakes.
+ *  - POST / DELETE: cookie session ONLY, 2FA-verified. The token grants read
+ *    access to every task's metadata without any further challenge —
+ *    equivalent sensitivity to creating an API key, which is also behind the
+ *    2FA gate. Bearer/API-key callers are rejected outright, with 403
+ *    `BEARER_SESSION_REQUIRED` — even a fully-privileged (non-readonly) key —
+ *    because feed tokens must be rotated/revoked from a trusted browser
+ *    session, not programmatically. This is a deliberate breaking change for
+ *    any script that previously rotated/revoked the feed token via an API
+ *    key; that was never supposed to work.
  *
  * Rate limit: 10 mutations / minute / user (generous for accidental
  * double-clicks; rotation is fast + idempotent).
@@ -17,6 +25,7 @@
 
 import {
   resolveVerifiedApiUser,
+  resolveSessionOnlyApiUser,
   verifiedAuthErrorResponse,
 } from "@/lib/api-auth";
 import {
@@ -44,8 +53,12 @@ export async function GET(request: Request) {
 
 /** POST — create a new token or rotate the existing one. Returns plaintext URL once. */
 export async function POST(request: Request) {
-  const auth = await resolveVerifiedApiUser(request);
+  const auth = await resolveSessionOnlyApiUser(request);
   if (!auth.ok) return verifiedAuthErrorResponse(auth.reason);
+  // No readonly-key check here: resolveSessionOnlyApiUser refuses every
+  // Bearer/API-key caller above (401/403 before this line), so reaching
+  // here means a cookie session authenticated us, and cookie sessions are
+  // never readonly. A `user.readonly` check would be unreachable dead code.
 
   const rate = checkRateLimit(
     `calendar-feed-mutate:${auth.user.userId}`,
@@ -71,8 +84,12 @@ export async function POST(request: Request) {
 
 /** DELETE — revoke the existing token, if any. Idempotent. */
 export async function DELETE(request: Request) {
-  const auth = await resolveVerifiedApiUser(request);
+  const auth = await resolveSessionOnlyApiUser(request);
   if (!auth.ok) return verifiedAuthErrorResponse(auth.reason);
+  // No readonly-key check here: resolveSessionOnlyApiUser refuses every
+  // Bearer/API-key caller above (401/403 before this line), so reaching
+  // here means a cookie session authenticated us, and cookie sessions are
+  // never readonly. A `user.readonly` check would be unreachable dead code.
 
   const rate = checkRateLimit(
     `calendar-feed-mutate:${auth.user.userId}`,

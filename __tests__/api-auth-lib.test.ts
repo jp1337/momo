@@ -1,9 +1,9 @@
 /**
  * Unit tests for lib/api-auth.ts.
  *
- * Covers resolveApiUser and resolveVerifiedApiUser with all relevant auth
- * branches: Bearer token (valid / invalid / readonly), session cookie (with
- * and without 2FA), and the missing-session edge cases.
+ * Covers resolveApiUser, resolveVerifiedApiUser, and resolveSessionOnlyApiUser
+ * with all relevant auth branches: Bearer token (valid / invalid / readonly),
+ * session cookie (with and without 2FA), and the missing-session edge cases.
  *
  * The pure helper functions verifiedAuthErrorResponse and readonlyKeyResponse
  * are covered in api-auth-helpers.test.ts.
@@ -54,6 +54,7 @@ import { cookies } from "next/headers";
 import {
   resolveApiUser,
   resolveVerifiedApiUser,
+  resolveSessionOnlyApiUser,
 } from "@/lib/api-auth";
 
 const mockAuth = vi.mocked(auth);
@@ -221,5 +222,92 @@ describe("resolveVerifiedApiUser", () => {
     const result = await resolveVerifiedApiUser(sessionRequest());
 
     expect(result).toEqual({ ok: false, reason: "TOTP_REQUIRED" });
+  });
+});
+
+// ─── resolveSessionOnlyApiUser ────────────────────────────────────────────────
+//
+// Session-only variant used by endpoints (e.g. the calendar-feed token
+// mutations) sensitive enough that they must never be reachable
+// programmatically — a Bearer/API-key caller is refused outright, before any
+// key lookup, regardless of whether the key would otherwise be valid.
+
+describe("resolveSessionOnlyApiUser", () => {
+  it("returns { ok: false, reason: 'BEARER_SESSION_REQUIRED' } for a valid bearer token", async () => {
+    mockResolveApiKeyUser.mockResolvedValue({
+      userId: "user-uuid-bearer",
+      readonly: false,
+    });
+
+    const result = await resolveSessionOnlyApiUser(bearerRequest("momo_live_valid"));
+
+    expect(result).toEqual({ ok: false, reason: "BEARER_SESSION_REQUIRED" });
+  });
+
+  it("returns { ok: false, reason: 'BEARER_SESSION_REQUIRED' } for a read-only bearer token too", async () => {
+    mockResolveApiKeyUser.mockResolvedValue({
+      userId: "user-uuid-readonly",
+      readonly: true,
+    });
+
+    const result = await resolveSessionOnlyApiUser(bearerRequest("momo_live_readonly"));
+
+    expect(result).toEqual({ ok: false, reason: "BEARER_SESSION_REQUIRED" });
+  });
+
+  it("returns { ok: false, reason: 'BEARER_SESSION_REQUIRED' } for an invalid bearer token too", async () => {
+    mockResolveApiKeyUser.mockResolvedValue(null);
+
+    const result = await resolveSessionOnlyApiUser(bearerRequest("momo_live_bad"));
+
+    expect(result).toEqual({ ok: false, reason: "BEARER_SESSION_REQUIRED" });
+  });
+
+  it("never looks up the key for a Bearer request — rejected before any key lookup", async () => {
+    await resolveSessionOnlyApiUser(bearerRequest("momo_live_whatever"));
+
+    expect(mockResolveApiKeyUser).not.toHaveBeenCalled();
+  });
+
+  it("returns { ok: true } for a session user without 2FA configured (delegates like resolveVerifiedApiUser)", async () => {
+    const userId = "session-only-no-2fa";
+    mockAuth.mockResolvedValue({ user: { id: userId } } as never);
+    mockUserHasSecondFactor.mockResolvedValue(false);
+
+    const result = await resolveSessionOnlyApiUser(sessionRequest());
+
+    expect(result).toEqual({ ok: true, user: { userId, readonly: false } });
+  });
+
+  it("returns { ok: true } when 2FA is configured and the session is verified", async () => {
+    const userId = "session-only-2fa-verified";
+    mockAuth.mockResolvedValue({ user: { id: userId } } as never);
+    mockUserHasSecondFactor.mockResolvedValue(true);
+    mockReadSessionToken.mockReturnValue("verified-session-token");
+    mockIsSessionSecondFactorVerified.mockResolvedValue(true);
+
+    const result = await resolveSessionOnlyApiUser(sessionRequest());
+
+    expect(result).toEqual({ ok: true, user: { userId, readonly: false } });
+  });
+
+  it("returns { ok: false, reason: 'TOTP_REQUIRED' } when 2FA is configured but not verified", async () => {
+    const userId = "session-only-2fa-unverified";
+    mockAuth.mockResolvedValue({ user: { id: userId } } as never);
+    mockUserHasSecondFactor.mockResolvedValue(true);
+    mockReadSessionToken.mockReturnValue("some-session-token");
+    mockIsSessionSecondFactorVerified.mockResolvedValue(false);
+
+    const result = await resolveSessionOnlyApiUser(sessionRequest());
+
+    expect(result).toEqual({ ok: false, reason: "TOTP_REQUIRED" });
+  });
+
+  it("returns { ok: false, reason: 'UNAUTHORIZED' } when there is no bearer and no session", async () => {
+    mockAuth.mockResolvedValue(null as never);
+
+    const result = await resolveSessionOnlyApiUser(sessionRequest());
+
+    expect(result).toEqual({ ok: false, reason: "UNAUTHORIZED" });
   });
 });
