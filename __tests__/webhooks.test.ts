@@ -39,6 +39,40 @@ function ep(overrides: Partial<CreateWebhookEndpointInput> = {}): CreateWebhookE
   return { name: "Test EP", url: HTTPS_URL, events: [], enabled: true, ...overrides };
 }
 
+/**
+ * Waits for the fire-and-forget delivery log in `fireWebhookEvent` to land.
+ *
+ * `lib/webhooks.ts` deliberately does not await its `db.insert` for the
+ * delivery record, so that a slow or broken log never delays a webhook
+ * delivery. That makes "the row exists" eventually-true rather than true on
+ * return, and asserting it directly is a race the test loses locally and
+ * usually wins in CI. Polling turns the race into a bounded wait.
+ *
+ * @param timeoutMs - How long to keep polling before giving up
+ * @returns The most recent webhook delivery row
+ * @throws If no delivery row appears within the timeout
+ */
+async function waitForLatestDelivery(
+  timeoutMs = 2_000
+): Promise<typeof webhookDeliveries.$inferSelect> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const [row] = await db
+      .select()
+      .from(webhookDeliveries)
+      .orderBy(desc(webhookDeliveries.deliveredAt))
+      .limit(1);
+    if (row) return row;
+    if (Date.now() >= deadline) {
+      throw new Error(
+        `No webhook delivery row appeared within ${timeoutMs}ms — the ` +
+          `fire-and-forget insert in lib/webhooks.ts never completed.`
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+}
+
 // ─── listWebhookEndpoints ─────────────────────────────────────────────────────
 
 describe("listWebhookEndpoints", () => {
@@ -698,14 +732,10 @@ describe("fireWebhookEvent — HTTPS delivery", () => {
 
     setTimeoutSpy.mockRestore();
 
-    // Delivery should be logged as a failure
-    const [delivery] = await db
-      .select()
-      .from(webhookDeliveries)
-      .orderBy(desc(webhookDeliveries.deliveredAt))
-      .limit(1);
+    // Delivery should be logged as a failure. The insert is fire-and-forget,
+    // so wait for it rather than racing it — see waitForLatestDelivery.
+    const delivery = await waitForLatestDelivery();
 
-    expect(delivery).toBeDefined();
     expect(delivery.status).toBe("failure");
     expect(delivery.errorMessage).toContain("aborted");
   });

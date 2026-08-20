@@ -14,6 +14,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Flaky Webhook-Delivery-Test entschärft** — Der Test „aborts fetch via AbortController when delivery takes longer than timeout" hat gegen den absichtlich nicht `await`-eten `db.insert` in `lib/webhooks.ts` gerannt: lokal verlor er das Rennen zuverlässig, in CI gewann er es meistens. Der Test wartet den Insert jetzt mit einem 2-s-Polling ab, statt ihn zu erwischen. Produktionscode unverändert — fire-and-forget beim Delivery-Log ist gewollt, damit ein langsames Log keine Webhook-Auslieferung aufhält.
 - **`npm audit`-Fläche reduziert** — Die transitiven Security-Advisories (dompurify, brace-expansion, form-data, axios, js-yaml, fast-uri, vite) sind durch den konsolidierten Lockfile-Sweep geschlossen.
 
 ## [0.5.0] - 2026-05-10
