@@ -343,9 +343,9 @@ describe("updateQuestStreak", () => {
 
   it("increments the streak when last date was yesterday", async () => {
     const user = await createTestUser({ timezone: TZ });
-    const yesterday = new Date();
-    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    const today = getLocalDateString(TZ);
+    const [y, m, d] = today.split("-").map(Number);
+    const yesterdayStr = new Date(Date.UTC(y, m - 1, d - 1)).toISOString().split("T")[0];
 
     await db
       .update(users)
