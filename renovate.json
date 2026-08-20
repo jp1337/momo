@@ -1,0 +1,91 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": ["after 2am and before 5am"],
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 4,
+  "labels": ["renovate", "dependencies"],
+  "reviewers": ["jp1337"],
+  "platformAutomerge": true,
+  "rebaseWhen": "behind-base-branch",
+  "semanticCommitType": "chore",
+  "semanticCommitScope": "deps",
+  "lockFileMaintenance": {
+    "description": "The thing Dependabot has no equivalent for. Refreshes transitive pins that no direct bump touches — which is how a lockfile accumulates advisories nobody raised a PR for.",
+    "enabled": true,
+    "schedule": ["before 5am on monday"],
+    "automerge": true
+  },
+  "packageRules": [
+    {
+      "description": "Patch, pin and digest: auto-merge once CI is green. Applies to runtime and dev alike — a patch that breaks the 1684-test suite does not merge, and one that doesn't is noise.",
+      "matchUpdateTypes": ["patch", "pin", "digest"],
+      "automerge": true,
+      "automergeType": "pr",
+      "labels": ["renovate", "automerge", "patch"]
+    },
+    {
+      "description": "Runtime minors: manual. next, react, next-auth, drizzle and nodemailer are what the app is made of; a minor there deserves a pair of eyes even with a green suite.",
+      "matchUpdateTypes": ["minor"],
+      "automerge": false,
+      "labels": ["renovate", "minor", "needs-review"]
+    },
+    {
+      "description": "devDependency minors: auto-merge. Test, lint and build tooling cannot reach production, and the suite is the thing that would notice. Must stay AFTER the runtime-minor rule — later rules win in Renovate.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "labels": ["renovate", "automerge", "dev-minor"]
+    },
+    {
+      "description": "Majors: always manual, always with release notes. This is the bucket the old dependabot.yml ignored wholesale, which is how nodemailer 8 sat on four advisories without ever producing a PR.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["renovate", "major", "breaking-change"],
+      "addLabels": ["needs-release-notes"]
+    },
+    {
+      "description": "GitHub Actions in one grouped PR instead of four separate ones. Non-major automerges: the workflows are themselves what validates the change.",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "semanticCommitScope": "ci",
+      "labels": ["renovate", "dependencies", "ci"]
+    },
+    {
+      "description": "Container images in Dockerfile and docker-compose.yml — coverage Dependabot never had here.",
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "semanticCommitScope": "docker",
+      "labels": ["renovate", "dependencies", "docker"]
+    },
+    {
+      "description": "Postgres majors break the data directory: an image-tag jump from 18 to 19 leaves the cluster unreadable and needs a planned pg_dump/restore. Never automerge, whatever the update-type rules above say. The pg_dump cronjob (profiles: [backup]) is what makes the restore possible — verify a fresh dump exists before merging.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["postgres", "/^postgres$/"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "addLabels": ["breaking-change", "needs-manual-migration"],
+      "prBodyNotes": [
+        "Do NOT merge without a verified backup: `docker compose --profile backup run --rm db-backup`, then confirm the dump restores into a scratch container. A Postgres major moves the on-disk format; the old datadir will not mount."
+      ]
+    },
+    {
+      "description": "The Alexa Lambda is a separate npm project with its own lockfile. It had no dependabot.yml entry at all, which is why its four PRs only ever arrived as security alerts. Renovate finds it without being told; this rule only scopes its commits so they are legible in the log.",
+      "matchFileNames": ["alexa-skill/**"],
+      "semanticCommitScope": "deps",
+      "labels": ["renovate", "dependencies", "alexa"]
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "description": "A fix for a known vulnerability does not wait for the nightly window. GitHub's own 'Dependabot security updates' setting is switched off in favour of this, so one tool raises the PR rather than two raising it for the same advisory. The alerts themselves stay on — they are what this reads.",
+    "enabled": true,
+    "schedule": ["at any time"],
+    "labels": ["renovate", "security"],
+    "semanticCommitType": "fix"
+  }
+}
