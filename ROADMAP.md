@@ -8,133 +8,229 @@ Was bereits gebaut wurde, steht im [CHANGELOG](CHANGELOG.md).
 ## Wo Momo heute steht
 
 Momo hat eine starke Seele: *eine Aufgabe pro Tag, kein Overwhelm, du schaffst das.*
-Das technische Fundament ist solide — Self-hostable, GDPR-ready, multi-lingual, full API.
+Das technische Fundament ist solide — Self-hostable, GDPR-ready, sieben Sprachen, full API.
 
-**Das Problem:** Das Projekt ist schneller gewachsen als nötig. Zehn Seiten in der Navigation,
-sechs Entscheidungen um eine Aufgabe zu erstellen, Habits + Stats + Review + Achievements +
-Focus + Quick + Wishlist... Das ist Todoist-Komplexität mit Anti-Procrastination-Branding.
-Es untergräbt genau das, was Momo verspricht.
+Die Vereinfachungs-Phase ist durch: Quick-Add überall, Navigation konsolidiert, keine
+`window.confirm`-Dialoge mehr. Die Codebase ist dabei erstaunlich disziplinert geblieben —
+kein einziges `TODO`, kein `ts-ignore`, zehn `any` auf 244 Dateien, 1684 Unit-Tests und
+13 E2E-Specs. Jedes große Modul in `lib/` ist von Tests abgedeckt. Das ist die gute Nachricht.
 
-Die nächste Phase heißt nicht "mehr bauen". Sie heißt **vereinfachen, polieren, verbreiten.**
+Die schlechte: **das Fundament hat gebröckelt, während vorne poliert wurde.** 19 Dependabot-PRs
+hatten sich angestaut, und mit ihnen 75 offene Security-Alerts (3 critical, 36 high). Das ist
+jetzt aufgeräumt — **5 Alerts, davon 1 high, und 0 offene Dependency-PRs**. Aber es war kein
+Zufall, und es kommt wieder, solange die Ursachen stehen. Der eine verbleibende High ist
+nodemailer, und der ist genau der, den Dependabot nicht liefern kann.
+
+Die nächste Phase heißt deshalb: **absichern, verbreiten, polieren.** In dieser Reihenfolge.
 
 ---
 
 ## Die drei Themen
 
-### 1. Vereinfachen — Friction raus ✅ (2026-04-26)
+### 1. Absichern — das Fundament halten
 
-Das Versprechen muss sich in jedem Klick anfühlen. Nicht nur im Tagline.
+Nicht spannend. Aber alles andere ist wertlos, wenn Momo als „die Self-Hosted-App mit den
+36 High-Alerts" bekannt wird. Und genau jetzt beginnt die Verbreitungs-Phase.
 
-**Task-Erfassung radikal vereinfachen** ✅
-Ein globaler Keyboard-Shortcut (`N` oder `/`) öffnet ein minimales Eingabefeld überall in der App.
-Titel, Enter, fertig. Thema, Priorität, Energie-Level versteckt hinter „Mehr Optionen".
+**nodemailer 8 → 9 — der Fix, den Dependabot niemals liefern wird**
 
-**Navigation konsolidieren** ✅
-Habits, Errungenschaften und Wochenrückblick leben jetzt unter `/progress` mit Tab-Navigation.
-Sidebar und Mobile-Nav: ein „Progress"-Eintrag statt drei separate Toplevel-Seiten.
+`nodemailer` ist bis einschließlich 9.0.0 für CRLF-Injection in `List-*`-Header-Kommentaren
+verwundbar (Angreifer können beliebige Mail-Header setzen). Im Projekt steht `^8.0.7`.
 
-**Letzte window.confirm-Dialoge ersetzen** ✅
-Alle 12 `window.confirm()`-Aufrufe im gesamten Projekt durch `ConfirmButton` ersetzt.
-Inline-Bestätigung (Ja/Abbrechen) direkt am auslösenden Button.
+Der Fix verlangt einen Major-Bump. `.github/dependabot.yml` ignoriert aber pauschal *jeden*
+Major für *jedes* Paket:
+
+```yaml
+ignore:
+  - dependency-name: "*"
+    update-types: ["version-update:semver-major"]
+```
+
+Dieser Security-Fix wird also **strukturell nie als PR erscheinen**. Er muss von Hand kommen.
+Momo verschickt darüber Magic-Links und Notification-Mails — das ist der Auth-Kern, nicht
+ein Randfeature. Höchste Priorität von allem auf dieser Seite.
+
+Eine Falle dabei: `nodemailer` steht **zweimal** in `package.json` — als Dependency (Zeile 49)
+und als `overrides`-Eintrag (Zeile 67), beide auf `^8.0.7`. Der Override pinnt die 8.x-Linie
+über den ganzen Abhängigkeitsbaum. Wer nur die Dependency auf 9 hebt, wird vom Override
+still zurückgezogen und wundert sich. **Beide Stellen müssen gleichzeitig ändern** — und
+danach gehören die Mail-Pfade (Magic-Link-Versand, Notification-Mails) manuell getestet,
+weil ein Major-Bump am Transport nichts ist, was `npm test` vollständig abdeckt.
+
+**next 16.3.1** ✅ (2026-08-20, #65)
+
+Hat zwei der drei verbleibenden High-Alerts auf einen Schlag geschlossen: `next` selbst und
+das gebündelte `sharp` (libvips-CVEs). Damit steht `npm audit` bei **2** — nur noch nodemailer
+(siehe oben) und ein `@babel/core`-Low. Nebenwirkung: `eslint-config-next` 16.3.1 bringt die
+neue Regel `@next/next/no-location-assign-relative-destination` mit und markiert damit zwei
+vorbestehende Stellen, die `window.location.href` für interne Navigation nutzen —
+`components/auth/passkey-login-button.tsx:62` und
+`components/auth/passkey-second-factor-button.tsx:52`. Beides Warnungen, keine Errors;
+der Fix ist `useRouter().push()`.
+
+**Rate-Limiting auf 17 Mutation-Routen**
+
+`CLAUDE.md` schreibt vor: *„Rate limiting on all mutation API routes."* Tatsächlich haben
+17 von 57 Mutation-Routen keins. Authentifiziert sind sie alle korrekt — nur ungebremst.
+Die zwei, die am meisten wehtun:
+
+- `app/api/wishlist/[id]/buy/route.ts` — bucht **atomar Coins ab**. Eine ungebremste
+  Schreiboperation direkt auf dem Währungssystem.
+- `app/api/auth/link-request/route.ts` — erzeugt unbegrenzt `linking_request`-Records.
+
+Die Auth-Lage selbst ist sauber: `/api/cron` ist per `CRON_SECRET` mit `timingSafeEqual`
+geschützt, `calendar-feed` hinter `resolveVerifiedApiUser` samt 2FA-Gate. Hier fehlt nur
+die Bremse, nicht die Tür.
+
+**`dependabot.yml` reparieren, damit der Stau nicht wiederkommt**
+
+Vier Ursachen, alle in einer Datei:
+
+- `open-pull-requests-limit: 10`, während Security-Updates die Gruppierung umgehen — so
+  entstehen zwölf einzelne PRs auf derselben `package-lock.json`, die sich gegenseitig
+  bei jedem Merge invalidieren.
+- Majors global ignoriert → siehe nodemailer. Besser: Majors erlauben und einzeln bewerten,
+  oder wenigstens Security-Majors nicht ausschließen.
+- `github-actions` ohne Gruppierung → vier separate Action-PRs statt einem.
+- **`alexa-skill/` hat gar keinen Eintrag.** Die vier alexa-PRs kamen ausschließlich als
+  Security-Alerts durch; geplante Version-Updates gibt es dort nicht.
+
+**Error-Tracking**
+
+GlitchTip (self-hostbar) oder Sentry. `app/error.tsx:25` hat bis heute nur einen Kommentar,
+wo der Aufruf hingehört. Ohne das erfährt man von Produktionsfehlern durch Nutzer-Mails —
+und die schreibt niemand, der prokrastiniert. Gehört hierher, weil es die Voraussetzung
+dafür ist, überhaupt zu *wissen*, ob Momo bei Fremden funktioniert.
 
 ---
 
-### 2. Polieren — Den Kern besser machen
+### 2. Verbreiten — Momo bekannt machen
 
-Neue Features bringen nichts wenn das Bestehende nicht überzeugt. Diese Bereiche
-verdienen mehr Aufmerksamkeit:
+Mehr Features bringen nichts, wenn niemand Momo kennt. Bei 6 Stars ist das nach wie vor
+der größte Hebel.
 
-**Der Aha-Moment für neue Nutzer**
-Was erlebt jemand in den ersten 10 Minuten? Das Onboarding existiert, aber:
-Sieht ein neuer Nutzer die komplette Schleife — Quest → Energy-Check-in → Task erledigt →
-Coins verdient → Wishlist — noch am ersten Tag? Wenn nicht, kommt er nicht zurück.
+**awesome-selfhosted — Termin korrigiert: ab 22.09.2026**
 
-Die Lücke: nach dem Onboarding landen Nutzer auf einem leeren Dashboard ohne klare
-nächste Aktion. Bessere Empty States die erklären *warum* man was tun soll, nicht nur *dass*
-noch nichts da ist.
+Die alte Roadmap nannte „frühestens Aug 2026". Das war zu optimistisch: die Richtlinie
+verlangt ein Projektalter von sechs Monaten, und das Repo wurde am **22.03.2026** erstellt.
+Eligibility ist damit der **22.09.2026** — etwa ein Monat hin.
 
-→ Dashboard Empty State mit CTA zu /topics hinzugefügt ✅ (seit 0.4.0)
-
-**Daily Quest Algorithm**
-Der Quest-Algorithmus ist das Herzstück. Wird er regelmäßig hinterfragt?
-Fühlt sich die ausgewählte Quest immer sinnvoll an — oder manchmal zufällig?
-Keine Code-Änderung nötig, aber: bewusst testen und beobachten.
-
-**Insights statt Daten**
-Die Stats-Seite zeigt Zahlen. Aber: "Du erledigst Aufgaben am häufigsten dienstagmorgens"
-ist mehr wert als ein Balkenchart. Kleine, kontextuelle Hinweise auf dem Dashboard
-("Dein stärkster Wochentag ist Dienstag — guter Tag für die große Aufgabe") machen
-bestehende Daten nützlicher ohne neue Seiten zu bauen.
-
-→ Best-Day Insight Chip auf dem Dashboard ✅ (seit 0.4.0, ab ≥10 Erledigungen)
-
----
-
-### 3. Verbreiten — Momo bekannt machen
-
-Mehr Features bringen nichts wenn niemand Momo kennt. Das ist die größte Hebel.
-
-**awesome-selfhosted**
-Die bekannteste kuratierte Liste für Self-Hosting. Ein erfolgreicher PR dort bringt mehr
-echte Nutzer als jedes Feature. Frühestmöglich einreichen (aktuell: August 2026 nach
-Richtlinien-Anforderungen).
-
-**alternativeto.net** ✅
-Kostenloses Listing als Alternative zu Todoist, Things, TickTick, Habitica.
-Jemand der googelt "Todoist Alternative self-hosted" soll Momo finden.
-
-→ Listing eingereicht (seit 2026-04-29), 9 Alternativen verlinkt — Habitica, Vikunja, Super Productivity, LifeRPG, Loop, HabitTrove, Beaver, Finch, EpicWin, SuperBetter.
+Das ist keine Verzögerung, sondern eine Vorbereitungsphase. Bis dahin: Einreichung
+vorschreiben, Demo-Instanz stabil halten, Screenshots aktualisieren, und die Punkte aus
+Thema 1 abarbeiten. Ein Listing, das Besucher auf ein Repo mit 36 High-Alerts schickt,
+ist schlechter als kein Listing.
 
 **Backlinks aufbauen — der eigentliche SEO-Hebel**
-Mehr Listings auf alternativeto bringen wenig wenn Google Momo niemand verlinkt sieht.
-Hochwertige Backlinks von themenrelevanten Communities ranken besser als jedes On-Page-SEO.
 
-Konkrete Targets in Reihenfolge der Wichtigkeit:
-- **r/selfhosted** — eigener Showcase-Post mit Screenshots + Docker-Compose-Snippet (kein Spam-Post, ehrliche Story: „self-hosted task manager für ADHS-Nutzer"). Beste Engagement-Zeiten Mo–Mi morgens EU-Zeit
-- **r/selfhostable**, **r/opensource**, **r/ProductivityApps**, **r/ADHD** (in r/ADHD nur dezent, dort sind Self-Promo-Regeln strikt)
-- **HackerNews Show HN** — eigener „Show HN: Momo, self-hosted task manager for ADHD" Post; Wochenende oder Sonntagabend US-Zeit
-- **awesome-selfhosted-data** PR (das eigentliche Repo, nicht nur die Webseite) — frühestens Aug 2026 nach Richtlinien
-- **awesome-stars Listen** auf GitHub — viele kuratieren persönliche „awesome ADHD tools" oder „awesome productivity"
+Unverändert der Kern. Targets in Reihenfolge der Wichtigkeit:
+
+- **r/selfhosted** — Showcase-Post mit Screenshots + Docker-Compose-Snippet, ehrliche Story
+  („self-hosted task manager für ADHS-Nutzer"). Beste Zeiten Mo–Mi morgens EU-Zeit
+- **r/selfhostable**, **r/opensource**, **r/ProductivityApps**, **r/ADHD** (dort nur dezent,
+  strikte Self-Promo-Regeln)
+- **HackerNews Show HN** — „Show HN: Momo, self-hosted task manager for ADHD", Wochenende
+  oder Sonntagabend US-Zeit
+- **awesome-selfhosted-data** PR (das Daten-Repo, nicht die Webseite) — ab 22.09.2026
+- **awesome-stars Listen** auf GitHub — viele kuratieren „awesome ADHD tools" oder
+  „awesome productivity"
 - **Lobste.rs** wenn Invite vorhanden
-- **dev.to / hashnode Artikel** über Engineering-Themen aus Momo („How we built energy-aware task scheduling", „Radix UI vs custom components — what we learned") — bringt indirekt Backlinks zur Live-Demo
-- **product hunt** — einmaliger größerer Push, gut planbar
-- **GitHub README Badges** für jede Verlinkung die wir bekommen → reziprozierter Backlink
+- **dev.to / hashnode** über Engineering-Themen aus Momo („How we built energy-aware task
+  scheduling", „Radix UI vs custom components") — bringt indirekt Backlinks zur Live-Demo
+- **Product Hunt** — einmaliger größerer Push, gut planbar
+- **GitHub README Badges** für jede Verlinkung → reziprozierter Backlink
 
-**Ein kurzes Video** ❌ (gestrichen)
-Erkenntnis: ein 3-Minuten-Demovideo bringt weniger als ein gut platzierter Reddit-Post mit Screenshots. Demovideos werden selten geteilt, Backlinks ranken nachhaltig.
+**alternativeto.net** ✅ — Listing seit 2026-04-29, 9 Alternativen verlinkt.
+**GitHub-Präsenz** ✅ — CONTRIBUTING.md, Topics, README-Contributing-Sektion.
+**Ein kurzes Video** ❌ gestrichen — ein gut platzierter Reddit-Post mit Screenshots wirkt
+nachhaltiger als ein Demovideo, das selten geteilt wird.
 
-**GitHub-Präsenz pflegen** ✅
-README ist gut. Aber: Topics, Good-First-Issues, Contributors-Guide.
-Wer Momo auf GitHub findet, soll sofort wissen wie er mitmachen kann.
+---
 
-→ CONTRIBUTING.md hinzugefügt, README Contributing-Sektion erweitert ✅ (seit 0.4.0)
+### 3. Polieren — den Kern besser machen
+
+Nach wie vor richtig, nur nicht zuerst. Neue Features bringen nichts, wenn das Bestehende
+nicht überzeugt.
+
+**Der Aha-Moment für neue Nutzer**
+
+Sieht ein neuer Nutzer die komplette Schleife — Quest → Energy-Check-in → Task erledigt →
+Coins verdient → Wishlist — noch am ersten Tag? Wenn nicht, kommt er nicht zurück.
+Dashboard-Empty-State mit CTA existiert seit 0.4.0; der Abschluss-Moment im Onboarding
+seit 0.5.0. Was fehlt, ist die Messung: erlebt jemand die Schleife *wirklich*?
+Hängt an Error-Tracking und minimaler Nutzungs-Telemetrie aus Thema 1.
+
+**Daily Quest Algorithm**
+
+Der Quest-Algorithmus ist das Herzstück. `lib/daily-quest.ts` ist von sieben Testdateien
+abgedeckt, funktioniert also nachweisbar wie spezifiziert. Die offene Frage ist nicht
+Korrektheit, sondern *Gefühl*: fühlt sich die ausgewählte Quest immer sinnvoll an — oder
+manchmal zufällig? Keine Code-Änderung nötig, aber: bewusst benutzen und beobachten.
+
+**Insights statt Daten**
+
+Best-Day-Insight-Chip existiert seit 0.4.0 (ab ≥10 Erledigungen). Der Ansatz trägt weiter:
+kleine, kontextuelle Hinweise auf dem Dashboard machen bestehende Daten nützlicher, ohne
+neue Seiten zu bauen. „Dein stärkster Wochentag ist Dienstag" ist mehr wert als ein
+Balkenchart.
 
 ---
 
 ## Was wir bewusst nicht tun
 
-- Keine neuen Toplevel-Seiten bis Navigation vereinfacht ist
+- Keine neuen Toplevel-Seiten
 - Keine weiteren Notification-Typen oder -Kanäle
 - Keine weiteren Auth-Provider
 - Keine KI-Features ohne klaren Nutzen für procrastination-geplagte User
-- Kein Feature das eine weitere Entscheidung vom Nutzer verlangt
+- Kein Feature, das eine weitere Entscheidung vom Nutzer verlangt
 
-Das ist keine Freeze — neue Features sind willkommen wenn sie *Friction reduzieren*,
+Das ist keine Freeze — neue Features sind willkommen, wenn sie *Friction reduzieren*,
 nicht wenn sie Funktionsumfang erhöhen.
 
 ---
 
 ## Offene technische Schulden
 
-Kleine Dinge die irgendwann erledigt werden sollten — kein eigenes Feature, aber wichtig:
+**OpenAPI-Spec-Drift, von keinem Test bewacht**
 
-- **Automatische DB-Backups** ✅ — pg_dump-Cronjob in Docker Compose (`profiles: [backup]`), aktiviert via `BACKUP_ENABLED=true` (seit 0.4.0)
-- **E2E-Tests** ✅ — Playwright für kritische User Journeys: Task-Lifecycle, Quest-Flow, Quick-Add-Shortcut, Topic-Scope (seit 0.4.0)
-- **Error-Tracking** — GlitchTip (self-hostbar) oder Sentry für Produktionsfehler-Visibility
-- **Offline-Queue** — Tasks offline erfassen via PWA Service Worker Background Sync
+`lib/openapi.ts` sind 3715 handgepflegte Zeilen, und **keine einzige Testdatei importiert
+sie**. Dokumentiert sind 42 von 67 API-Routen. Das Gute: null Geister-Endpunkte — es steht
+nichts Falsches drin. Das Fehlende: Webhooks (3 Endpunkte), Push-Devices (2), 2FA (5) und
+Passkeys (7) existieren im Swagger-UI überhaupt nicht. „Full API" ist ein Verkaufsargument
+im README.
+
+Der eigentliche Fix ist nicht „25 Endpunkte nachdokumentieren", sondern **ein Test, der
+Spec gegen `app/api/**/route.ts` abgleicht** und bei Drift fehlschlägt. Sonst ist die Lücke
+in drei Monaten wieder da.
+
+**Flaky Webhook-Test**
+
+`__tests__/webhooks.test.ts` → „aborts fetch via AbortController when delivery takes longer
+than timeout" ist ein Race gegen den absichtlich fire-and-forget nicht-`await`-eten
+`db.insert` in `lib/webhooks.ts:470`. In CI gewinnt der Insert das Rennen meist, lokal
+zuverlässig nicht. Heute grün — aber er wird rot, und dann verliert man Vertrauen in die
+Suite genau dann, wenn man sie braucht. Der Produktionscode ist in Ordnung; der Test muss
+auf den Insert warten können.
+
+**Offline-Queue**
+
+Tasks offline erfassen via PWA Service Worker Background Sync. Aktuell kein
+`BackgroundSync`-Code im Projekt. Passt zur Zielgruppe (Aufgabe notieren, wenn sie
+einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
+
+**Kleinigkeiten**
+
+- `components/layout/user-menu.tsx:157` verlinkt direkt auf `/review` statt auf
+  `/progress?tab=review` — ein unnötiger Redirect-Hop.
+- `lib/openapi.ts` (3715 LOC) und `components/tasks/task-list.tsx` (1467 LOC) sind die
+  beiden Dateien, bei denen Aufteilen sich am ehesten lohnt.
+
+**Erledigt** ✅ — Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
+0.4.0) · E2E-Tests (Playwright, 13 Specs, seit 0.4.0) · Dependency-Stau aufgelöst
+(19 → 0 offene PRs, 75 → 5 Security-Alerts, 2026-08-20) · next 16.3.1 (#65, 2026-08-20)
 
 ---
 
-*Momo ist für die Menschen die zu viel im Kopf haben und zu wenig auf der Liste erledigt bekommen.
-Der nächste Schritt ist nicht ein neues Feature — es ist sicherzustellen dass das was da ist,
-wirklich für diese Menschen funktioniert.*
+*Momo ist für die Menschen, die zu viel im Kopf haben und zu wenig auf der Liste erledigt
+bekommen. Der nächste Schritt ist nicht ein neues Feature — es ist sicherzustellen, dass
+das, was da ist, wirklich für diese Menschen funktioniert. Und dass es sicher genug ist,
+um es Fremden zu empfehlen.*
