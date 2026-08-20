@@ -19,6 +19,7 @@ import { db } from "@/lib/db";
 import { wishlistItems, users } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { checkAndUnlockAchievements } from "@/lib/gamification";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * POST /api/wishlist/:id/buy
@@ -31,6 +32,9 @@ export async function POST(
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
+
+  const rate = checkRateLimit(`wishlist-buy:${user.userId}`, 20, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
 
@@ -89,6 +93,9 @@ export async function DELETE(
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
+
+  const rate = checkRateLimit(`wishlist-buy:${user.userId}`, 20, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
 

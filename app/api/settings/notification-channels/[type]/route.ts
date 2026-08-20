@@ -11,6 +11,7 @@ import { db } from "@/lib/db";
 import { notificationChannels } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * DELETE — Remove a notification channel by type.
@@ -22,6 +23,9 @@ export async function DELETE(
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse() as NextResponse;
+
+  const rate = checkRateLimit(`notif-channel:${user.userId}`, 10, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
 
   const { type } = await params;
 

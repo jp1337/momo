@@ -29,6 +29,7 @@ import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { parseUserAgent } from "@/lib/sessions";
 import { PushNotificationTimeSchema } from "@/lib/validators";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /** Zod schema for a W3C PushSubscription JSON object */
 const pushSubscriptionSchema = z.object({
@@ -55,6 +56,9 @@ const subscribeBodySchema = z.object({
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rate = checkRateLimit(`push-subscribe:${user.userId}`, 20, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
   if (user.readonly) return NextResponse.json({ error: "Forbidden", message: "This API key is read-only. Use a read-write key to modify data." }, { status: 403 });
 
   let body: unknown;
@@ -161,6 +165,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 export async function PATCH(req: NextRequest): Promise<NextResponse> {
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rate = checkRateLimit(`push-subscribe:${user.userId}`, 20, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
   if (user.readonly) return NextResponse.json({ error: "Forbidden", message: "This API key is read-only." }, { status: 403 });
 
   let body: unknown;
@@ -267,6 +274,9 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
 export async function DELETE(req: NextRequest): Promise<NextResponse> {
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rate = checkRateLimit(`push-subscribe:${user.userId}`, 20, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
   if (user.readonly) return NextResponse.json({ error: "Forbidden", message: "This API key is read-only. Use a read-write key to modify data." }, { status: 403 });
 
   let body: unknown;

@@ -20,6 +20,7 @@ import { users, pushSubscriptions } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const patchSchema = z
   .object({
@@ -39,6 +40,9 @@ export async function PATCH(
 ): Promise<NextResponse> {
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rate = checkRateLimit(`push-device-mutate:${user.userId}`, 20, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
   if (user.readonly) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
@@ -94,6 +98,9 @@ export async function DELETE(
 ): Promise<NextResponse> {
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rate = checkRateLimit(`push-device-mutate:${user.userId}`, 20, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
   if (user.readonly) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;

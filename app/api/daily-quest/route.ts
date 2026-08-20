@@ -15,6 +15,7 @@
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { selectDailyQuest, forceSelectDailyQuest } from "@/lib/daily-quest";
 import { TimezoneSchema, EnergyLevelSchema } from "@/lib/validators";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * GET /api/daily-quest
@@ -48,6 +49,9 @@ export async function POST(request: Request) {
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
+
+  const rate = checkRateLimit(`quest-generate:${user.userId}`, 10, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   let timezone: string | null | undefined = null;
   let energyLevel: "HIGH" | "MEDIUM" | "LOW" | null | undefined = null;

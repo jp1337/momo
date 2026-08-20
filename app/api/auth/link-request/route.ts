@@ -17,6 +17,7 @@ import { accounts, linkingRequests } from "@/lib/db/schema";
 import { serverEnv } from "@/lib/env";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const PROVIDER_ENV_MAP: Record<string, string> = {
   github: "GITHUB_CLIENT_ID",
@@ -38,6 +39,17 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Tighter window than the usual per-minute buckets: every accepted request
+  // writes a `linking_request` row, and linking a provider is a once-in-a-while
+  // action. Five attempts per five minutes is generous for a human retrying a
+  // failed OAuth round-trip and useless for filling the table.
+  const rate = checkRateLimit(
+    `auth-link-request:${session.user.id}`,
+    5,
+    5 * 60 * 1000
+  );
+  if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   let body: unknown;
   try {

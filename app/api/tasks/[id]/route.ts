@@ -19,6 +19,7 @@
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { getTaskById, updateTask, deleteTask } from "@/lib/tasks";
 import { UpdateTaskInputSchema } from "@/lib/validators";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * GET /api/tasks/:id
@@ -56,6 +57,9 @@ export async function PATCH(
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
+
+  const rate = checkRateLimit(`tasks-mutate:${user.userId}`, 60, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
 
@@ -99,6 +103,9 @@ export async function DELETE(
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
+
+  const rate = checkRateLimit(`tasks-mutate:${user.userId}`, 60, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
 

@@ -8,6 +8,14 @@
  * idempotency guard (5-minute bucket or daily) so duplicate calls are harmless.
  *
  * Returns: { jobs: JobRunResult[] }
+ *
+ * Deliberately NOT rate limited, unlike every other mutation route. There is no
+ * user identity to key a bucket on, so the only available key is the caller's
+ * IP — and that is a single scheduler hitting this every five minutes. A limit
+ * there protects nothing (the bearer check already rejects everyone else before
+ * any work happens) and risks locking out the one legitimate caller, e.g. after
+ * a container restart storm. The idempotency guard in each job is what makes
+ * duplicate calls harmless.
  */
 
 import { runAllJobs } from "@/lib/cron";

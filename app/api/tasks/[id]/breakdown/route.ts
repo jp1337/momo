@@ -12,6 +12,7 @@ import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { breakdownTask } from "@/lib/tasks";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const BreakdownBodySchema = z.object({
   subtaskTitles: z
@@ -30,6 +31,9 @@ export async function POST(
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse() as NextResponse;
+
+  const rate = checkRateLimit(`tasks-breakdown:${user.userId}`, 10, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
 
   const { id: taskId } = await params;
   if (!taskId) {

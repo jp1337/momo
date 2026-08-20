@@ -15,6 +15,7 @@
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { getBudgetSummary, updateMonthlyBudget } from "@/lib/wishlist";
 import { UpdateBudgetInputSchema } from "@/lib/validators";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 /**
  * GET /api/settings/budget
@@ -44,6 +45,9 @@ export async function PATCH(request: Request) {
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
+
+  const rate = checkRateLimit(`settings-budget:${user.userId}`, 10, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt);
 
 
   let body: unknown;

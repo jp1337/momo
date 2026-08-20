@@ -21,6 +21,7 @@ import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { pinTaskAsDailyQuest } from "@/lib/daily-quest";
 import { TimezoneSchema } from "@/lib/validators";
 import { z } from "zod";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const RestoreInputSchema = z.object({
   taskId: z.string().uuid("Invalid task ID"),
@@ -31,6 +32,9 @@ export async function POST(request: Request) {
   const user = await resolveApiUser(request);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
+
+  const rate = checkRateLimit(`quest-restore:${user.userId}`, 10, 60_000);
+  if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   let body: unknown;
   try {
