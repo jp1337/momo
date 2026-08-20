@@ -4,10 +4,13 @@
  * PasskeySecondFactorButton — rendered on `/login/2fa` as an alternative to
  * (or alongside) the TOTP code input. Triggers an assertion against the
  * user's registered passkeys and, on success, marks the current session
- * as second-factor-verified before hard-navigating to /dashboard.
+ * as second-factor-verified, then calls `router.refresh()` followed by
+ * `router.push("/dashboard")` so the dashboard renders with the newly
+ * verified session — see the inline comment at the call site for the full why.
  */
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,6 +18,7 @@ import { faFingerprint } from "@fortawesome/free-solid-svg-icons";
 
 export function PasskeySecondFactorButton() {
   const t = useTranslations("auth");
+  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +53,11 @@ export function PasskeySecondFactorButton() {
         setError(t("passkey_err_generic"));
         return;
       }
-      window.location.href = "/dashboard";
+      // See the note in passkey-login-button.tsx: refresh() before push() so
+      // /dashboard is rendered with the session this verify call just
+      // established, not one served from the Router Cache.
+      router.refresh();
+      router.push("/dashboard");
     } catch (err) {
       console.error(err);
       setError(t("passkey_err_network"));
