@@ -17,8 +17,9 @@ kein einziges `TODO`, kein `ts-ignore`, zehn `any` auf 244 Dateien, 1684 Unit-Te
 
 Die schlechte: **das Fundament hat gebröckelt, während vorne poliert wurde.** 19 Dependabot-PRs
 hatten sich angestaut, und mit ihnen 75 offene Security-Alerts (3 critical, 36 high). Das ist
-jetzt aufgeräumt — 6 Alerts, 0 offene PRs — aber es war kein Zufall, und es kommt wieder,
-solange die Ursachen stehen.
+jetzt aufgeräumt — **5 Alerts, davon 1 high, und 0 offene Dependency-PRs**. Aber es war kein
+Zufall, und es kommt wieder, solange die Ursachen stehen. Der eine verbleibende High ist
+nodemailer, und der ist genau der, den Dependabot nicht liefern kann.
 
 Die nächste Phase heißt deshalb: **absichern, verbreiten, polieren.** In dieser Reihenfolge.
 
@@ -56,10 +57,16 @@ still zurückgezogen und wundert sich. **Beide Stellen müssen gleichzeitig änd
 danach gehören die Mail-Pfade (Magic-Link-Versand, Notification-Mails) manuell getestet,
 weil ein Major-Bump am Transport nichts ist, was `npm test` vollständig abdeckt.
 
-**next 16.3.1 — fast gratis**
+**next 16.3.1** ✅ (2026-08-20, #65)
 
-Schließt zwei der drei verbleibenden High-Alerts auf einen Schlag: `next` selbst und das
-gebündelte `sharp` (libvips-CVEs). Kein Major, keine erwarteten Breaking Changes.
+Hat zwei der drei verbleibenden High-Alerts auf einen Schlag geschlossen: `next` selbst und
+das gebündelte `sharp` (libvips-CVEs). Damit steht `npm audit` bei **2** — nur noch nodemailer
+(siehe oben) und ein `@babel/core`-Low. Nebenwirkung: `eslint-config-next` 16.3.1 bringt die
+neue Regel `@next/next/no-location-assign-relative-destination` mit und markiert damit zwei
+vorbestehende Stellen, die `window.location.href` für interne Navigation nutzen —
+`components/auth/passkey-login-button.tsx:62` und
+`components/auth/passkey-second-factor-button.tsx:52`. Beides Warnungen, keine Errors;
+der Fix ist `useRouter().push()`.
 
 **Rate-Limiting auf 17 Mutation-Routen**
 
@@ -219,7 +226,7 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
 
 **Erledigt** ✅ — Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
 0.4.0) · E2E-Tests (Playwright, 13 Specs, seit 0.4.0) · Dependency-Stau aufgelöst
-(19 → 0 offene PRs, 75 → 6 Security-Alerts, 2026-08-20)
+(19 → 0 offene PRs, 75 → 5 Security-Alerts, 2026-08-20) · next 16.3.1 (#65, 2026-08-20)
 
 ---
 
