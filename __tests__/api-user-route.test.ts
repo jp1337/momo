@@ -409,6 +409,16 @@ describe("DELETE /api/user/api-keys/:id", () => {
     spy.mockRestore();
     consoleSpy.mockRestore();
   });
+
+  it("returns 403 for a readonly key", async () => {
+    const user = await createTestUser();
+    authAs(user.id, true);
+    const res = await DELETEApiKey(
+      req("DELETE", `/api/user/api-keys/${FAKE_ID}`),
+      { params: Promise.resolve({ id: FAKE_ID }) }
+    );
+    expect(res.status).toBe(403);
+  });
 });
 
 // ─── GET /api/user/export ─────────────────────────────────────────────────────

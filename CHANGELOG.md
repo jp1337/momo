@@ -15,6 +15,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Read-only API-Keys sind jetzt wirklich read-only** — Drei Mutation-Routen hatten überhaupt keinen
+  Readonly-Check: `DELETE /api/user/api-keys/[id]`, `POST /api/settings/webhooks/[id]/test` und
+  `POST /api/onboarding/complete`. Die erste ist die, die zählt: ein Read-only-Key konnte **API-Keys
+  widerrufen** — während `POST /api/user/api-keys` auf derselben Ressource korrekt gegated war. Ein
+  Credential, dessen ganzer Zweck es ist, gefahrlos weitergegeben werden zu können, konnte damit die
+  Credentials um sich herum zerstören. Beim Webhook-Test-Endpunkt konnte ein Read-only-Key den Server
+  zu ausgehenden HTTP-Requests veranlassen. Gefunden als Nebenbefund beim Rate-Limiting-Review, nicht
+  durch einen Report von außen.
 - **Rate-Limiting auf allen erreichbaren Mutation-Routen** — `CLAUDE.md` verlangt „rate limiting on all mutation API routes"; tatsächlich hatten 17 von 57 keins. 15 sind jetzt nachgezogen (Task-, Topic- und Wishlist-`[id]`-Mutationen, Buy/Discard, Task-Breakdown, Daily-Quest inkl. Restore, Push-Subscribe und -Devices, Budget-Settings, Notification-Channel-Delete, API-Key-Delete, Account-Linking, Locale). Am meisten wehgetan hätten `POST /api/wishlist/[id]/buy` — bucht atomar Coins ab — und `POST /api/auth/link-request`, das unbegrenzt `linking_request`-Records erzeugen konnte. Authentifiziert waren alle Routen bereits korrekt; es fehlte die Bremse, nicht die Tür.
 - **`/api/cron` und `/api/admin/seed` bleiben bewusst ohne Limit** — beide Ausnahmen sind jetzt im Quellcode begründet, damit die nächste Prüfung sie nicht erneut als Befund meldet: bei `/api/cron` gibt es keine User-Identität zum Keyen und der `CRON_SECRET`-Check weist alles andere vorher ab, bei `/api/admin/seed` greift außerhalb `NODE_ENV=development` schon vor Auth und DB ein 403.
 - **OpenAPI: 429 bei sieben Operationen nachgetragen** — die Spec dokumentierte `TooManyRequests` bereits für elf Operationen, deren Code gar kein Limit hatte. Jetzt stimmen Spec und Code überein.

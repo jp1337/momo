@@ -97,4 +97,11 @@ describe("POST /api/onboarding/complete", () => {
     const res = await POST(req("POST", "/api/onboarding/complete"));
     expect(res.status).toBe(500);
   });
+
+  it("returns 403 for a readonly key", async () => {
+    const user = await createTestUser();
+    asUser(user.id, true);
+    const res = await POST(req("POST", "/api/onboarding/complete"));
+    expect(res.status).toBe(403);
+  });
 });
