@@ -29,6 +29,21 @@
  *     currently-selected one (when changing an existing check-in) is marked,
  *     via weight + a checkmark, not colour.
  *
+ * Fix round 3 (2026-08-22): round 2 grew each choice's tap target with
+ * `-my-4 py-4` — real padding cancelled by an equal negative margin, so the
+ * clickable box was bigger than the space it reserved in layout. At 375px
+ * the row wraps, and the two invisible overflow regions of the first and
+ * last choice then overlapped each other across the wrap boundary — worst
+ * in German ("Viel Energie" / "Wenig Energie", 31×32px overlap), because a
+ * longer label pushes the wrap point earlier. Whichever choice sits later
+ * in the DOM wins ties in that overlap, so a tap on "Wenig Energie" could
+ * register as "Viel Energie" — the opposite of what was pressed. Fixed by
+ * dropping the negative margin: `py-4` is now genuine padding on a real
+ * `inline-flex flex-wrap` row, so the browser's own box layout — not an
+ * invisible bleed past the box edge — is what makes each target ≥44px
+ * tall, and wrapped rows are pushed apart by their own real height instead
+ * of colliding. Verified at 375×800 in de/ru/en: zero pairwise overlap.
+ *
  * Why "today" is computed client-side: `users.energyLevelDate` is written
  * with the user's local date (via `getLocalDateString(timezone)` on the
  * server), but the dashboard SSR has no access to the user's IANA timezone
@@ -209,28 +224,36 @@ export function EnergyCheckinCard({
         data-testid="quest-meta"
         className="flex items-center gap-3 flex-wrap font-[family-name:var(--font-mono)] text-[0.6875rem] tracking-[0.06em] text-[var(--ink-3)]"
       >
-        <span>
-          {weekdayLabel} ·{" "}
+        <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-1">
+          <span>{weekdayLabel} ·</span>
           {showChoices ? (
             submitting !== null ? (
               <span aria-live="polite">{t("energy_checking_in")}</span>
             ) : (
-              <span role="group" aria-label={t("energy_checkin_title")}>
+              <span
+                className="inline-flex flex-wrap items-center gap-x-1 gap-y-1 align-middle"
+                role="group"
+                aria-label={t("energy_checkin_title")}
+              >
                 {LEVELS.map((level, i) => {
                   const isCurrent = isCheckedInToday && energyLevel === level;
                   const label = t(
                     `energy_${level.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low"
                   );
                   return (
-                    <span key={level}>
-                      {i > 0 && " · "}
+                    <span key={level} className="inline-flex items-center">
+                      {i > 0 && (
+                        <span aria-hidden="true" className="mr-1 text-[var(--ink-3)]">
+                          ·
+                        </span>
+                      )}
                       <button
                         type="button"
                         onClick={() => submitCheckin(level)}
                         aria-pressed={isCurrent}
                         aria-label={t("meta_energy_set_aria", { level: label })}
                         className={cn(
-                          "-my-4 inline-block cursor-pointer rounded-[var(--radius-sm)] border-0 bg-transparent px-1 py-4 align-middle",
+                          "inline-flex cursor-pointer items-center rounded-[var(--radius-sm)] border-0 bg-transparent px-1.5 py-4",
                           "font-[family-name:var(--font-mono)] text-[0.6875rem] tracking-[0.06em] transition-colors",
                           "hover:bg-[var(--raised)] hover:underline underline-offset-2",
                           isCurrent ? "font-semibold text-[var(--ink)]" : "text-[var(--ink-2)]"

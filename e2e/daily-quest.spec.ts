@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 /**
  * Daily Quest E2E tests.
@@ -224,4 +225,83 @@ test.describe("Lichtkegel", () => {
     const count = await page.evaluate(countAmberInPageAndDialogs);
     expect(count).toBeLessThanOrEqual(1);
   });
+});
+
+
+// ─── Energie-Wahlmoeglichkeiten: Ziel-Ueberlappung ─────────────────────────────
+//
+// Fix round 3 (2026-08-22): the three energy choices (Task 8 fix round 2)
+// grew their tap targets with a negative margin trick, which is only safe
+// when nothing can ever occupy the space the target bleeds into. At 375px
+// the choices row wraps, and that assumption broke: the grown, invisible
+// hit-boxes of the first and last choice overlapped each other across the
+// wrap boundary. Worst in German (the default locale) — its longer labels
+// push the wrap point earlier — with a measured 31x32px overlap between
+// "Viel Energie" and "Wenig Energie". Whichever choice is later in the DOM
+// wins a tap that lands in that overlap, so a tap on "Wenig Energie" could
+// silently set "Viel Energie" instead: the opposite of what was pressed.
+//
+// This is exactly the class of bug that returns silently when a translator
+// lengthens a string, so it's a permanent test, not a one-off measurement —
+// covering the three locales already known to sit near the wrap boundary
+// (de is longest/default, ru is close behind, en was the one round 2's
+// author checked and judged "clean" at a 1px overlap that turned out not to
+// generalise).
+test.describe("Energie-Wahlmoeglichkeiten: Ziel-Ueberlappung", () => {
+  /** Forces the "not checked in today" state without touching the DB — same
+   * technique as the amber-uniqueness test above. */
+  async function forceNotCheckedIn(page: Page) {
+    await page.addInitScript(() => {
+      const orig = Date.prototype.toLocaleDateString;
+      Date.prototype.toLocaleDateString = function (...args: Parameters<typeof orig>) {
+        if (args[0] === "en-CA" && args.length === 1) return "2099-01-01";
+        return orig.apply(this, args);
+      };
+    });
+  }
+
+  function overlaps(a: Box, b: Box): boolean {
+    const xOverlap = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+    const yOverlap = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+    return xOverlap > 0 && yOverlap > 0;
+  }
+
+  interface Box {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
+
+  for (const locale of ["de", "ru", "en"] as const) {
+    test(`${locale}: 375px, keine Ueberlappung, jedes Ziel mindestens 44px hoch`, async ({
+      page,
+    }) => {
+      await page.context().addCookies([
+        { name: "locale", value: locale, domain: "localhost", path: "/" },
+      ]);
+      await forceNotCheckedIn(page);
+      await page.setViewportSize({ width: 375, height: 800 });
+      await page.goto("/dashboard");
+      await page.waitForLoadState("networkidle");
+
+      const boxes: Box[] = await page.locator("[aria-pressed]").evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect();
+          return { x: r.x, y: r.y, width: r.width, height: r.height };
+        })
+      );
+      test.skip(boxes.length === 0, "energy choices not rendered (already checked in?)");
+      expect(boxes.length).toBe(3);
+
+      for (const b of boxes) {
+        expect(b.height).toBeGreaterThanOrEqual(44);
+      }
+      for (let i = 0; i < boxes.length; i++) {
+        for (let j = i + 1; j < boxes.length; j++) {
+          expect(overlaps(boxes[i], boxes[j])).toBe(false);
+        }
+      }
+    });
+  }
 });
