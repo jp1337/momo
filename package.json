@@ -79,7 +79,7 @@
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",
-    "@types/node": "^24.13.3",
+    "@types/node": "^24",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.23.1",
     "@types/qrcode": "^1.5.6",
@@ -91,7 +91,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
-    "npm-check-updates": "^23.0.2",
+    "npm-check-updates": "^23",
     "tailwindcss": "^4",
     "typescript": "^6",
     "vitest": "^4.1.11"
