@@ -21,13 +21,21 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 vi.mock("@/lib/api-auth", () => ({
   resolveApiUser: vi.fn(),
   resolveVerifiedApiUser: vi.fn(),
+  resolveSessionOnlyApiUser: vi.fn(),
   readonlyKeyResponse: () =>
     Response.json(
       { error: "Forbidden", message: "This API key is read-only." },
       { status: 403 }
     ),
+  // Mirrors the real helper's per-reason status codes closely enough for
+  // route-level tests: BEARER_SESSION_REQUIRED is a 403 (the caller is
+  // refused because of *how* it authenticated, not because credentials are
+  // missing/invalid), every other reason is a 401.
   verifiedAuthErrorResponse: (reason: string) =>
-    Response.json({ error: reason, code: reason }, { status: 401 }),
+    Response.json(
+      { error: reason, code: reason },
+      { status: reason === "BEARER_SESSION_REQUIRED" ? 403 : 401 }
+    ),
 }));
 
 vi.mock("next/headers", () => ({
@@ -81,7 +89,11 @@ vi.mock("@/lib/webhooks", async (orig) => {
   };
 });
 
-import { resolveApiUser, resolveVerifiedApiUser } from "@/lib/api-auth";
+import {
+  resolveApiUser,
+  resolveVerifiedApiUser,
+  resolveSessionOnlyApiUser,
+} from "@/lib/api-auth";
 import { GET as questGET, PATCH as questPATCH } from "@/app/api/settings/quest/route";
 import { GET as timezoneGET, PATCH as timezonePATCH } from "@/app/api/settings/timezone/route";
 import { GET as vacationGET, PATCH as vacationPATCH } from "@/app/api/settings/vacation-mode/route";
@@ -109,10 +121,12 @@ import type { ApiUser } from "@/lib/api-auth";
 
 const mockAuth = vi.mocked(resolveApiUser);
 const mockVerifiedAuth = vi.mocked(resolveVerifiedApiUser);
+const mockSessionOnlyAuth = vi.mocked(resolveSessionOnlyApiUser);
 
 beforeEach(() => {
   mockAuth.mockReset();
   mockVerifiedAuth.mockReset();
+  mockSessionOnlyAuth.mockReset();
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -129,15 +143,22 @@ function asUser(userId: string, readonly = false): void {
   mockAuth.mockResolvedValue({ userId, readonly } as ApiUser);
 }
 
+// asVerifiedUser/asVerifiedUserFailed drive BOTH resolveVerifiedApiUser (used
+// by session-or-bearer endpoints, e.g. calendar-feed GET) and
+// resolveSessionOnlyApiUser (used by session-ONLY endpoints, e.g.
+// calendar-feed POST/DELETE) with the same outcome, since for a real cookie
+// session the two resolvers agree. Bearer-specific refusal scenarios set
+// mockSessionOnlyAuth directly instead of going through these helpers.
 function asVerifiedUser(userId: string): void {
-  mockVerifiedAuth.mockResolvedValue({
-    ok: true as const,
-    user: { userId, readonly: false },
-  });
+  const result = { ok: true as const, user: { userId, readonly: false } };
+  mockVerifiedAuth.mockResolvedValue(result);
+  mockSessionOnlyAuth.mockResolvedValue(result);
 }
 
 function asVerifiedUserFailed(reason: "UNAUTHORIZED" | "TOTP_REQUIRED" | "TOTP_SETUP_REQUIRED" = "UNAUTHORIZED"): void {
-  mockVerifiedAuth.mockResolvedValue({ ok: false as const, reason });
+  const result = { ok: false as const, reason };
+  mockVerifiedAuth.mockResolvedValue(result);
+  mockSessionOnlyAuth.mockResolvedValue(result);
 }
 
 // ─── GET/PATCH /api/settings/quest ───────────────────────────────────────────
@@ -696,6 +717,24 @@ describe("GET /api/settings/calendar-feed", () => {
     const body = await res.json();
     expect(body).toHaveProperty("active");
   });
+
+  it("consults resolveVerifiedApiUser, not resolveSessionOnlyApiUser — GET stays Bearer-accepting", async () => {
+    const user = await createTestUser();
+    // Diverge the two mocks on purpose: if GET is ever switched to the
+    // session-only resolver, this pins that regression by failing here
+    // instead of silently passing (asVerifiedUser sets both identically,
+    // which would mask exactly that regression).
+    mockVerifiedAuth.mockResolvedValue({
+      ok: true,
+      user: { userId: user.id, readonly: false },
+    });
+    mockSessionOnlyAuth.mockResolvedValue({
+      ok: false,
+      reason: "BEARER_SESSION_REQUIRED",
+    });
+    const res = await calendarGET(req("GET", "/api/settings/calendar-feed"));
+    expect(res.status).toBe(200);
+  });
 });
 
 describe("POST /api/settings/calendar-feed", () => {
@@ -716,6 +755,26 @@ describe("POST /api/settings/calendar-feed", () => {
     expect(typeof body.url).toBe("string");
     expect(body.url).toContain(".ics");
   });
+
+  it("refuses a Bearer/API-key caller with 403 BEARER_SESSION_REQUIRED, even one the legacy verified-auth check would have allowed through", async () => {
+    const user = await createTestUser();
+    // Simulates the old behavior: resolveVerifiedApiUser exempts Bearer
+    // callers from the 2FA gate and would say "fine" (this endpoint no
+    // longer consults it for POST). resolveSessionOnlyApiUser is the one
+    // POST must now use, and it refuses outright.
+    mockVerifiedAuth.mockResolvedValue({
+      ok: true,
+      user: { userId: user.id, readonly: false },
+    });
+    mockSessionOnlyAuth.mockResolvedValue({
+      ok: false,
+      reason: "BEARER_SESSION_REQUIRED",
+    });
+    const res = await calendarPOST(req("POST", "/api/settings/calendar-feed"));
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.code).toBe("BEARER_SESSION_REQUIRED");
+  });
 });
 
 describe("DELETE /api/settings/calendar-feed", () => {
@@ -735,6 +794,22 @@ describe("DELETE /api/settings/calendar-feed", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+  });
+
+  it("refuses a Bearer/API-key caller with 403 BEARER_SESSION_REQUIRED, even one the legacy verified-auth check would have allowed through", async () => {
+    const user = await createTestUser();
+    mockVerifiedAuth.mockResolvedValue({
+      ok: true,
+      user: { userId: user.id, readonly: false },
+    });
+    mockSessionOnlyAuth.mockResolvedValue({
+      ok: false,
+      reason: "BEARER_SESSION_REQUIRED",
+    });
+    const res = await calendarDELETE(req("DELETE", "/api/settings/calendar-feed"));
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.code).toBe("BEARER_SESSION_REQUIRED");
   });
 });
 

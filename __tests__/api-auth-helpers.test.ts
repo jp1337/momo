@@ -2,8 +2,9 @@
  * Tests for the pure helper functions in lib/api-auth.ts
  *
  * Covers:
- *  - verifiedAuthErrorResponse(): all three reason codes produce 401 with
- *    correct `code` and `error` fields
+ *  - verifiedAuthErrorResponse(): the three 2FA-gate reason codes produce 401
+ *    with correct `code` and `error` fields, and the BEARER_SESSION_REQUIRED
+ *    reason (used by resolveSessionOnlyApiUser) produces a distinct 403
  *  - readonlyKeyResponse(): produces 403 with Forbidden error
  *
  * These are pure Response-building functions — no Next.js runtime, no DB,
@@ -154,6 +155,24 @@ describe("verifiedAuthErrorResponse", () => {
       expect(body).toHaveProperty("error");
       expect(body).toHaveProperty("code");
     }
+  });
+
+  it("returns a 403 (not 401) for BEARER_SESSION_REQUIRED — distinct from the other three, which are 401", async () => {
+    const response = verifiedAuthErrorResponse("BEARER_SESSION_REQUIRED");
+    expect(response.status).toBe(403);
+  });
+
+  it("returns correct code field for BEARER_SESSION_REQUIRED", async () => {
+    const response = verifiedAuthErrorResponse("BEARER_SESSION_REQUIRED");
+    const body = await response.json();
+    expect(body.code).toBe("BEARER_SESSION_REQUIRED");
+  });
+
+  it("BEARER_SESSION_REQUIRED message explains the refusal, not a generic invalid-credentials message", async () => {
+    const response = verifiedAuthErrorResponse("BEARER_SESSION_REQUIRED");
+    const body = await response.json();
+    expect(body.error).toMatch(/session|browser/i);
+    expect(body.error).not.toBe("Unauthorized");
   });
 });
 

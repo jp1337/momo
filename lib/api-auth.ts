@@ -155,12 +155,70 @@ export async function resolveVerifiedApiUser(
 }
 
 /**
- * Standard error response for the three reason codes returned by
- * `resolveVerifiedApiUser`. Returns 401 with a stable `code` field so
- * the client can route the user to /login or /setup/2fa.
+ * Session-only variant of `resolveVerifiedApiUser`, for endpoints that must
+ * never be reachable programmatically — not even by a fully-privileged
+ * (non-readonly) API key. Some mutations are sensitive enough that they are
+ * deliberately scoped to a trusted, 2FA-verified browser session only (e.g.
+ * rotating/revoking the calendar feed token, which is equivalent in
+ * sensitivity to creating an API key).
+ *
+ * A caller presenting an `Authorization: Bearer ...` header is refused
+ * outright — before any key lookup — with reason `BEARER_SESSION_REQUIRED`.
+ * This is intentionally checked ahead of (and instead of) calling
+ * `resolveApiKeyUser`:
+ *  - a valid key and an invalid key are refused identically, so the response
+ *    leaks nothing about key validity;
+ *  - no needless DB round-trip is made for a caller that can never succeed
+ *    here regardless of what the lookup would return.
+ * The refusal keys on the header *prefix* alone, deliberately not on
+ * whether a token follows it. This is stricter than `resolveVerifiedApiUser`,
+ * which falls through to the cookie session for an empty `Bearer ` header
+ * (see below) — here an empty token is refused too, rather than silently
+ * treated as "no Bearer header".
+ *
+ * When no Bearer header is present, this delegates entirely to
+ * `resolveVerifiedApiUser` for the cookie-session / 2FA-gate logic — a
+ * session accepted there is accepted here too, since both apply the same
+ * verification to the same session.
+ *
+ * @param request - The incoming Next.js Request object
+ */
+export async function resolveSessionOnlyApiUser(
+  request: Request
+): Promise<
+  | { ok: true; user: ApiUser }
+  | {
+      ok: false;
+      reason:
+        | "UNAUTHORIZED"
+        | "TOTP_SETUP_REQUIRED"
+        | "TOTP_REQUIRED"
+        | "BEARER_SESSION_REQUIRED";
+    }
+> {
+  const authHeader = request.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    return { ok: false, reason: "BEARER_SESSION_REQUIRED" };
+  }
+
+  return resolveVerifiedApiUser(request);
+}
+
+/**
+ * Standard error response for the reason codes returned by
+ * `resolveVerifiedApiUser` / `resolveSessionOnlyApiUser`. Returns 401 with a
+ * stable `code` field for the three 2FA-gate reasons so the client can route
+ * the user to /login or /setup/2fa. `BEARER_SESSION_REQUIRED` returns 403
+ * instead — the caller isn't unauthenticated, it authenticated with a method
+ * this endpoint refuses to accept, which is a distinct, explicit failure
+ * mode (not "your token is invalid").
  */
 export function verifiedAuthErrorResponse(
-  reason: "UNAUTHORIZED" | "TOTP_SETUP_REQUIRED" | "TOTP_REQUIRED"
+  reason:
+    | "UNAUTHORIZED"
+    | "TOTP_SETUP_REQUIRED"
+    | "TOTP_REQUIRED"
+    | "BEARER_SESSION_REQUIRED"
 ): Response {
   const messages: Record<typeof reason, string> = {
     UNAUTHORIZED: "Unauthorized",
@@ -168,8 +226,19 @@ export function verifiedAuthErrorResponse(
       "Two-factor authentication setup is required by the administrator",
     TOTP_REQUIRED:
       "Two-factor authentication required for this session — please verify",
+    BEARER_SESSION_REQUIRED:
+      "This endpoint can only be managed from a signed-in browser session — API keys are not accepted here",
   };
-  return Response.json({ error: messages[reason], code: reason }, { status: 401 });
+  const statuses: Record<typeof reason, number> = {
+    UNAUTHORIZED: 401,
+    TOTP_SETUP_REQUIRED: 401,
+    TOTP_REQUIRED: 401,
+    BEARER_SESSION_REQUIRED: 403,
+  };
+  return Response.json(
+    { error: messages[reason], code: reason },
+    { status: statuses[reason] }
+  );
 }
 
 /**
