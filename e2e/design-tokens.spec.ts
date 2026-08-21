@@ -141,3 +141,36 @@ test.describe("Schriften", () => {
     expect(loaded).toBe(true);
   });
 });
+
+test.describe("Surface", () => {
+  test("hat keinen Rahmen und keinen Schatten", async ({ page }) => {
+    await page.goto("/design-system");
+    const el = page.getByTestId("surface-flat");
+    await expect(el).toBeVisible();
+    const s = await el.evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { border: c.borderTopWidth, shadow: c.boxShadow, radius: c.borderTopLeftRadius };
+    });
+    expect(s.border).toBe("0px");
+    expect(s.shadow).toBe("none");
+    expect(s.radius).toBe("11px");
+  });
+
+  test("flat, raised und input sind unterschiedlich hell", async ({ page }) => {
+    await page.goto("/design-system");
+    const bg = async (id: string) =>
+      page.getByTestId(id).evaluate((n) => getComputedStyle(n).backgroundColor);
+    const flat = await bg("surface-flat");
+    const raised = await bg("surface-raised");
+    const input = await bg("surface-input");
+    expect(new Set([flat, raised, input]).size).toBe(3);
+  });
+
+  test("overlay ist die einzige Stufe mit Schatten", async ({ page }) => {
+    await page.goto("/design-system");
+    const shadow = await page
+      .getByTestId("surface-overlay")
+      .evaluate((n) => getComputedStyle(n).boxShadow);
+    expect(shadow).not.toBe("none");
+  });
+});

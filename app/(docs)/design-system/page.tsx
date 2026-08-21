@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Surface } from "@/components/ui/surface";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,35 +51,18 @@ export default function DesignSystemPage() {
         </div>
       </section>
 
-      {/* Cards */}
+      {/* Surfaces */}
       <section className="space-y-6">
-        <h2 className="text-2xl font-semibold border-b border-[var(--border)] pb-2">Cards</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Standard Card</CardTitle>
-              <CardDescription>A simple card for grouping content.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>This is the main content area of the card.</p>
-            </CardContent>
-            <CardFooter>
-              <Badge variant="danger" className="gap-1">
-                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                1 Issue
-              </Badge>
-            </CardFooter>
-          </Card>
-
-          <Card hover>
-            <CardHeader>
-              <CardTitle>Hoverable Card</CardTitle>
-              <CardDescription>This card lifts slightly on hover.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Try hovering over me to see the effect!</p>
-            </CardContent>
-          </Card>
+        <h2 className="text-2xl font-semibold border-b border-[var(--border)] pb-2">
+          Flächen
+        </h2>
+        <div className="flex flex-wrap gap-4">
+          <Surface data-testid="surface-flat" className="p-6">flat — unbeleuchtet</Surface>
+          <Surface data-testid="surface-raised" level="raised" className="p-6">raised</Surface>
+          <Surface data-testid="surface-input" level="input" className="p-6">input, hover</Surface>
+          <Surface data-testid="surface-overlay" level="overlay" radius="lg" className="p-6">
+            overlay — die einzige Stufe mit Schatten
+          </Surface>
         </div>
       </section>
 
