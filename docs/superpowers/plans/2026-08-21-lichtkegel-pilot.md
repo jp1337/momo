@@ -33,6 +33,27 @@
 
 - **`PLAYWRIGHT_TEST_PASSWORD` darf NICHT gesetzt sein.** Sobald die Variable existiert, hängt `lib/auth.ts` den Credentials-Provider an die Auth.js-Konfiguration — und Auth.js verwirft daraufhin die *gesamte* Konfiguration mit `UnsupportedStrategy`, weil Credentials mit `session.strategy: "database"` unzulässig ist. Jeder Auth-Aufruf antwortet dann mit 500 und jede geschützte Route leitet auf `/login`. `e2e/global.setup.ts` legt die Session stattdessen direkt in der Datenbank an und braucht die Variable nicht. Details siehe „Vorgefundener Zustand" unten.
 
+## Revision am 2026-08-21 — nach dem ersten Blick in den Browser
+
+Tasks 1 bis 6 wurden umgesetzt und mit sauberem Review abgenommen. Dann wurde
+die Anwendung zum ersten Mal **angesehen**, und fünf Festlegungen der Spec
+erwiesen sich als falsch. Die Spec ist entsprechend revidiert (Commit
+`66dd104`); dieser Plan bleibt als Protokoll dessen stehen, was tatsächlich
+gebaut wurde, mit diesem Hinweis vorweg:
+
+| Ursprünglich im Plan | Revidiert |
+|---|---|
+| Vier Flächenstufen `--s1` `--s2` `--s3` | Zwei Werte: `--ground` und `--raised`. Die Leiter war selbst das Problem — sie lädt dazu ein, Dinge auf Sprossen zu stellen |
+| „Kein Rahmen als Abgrenzung" | „Eine Kante nur, wo sie etwas aussagt" — um eine Affordanz ja, um eine Inhaltsgruppe nein |
+| `--ink-3` `#6c7a71` / `#7d8a80` | `#828f86` / `#666f68` — die alten Werte lagen bei 11 px unter AA (4,24:1 und 3,08:1) |
+| `Surface` mit vier Stufen | Zwei: `raised` und `overlay` |
+| Flächenabstand über WCAG-Kontrast gemessen | Über ΔL\* (Ziel ≥ 8). Kontrastverhältnis gilt nur für Text |
+
+Ab dieser Revision gilt zusätzlich: **jede optische Änderung wird im Browser
+angesehen, bevor sie als fertig gilt.** Grüne Tests sind kein Beleg dafür,
+dass ein Design funktioniert — alle fünf Fehler oben waren durch Reviews
+gekommen.
+
 ## Vorgefundener Zustand (Pre-Flight, 2026-08-21)
 
 Beim Einrichten der Verifikationsspur kam heraus, dass die Playwright-Suite bis
@@ -1526,7 +1547,9 @@ git commit -m "feat(ui): Quick Wins als nackte Liste — Schriftgröße zeigt de
 
 - [ ] **Step 2: `docs/design-system.md` neu schreiben**
 
-Die bestehende Datei beschreibt Komponenten, die es nicht mehr gibt (`Card`) und Schriften, die ersetzt sind (Lora, DM Sans). Neu, in dieser Reihenfolge: die Designthese in zwei Sätzen, die Flächenleiter als Tabelle mit beiden Themes, die vier Radien, die Amber-Regel, die drei Schriftrollen, `Surface`/`Button`/`Badge` mit Signaturen, und ein Verweis auf `npm run check:design` als das, was die Regeln durchsetzt. Ein Link auf die Spec.
+Die bestehende Datei beschreibt Komponenten, die es nicht mehr gibt (`Card`) und Schriften, die ersetzt sind (Lora, DM Sans). Neu, in dieser Reihenfolge: die Designthese in zwei Sätzen, die **zwei Flächenwerte** (`--ground` und `--raised`) mit der Regel „eine Kante nur, wo sie etwas aussagt", die vier Radien, die Amber-Regel, die drei Schriftrollen, `Surface`/`Button`/`Badge` mit Signaturen, und ein Verweis auf `npm run check:design` als das, was die Regeln durchsetzt. Ein Link auf die Spec.
+
+**Achtung — die Spec wurde am 2026-08-21 revidiert** (`docs/superpowers/specs/2026-08-21-lichtkegel-design.md`, Commit `66dd104`). Die vierstufige Leiter `--s1`/`--s2`/`--s3` existiert nicht mehr; es gibt `--ground`, `--raised` und `--hairline`. `Surface` hat zwei Stufen (`raised`, `overlay`), nicht vier. Und Flächenabstand wird über ΔL\* gemessen, nicht über WCAG-Kontrastverhältnis — Letzteres gilt nur für Text. Die Doku muss den revidierten Stand beschreiben, nicht den ursprünglichen.
 
 - [ ] **Step 3: `CHANGELOG.md` unter `[Unreleased]`**
 
@@ -1543,7 +1566,9 @@ Die bestehende Datei beschreibt Komponenten, die es nicht mehr gibt (`Card`) und
 - Quick Wins zeigen den geschätzten Aufwand über die Schriftgröße.
 
 ### Removed
-- `Card`-Komponente — ersetzt durch `Surface` ohne Rahmen und Schatten.
+- `Card`-Komponente — ersetzt durch `Surface`, das nur noch bei echten
+  Affordanzen (Eingabe, Button) und bei Overlays auftritt. Gewöhnlicher
+  Inhalt liegt direkt auf dem Grund und braucht keine Fläche.
 - Button-Varianten `secondary`, `ghost`, `outline`, `success` — es bleiben
   `primary`, `quiet`, `danger`.
 
