@@ -39,25 +39,31 @@ Die Reihenfolge hier ist bewusst nach *Erreichbarkeit* sortiert, nicht nach
 Alert-Severity: was ein Nutzer heute anfassen kann, steht vor dem, was nur im
 Advisory-Feed steht.
 
-**Rate-Limiting auf 17 Mutation-Routen — der real erreichbare Befund**
+**Rate-Limiting auf 70 Mutation-Handlern** ✅ (2026-08-20/21, #71, #80)
 
-`CLAUDE.md` schreibt vor: *„Rate limiting on all mutation API routes."* Tatsächlich haben
-17 von 57 Mutation-Routen keins. Authentifiziert sind sie alle korrekt — nur ungebremst.
-Die zwei, die am meisten wehtun:
+`CLAUDE.md` schreibt vor: *„Rate limiting on all mutation API routes."* Die ehrliche Einheit
+dafür ist der Handler, nicht die Datei: **70 Mutation-Handler über 57 Dateien**. 17 Dateien
+hatten zunächst überhaupt kein Limit; 15 davon wurden nachgezogen (`/api/cron` und
+`/api/admin/seed` bleiben bewusst ausgenommen, siehe CHANGELOG). Eine reine Datei-Zählung
+verdeckte dabei zwei weitere unguarded Handler, deren Datei-Nachbar bereits ein Limit hatte
+— `DELETE /api/settings/webhooks/[id]` und `DELETE /api/tasks/[id]/snooze` — erst gefunden,
+als der Invariant-Test auf Handler- statt Datei-Granularität umgestellt wurde. Authentifiziert
+waren alle Routen bereits korrekt — es fehlte nur die Bremse, nicht die Tür. Am meisten hätten
+wehgetan:
 
 - `app/api/wishlist/[id]/buy/route.ts` — bucht **atomar Coins ab**. Eine ungebremste
   Schreiboperation direkt auf dem Währungssystem.
-- `app/api/auth/link-request/route.ts` — erzeugt unbegrenzt `linking_request`-Records.
+- `app/api/auth/link-request/route.ts` — konnte unbegrenzt `linking_request`-Records erzeugen.
 
-Das steht hier oben, weil es der einzige Befund auf dieser Seite ist, den ein
-authentifizierter Nutzer **heute tatsächlich anfassen kann**. Das Muster dafür existiert
+Das stand hier oben, weil es der einzige Befund auf dieser Seite war, den ein
+authentifizierter Nutzer damals tatsächlich anfassen konnte. Das Muster dafür existierte
 schon (`checkRateLimit` / `rateLimitResponse` aus `lib/rate-limit`, siehe
-`app/api/settings/calendar-feed/route.ts` als Vorbild) — es ist konsistentes Nachziehen,
+`app/api/settings/calendar-feed/route.ts` als Vorbild) — es war konsistentes Nachziehen,
 kein Neubau.
 
-Die Auth-Lage selbst ist sauber: `/api/cron` ist per `CRON_SECRET` mit `timingSafeEqual`
-geschützt, `calendar-feed` hinter `resolveVerifiedApiUser` samt 2FA-Gate. Hier fehlt nur
-die Bremse, nicht die Tür.
+Die Auth-Lage selbst war sauber: `/api/cron` ist per `CRON_SECRET` mit `timingSafeEqual`
+geschützt, `calendar-feed` hinter `resolveSessionOnlyApiUser` (Bearer-Aufrufer werden für die
+Mutationen dort seit #78 ganz zurückgewiesen). Es fehlte nur die Bremse, nicht die Tür.
 
 **nodemailer 8 → 9 — vier von fünf Alerts, alle nicht erreichbar**
 

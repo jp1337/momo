@@ -287,12 +287,18 @@ function findUnguardedMutationHandlers(): HandlerRegion[] {
 /**
  * True when a handler's own region resolves its caller via `resolveApiUser`
  * — the only resolver that can hand back a read-only API key.
- * `resolveVerifiedApiUser` (2FA-aware; bearer tokens exempt from the 2FA
- * check but still subject to `.readonly` at the call site, so routes using
- * it manage the check themselves) and `resolveSessionOnlyApiUser` /
- * plain `auth()` (cookie session only — no API key, so no read-only key can
- * ever reach them) have their own semantics and are out of scope for the
- * read-only-gate invariant below.
+ * `resolveSessionOnlyApiUser` / plain `auth()` (cookie session only — no API
+ * key, so no read-only key can ever reach them) are correctly out of scope
+ * for the read-only-gate invariant below.
+ * `resolveVerifiedApiUser` is excluded too, but — as of this writing — that
+ * exclusion is vacuous rather than earned: no mutation handler resolves its
+ * caller via it (`grep -rn "resolveVerifiedApiUser" app/api --include=route.ts`
+ * finds exactly one call, and it's the GET on
+ * `app/api/settings/calendar-feed/route.ts`). If a future mutation handler
+ * ever adopts this resolver, this invariant will silently stop covering it
+ * — revisit the exclusion at that point. This is not hypothetical: before
+ * PR #78, the calendar-feed POST/DELETE mutations *did* resolve via
+ * `resolveVerifiedApiUser` and did not check `.readonly`.
  */
 function usesResolveApiUser(region: string): boolean {
   return (

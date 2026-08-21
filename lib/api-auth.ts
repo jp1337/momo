@@ -8,9 +8,8 @@
  * Usage in API routes:
  *   const user = await resolveApiUser(request);
  *   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
- *   if (user.readonly && request.method !== "GET") {
- *     return Response.json({ error: "Read-only API key" }, { status: 403 });
- *   }
+ *   // Mutation handlers only (POST/PATCH/DELETE) — GET handlers never call this:
+ *   if (user.readonly) return readonlyKeyResponse();
  */
 
 import { auth } from "@/lib/auth";
