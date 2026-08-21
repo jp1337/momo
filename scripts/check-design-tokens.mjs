@@ -18,6 +18,13 @@
  *   node scripts/check-design-tokens.mjs
  *   node scripts/check-design-tokens.mjs --update     # Baseline senken
  *   node scripts/check-design-tokens.mjs --selftest   # Regexe pruefen
+ *
+ * Die Ratsche darf nur sinken: --update verweigert jede Erhoehung. Wird eine
+ * Regel selbst erweitert (neues Muster, bisher blinder Fleck), ist das die
+ * eine legitime Ursache fuer eine hoehere Zahl. Der Weg dafuer ist nicht
+ * --update, sondern scripts/design-baseline.json loeschen und --update erneut
+ * laufen lassen: mit alter Baseline = {} greift keine Steigerungspruefung,
+ * und das Ergebnis ist ein ehrlicher neuer Boden fuer die erweiterten Regeln.
  */
 
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
@@ -38,6 +45,7 @@ const PATTERNS = {
     /\brgba?\(/g,
     /\bhsla?\(/g,
     /["'\s:](?:white|black)["'\s,;}]/g,
+    /\b(?:text|bg|border|ring|from|via|to|fill|stroke|decoration|outline|shadow|divide|placeholder|caret|accent)-(?:white|black)\b/g,
     new RegExp(
       `\\b(?:text|bg|border|ring|from|via|to|fill|stroke|decoration|outline|shadow)-(?:${TAILWIND_PALETTES})-\\d{2,3}\\b`,
       "g",
@@ -96,6 +104,10 @@ function selftest() {
     ['color', 'className="text-red-500"', 1],
     ['color', 'color: "var(--ink)"', 0],
     ['color', 'className="text-ink-2 bg-s1"', 0],
+    ['color', 'className="text-white"', 1],
+    ['color', 'className="bg-black"', 1],
+    ['color', 'color: "white"', 1],
+    ['color', 'className="text-ink-2"', 0],
     ['radius', 'className="rounded-xl"', 1],
     ['radius', 'className="rounded-[var(--radius-md)]"', 0],
     ['radius', 'className="rounded-full"', 0],
