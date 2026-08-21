@@ -23,7 +23,7 @@
   },
   "packageRules": [
     {
-      "description": "Patch, pin and digest: auto-merge once CI is green. Applies to runtime and dev alike — a patch that breaks the 1684-test suite does not merge, and one that doesn't is noise.",
+      "description": "Patch, pin and digest: auto-merge once CI is green. Applies to runtime and dev alike — a patch that breaks the 1728-test suite does not merge, and one that doesn't is noise. This only became true on 2026-08-21: until then main had no required status checks and lint/build did not run on pull requests at all, so 'once CI is green' was aspirational. The required checks are now lint, build and test from the PR Gate workflow. Keep build in that list — the magic-string v1 override kept every test green and broke next build.",
       "matchUpdateTypes": ["patch", "pin", "digest"],
       "automerge": true,
       "automergeType": "pr",

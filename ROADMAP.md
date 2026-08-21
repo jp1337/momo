@@ -163,12 +163,22 @@ Dazu `lockFileMaintenance`, wofür es bei Dependabot keine Entsprechung gibt. Au
 devDependencies mergen Patch und Minor selbst, Runtime-Dependencies nur Patches, Runtime-Minors und
 alle Majors bleiben Handarbeit. Postgres-Majors sind explizit gesperrt.
 
-**Eine Sache fehlt dafür noch, und sie ist eine Falle:** `main` hat **keine required status checks**.
-Solange GitHubs Auto-Merge ausgeschaltet ist, greift Renovates eigener Mechanismus, der den
-Branch-Status prüft — sicher aus Versehen, nicht aus Konstruktion. Wird Auto-Merge eingeschaltet,
-mergen Patch-, Digest- und devDeps-Minor-PRs sowie der wöchentliche Lockfile-PR sofort und **ohne
-einen einzigen Testlauf**, weil nichts verlangt wird. `test` gehört als required check auf `main`,
-bevor die Automation scharf läuft.
+**Diese Falle ist seit 2026-08-21 zu** — und sie war tiefer als hier beschrieben. Notiert war
+„`main` hat keine required status checks"; dazu kam, dass `lint` und `next build` bei einem Pull
+Request **gar nicht liefen**. `build-and-publish.yml` triggert nur auf `push: main`, berichtete also
+erst nach dem Merge. Es fehlte damit nicht nur die Pflicht, den Check zu bestehen, sondern der Check
+selbst.
+
+Beides ist erledigt: die beiden Jobs leben jetzt in `test.yml` („PR Gate"), das auf `pull_request`
+läuft, und `lint`, `build` und `test` sind required status checks auf `main` (nicht-strict,
+`enforce_admins` bleibt an). `build-and-publish.yml` durfte den Trigger nicht bekommen — sein
+`deploy`-Job läuft auf einem Self-hosted-Intranet-Runner in einem öffentlichen Repo, und
+`pull_request` würde daraus Codeausführung aus jeder Fork-PR machen. Der Kommentar dort verweist
+jetzt auf den richtigen Ort.
+
+Warum `build` und nicht nur `test` required ist: der `magic-string`-v1-Override ließ **alle 1728
+Tests grün** und brach `next build`. Eine Suite prüft die Build-Toolchain nicht — der Build braucht
+sein eigenes Gate.
 
 **Read-only API-Keys waren nicht read-only** ✅ (2026-08-21, #77, #78)
 
@@ -368,20 +378,6 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
   `eslint ^9.7` — dieser Workaround kann also wegfallen, sobald das Plugin nachzieht oder
   `eslint-config-next` es fallen lässt. Bis dahin ist die explizite Version ohnehin die schnellere
   Variante: kein Dateisystem-Probe pro geprüfter Datei.
-- **Automerge ist praktisch ungesichert — und ein Gegenbeispiel liegt jetzt vor.** Drei Fakten, die
-  zusammen das Problem ergeben: (1) `build-and-publish.yml`, das `lint` und `next build` fährt,
-  triggert nur auf `push: branches: [main]` — also **nach** dem Merge, nicht davor; bei einem PR
-  läuft nur `test.yml` plus CodeQL. (2) Die Branch Protection von `main` hat
-  `required_status_checks: null` — **kein einziger Check ist required**. (3) `renovate.json` setzt
-  `platformAutomerge: true` und mergt `patch`/`pin`/`digest` sowie devDependency-Minors
-  automatisch. Ergebnis: eine Renovate-Patch-PR kann einziehen, ohne dass irgendetwas sie aufhält.
-  Die Beschreibung der Patch-Regel behauptet „a patch that breaks the 1684-test suite does not
-  merge" — das stimmt nur, wenn der Suite-Check required ist, und er ist es nicht.
-  Das Gegenbeispiel ist nicht hypothetisch: der `magic-string`-v1-Override auf diesem Branch ließ
-  **alle 1728 Tests grün** und brach `next build`. Genau diese Klasse — Build-Tooling kaputt, Suite
-  ahnungslos — ist die, die durchrutscht. Fix in zwei Teilen: `pull_request` als Trigger für die
-  `lint`- und `build`-Jobs ergänzen, und `test`, `lint` und `build` als required status checks auf
-  `main` eintragen. Erst dann bedeutet Automerge, was die Regel-Beschreibungen behaupten.
 - **`alexa-skill/` hat keine eigene eslint-Config, und niemand hat es gemerkt.** `npm run lint`
   dort fällt auf die Root-`eslint.config.mjs` zurück — die Next.js-Config — und meldet folgerichtig
   „Pages directory cannot be found". Der Lambda-Code wird also gegen React-/Next-Regeln geprüft
@@ -393,7 +389,7 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
   `typescript-eslint` — dann werden die beiden Pakete echt und das Skript prüft, was es zu prüfen
   behauptet.
 
-**Erledigt** ✅ — Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
+**Erledigt** ✅ — Automerge-Gate (`lint`, `build`, `test` sind seit 2026-08-21 required status checks auf `main`, und die beiden neuen Jobs laufen im PR-Gate-Workflow — vorher berichteten Lint und Build erst *nach* dem Merge, bei `required_status_checks: null`) · Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
 0.4.0) · E2E-Tests (Playwright, 13 Specs, seit 0.4.0) · Dependency-Stau aufgelöst
 (19 → 0 offene PRs, 75 → 1 Alert, 2026-08-20) · next 16.3.1 (#65) · Rate-Limiting auf allen
 70 Mutation-Handlern (#71, #80) · nodemailer 9 (#72) · Renovate statt Dependabot (#73) ·

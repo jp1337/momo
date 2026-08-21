@@ -48,6 +48,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Automerge lief ohne einen einzigen verpflichtenden Check.** Drei Dinge zusammen: `lint` und
+  `next build` stehen in `build-and-publish.yml`, das nur auf `push: main` triggert — bei einem Pull
+  Request liefen sie also **gar nicht**, sondern berichteten erst nach dem Merge. `main` hatte
+  `required_status_checks: null`. Und `renovate.json` setzt `platformAutomerge: true`. Eine
+  Renovate-Patch-PR konnte damit einziehen, ohne dass irgendetwas sie ansieht.
+  Behoben: die beiden Jobs leben jetzt in `test.yml`, umbenannt zu **„PR Gate"**, das auf
+  `pull_request` läuft; `lint`, `build` und `test` sind required status checks auf `main`
+  (nicht-strict, `enforce_admins` bleibt an). Der Trigger durfte *nicht* an
+  `build-and-publish.yml` — dessen `deploy`-Job läuft auf einem Self-hosted-Intranet-Runner in
+  einem öffentlichen Repo, wo `pull_request` jede Fork-PR zu Codeausführung im Intranet machen
+  würde. Dass `build` mit in der Liste steht und nicht nur `test`, hat einen konkreten Grund aus
+  diesem Release: der `magic-string`-v1-Override ließ alle 1728 Tests grün und brach `next build`.
+
 - **Zwei Webhook-Beispiele in der Doku waren kaputt ausgeliefert.** Liquid verarbeitet `{{ ... }}`
   auch in Code-Blöcken: das Home-Assistant-Beispiel rendete `title: ""` und `message: ""` (stumm —
   wer es kopierte, bekam eine leere Benachrichtigung), und die n8n-Zeile rendete „use `and` as
