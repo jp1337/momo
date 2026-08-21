@@ -134,7 +134,7 @@ account.
 | Layer | Technology |
 |---|---|
 | **Frontend** | Next.js 16 (App Router) + React 19, TypeScript, Tailwind CSS v4 |
-| **Animations** | Framer Motion |
+| **Animations** | Motion |
 | **Auth** | Auth.js v5 (GitHub, Discord, Google, Microsoft (private accounts), OIDC) |
 | **Database** | PostgreSQL 18 + Drizzle ORM |
 | **i18n** | next-intl — German, English, French (cookie-based, no URL prefix) |

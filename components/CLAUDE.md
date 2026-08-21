@@ -13,10 +13,10 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `ui/tooltip.tsx` — Thin wrapper around `@radix-ui/react-tooltip`. Exports `TooltipProvider` (mounted once in the root layout with delayDuration=300), `Tooltip`, `TooltipTrigger`, `TooltipContent` (with `side`, `align`, `sideOffset` props + themed arrow). Used to replace native HTML `title=` attributes on icon-only buttons (TopicCard, TopicDetailActions, TopicsGrid, ThemeToggle). Heatmap cells (contribution-grid, energy-week-block) intentionally keep native `title=` to avoid DOM bloat
 - `ui/confirm-button.tsx` — Inline two-step confirm (replaces window.confirm)
 - **Radix UI primitives in use**: `react-dialog` (modals), `react-dropdown-menu` (UserMenu, BulkActionBar topic + priority pickers, task snooze menu), `react-popover` (IconPicker), `react-tooltip` (icon-button hints), `react-toggle-group` (LanguageSwitcher, QuestSettings postpone limit, TopicForm energy picker). All wrappers preserve Momo's CSS-variable styling — no Radix design tokens introduced
-- `tasks/task-item.tsx` — Single task row: checkbox, Framer Motion completion animation, priority badges, topic tag, due date, estimatedMinutes badge, energyLevel badge (⚡/☀/🌙), postponeCount badge, breakdown button, snooze button (clock icon with popover: tomorrow/week/month/custom date), snoozed-until badge; optional **selectionMode** props (isSelected/onToggleSelect) — in selection mode shows amber checkbox instead of completion, hides edit/delete buttons
+- `tasks/task-item.tsx` — Single task row: checkbox, Motion completion animation, priority badges, topic tag, due date, estimatedMinutes badge, energyLevel badge (⚡/☀/🌙), postponeCount badge, breakdown button, snooze button (clock icon with popover: tomorrow/week/month/custom date), snoozed-until badge; optional **selectionMode** props (isSelected/onToggleSelect) — in selection mode shows amber checkbox instead of completion, hides edit/delete buttons
 - `tasks/task-form.tsx` — Create/edit modal; fields: title, type, priority, topicId, dueDate, coinValue, estimatedMinutes (5/15/30/60 min), energyLevel (HIGH/MEDIUM/LOW/null), notes, recurrenceInterval
 - `tasks/task-list.tsx` — Groups tasks into Today/Upcoming/No Date/Someday/Snoozed/Completed sections; manages client state, fires coinsEarned CustomEvent on complete/uncomplete, sends timezone in complete POST, renders live active/completed subtitle, handles snooze/unsnooze via /api/tasks/:id/snooze; **bulk selection mode** with selectedIds state, "Select" toggle button, select all/deselect, bulk action handlers (delete/complete/changeTopic/setPriority via PATCH /api/tasks/bulk)
-- `tasks/bulk-action-bar.tsx` — Sticky bottom bar shown when ≥1 task is selected in bulk mode; Framer Motion slide-up/down; action buttons: Complete (green), Change Topic (dropdown), Set Priority (dropdown), Delete (red); dumb component, all actions are callbacks
+- `tasks/bulk-action-bar.tsx` — Sticky bottom bar shown when ≥1 task is selected in bulk mode; Motion slide-up/down; action buttons: Complete (green), Change Topic (dropdown), Set Priority (dropdown), Delete (red); dumb component, all actions are callbacks
 - `tasks/task-breakdown-modal.tsx` — Modal to split a task into 2–5 subtasks inside a new topic; POSTs to /api/tasks/:id/breakdown
 - `tasks/due-today-banner.tsx` — Banner shown on tasks page when tasks are overdue or due today
 - `topics/topic-card.tsx` — Topic card: FA icon (resolveTopicIcon), color, progress bar (X/Y subtasks), priority badge
@@ -57,8 +57,8 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `auth/forced-totp-setup.tsx` — Wraps TotpSetupWizard for the REQUIRE_2FA hard-lock page at `/setup/2fa`. No cancel path — after successful setup, renders the backup codes inline and demands an explicit "I have stored them safely" checkbox before the Continue button unlocks
 - `auth/passkey-login-button.tsx` — Passwordless primary-login button rendered above the OAuth providers on `/login`. Calls `POST /api/auth/passkey/login/options` → `startAuthentication()` → `POST /api/auth/passkey/login/verify` → `router.refresh()` + `router.push("/dashboard")` so the dashboard re-renders Server Components with the newly set Auth.js session cookie instead of a stale Router Cache entry
 - `auth/passkey-second-factor-button.tsx` — Passkey challenge button shown on `/login/2fa` as alternative (or sole option) alongside/instead of the TOTP code input. Calls `POST /api/auth/passkey/second-factor/{options,verify}` — on success, marks the existing session row as second-factor-verified, then `router.refresh()` + `router.push("/dashboard")`
-- `onboarding/onboarding-wizard.tsx` — Main 4-step onboarding wizard shell. State machine: welcome → topic → tasks → notifications. Framer Motion step transitions (slide + spring). On finish calls POST /api/onboarding/complete then redirects to /dashboard. Every step skippable
-- `onboarding/onboarding-progress.tsx` — 4-dot progress indicator with animated active dot (amber) and completed dots (green). Framer Motion scale + color transitions
+- `onboarding/onboarding-wizard.tsx` — Main 4-step onboarding wizard shell. State machine: welcome → topic → tasks → notifications. Motion step transitions (slide + spring). On finish calls POST /api/onboarding/complete then redirects to /dashboard. Every step skippable
+- `onboarding/onboarding-progress.tsx` — 4-dot progress indicator with animated active dot (amber) and completed dots (green). Motion scale + color transitions
 - `onboarding/steps/welcome-step.tsx` — Step 1: four concept cards (Daily Quest, Energy, Coins, Streaks) with staggered entrance animation. FA icons, color-coded backgrounds
 - `onboarding/steps/create-topic-step.tsx` — Step 2: simplified inline topic creation form (title + IconPicker + color swatches). Calls POST /api/topics, auto-advances to tasks step on success
 - `onboarding/steps/add-tasks-step.tsx` — Step 3: quick-add tasks with Enter shortcut. AnimatePresence for add/remove. Shows "skipped" message if no topic was created
@@ -68,11 +68,11 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `animations/confetti.tsx` — Confetti burst on task completion / level-up
 - `animations/achievement-toast.tsx` — Toast overlay when an achievement is unlocked
 - `animations/level-up-overlay.tsx` — Full-screen overlay animation on level-up
-- `animations/emotional-closure.tsx` — Affirmation/quote shown after daily quest completion; day-based deterministic pick (same quote all day), Framer Motion fade-in, Lora italic; 12 quotes per language via closure.quote_N i18n keys
+- `animations/emotional-closure.tsx` — Affirmation/quote shown after daily quest completion; day-based deterministic pick (same quote all day), Motion fade-in, Lora italic; 12 quotes per language via closure.quote_N i18n keys
 
 ## Patterns
 - Use CSS variables from `globals.css` for all colors (never hardcode hex)
 - Dark and light mode must work for every component (`data-theme` attribute on `<html>`)
-- Framer Motion for complex animations; CSS-only for simple hover/focus states
+- Motion for complex animations; CSS-only for simple hover/focus states
 - Fonts: `--font-display` (Lora) for headings, `--font-body` (JetBrains Mono) for task text, `--font-ui` (DM Sans) for UI
 - Responsive: test at 375px and 1280px minimum

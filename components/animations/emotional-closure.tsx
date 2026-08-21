@@ -9,7 +9,7 @@
  * after the main celebration text.
  */
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 
 interface EmotionalClosureProps {

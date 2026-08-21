@@ -16,7 +16,7 @@
  */
 
 import { useState, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { useTranslations, useLocale } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLink, faPen, faXmark } from "@fortawesome/free-solid-svg-icons";

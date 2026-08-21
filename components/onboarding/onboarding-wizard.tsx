@@ -10,7 +10,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { useTranslations } from "next-intl";
 import { OnboardingProgress } from "./onboarding-progress";
 import { WelcomeStep } from "./steps/welcome-step";

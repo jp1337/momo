@@ -12,7 +12,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronRight, faBoxArchive, faXmark, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
 import { TopicCard } from "./topic-card";
