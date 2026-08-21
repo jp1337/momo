@@ -249,9 +249,14 @@ export default async function DashboardPage() {
   const isoDow = ((new Date().getDay() + 6) % 7); // 0 = Montag
   const weekdayLabel = t(weekdayKeys[isoDow] as Parameters<typeof t>[0]);
 
-  const energyLabel = userEnergyToday
-    ? t(`energy_${userEnergyToday.toLowerCase()}` as Parameters<typeof t>[0])
-    : t("meta_energy_unknown" as Parameters<typeof t>[0]);
+  // Streak-Fragment fuer die Metazeile — bei 0 ganz weglassen, nicht als
+  // "0 Tage Serie" anzeigen. Momo ist fuer Menschen mit Vermeidungstendenz;
+  // eine Null als Tatsache zu praesentieren ist ein taeglicher kleiner
+  // Vorwurf an der ersten Stelle, die sie sehen (Task 6 round 2 finding).
+  const streakText =
+    stats.streakCurrent > 0
+      ? t("meta_streak", { days: stats.streakCurrent })
+      : null;
 
   return (
     // Rhythmus statt Gleichverteilung (Task 6 fix — ein flaches `gap-*` auf
@@ -321,26 +326,21 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* ── Metazeile: Wochentag, Energie, Streak ───────────────────────
-            Ersetzt drei fruehere Flaechen (Energie-Karte, Insight-Chip,
-            Stat-Tiles). Alles Mono, alles gedimmt — es ist Kontext, keine
-            Handlung. Zeigt der Server hier ein Energielevel an, rendert
-            EnergyCheckinCard direkt darunter bewusst nichts (siehe dort) —
-            dieselbe Tatsache steht sonst zweimal auf der Seite. */}
-        <div
-          data-testid="quest-meta"
-          className="flex items-center justify-between gap-3 flex-wrap font-[family-name:var(--font-mono)] text-[0.6875rem] tracking-[0.06em] text-[var(--ink-3)]"
-        >
-          <span>{weekdayLabel} · {energyLabel}</span>
-          <span className="flex gap-4">
-            <span>{t("meta_streak", { days: stats.streakCurrent })}</span>
-            {bestDayInsight && <span>{bestDayInsight}</span>}
-          </span>
-        </div>
-
+        {/* ── Metazeile + Energie-Check-in ─────────────────────────────────
+            EnergyCheckinCard rendert jetzt beides: die Metazeile
+            (data-testid="quest-meta", Wochentag/Energie/Streak — ersetzt
+            drei fruehere Flaechen) UND, direkt darunter, den Picker — aber
+            nur wenn noch nicht eingecheckt oder der Nutzer das Energiewort
+            in der Metazeile angeklickt hat, um es zu aendern. Eine
+            Komponente, weil beide dieselbe "heute schon eingecheckt?"-
+            Entscheidung teilen, die aus Timezone-Gruenden im Client
+            getroffen wird (siehe Kommentar dort) — nicht hier im Server. */}
         <EnergyCheckinCard
           energyLevel={cachedEnergyLevel}
           energyLevelDate={cachedEnergyLevelDate}
+          weekdayLabel={weekdayLabel}
+          streakText={streakText}
+          bestDayInsight={bestDayInsight}
         />
       </div>
 

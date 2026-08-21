@@ -36,11 +36,36 @@ test.describe("Dashboard", () => {
     await expect(page.getByTestId("dashboard-quick-links")).toHaveCount(0);
   });
 
-  test("Wochentag, Energie und Streak stehen in einer Metazeile", async ({ page }) => {
+  test("Wochentag und Energie stehen in einer Metazeile", async ({ page }) => {
     await page.goto("/dashboard");
     const meta = page.getByTestId("quest-meta");
     await expect(meta).toBeVisible();
-    await expect(meta).toContainText(/\d+/); // Streak-Zahl
+    // Wochentag und Energie sind durch einen Mittelpunkt verbunden — das
+    // literale Zeichen ist locale-unabhaengig pruefbar, der uebersetzte
+    // Wochentag/Energie-Text nicht.
+    await expect(meta).toContainText("·");
+  });
+
+  test("Streak erscheint in der Metazeile nur, wenn sie nicht null ist", async ({
+    page,
+    request,
+  }) => {
+    // "0 days streak" ist ein taeglicher kleiner Vorwurf fuer eine App, die
+    // Menschen mit Vermeidungstendenz hilft — bei Streak 0 zeigt die
+    // Metazeile gar keine Zahl (Task 6 round 2 finding). Ein hartkodierter
+    // Erwartungswert waere fragil, deshalb erst den echten Wert abfragen.
+    const res = await request.get("/api/user");
+    const body = (await res.json()) as { streakCurrent: number };
+
+    await page.goto("/dashboard");
+    const meta = page.getByTestId("quest-meta");
+    await expect(meta).toBeVisible();
+
+    if (body.streakCurrent > 0) {
+      await expect(meta).toContainText(/\d+/);
+    } else {
+      await expect(meta).not.toContainText(/\d+/);
+    }
   });
 
   test("quick wins appear when short tasks exist", async ({
