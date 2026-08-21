@@ -2,15 +2,18 @@
  * Dashboard page — the home screen for authenticated users.
  *
  * Shows:
- *  - Small, mono greeting with the user's first name
+ *  - Small, mono greeting with the user's first name (a <p>, not the page h1 —
+ *    the Daily Quest supplies that, see Task 7)
  *  - Meta line above the quest: weekday, energy state, streak
- *  - Daily Quest Hero Card (live quest selected by algorithm)
+ *  - Daily Quest Hero Card (live quest selected by algorithm) — the page's
+ *    one lit thing: no card, no border, a wide amber Lichtkegel wash and a
+ *    large Fraunces headline that is also this page's <h1>
  *  - Quick Wins section (tasks ≤ 15 min, uncompleted)
  *
  * Task 6 stripped the stat tiles, the quick-link section and the standalone
  * Focus Mode banner — coins/level already live in the navbar, tasks/topics
- * links already live in the sidebar, and the focus entry point moves into
- * the quest row itself in Task 7.
+ * links already live in the sidebar. Task 7 folded the Focus-Mode CTA into
+ * the quest's own action row ("jetzt anfangen").
  *
  * This is a Server Component that fetches data server-side.
  * Interactive quest actions are delegated to the DailyQuestCard client component.
@@ -275,12 +278,11 @@ export default async function DashboardPage() {
           Eng zusammen (gap-2 = 8px) — ein Gedanke, nicht drei Flaechen. */}
       <div className="flex flex-col gap-2">
         {/* Begrüßung, nicht die Hauptsache der Seite — Fraunces ist für die
-            Quest reserviert. Bleibt vorerst ein h1 (siehe Task-6-Brief Step
-            3b): erst Task 7 macht die Quest zur h1 und demotet dieses
-            Element zu <p>. */}
-        <h1 className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] font-normal tracking-[0.01em] text-[var(--ink-2)]">
+            Quest reserviert. Task 7: die Quest liefert jetzt die Seiten-h1,
+            deshalb ist dieses Element ein <p> — zwei h1 waeren falsch. */}
+        <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] font-normal tracking-[0.01em] text-[var(--ink-2)]">
           {greeting}, {firstName}.
-        </h1>
+        </p>
 
         {/* ── New-user empty state ──────────────────────────────────────── */}
         {isNewUser && (

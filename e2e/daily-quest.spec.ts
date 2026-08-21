@@ -104,3 +104,45 @@ test.describe("Quest Postpone", () => {
     }
   });
 });
+
+// ─── Lichtkegel (Task 7) ───────────────────────────────────────────────────────
+// Die Quest ist nicht mehr eine Karte unter acht gleichen Flaechen, sondern
+// die eine Lichtquelle der Seite: kein Rahmen, kein Kasten, ein weiter,
+// weicher Amber-Wash von oben, Fraunces gross. Amber kommt auf der ganzen
+// Seite genau einmal als Textfarbe vor.
+test.describe("Lichtkegel", () => {
+  test("die Quest ist in Fraunces gesetzt und gross", async ({ page }) => {
+    await page.goto("/dashboard");
+    const title = page.getByTestId("quest-title");
+    await expect(title).toBeVisible();
+    const s = await title.evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { family: c.fontFamily, size: parseFloat(c.fontSize) };
+    });
+    expect(s.family).toContain("Fraunces");
+    expect(s.size).toBeGreaterThan(27); // clamp-Minimum 1.75rem
+  });
+
+  test("die Quest hat keinen Rahmen und keinen Kasten", async ({ page }) => {
+    await page.goto("/dashboard");
+    const s = await page.getByTestId("quest-light").evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { border: c.borderTopWidth, bg: c.backgroundColor };
+    });
+    expect(s.border).toBe("0px");
+    // transparent oder gar nicht gesetzt — die Quest liegt im Licht,
+    // nicht auf einer Flaeche.
+    expect(["rgba(0, 0, 0, 0)", "transparent"]).toContain(s.bg);
+  });
+
+  test("Amber kommt auf dem Dashboard genau einmal als Textfarbe vor", async ({ page }) => {
+    await page.goto("/dashboard");
+    const count = await page.evaluate(() => {
+      const amber = "rgb(240, 165, 0)";
+      return Array.from(document.querySelectorAll("main *")).filter(
+        (n) => getComputedStyle(n).color === amber,
+      ).length;
+    });
+    expect(count).toBeLessThanOrEqual(1);
+  });
+});

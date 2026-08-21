@@ -268,36 +268,45 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Daily Quest "breathing" glow ──────────────────────────────────────────── */
-/*
- * Subtle pulse on the amber border + halo of the Daily Quest card. Period
- * is intentionally slow (5s) and amplitude small (~5% opacity variation)
- * so it reads as "the card is alive" rather than "look at me, look at me".
+/* ─── Der Lichtkegel ────────────────────────────────────────────────────────
+ * Die eine Lichtquelle pro Seite. Kein Rahmen, keine Flaeche — ein weiter,
+ * weicher Wash von oben. Die Keule ist absichtlich breit: eine engere
+ * Version liest als Fleck hinter der Schrift statt als Licht.
  *
- * Disabled completely under prefers-reduced-motion — for ADHS users who
- * are sensitive to motion, the breathing would be the opposite of calm.
+ * Die Opazitaet atmet leicht (6s, 0.85 → 1) statt zu pulsieren — das Licht
+ * soll wirken, als stuende es einfach da, nicht als bluepe es. Unter
+ * prefers-reduced-motion bleibt das Licht selbst stehen, nur die Animation
+ * faellt weg: der Kegel ist Inhalt (Beleuchtung), keine Bewegung.
  */
-@keyframes quest-breathe {
-  0%, 100% {
-    box-shadow:
-      0 0 16px color-mix(in srgb, var(--accent-amber) 12%, transparent),
-      var(--shadow-md);
-  }
-  50% {
-    box-shadow:
-      0 0 28px color-mix(in srgb, var(--accent-amber) 22%, transparent),
-      var(--shadow-md);
-  }
+.lichtkegel {
+  position: relative;
+  isolation: isolate;
 }
-.quest-card-breathing {
-  animation: quest-breathe 5s ease-in-out infinite;
+.lichtkegel::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -6rem;
+  width: min(190%, 64rem);
+  height: 30rem;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse 55% 48% at 50% 46%,
+    color-mix(in srgb, var(--amber) 11%, transparent) 0%,
+    color-mix(in srgb, var(--amber) 7%,  transparent) 26%,
+    color-mix(in srgb, var(--amber) 3%,  transparent) 48%,
+    transparent 84%);
+  pointer-events: none;
+  z-index: -1;
+  animation: lichtkegel-atmen 6s ease-in-out infinite;
+}
+@keyframes lichtkegel-atmen {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .quest-card-breathing {
+  .lichtkegel::before {
     animation: none;
-    box-shadow:
-      0 0 16px color-mix(in srgb, var(--accent-amber) 15%, transparent),
-      var(--shadow-md);
+    opacity: 1;
   }
 }
 

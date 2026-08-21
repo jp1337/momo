@@ -100,6 +100,8 @@
     "quest_complete_btn": "✓ Voltooien",
     "quest_postponing": "Uitstellen…",
     "quest_postpone_btn": "Niet vandaag →",
+    "quest_start": "nu beginnen",
+    "quest_breakdown": "opsplitsen",
     "quest_label_onetime": "Eenmalig",
     "quest_label_recurring": "Terugkerend",
     "quest_label_eligible": "Opdracht-geschikt",

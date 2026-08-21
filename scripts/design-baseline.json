@@ -16,8 +16,8 @@
   },
   "app/(app)/dashboard/page.tsx": {
     "color": 1,
-    "radius": 9,
-    "inline": 30
+    "radius": 3,
+    "inline": 5
   },
   "app/(app)/layout.tsx": {
     "color": 0,
@@ -108,11 +108,6 @@
     "color": 3,
     "radius": 3,
     "inline": 16
-  },
-  "app/(docs)/design-system/page.tsx": {
-    "color": 1,
-    "radius": 0,
-    "inline": 0
   },
   "app/(docs)/layout.tsx": {
     "color": 2,
@@ -220,14 +215,14 @@
     "inline": 4
   },
   "components/dashboard/daily-quest-card.tsx": {
-    "color": 4,
-    "radius": 4,
-    "inline": 20
+    "color": 0,
+    "radius": 0,
+    "inline": 2
   },
   "components/dashboard/energy-checkin-card.tsx": {
     "color": 0,
-    "radius": 6,
-    "inline": 13
+    "radius": 3,
+    "inline": 7
   },
   "components/dashboard/quick-wins-section.tsx": {
     "color": 0,
@@ -548,21 +543,6 @@
     "color": 1,
     "radius": 7,
     "inline": 19
-  },
-  "components/ui/badge.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 1
-  },
-  "components/ui/button.tsx": {
-    "color": 2,
-    "radius": 0,
-    "inline": 0
-  },
-  "components/ui/card.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 2
   },
   "components/ui/checkbox.tsx": {
     "color": 0,

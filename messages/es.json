@@ -100,6 +100,8 @@
     "quest_complete_btn": "✓ Completar",
     "quest_postponing": "Aplazando…",
     "quest_postpone_btn": "Hoy no →",
+    "quest_start": "empezar ahora",
+    "quest_breakdown": "dividir",
     "quest_label_onetime": "Una vez",
     "quest_label_recurring": "Recurrente",
     "quest_label_eligible": "Apta para misión",

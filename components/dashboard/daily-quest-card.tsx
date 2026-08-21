@@ -1,21 +1,42 @@
 "use client";
 
 /**
- * DailyQuestCard component — hero card displayed on the dashboard.
+ * DailyQuestCard component — the page's one lit thing on the dashboard.
+ *
+ * Task 7 ("Lichtkegel"): the quest is no longer a bordered, shadowed card.
+ * It has no background, no border and no shadow — it sits directly on
+ * `--ground`, lit from above by a wide, soft amber wash (`.lichtkegel` in
+ * globals.css) and headlined in large Fraunces. That headline is this
+ * page's `<h1>` — the dashboard greeting above it was demoted to `<p>` in
+ * the same change (see `app/(app)/dashboard/page.tsx`), so all three quest
+ * states below render the identical `data-testid="quest-title"` `<h1>` and
+ * the page never has more than one.
+ *
+ * Amber budget: exactly one element on the dashboard may carry amber as a
+ * text colour — the "jetzt anfangen" / quest_start action below, plus the
+ * light pool itself (a background gradient, not a text colour). Every
+ * other formerly-amber element here (eyebrow label, priority badge,
+ * bonus-coin chip) has moved to `--ink-3`, or been dropped.
  *
  * Features:
- * - Displays the current daily quest task with priority and type badges
- * - "Complete" button: calls POST /api/tasks/:id/complete and shows celebration
- * - "Not today" button: calls POST /api/daily-quest/postpone and refreshes
- * - Empty state when no quest is available
- * - Celebration state after completing the quest
- * - Framer Motion entrance animation (fade + slide up)
+ * - Displays the current daily quest task, its topic tag and effort badges
+ * - Action row is quiet text, not filled buttons — "Complete" and
+ *   "Not today" used to be a green-filled and a grey-filled button; both
+ *   are text now so they don't compete with the one amber action
+ * - "Complete": calls POST /api/tasks/:id/complete and shows celebration
+ * - "Not today": calls POST /api/daily-quest/postpone and refreshes
+ * - "aufteilen" (breakdown): opens TaskBreakdownModal for the quest task
+ * - Empty state and celebration (completed) state — both still render the
+ *   page's h1, in the empty state as the "no quest" text, in the completed
+ *   state as the struck-through, dimmed title
+ * - Motion entrance animation (fade + slide up)
  *
  * Receives all data as props — no direct data fetching.
  */
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -27,6 +48,8 @@ import { AchievementToast } from "@/components/animations/achievement-toast";
 import type { AchievementItem } from "@/components/animations/achievement-toast";
 import { dispatchCoinsEarned } from "@/lib/client/coin-events";
 import { EmotionalClosure } from "@/components/animations/emotional-closure";
+import { Badge } from "@/components/ui/badge";
+import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -65,22 +88,19 @@ interface DailyQuestCardProps {
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 /**
- * Priority badge visual styles (labels are computed inside component with i18n).
+ * Shared style for the quest headline in all three states. Kept as a single
+ * named object (rather than a literal on each `<h1>`) so the file has one
+ * `style={{…}}` occurrence, not three — `fontVariationSettings` is the one
+ * value a CSS custom property cannot carry, which is why it stays inline at
+ * all (see docs/superpowers/specs/2026-08-21-lichtkegel-design.md §3).
  */
-const PRIORITY_STYLES = {
-  HIGH: {
-    backgroundColor: "var(--accent-red)",
-    color: "white",
-  },
-  NORMAL: {
-    backgroundColor: "var(--accent-amber)",
-    color: "black",
-  },
-  SOMEDAY: {
-    backgroundColor: "var(--bg-elevated)",
-    color: "var(--text-muted)",
-  },
-} as const;
+const questTitleStyle: React.CSSProperties = {
+  fontVariationSettings: '"SOFT" 50, "WONK" 1, "opsz" 130',
+};
+
+const questTitleClassName =
+  "m-0 max-w-[26ch] font-[family-name:var(--font-display)] font-normal " +
+  "text-[clamp(1.75rem,4.1vw,2.85rem)] leading-[1.08] tracking-[-0.022em] text-balance";
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -93,8 +113,8 @@ interface CompleteResponse {
 }
 
 /**
- * Hero card for the daily quest.
- * Manages completing and postponing the quest via API calls.
+ * Hero light for the daily quest.
+ * Manages completing, postponing and breaking down the quest via API calls.
  * Triggers confetti, level-up overlay, and achievement toasts on completion.
  */
 export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotionalClosureEnabled, userEnergyToday }: DailyQuestCardProps) {
@@ -111,12 +131,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
   const [coinsEarned, setCoinsEarned] = useState<number | null>(null);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
-
-  const PRIORITY_LABELS: Record<"HIGH" | "NORMAL" | "SOMEDAY", string> = {
-    HIGH: t("quest_label_high"),
-    NORMAL: t("quest_label_normal"),
-    SOMEDAY: t("quest_label_someday"),
-  };
+  const [showBreakdownModal, setShowBreakdownModal] = useState(false);
 
   const TYPE_LABELS: Record<"ONE_TIME" | "RECURRING" | "DAILY_ELIGIBLE", string> = {
     ONE_TIME: t("quest_label_onetime"),
@@ -215,12 +230,16 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
     }
   }
 
+  /** Opens the breakdown modal for the current quest task. */
+  function handleBreakdown() {
+    if (!quest) return;
+    setShowBreakdownModal(true);
+  }
+
   // Energy check-in is now handled by EnergyCheckinCard, rendered above
   // this card on the dashboard. DailyQuestCard only consumes the resulting
   // userEnergyToday prop to show the "matches your energy" badge.
 
-  const priorityStyle = quest ? PRIORITY_STYLES[quest.priority] : null;
-  const priorityLabel = quest ? PRIORITY_LABELS[quest.priority] : null;
   const typeLabel = quest ? TYPE_LABELS[quest.type] : null;
 
   return (
@@ -242,45 +261,33 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
       />
     )}
 
+    {/* Breakdown modal — splits the quest task into subtasks under a new topic */}
+    {showBreakdownModal && quest && (
+      <TaskBreakdownModal
+        task={{ id: quest.id, title: quest.title }}
+        onCancel={() => setShowBreakdownModal(false)}
+        onSuccess={() => setShowBreakdownModal(false)}
+      />
+    )}
+
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      // Breathing glow only on the active-quest state — completed/empty
-      // states don't need the live indicator. Inline boxShadow is removed
-      // because the .quest-card-breathing keyframes own it.
-      className={`rounded-2xl p-6 sm:p-8 flex flex-col gap-4 ${quest && !isCompleted ? "quest-card-breathing" : ""}`}
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        border: "1px solid var(--accent-amber)",
-        // Static glow for completed/empty states (no animation)
-        boxShadow: quest && !isCompleted
-          ? undefined
-          : "0 0 16px color-mix(in srgb, var(--accent-amber) 12%, transparent), var(--shadow-md)",
-      }}
+      data-testid="quest-light"
+      className="lichtkegel flex flex-col gap-4"
     >
-      {/* No quest — empty state */}
+      {/* No quest — empty state. Still supplies the page's h1: the dashboard
+          has no other h1 in this state, and the design requires exactly one. */}
       {!quest && (
         <div className="flex flex-col gap-3">
-          <p
-            className="text-base"
-            style={{
-              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-              color: "var(--text-muted)",
-            }}
-          >
+          <h1 data-testid="quest-title" className={`${questTitleClassName} text-[var(--ink)]`} style={questTitleStyle}>
             {t("quest_no_quest")}
-          </p>
-          <p
-            className="text-sm"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            <a href="/tasks" style={{ color: "var(--accent-amber)" }}>
+          </h1>
+          <p className="m-0 font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
+            <Link href="/tasks" className="font-medium text-[var(--amber)] no-underline">
               {t("quest_no_quest_hint")}
-            </a>
+            </Link>
           </p>
         </div>
       )}
@@ -288,44 +295,22 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
       {/* Quest completed — celebration state */}
       {quest && isCompleted && (
         <div className="flex flex-col gap-3">
-          <p
-            className="text-lg font-semibold"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              color: "var(--text-primary)",
-            }}
-          >
+          <p className="m-0 font-[family-name:var(--font-ui)] text-sm font-medium text-[var(--ink-2)]">
             {t("quest_done")}
           </p>
-          <p
-            className="text-sm"
-            style={{
-              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-              color: "var(--text-muted)",
-              textDecoration: "line-through",
-            }}
+          <h1
+            data-testid="quest-title"
+            className={`${questTitleClassName} text-[var(--ink-3)] line-through`}
+            style={questTitleStyle}
           >
             {quest.title}
-          </p>
-          {coinsEarned !== null && (
-            <p
-              className="text-sm font-medium"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--coin-gold)",
-              }}
-            >
+          </h1>
+          {coinsEarned !== null ? (
+            <p className="m-0 font-[family-name:var(--font-ui)] text-sm font-medium text-[var(--ink-2)]">
               {t("quest_done_hint", { coins: coinsEarned })}
             </p>
-          )}
-          {coinsEarned === null && (
-            <p
-              className="text-sm"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-              }}
-            >
+          ) : (
+            <p className="m-0 font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
               {t("quest_comeback")}
             </p>
           )}
@@ -338,29 +323,24 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
         <>
           {/* Quest header */}
           <div className="flex flex-col gap-2">
-            {/* Eyebrow label — gives the card hero theatricality */}
-            <span
-              className="text-xs font-semibold uppercase tracking-[0.18em] self-start"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--accent-amber)",
-                opacity: 0.85,
-              }}
-            >
+            {/* Eyebrow label — theatricality without amber; the eyebrow is
+                context, not the page's one action. */}
+            <span className="self-start font-[family-name:var(--font-ui)] text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-[var(--ink-3)]">
               {t("quest_eyebrow_label")}
             </span>
 
-            {/* Topic tag */}
+            {/* Topic tag — colour comes from user data (lib/db topics.color),
+                not a literal in this file, so it stays inline: a CSS custom
+                property can't carry a runtime hex value from the database. */}
             {quest.topic && (
               <span
-                className="text-xs px-2 py-0.5 rounded self-start"
+                className="self-start inline-flex items-center rounded-[var(--radius-sm)] px-2 py-0.5 text-xs font-[family-name:var(--font-ui)]"
                 style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: quest.topic.color ?? "var(--text-muted)",
+                  color: quest.topic.color ?? "var(--ink-2)",
                   backgroundColor: quest.topic.color
                     ? `${quest.topic.color}22`
-                    : "rgba(122,144,127,0.12)",
-                  border: `1px solid ${quest.topic.color ?? "var(--border)"}44`,
+                    : "color-mix(in srgb, var(--ink-2) 12%, transparent)",
+                  border: `1px solid ${quest.topic.color ?? "var(--hairline)"}44`,
                 }}
               >
                 {quest.topic.icon && (
@@ -374,146 +354,75 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
               </span>
             )}
 
-            {/* Task title — display-scale typography for true hero presence.
-                The Daily Quest is THE one thing today; it should read like
-                a headline, not like a list item. */}
-            <h3
-              className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight tracking-tight"
-              style={{
-                fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-                color: "var(--text-primary)",
-              }}
-            >
+            {/* Task title — this IS the page's h1. The Daily Quest is the one
+                lit thing today; it reads as a headline, lit from above by
+                the .lichtkegel wash on the container, not boxed. */}
+            <h1 data-testid="quest-title" className={`${questTitleClassName} text-[var(--ink)]`} style={questTitleStyle}>
               {quest.title}
-            </h3>
+            </h1>
 
-            {/* Badges row */}
+            {/* Badges row — labels, not the page's action, so none of them
+                carry amber. Priority is dropped entirely here: the daily-quest
+                algorithm already picked the one task that matters today, and
+                a HIGH/NORMAL/SOMEDAY label next to a headline-sized title
+                added noise without adding a decision the user needs to make. */}
             <div className="flex flex-wrap items-center gap-2">
-              {/* Priority badge */}
-              {priorityStyle && priorityLabel && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded font-medium"
-                  style={{
-                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    ...priorityStyle,
-                  }}
-                >
-                  {priorityLabel}
-                </span>
-              )}
+              {typeLabel && <Badge variant="neutral">{typeLabel}</Badge>}
 
-              {/* Type badge */}
-              {typeLabel && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded"
-                  style={{
-                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    color: "var(--text-muted)",
-                    backgroundColor: "var(--bg-elevated)",
-                  }}
-                >
-                  {typeLabel}
-                </span>
-              )}
-
-              {/* Energy match badge */}
               {quest.energyLevel && userEnergyToday && quest.energyLevel === userEnergyToday && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded"
-                  style={{
-                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    color: "var(--accent-green)",
-                    backgroundColor: "color-mix(in srgb, var(--accent-green) 10%, transparent)",
-                    border: "1px solid color-mix(in srgb, var(--accent-green) 25%, transparent)",
-                  }}
-                >
-                  {t("energy_match_badge")}
-                </span>
+                <Badge variant="neutral">{t("energy_match_badge")}</Badge>
               )}
 
-              {/* Coin value — show ×2 bonus badge if task was often postponed */}
-              <span
-                className="text-xs inline-flex items-center gap-1"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: "var(--coin-gold)",
-                }}
-              >
+              {/* Coin value + postpone bonus — meta, not amber (--coin-gold
+                  was an alias for --amber; moved to --ink-3 to keep the
+                  amber budget at exactly one element on the page). */}
+              <span className="inline-flex items-center gap-1 font-[family-name:var(--font-ui)] text-xs text-[var(--ink-3)]">
                 {quest.postponeCount >= 3
                   ? `+${quest.coinValue * 2}`
                   : `+${quest.coinValue}`}{" "}
                 <FontAwesomeIcon icon={faCoins} className="w-3 h-3" aria-hidden="true" />
                 {quest.postponeCount >= 3 && (
-                  <span
-                    className="ml-1 px-1.5 py-0.5 rounded text-xs font-semibold"
-                    style={{
-                      backgroundColor: "color-mix(in srgb, var(--accent-amber) 20%, transparent)",
-                      color: "var(--accent-amber)",
-                      border: "1px solid color-mix(in srgb, var(--accent-amber) 40%, transparent)",
-                    }}
-                  >
-                    {t("quest_bonus_coins")}
-                  </span>
+                  <span className="ml-1 font-semibold">{t("quest_bonus_coins")}</span>
                 )}
               </span>
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex flex-wrap gap-3 pt-2 items-center">
-            {/* Complete button */}
+          {/* Action row — quiet text, not filled buttons. "Complete" was a
+              green-filled button and "Not today" a grey-filled one; a filled
+              button in the quest competes with the light, and green is
+              reserved for "done" only (see spec §4 rule 2). Exactly one
+              action carries amber: the first one, "jetzt anfangen" — it is
+              this page's one action, not a label. */}
+          <div className="flex flex-wrap items-center gap-6 pt-2 font-[family-name:var(--font-ui)] text-sm">
+            <Link href="/focus" className="font-medium text-[var(--amber)] no-underline">
+              {t("quest_start")}
+            </Link>
             <button
+              type="button"
               onClick={handleComplete}
               disabled={isCompleting || isPostponing}
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                backgroundColor: "var(--accent-green)",
-                color: "white",
-              }}
+              className="cursor-pointer border-0 bg-transparent p-0 font-medium text-[var(--ink-2)] hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {isCompleting ? t("quest_completing") : t("quest_complete_btn")}
             </button>
-
-            {/* Not today button — disabled when limit reached */}
-            {!isPostponeLimitReached ? (
-              <button
-                onClick={handleNotToday}
-                disabled={isCompleting || isPostponing}
-                className="px-5 py-2.5 rounded-xl text-sm transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: "var(--text-muted)",
-                  backgroundColor: "var(--bg-elevated)",
-                  border: "1px solid var(--border)",
-                }}
-              >
-                {isPostponing ? t("quest_postponing") : t("quest_postpone_btn")}
-              </button>
-            ) : (
-              <span
-                className="text-xs px-3 py-1.5 rounded-lg"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: "var(--accent-red)",
-                  backgroundColor: "color-mix(in srgb, var(--accent-red) 10%, transparent)",
-                  border: "1px solid color-mix(in srgb, var(--accent-red) 30%, transparent)",
-                }}
-              >
-                {t("quest_postpones_none")}
-              </span>
-            )}
-
-            {/* Postpone counter hint */}
+            <button
+              type="button"
+              onClick={handleBreakdown}
+              className="cursor-pointer border-0 bg-transparent p-0 font-medium text-[var(--ink-2)] hover:text-[var(--ink)]"
+            >
+              {t("quest_breakdown")}
+            </button>
+            <button
+              type="button"
+              onClick={handleNotToday}
+              disabled={isCompleting || isPostponing || isPostponeLimitReached}
+              className="cursor-pointer border-0 bg-transparent p-0 font-medium text-[var(--ink-2)] hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isPostponing ? t("quest_postponing") : t("quest_postpone_btn")}
+            </button>
             {!isPostponeLimitReached && (
-              <span
-                className="text-xs ml-1"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: "var(--text-muted)",
-                  opacity: 0.7,
-                }}
-              >
+              <span className="text-xs text-[var(--ink-3)]">
                 {t("quest_postpones_left", { count: postponesLeft })}
               </span>
             )}

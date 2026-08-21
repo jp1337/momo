@@ -100,6 +100,8 @@
     "quest_complete_btn": "✓ Erledigt",
     "quest_postponing": "Verschiebe...",
     "quest_postpone_btn": "Nicht heute →",
+    "quest_start": "jetzt anfangen",
+    "quest_breakdown": "aufteilen",
     "quest_label_onetime": "Einmalig",
     "quest_label_recurring": "Wiederkehrend",
     "quest_label_eligible": "Quest-geeignet",
