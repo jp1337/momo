@@ -5,7 +5,7 @@
  * Renders 4 dots connected by a line, highlighting the current step.
  */
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 const PROGRESS_STEPS = ["welcome", "topic", "tasks", "notifications"] as const;
 type AnyStep = (typeof PROGRESS_STEPS)[number] | "complete";

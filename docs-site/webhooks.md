@@ -58,6 +58,7 @@ The **HTTP Alert** is a delivery channel for Momo notifications — alongside We
 
 ### Example: Home Assistant
 
+{% raw %}
 ```yaml
 # configuration.yaml
 rest_command:
@@ -77,10 +78,11 @@ automation:
         title: "{{ trigger.json.title }}"
         message: "{{ trigger.json.body }}"
 ```
+{% endraw %}
 
 ### Example: n8n / Zapier
 
-Add a **Webhook Trigger** node and use `{{ $json.title }}` and `{{ $json.body }}` as inputs for further actions.
+Add a **Webhook Trigger** node and use {% raw %}`{{ $json.title }}`{% endraw %} and {% raw %}`{{ $json.body }}`{% endraw %} as inputs for further actions.
 
 ---
 

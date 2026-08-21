@@ -47,7 +47,7 @@ You (voice)
     ↓
 Amazon Echo / Alexa App
     ↓
-Alexa Skills Kit → AWS Lambda (Node.js 20)
+Alexa Skills Kit → AWS Lambda (Node.js 24)
     ↓
 POST/GET https://your-momo-instance/api/...
 Authorization: Bearer <your-api-key>
@@ -93,7 +93,7 @@ The Lambda function is stateless — it receives the Alexa request, calls the Mo
 5. Select **Author from scratch**
 6. Fill in:
    - **Function name**: `momo-alexa-skill`
-   - **Runtime**: `Node.js 20.x`
+   - **Runtime**: `Node.js 24.x`
    - **Architecture**: `x86_64`
 7. Click **Create function**
 

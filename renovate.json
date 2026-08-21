@@ -23,7 +23,7 @@
   },
   "packageRules": [
     {
-      "description": "Patch, pin and digest: auto-merge once CI is green. Applies to runtime and dev alike — a patch that breaks the 1684-test suite does not merge, and one that doesn't is noise.",
+      "description": "Patch, pin and digest: auto-merge once CI is green. Applies to runtime and dev alike — a patch that breaks the 1728-test suite does not merge, and one that doesn't is noise. This only became true on 2026-08-21: until then main had no required status checks and lint/build did not run on pull requests at all, so 'once CI is green' was aspirational. The required checks are now lint, build and test from the PR Gate workflow. Keep build in that list — the magic-string v1 override kept every test green and broke next build.",
       "matchUpdateTypes": ["patch", "pin", "digest"],
       "automerge": true,
       "automergeType": "pr",
@@ -73,6 +73,19 @@
       "prBodyNotes": [
         "Do NOT merge without a verified backup: `docker compose --profile backup run --rm db-backup`, then confirm the dump restores into a scratch container. A Postgres major moves the on-disk format; the old datadir will not mount."
       ]
+    },
+    {
+      "description": "@types/node major must track the Node runtime, not run ahead of it. The app image is node:24-alpine and the Alexa Lambda targets Node 24, so @types/node stays on 24.x in both projects — typing against APIs the runtime does not ship is how code compiles and then throws. Before this was pinned, the app carried @types/node ^25 against a node:22-alpine base. Raise this line and the Dockerfile, the setup-node steps and the Lambda's esbuild target in the same PR, never separately.",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "^24"
+    },
+    {
+      "description": "magic-string v1 breaks the PWA build and no test notices. It is an override forcing a transitive version onto workbox-build's rollup plugins, which do `new MagicString(...)`; v1 moved the constructor off the default export, so `next build` dies with 'MagicString is not a constructor' while all 1728 tests still pass. Tried on 2026-08-21 and reverted. Revisit only when @ducanh2912/next-pwa ships a workbox-build that declares magic-string ^1.",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["magic-string"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     },
     {
       "description": "The Alexa Lambda is a separate npm project with its own lockfile. It had no dependabot.yml entry at all, which is why its four PRs only ever arrived as security alerts. Renovate finds it without being told; this rule only scopes its commits so they are legible in the log.",

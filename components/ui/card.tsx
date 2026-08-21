@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion, HTMLMotionProps } from "framer-motion";
+import { motion, HTMLMotionProps } from "motion/react";
 import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 

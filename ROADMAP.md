@@ -163,12 +163,22 @@ Dazu `lockFileMaintenance`, wofür es bei Dependabot keine Entsprechung gibt. Au
 devDependencies mergen Patch und Minor selbst, Runtime-Dependencies nur Patches, Runtime-Minors und
 alle Majors bleiben Handarbeit. Postgres-Majors sind explizit gesperrt.
 
-**Eine Sache fehlt dafür noch, und sie ist eine Falle:** `main` hat **keine required status checks**.
-Solange GitHubs Auto-Merge ausgeschaltet ist, greift Renovates eigener Mechanismus, der den
-Branch-Status prüft — sicher aus Versehen, nicht aus Konstruktion. Wird Auto-Merge eingeschaltet,
-mergen Patch-, Digest- und devDeps-Minor-PRs sowie der wöchentliche Lockfile-PR sofort und **ohne
-einen einzigen Testlauf**, weil nichts verlangt wird. `test` gehört als required check auf `main`,
-bevor die Automation scharf läuft.
+**Diese Falle ist seit 2026-08-21 zu** — und sie war tiefer als hier beschrieben. Notiert war
+„`main` hat keine required status checks"; dazu kam, dass `lint` und `next build` bei einem Pull
+Request **gar nicht liefen**. `build-and-publish.yml` triggert nur auf `push: main`, berichtete also
+erst nach dem Merge. Es fehlte damit nicht nur die Pflicht, den Check zu bestehen, sondern der Check
+selbst.
+
+Beides ist erledigt: die beiden Jobs leben jetzt in `test.yml` („PR Gate"), das auf `pull_request`
+läuft, und `lint`, `build` und `test` sind required status checks auf `main` (nicht-strict,
+`enforce_admins` bleibt an). `build-and-publish.yml` durfte den Trigger nicht bekommen — sein
+`deploy`-Job läuft auf einem Self-hosted-Intranet-Runner in einem öffentlichen Repo, und
+`pull_request` würde daraus Codeausführung aus jeder Fork-PR machen. Der Kommentar dort verweist
+jetzt auf den richtigen Ort.
+
+Warum `build` und nicht nur `test` required ist: der `magic-string`-v1-Override ließ **alle 1728
+Tests grün** und brach `next build`. Eine Suite prüft die Build-Toolchain nicht — der Build braucht
+sein eigenes Gate.
 
 **Read-only API-Keys waren nicht read-only** ✅ (2026-08-21, #77, #78)
 
@@ -332,8 +342,54 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
 - **Rate-Limits sind pro Prozess**, und `deploy/examples/deployment.yaml` fährt `replicas: 2`. Jedes
   Limit gilt auf der empfohlenen Topologie faktisch doppelt. Steht so im Header von
   `lib/rate-limit.ts`, aber nicht in der API-Doku.
+- **Zehn Komponenten rufen `setState` synchron in einem Effect** (`react-hooks/set-state-in-effect`):
+  `layout/quick-add-modal.tsx:53`, `onboarding/steps/notification-step.tsx:29`,
+  `settings/linked-accounts.tsx:66`, `settings/notification-history.tsx:103`,
+  `settings/notification-settings.tsx:114`, `settings/push-devices-section.tsx:163`,
+  `settings/timezone-settings.tsx:97`, `tasks/task-form.tsx:145`, `topics/topic-form.tsx:97`,
+  `wishlist/wishlist-form.tsx:83`. Jede Stelle kostet einen zusätzlichen Render-Pass.
+  Aufgetaucht sind sie nicht durch Hinsehen, sondern weil `eslint-plugin-react-hooks` 7.1 die
+  Regel von opt-in auf `error` gezogen hat — zehn rote Dateien aus einem Lockfile-Refresh, der
+  keine Zeile Anwendungscode anfasst. Die Regel steht deshalb in `eslint.config.mjs` bewusst auf
+  `warn`: der Fix ist ein Umbau des State-Flusses in zehn Komponenten und gehört in einen eigenen
+  PR, nicht in einen Dependency-Sweep. Solange sie `warn` ist, steht sie in jedem Lint-Lauf —
+  ein Pin auf 7.0.1 wäre still gewesen.
+- **TypeScript 7 ist blockiert, aber nicht an uns.** `tsc --noEmit` läuft mit 7.0.2 sauber durch und
+  `next build` auch — der Blocker ist `typescript-eslint`, das mit
+  `Error: typescript-eslint does not support TS 7.0` hart abbricht und damit `npm run lint`
+  komplett tötet. Grund: TS 7 ist der Go-Port und stellt noch keine stabile programmatische API
+  bereit; die ist für 7.1 angekündigt. Wiedervorlage, sobald `typescript-eslint` TS 7 unterstützt —
+  die tsconfig des Hauptprojekts ist bereits 7-tauglich (`moduleResolution: bundler`, kein
+  `baseUrl`, kein `downlevelIteration`, kein `target: es5`).
+  Der Guard in `typescript-eslint/dist/index.js` ist ein unbedingtes `throw` bei
+  `ts.versionMajorMinor >= 7` — keine Env-Var, kein Flag, und auch die Canary
+  (`8.67.1-alpha.24`) deklariert noch `typescript >=4.8.4 <6.1.0`. Es gibt kein `typescript-eslint`
+  v9. Der von Microsoft dokumentierte Side-by-side-Weg über `@typescript/typescript6` (existiert,
+  6.0.2) wurde ebenfalls probiert: npm-`overrides` auf die acht Pakete, die `typescript` als *Peer*
+  deklarieren, erzeugen keine verschachtelte Installation — `require("typescript")` landet weiter
+  auf dem Root-TS-7 und der Throw feuert. Umgekehrt aufzusetzen (TS 6 als `typescript`, TS 7 unter
+  anderem Namen) würde `next build` mit TS 6 typprüfen und damit den Zweck aufheben. Wiedervorlage
+  an `typescript-eslint` Issue #10940, das TS >= 7.1 verfolgt.
+- **`eslint-plugin-react` 7.37.5 ruft weiter das entfernte `context.getFilename()`** — nur trifft
+  es uns nicht mehr. Der Aufruf sitzt in `detectReactVersion`, und der läuft ausschließlich, wenn
+  `settings.react.version` auf `"detect"` steht, was `eslint-config-next` so ausliefert.
+  `eslint.config.mjs` setzt die Version jetzt explizit (aus `react/package.json` gelesen), damit
+  die Erkennung nie anläuft. 7.37.5 ist die neueste Version des Plugins und deklariert nur bis
+  `eslint ^9.7` — dieser Workaround kann also wegfallen, sobald das Plugin nachzieht oder
+  `eslint-config-next` es fallen lässt. Bis dahin ist die explizite Version ohnehin die schnellere
+  Variante: kein Dateisystem-Probe pro geprüfter Datei.
+- **`alexa-skill/` hat keine eigene eslint-Config, und niemand hat es gemerkt.** `npm run lint`
+  dort fällt auf die Root-`eslint.config.mjs` zurück — die Next.js-Config — und meldet folgerichtig
+  „Pages directory cannot be found". Der Lambda-Code wird also gegen React-/Next-Regeln geprüft
+  statt gegen Node-Regeln. Konsequenz: die beiden devDependencies
+  `@typescript-eslint/eslint-plugin` und `@typescript-eslint/parser`, die das Projekt installiert,
+  werden **von keiner Config referenziert** — Renovate hat sie zuletzt brav auf 8.67.0 gehoben, für
+  einen Linter, der so nicht existiert. Dazu ist `--ext .ts` im Lint-Skript unter eslint 9 Flat
+  Config bedeutungslos. Fix ist eine eigene `alexa-skill/eslint.config.mjs` mit
+  `typescript-eslint` — dann werden die beiden Pakete echt und das Skript prüft, was es zu prüfen
+  behauptet.
 
-**Erledigt** ✅ — Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
+**Erledigt** ✅ — Automerge-Gate (`lint`, `build`, `test` sind seit 2026-08-21 required status checks auf `main`, und die beiden neuen Jobs laufen im PR-Gate-Workflow — vorher berichteten Lint und Build erst *nach* dem Merge, bei `required_status_checks: null`) · Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
 0.4.0) · E2E-Tests (Playwright, 13 Specs, seit 0.4.0) · Dependency-Stau aufgelöst
 (19 → 0 offene PRs, 75 → 1 Alert, 2026-08-20) · next 16.3.1 (#65) · Rate-Limiting auf allen
 70 Mutation-Handlern (#71, #80) · nodemailer 9 (#72) · Renovate statt Dependabot (#73) ·

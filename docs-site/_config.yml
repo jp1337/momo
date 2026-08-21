@@ -39,6 +39,9 @@ exclude:
   - Gemfile.lock
   - node_modules
   - vendor
+  # Agent instructions for this directory — not user documentation. Without this
+  # line Jekyll copies it verbatim into _site and it is served publicly.
+  - CLAUDE.md
 
 nav:
   - title: Home
