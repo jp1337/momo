@@ -114,9 +114,12 @@
   --color-danger: var(--accent-red);
   --color-coin: var(--coin-gold);
 
-  /* Shadow tokens — die Elevation kommt aus der Fläche, nicht mehr aus dem Schatten */
-  --shadow-sm: none;
-  --shadow-md: none;
+  /* Shadow tokens — die Elevation kommt aus der Fläche, nicht mehr aus dem Schatten.
+     0 0 #0000 statt none: none ist nur als Alleinwert von box-shadow gueltig —
+     als Listenglied (z. B. "0 0 16px amber, var(--shadow-md)") macht "none" die
+     GESAMTE Deklaration ungueltig und der Browser verwirft sie komplett. */
+  --shadow-sm: 0 0 #0000;
+  --shadow-md: 0 0 #0000;
   --shadow-lg: var(--shadow-overlay);
 }
 
@@ -156,9 +159,12 @@
   --coin-gold:    var(--amber);
   --rarity-legendary: #9333ea; /* Violett für Legendary-Achievements */
 
-  /* Shadow tokens — die Elevation kommt aus der Fläche, nicht mehr aus dem Schatten */
-  --shadow-sm: none;
-  --shadow-md: none;
+  /* Shadow tokens — die Elevation kommt aus der Fläche, nicht mehr aus dem Schatten.
+     0 0 #0000 statt none: none ist nur als Alleinwert von box-shadow gueltig —
+     als Listenglied (z. B. "0 0 16px amber, var(--shadow-md)") macht "none" die
+     GESAMTE Deklaration ungueltig und der Browser verwirft sie komplett. */
+  --shadow-sm: 0 0 #0000;
+  --shadow-md: 0 0 #0000;
   --shadow-lg: var(--shadow-overlay);
 }
 

@@ -54,4 +54,37 @@ test.describe("Design-Tokens", () => {
     expect(t["--radius-lg"]).toBe("14px");
     expect(t["--radius-pill"]).toBe("999px");
   });
+
+  // Prueft in BEIDEN Themes explizit (nicht nur dem gerade aktiven Default —
+  // next-themes kann je nach gespeicherter Praeferenz mit "light" starten),
+  // dass --shadow-md als Listenglied in einer mehrteiligen box-shadow
+  // ueberlebt. "none" ist nur als Alleinwert von box-shadow gueltig; als
+  // Listenglied macht es die GESAMTE Deklaration ungueltig, und der Browser
+  // verwirft sie komplett — das war der Bug, der der Daily-Quest-Karte ihren
+  // Amber-Glow genommen hat.
+  for (const theme of ["dark", "light"] as const) {
+    test(`Schatten-Token sind im ${theme} Mode in Listen verwendbar`, async ({
+      page,
+    }) => {
+      await page.goto("/dashboard");
+      await page.evaluate(
+        (t: string) => document.documentElement.setAttribute("data-theme", t),
+        theme,
+      );
+      const shadow = await page.evaluate(() => {
+        const probe = document.createElement("div");
+        probe.style.boxShadow =
+          "0 0 16px color-mix(in srgb, var(--amber) 12%, transparent), var(--shadow-md)";
+        document.body.appendChild(probe);
+        const computed = getComputedStyle(probe).boxShadow;
+        probe.remove();
+        return computed;
+      });
+      // "none" hier heisst: die gesamte Deklaration wurde als ungueltig
+      // verworfen, weil ein Listenglied "none" war. --shadow-md muss ein
+      // maler-loses, aber gueltiges Shadow-Value sein (z. B. "0 0 #0000").
+      expect(shadow, theme).not.toBe("none");
+      expect(shadow, theme).toContain("16px");
+    });
+  }
 });
