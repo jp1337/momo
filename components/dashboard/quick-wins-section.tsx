@@ -159,7 +159,7 @@ export function QuickWinsSection({ tasks: initialTasks }: QuickWinsSectionProps)
                   type="button"
                   onClick={() => handleComplete(task.id)}
                   disabled={isCompleting}
-                  aria-label={t("quick_win_complete_aria")}
+                  aria-label={t("quick_win_complete_aria", { title: task.title })}
                   className="-m-2.5 flex shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-pill)] border-0 bg-transparent p-2.5 transition-colors hover:bg-[var(--raised)] disabled:cursor-wait"
                 >
                   <span

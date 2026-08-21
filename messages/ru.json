@@ -118,7 +118,7 @@
     "energy_checking_in": "Загрузка...",
     "energy_card_swapped": "Квест заменён, чтобы лучше соответствовать вашей энергии — был: {title}",
     "energy_card_swapped_undo": "Отменить",
-    "quick_win_complete_aria": "Отметить задачу как выполненную",
+    "quick_win_complete_aria": "Отметить «{title}» как выполненную",
     "empty_state_title": "Добро пожаловать в Momo.",
     "empty_state_body": "Создайте первую тему и начните — одной задачи на сегодня достаточно.",
     "empty_state_cta": "Создать первую тему",

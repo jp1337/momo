@@ -118,7 +118,7 @@
     "energy_checking_in": "Wird geladen...",
     "energy_card_swapped": "Quest auf deine Energie angepasst — vorher: {title}",
     "energy_card_swapped_undo": "Rückgängig",
-    "quick_win_complete_aria": "Aufgabe als erledigt markieren",
+    "quick_win_complete_aria": "„{title}\" als erledigt markieren",
     "empty_state_title": "Willkommen bei Momo.",
     "empty_state_body": "Erstelle dein erstes Thema und leg los — eine Aufgabe reicht für heute.",
     "empty_state_cta": "Erstes Thema erstellen",

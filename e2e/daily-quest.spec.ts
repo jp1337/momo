@@ -243,10 +243,10 @@ test.describe("Lichtkegel", () => {
 //
 // This is exactly the class of bug that returns silently when a translator
 // lengthens a string, so it's a permanent test, not a one-off measurement —
-// covering the three locales already known to sit near the wrap boundary
-// (de is longest/default, ru is close behind, en was the one round 2's
-// author checked and judged "clean" at a 1px overlap that turned out not to
-// generalise).
+// covering all seven locales (fix round 4, 2026-08-22: originally just
+// de/ru/en, the three known to sit near the wrap boundary; widened to all
+// seven since the loop already existed and the fix is structural, so
+// checking is strictly better than arguing it should generalise).
 test.describe("Energie-Wahlmoeglichkeiten: Ziel-Ueberlappung", () => {
   /** Forces the "not checked in today" state without touching the DB — same
    * technique as the amber-uniqueness test above. */
@@ -273,7 +273,7 @@ test.describe("Energie-Wahlmoeglichkeiten: Ziel-Ueberlappung", () => {
     height: number;
   }
 
-  for (const locale of ["de", "ru", "en"] as const) {
+  for (const locale of ["de", "ru", "en", "es", "fr", "nl", "zh"] as const) {
     test(`${locale}: 375px, keine Ueberlappung, jedes Ziel mindestens 44px hoch`, async ({
       page,
     }) => {

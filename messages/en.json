@@ -118,7 +118,7 @@
     "energy_checking_in": "Loading...",
     "energy_card_swapped": "Quest swapped to better match your energy — was: {title}",
     "energy_card_swapped_undo": "Undo",
-    "quick_win_complete_aria": "Mark task as complete",
+    "quick_win_complete_aria": "Mark \"{title}\" as complete",
     "empty_state_title": "Welcome to Momo.",
     "empty_state_body": "Create your first topic and get going — one task is enough for today.",
     "empty_state_cta": "Create first topic",

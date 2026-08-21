@@ -118,7 +118,7 @@
     "energy_checking_in": "加载中…",
     "energy_card_swapped": "已切换为更匹配你精力的任务 — 原任务:{title}",
     "energy_card_swapped_undo": "撤销",
-    "quick_win_complete_aria": "标记任务为已完成",
+    "quick_win_complete_aria": "将\"{title}\"标记为已完成",
     "empty_state_title": "欢迎来到 Momo。",
     "empty_state_body": "创建你的第一个主题,然后开始 — 今天一个任务就够了。",
     "empty_state_cta": "创建第一个主题",

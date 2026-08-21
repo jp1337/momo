@@ -118,7 +118,7 @@
     "energy_checking_in": "Chargement...",
     "energy_card_swapped": "Quête adaptée à ton énergie — précédente : {title}",
     "energy_card_swapped_undo": "Annuler",
-    "quick_win_complete_aria": "Marquer la tâche comme terminée",
+    "quick_win_complete_aria": "Marquer « {title} » comme terminée",
     "empty_state_title": "Bienvenue sur Momo.",
     "empty_state_body": "Créez votre premier sujet et commencez — une tâche suffit pour aujourd'hui.",
     "empty_state_cta": "Créer le premier sujet",

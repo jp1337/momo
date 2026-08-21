@@ -118,7 +118,7 @@
     "energy_checking_in": "Laden...",
     "energy_card_swapped": "Opdracht omgewisseld voor betere match met je energie — was: {title}",
     "energy_card_swapped_undo": "Ongedaan maken",
-    "quick_win_complete_aria": "Taak als voltooid markeren",
+    "quick_win_complete_aria": "„{title}” als voltooid markeren",
     "empty_state_title": "Welkom bij Momo.",
     "empty_state_body": "Maak je eerste onderwerp aan en begin — één taak is genoeg voor vandaag.",
     "empty_state_cta": "Eerste onderwerp maken",
