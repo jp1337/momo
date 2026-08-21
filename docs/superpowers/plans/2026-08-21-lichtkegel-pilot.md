@@ -22,7 +22,39 @@
 - **TypeScript strict, kein `any`.** Bei Unklarheit `unknown` und einengen.
 - **Conventional Commits** mit Scope aus der CLAUDE.md-Liste (`ui`, `config`, `docs`, `daily-quest`, …). Nach jeder Task committen.
 - **`main` ist branch-protected.** Direkt-Push schlägt fehl; die Arbeit läuft auf `design/lichtkegel-impl` und geht per PR.
-- **Für alle Playwright-Schritte** muss in einem zweiten Terminal laufen: `PLAYWRIGHT_TEST_PASSWORD=test-secret npm run dev`. Der `setup`-Job legt `e2e/.auth/user.json` an.
+- **Für alle Playwright-Schritte** muss in einem zweiten Terminal `npm run dev` laufen, und die Testbefehle brauchen `DATABASE_URL` auf dieselbe Datenbank:
+
+  ```bash
+  # Terminal 1
+  npm run dev
+  # Terminal 2
+  DATABASE_URL=postgresql://momo:password@localhost:5432/momo npx playwright test <datei>
+  ```
+
+- **`PLAYWRIGHT_TEST_PASSWORD` darf NICHT gesetzt sein.** Sobald die Variable existiert, hängt `lib/auth.ts` den Credentials-Provider an die Auth.js-Konfiguration — und Auth.js verwirft daraufhin die *gesamte* Konfiguration mit `UnsupportedStrategy`, weil Credentials mit `session.strategy: "database"` unzulässig ist. Jeder Auth-Aufruf antwortet dann mit 500 und jede geschützte Route leitet auf `/login`. `e2e/global.setup.ts` legt die Session stattdessen direkt in der Datenbank an und braucht die Variable nicht. Details siehe „Vorgefundener Zustand" unten.
+
+## Vorgefundener Zustand (Pre-Flight, 2026-08-21)
+
+Beim Einrichten der Verifikationsspur kam heraus, dass die Playwright-Suite bis
+jetzt **nie gelaufen ist**. Das wurde vor Task 1 behoben; die Funde stehen hier,
+weil sie das Testen jedes Tasks betreffen.
+
+| Befund | Wirkung | Status |
+|---|---|---|
+| `PLAYWRIGHT_TEST_PASSWORD` (in `.env.example` dokumentiert) fügt den Credentials-Provider hinzu; Auth.js verwirft mit `UnsupportedStrategy` die ganze Konfiguration, weil `session.strategy` `"database"` ist | **Jede** Anmeldung bricht: `/api/auth/session` → 500, jede geschützte Route → `/login`. Nicht nur Tests. | offen — Produktionscode, bewusst nicht im Rahmen dieses Plans geändert |
+| `test-credentials`-Provider in `lib/auth.ts:93-135` | toter Code, kann mit DB-Sessions nie funktionieren | offen — siehe oben |
+| `/login` rendert kein Credentials-Formular, `/api/auth/signin` leitet per `pages`-Config auf `/login` | `e2e/global.setup.ts` lief in einen 30-s-Timeout | **behoben**: Setup legt die Session direkt in der DB an |
+| Testnutzer hatte `onboarding_completed = false` | jede geschützte Route leitete auf `/onboarding` | **behoben** im Setup |
+| `a[href="/focus"]` matcht 3 Elemente (Sidebar, Dashboard, Mobile-Nav), Test ohne `.first()` | Strict-Mode-Verstoß in `dashboard.spec.ts` zweimal | **behoben**: auf `main` eingegrenzt |
+| `e2e/helpers/api.ts` sendet `estimatedMinutes: 10`, der Validator erlaubt nur `5 \| 15 \| 30 \| 60 \| null` | 422 bei jedem Lauf | **behoben** |
+| Playwright läuft in keinem CI-Workflow | 15 Spec-Dateien, die niemand ausführt — deshalb fiel nichts davon auf | offen — eigene Entscheidung, siehe unten |
+
+`e2e/dashboard.spec.ts` ist seitdem 10/10 grün.
+
+**Nicht in diesem Plan:** die zwei offenen Auth-Punkte anfassen. Das ist
+Produktions-Authentifizierung und gehört nicht in einen Design-Umbau. Ebenso
+das Verdrahten von Playwright in CI — sinnvoll, aber eine eigene Entscheidung,
+weil es einen Dienst-Container und eine Migrationsstufe im Workflow braucht.
 
 ---
 
@@ -1383,7 +1415,11 @@ Oben in `components/dashboard/quick-wins-section.tsx`:
  * Drei Stufen, nicht stufenlos — eine stufenlose Skala kollidiert mit
  * Mindestgroessen und Zoom.
  *
- * @param minutes - Geschaetzte Dauer, null wenn nicht geschaetzt
+ * estimatedMinutes ist ein Enum, kein freier Integer: 5 | 15 | 30 | 60 | null
+ * (lib/validators/index.ts). Die Stufen bilden darauf ab:
+ *   5 → small,  15 und 30 → medium,  60 → large,  null → medium.
+ *
+ * @param minutes - Geschaetzte Dauer (5, 15, 30, 60) oder null
  * @returns "small" (≤5 min), "medium" (≤30 min oder ohne Schaetzung), "large" (>30 min)
  */
 export function effortStep(minutes: number | null): "small" | "medium" | "large" {
@@ -1446,8 +1482,20 @@ Die Kachel- oder Kastendarstellung durch eine `<ul>` ohne Flächen ersetzen:
 
 - [ ] **Step 5: Tests laufen lassen**
 
+Vorher im Test zwei Aufgaben anlegen, damit die Stufen überhaupt auftreten — `createTask` aus `e2e/helpers/api.ts`, mit **gültigen** Enum-Werten:
+
+```ts
+    const a = await createTask(request, `Klein ${Date.now()}`, { estimatedMinutes: 5 });
+    const b = await createTask(request, `Mittel ${Date.now()}`, { estimatedMinutes: 15 });
+    // … Assertions …
+    await deleteTask(request, a.id);
+    await deleteTask(request, b.id);
+```
+
 Run: `npx playwright test e2e/dashboard.spec.ts`
-Expected: PASS. Erscheint `test.skip` wegen fehlender Quick Wins, im Testkonto drei Aufgaben mit 3, 20 und 45 Minuten anlegen und erneut laufen lassen — die Stufen müssen sonst ungeprüft bleiben.
+Expected: PASS.
+
+**Warum nur zwei Stufen geprüft werden:** die Quick-Wins-Abfrage in `app/(app)/dashboard/page.tsx` filtert `lte(tasks.estimatedMinutes, 15)`. Auf dem Dashboard sind damit nur `small` (5) und `medium` (15) erreichbar — `large` (60) kann dort nie erscheinen. Die dritte Stufe wird erst geprüft, wenn `/tasks` migriert wird. Der Test aus Step 1 ist deshalb so geschrieben, dass er nur vorhandene Stufen vergleicht.
 
 - [ ] **Step 6: Ratsche senken und committen**
 

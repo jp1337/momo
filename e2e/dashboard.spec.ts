@@ -36,7 +36,9 @@ test.describe("Dashboard", () => {
   test("Focus Mode CTA link is visible and navigates", async ({ page }) => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
-    const focusLink = page.locator('a[href="/focus"]');
+    // Scoped to <main>: the sidebar and the mobile nav also link to /focus,
+    // and an unscoped locator is a strict-mode violation with three matches.
+    const focusLink = page.locator('main a[href="/focus"]').first();
     await expect(focusLink).toBeVisible();
     await focusLink.click();
     await expect(page).toHaveURL(/focus/);
@@ -65,8 +67,10 @@ test.describe("Dashboard", () => {
     request,
   }) => {
     // Create a short task via API
+    // estimatedMinutes is an enum, not a free integer: 5 | 15 | 30 | 60 | null
+    // (lib/validators/index.ts). 10 was rejected with a 422 every run.
     const task = await createTask(request, `Quick Win ${Date.now()}`, {
-      estimatedMinutes: 10,
+      estimatedMinutes: 5,
     });
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
@@ -81,7 +85,9 @@ test.describe("Dashboard", () => {
     // The 5-Min CTA was removed from the dashboard in favour of the Focus Mode CTA.
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
-    const focusLink = page.locator('a[href="/focus"]');
+    // Scoped to <main> so this asserts the dashboard's own entry point and not
+    // the sidebar or mobile-nav links to the same route.
+    const focusLink = page.locator('main a[href="/focus"]').first();
     await expect(focusLink).toBeVisible();
   });
 
