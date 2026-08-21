@@ -11,7 +11,7 @@
  * Returns: { success: true }
  */
 
-import { resolveApiUser } from "@/lib/api-auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -64,10 +64,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 export async function PATCH(req: NextRequest): Promise<NextResponse> {
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (user.readonly) return NextResponse.json(
-    { error: "Forbidden", message: "This API key is read-only." },
-    { status: 403 }
-  );
+  if (user.readonly) return readonlyKeyResponse() as NextResponse;
 
   // Rate limit: 10 requests per minute
   const rl = checkRateLimit(`settings-quest:${user.userId}`, 10, 60_000);

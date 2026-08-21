@@ -79,6 +79,12 @@ export async function DELETE(
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse();
 
+  // Rate limit: shares the snooze bucket with POST — snooze and unsnooze are
+  // two halves of one action, so a separate bucket would let a caller
+  // alternate between them at double the intended rate.
+  const rateCheck = checkRateLimit(`tasks-snooze:${user.userId}`, 30, 60_000);
+  if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
+
   const { id } = await params;
 
   try {
