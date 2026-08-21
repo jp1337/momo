@@ -68,10 +68,10 @@
     "error_default": "Une erreur s'est produite lors de la connexion. Réessaye."
   },
   "dashboard": {
-    "greeting_night": "Encore debout ?",
-    "greeting_morning": "Bonjour",
-    "greeting_afternoon": "Bon après-midi",
-    "greeting_evening": "Bonsoir",
+    "greeting_night": "Encore debout, {name} ?",
+    "greeting_morning": "Bonjour, {name}.",
+    "greeting_afternoon": "Bon après-midi, {name}.",
+    "greeting_evening": "Bonsoir, {name}.",
     "meta_streak": "{days, plural, one {# jour de suite} other {# jours de suite}}",
     "meta_energy_unknown": "énergie non définie",
     "meta_energy_change_aria": "Changer l'énergie du jour (actuellement : {level})",

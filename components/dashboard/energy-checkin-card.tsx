@@ -232,17 +232,20 @@ export function EnergyCheckinCard({
         {bestDayInsight && <span>· {bestDayInsight}</span>}
       </div>
 
+      {/* Fix round 1 (2026-08-22): this used to be a bordered, filled,
+          rounded-2xl box — pure edge around a content group, which spec
+          rule 3 forbids ("an edge only where it says something"). The
+          heading plus the three buttons already say "this is a group";
+          the hairline-bordered box said nothing extra. Removed entirely —
+          the three buttons below keep their own --raised + hairline
+          because THEY are affordances (a click target), the container
+          around them was not. */}
       {showPicker && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="rounded-2xl p-5 flex flex-col gap-4"
-          style={{
-            backgroundColor: "var(--bg-surface)",
-            border: "1px solid var(--border)",
-            boxShadow: "var(--shadow-sm)",
-          }}
+          className="flex flex-col gap-4 py-2"
         >
           <div className="flex flex-col gap-1">
             <h3

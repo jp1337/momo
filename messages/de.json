@@ -68,10 +68,10 @@
     "error_default": "Bei der Anmeldung ist ein Fehler aufgetreten. Bitte erneut versuchen."
   },
   "dashboard": {
-    "greeting_night": "Noch wach?",
-    "greeting_morning": "Guten Morgen",
-    "greeting_afternoon": "Guten Nachmittag",
-    "greeting_evening": "Guten Abend",
+    "greeting_night": "Noch wach, {name}?",
+    "greeting_morning": "Guten Morgen, {name}.",
+    "greeting_afternoon": "Guten Nachmittag, {name}.",
+    "greeting_evening": "Guten Abend, {name}.",
     "meta_streak": "{days, plural, one {# Tag Serie} other {# Tage Serie}}",
     "meta_energy_unknown": "Energie noch offen",
     "meta_energy_change_aria": "Energie für heute ändern (aktuell: {level})",

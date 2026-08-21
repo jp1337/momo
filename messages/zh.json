@@ -68,10 +68,10 @@
     "error_default": "登录时出错。请重试。"
   },
   "dashboard": {
-    "greeting_night": "还没睡?",
-    "greeting_morning": "早上好",
-    "greeting_afternoon": "下午好",
-    "greeting_evening": "晚上好",
+    "greeting_night": "{name}，还没睡？",
+    "greeting_morning": "{name}，早上好。",
+    "greeting_afternoon": "{name}，下午好。",
+    "greeting_evening": "{name}，晚上好。",
     "meta_streak": "{days, plural, other {连续 # 天}}",
     "meta_energy_unknown": "未设定精力",
     "meta_energy_change_aria": "更改今天的精力(当前:{level})",

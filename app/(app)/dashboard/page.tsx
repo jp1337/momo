@@ -226,9 +226,16 @@ export default async function DashboardPage() {
     .sort((a, b) => energyMatchScore(a.energyLevel) - energyMatchScore(b.energyLevel))
     .slice(0, 3);
 
-  // Determine greeting based on time of day
+  // Determine greeting based on time of day. The name is interpolated INSIDE
+  // the translated string (fix round 1, 2026-08-22) rather than concatenated
+  // in JSX with a hardcoded ", " and ".": that assumed every locale puts the
+  // name after the greeting with an ASCII comma and ends in an ASCII period,
+  // which is false for at least zh (name-first, full-width punctuation) and
+  // broke greeting_night specifically — "Still up?" is a question, and
+  // gluing ", {name}." onto its "?" produced "Still up?, E2E." Each locale's
+  // string now owns its own word order and punctuation.
   const hour = new Date().getHours();
-  const greeting = t(getGreetingKey(hour) as Parameters<typeof t>[0]);
+  const greeting = t(getGreetingKey(hour) as Parameters<typeof t>[0], { name: firstName });
 
   // Empty-state detection — no topics means a brand-new user who just completed onboarding.
   const topicCount = topicCountRows[0]?.count ?? 0;
@@ -281,7 +288,7 @@ export default async function DashboardPage() {
             Quest reserviert. Task 7: die Quest liefert jetzt die Seiten-h1,
             deshalb ist dieses Element ein <p> — zwei h1 waeren falsch. */}
         <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] font-normal tracking-[0.01em] text-[var(--ink-2)]">
-          {greeting}, {firstName}.
+          {greeting}
         </p>
 
         {/* ── New-user empty state ──────────────────────────────────────── */}

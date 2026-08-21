@@ -68,10 +68,10 @@
     "error_default": "Произошла ошибка при входе. Повторите попытку."
   },
   "dashboard": {
-    "greeting_night": "Ещё не спите?",
-    "greeting_morning": "Доброе утро",
-    "greeting_afternoon": "Добрый день",
-    "greeting_evening": "Добрый вечер",
+    "greeting_night": "Ещё не спите, {name}?",
+    "greeting_morning": "Доброе утро, {name}.",
+    "greeting_afternoon": "Добрый день, {name}.",
+    "greeting_evening": "Добрый вечер, {name}.",
     "meta_streak": "{days, plural, one {# день} few {# дня} other {# дней}} подряд",
     "meta_energy_unknown": "энергия не указана",
     "meta_energy_change_aria": "Изменить энергию на сегодня (сейчас: {level})",

@@ -68,10 +68,10 @@
     "error_default": "Er is een fout opgetreden bij het aanmelden. Probeer het opnieuw."
   },
   "dashboard": {
-    "greeting_night": "Nog wakker?",
-    "greeting_morning": "Goedemorgen",
-    "greeting_afternoon": "Goedemiddag",
-    "greeting_evening": "Goedenavond",
+    "greeting_night": "Nog wakker, {name}?",
+    "greeting_morning": "Goedemorgen, {name}.",
+    "greeting_afternoon": "Goedemiddag, {name}.",
+    "greeting_evening": "Goedenavond, {name}.",
     "meta_streak": "{days, plural, one {# dag reeks} other {# dagen reeks}}",
     "meta_energy_unknown": "energie nog niet gezet",
     "meta_energy_change_aria": "Energie van vandaag wijzigen (huidig: {level})",
