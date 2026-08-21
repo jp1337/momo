@@ -164,7 +164,7 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
            * hardcoded dark-hex label color — amber as a button fill is
            * forbidden outright (amber is light, never a surface).
            *
-           * Both actions use the shared `quiet` Button variant, not
+           * "Split & create topic" is `Button variant="quiet"`, not
            * `primary`. This dialog opens over the dashboard while its one
            * amber element ("jetzt anfangen" / quest_start) is still on
            * screen behind the scrim — the page's "exactly one amber
@@ -172,15 +172,30 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
            * dialog is still one page. Giving Confirm `primary` (amber
            * text) would make two. Rule 1 covers this exact case: a screen
            * that needs two equally weighted things gives amber to neither.
-           * A modal already has the user's full attention from the scrim
-           * and focus trap alone — it doesn't need amber to say "this
-           * matters", so quiet-for-both costs nothing here.
+           *
+           * Round 3 fix: Cancel used to be the SAME `quiet` Button as
+           * Confirm — visually identical weight for a reversible action
+           * (close the dialog) and an irreversible one (delete the
+           * original task, permanently). Under the dialog's focus trap
+           * that made two indistinguishable tab stops next to each other.
+           * Cancel is now a bare text action — no fill, no border, no
+           * Button variant (Button only has three: `primary`/`quiet`/
+           * `danger`, and none of them is "no surface at all", so this
+           * is a plain `<button>` styled by hand) — the same register as
+           * the quest's own `abhaken`/`aufteilen`/`morgen` text actions
+           * (see daily-quest-card.tsx). Only "Split & create topic" now
+           * looks like a control; Cancel looks like an escape, matching
+           * which one actually is which.
            */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex items-center gap-4 pt-2">
             <DialogClose asChild>
-              <Button type="button" variant="quiet" disabled={isSubmitting} className="flex-1">
+              <button
+                type="button"
+                disabled={isSubmitting}
+                className="cursor-pointer border-0 bg-transparent p-0 text-sm font-medium font-[family-name:var(--font-ui)] text-[var(--ink-2)] hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
                 {tc("cancel")}
-              </Button>
+              </button>
             </DialogClose>
             <Button type="submit" variant="quiet" disabled={isSubmitting} className="flex-1">
               {isSubmitting ? tc("saving") : t("breakdown_confirm")}
