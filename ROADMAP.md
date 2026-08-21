@@ -351,6 +351,16 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
   bereit; die ist für 7.1 angekündigt. Wiedervorlage, sobald `typescript-eslint` TS 7 unterstützt —
   die tsconfig des Hauptprojekts ist bereits 7-tauglich (`moduleResolution: bundler`, kein
   `baseUrl`, kein `downlevelIteration`, kein `target: es5`).
+- **ESLint 10 ist ebenfalls blockiert, und zwar an einem Paket ohne Nachfolger.** eslint 10.8.1
+  installiert sauber — `typescript-eslint` 8.67 und `eslint-plugin-react-hooks` 7.1.1 deklarieren
+  beide `^10.0.0` —, aber `npm run lint` stirbt mit
+  `TypeError: Error while loading rule 'react/display-name': contextOrFilename.getFilename is not a function`.
+  ESLint 10 hat das deprecated `context.getFilename()` entfernt, `eslint-plugin-react` ruft es noch.
+  Der Haken: **7.37.5 ist die neueste Version dieses Plugins**, und ihr Peer-Range endet bei `^9.7`.
+  Es gibt also nichts, worauf man overriden könnte — der Fix muss upstream passieren, entweder in
+  `eslint-plugin-react` oder indem `eslint-config-next` es fallen lässt. Reingezogen wird es über
+  `eslint-config-next@16.3.1`, das an `next` 16.3.1 gekoppelt ist. Wiedervorlage bei jedem
+  next-Minor.
 - **`alexa-skill/` hat keine eigene eslint-Config, und niemand hat es gemerkt.** `npm run lint`
   dort fällt auf die Root-`eslint.config.mjs` zurück — die Next.js-Config — und meldet folgerichtig
   „Pages directory cannot be found". Der Lambda-Code wird also gegen React-/Next-Regeln geprüft

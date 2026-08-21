@@ -7,6 +7,69 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Node.js 22 → 24 in App und CI**, und **Node.js 20 → 24 im Alexa-Lambda**. Node 20 ist seit
+  2026-04-30 EOL, Node 24 läuft bis 2028-04-30 (Quelle: `nodejs/Release`). Betrifft
+  `Dockerfile` (`node:24-alpine`), die drei `setup-node`-Schritte in `test.yml` und
+  `build-and-publish.yml`, sowie das esbuild-Target und `engines` des Lambda. Verifiziert mit
+  einem vollständigen Image-Build (`node -v` im Image: v24.19.0).
+- **`framer-motion` → `motion`.** Das Paket wurde upstream umbenannt; der React-Einstiegspunkt ist
+  jetzt `motion/react`. 25 Imports in 25 Komponenten, zusammen mit dem v13-Major. Zwei
+  Präzisierungen: `framer-motion` trägt auf npm **kein** `deprecated`-Feld (der Hinweis kommt aus
+  Renovates Replacement-Datensatz), und es verschwindet nicht aus `node_modules` — `motion@13.1.1`
+  hängt selbst von `framer-motion@^13.1.1` ab und re-exportiert es.
+- **CI-Tests laufen jetzt gegen Postgres 18** statt 16. `build-and-publish.yml` und
+  `docker-compose.yml` waren längst auf 18-alpine; jeder Test validierte gegen einen Major, auf dem
+  die App nicht läuft.
+- **Docs-Build von Ruby 3.1 auf 3.4.** 3.1 ist seit März 2025 EOL. Jekyll löst innerhalb von
+  `~> 4.3` auf 4.4.1 auf, das `base64` und `csv` selbst als Runtime-Deps deklariert — die
+  Ruby-3.4-Default-Gem-Extraktion trifft die Seite also nicht. Verifiziert mit echtem Build im
+  `ruby:3.4`-Container.
+- **`@types/node` von ^25 auf ^24** — bewusst ein Downgrade gegen Renovates Vorschlag ^26. Die
+  Typen sollen die Runtime beschreiben, nicht ihr vorauslaufen; vorher stand ^25 über einem
+  node:22-alpine-Image. Jetzt lesen beide Projekte gleich: Runtime 24, Typen ^24. In
+  `renovate.json` mit `allowedVersions: "^24"` festgehalten.
+- **`ical-generator` 10 → 11**, **`npm-check-updates` 22 → 23**, **`source-map`-Override
+  ^0.7 → ^0.8**, Lambda-**TypeScript 5 → 6**, plus Patch-Sweep und Lockfile-Maintenance in beiden
+  npm-Projekten (`pg`, `@types/pg`, `vitest`, `next-intl`, `swagger-ui-react`, `eslint` 9.39.5,
+  `serialize-javascript`, `workbox-build`, `esbuild` 0.28.2, `@types/aws-lambda`,
+  `typescript-eslint` 8.67.0). Beide Projekte auditieren auf 0 Vulnerabilities.
+- **`docs-site/Gemfile.lock` ist jetzt eingecheckt.** Der Docs-Build löste Gems bisher bei jedem
+  Lauf neu auf — ein neues Jekyll-Release konnte den Deploy ohne Code-Änderung brechen. Der Lock
+  pinnt jekyll 4.4.1 und deckt 19 Plattformen inkl. `x86_64-linux-gnu` ab.
+
+### Fixed
+
+- **Zwei Webhook-Beispiele in der Doku waren kaputt ausgeliefert.** Liquid verarbeitet `{{ ... }}`
+  auch in Code-Blöcken: das Home-Assistant-Beispiel rendete `title: ""` und `message: ""` (stumm —
+  wer es kopierte, bekam eine leere Benachrichtigung), und die n8n-Zeile rendete „use `and` as
+  inputs". Beide jetzt in `{% raw %}`.
+- **`docs-site/CLAUDE.md` wurde öffentlich mitpubliziert**, weil es nicht in der `exclude`-Liste
+  von `_config.yml` stand. Jetzt ausgeschlossen.
+- Der Kommentar über `FROM` im Dockerfile behauptete „Node 22 LTS … supported until April 2027"
+  über einem Node-24-Image.
+- `alexa-skill/tsconfig.json` deklariert `types: ["node"]` explizit. TypeScript 6 hat den
+  `types`-Default von `["*"]` auf `[]` geändert; ohne das fanden `console`, `process`, `fetch` und
+  `RequestInit` keine Typen mehr (9 Fehler in 7 Dateien).
+
+### Nicht übernommen
+
+Vier von Renovate angebotene Updates wurden getestet und liegen gelassen — Begründung und
+Wiedervorlage-Bedingung stehen in `ROADMAP.md` bzw. in den `renovate.json`-Regeln:
+
+- **`magic-string` v1**: bricht den PWA-Build (`MagicString is not a constructor`), weil
+  workbox-builds Rollup-Plugins den Default-Export konstruieren. **Alle 1728 Tests blieben dabei
+  grün** — nur `next build` fängt es. Major in `renovate.json` deaktiviert.
+- **TypeScript 7**: `tsc --noEmit` und `next build` laufen sauber, aber `typescript-eslint`
+  bricht mit „does not support TS 7.0" ab und tötet damit `npm run lint`. TS 7 ist der Go-Port und
+  hat noch keine stabile programmatische API (angekündigt für 7.1).
+- **ESLint 10**: `eslint-plugin-react` ruft das entfernte `context.getFilename()`. 7.37.5 ist die
+  neueste Version dieses Plugins und deklariert nur bis `eslint ^9.7` — es gibt kein Ziel für einen
+  Override, der Fix muss upstream kommen.
+- **Ruby 4.0**: 3.4 reicht bis 2028; 4.0 gegen Jekyll 4.4 hat keine Erfahrungswerte.
+
+
 ## [0.6.0] - 2026-08-21
 
 Härtungs-Release. Kein neues Feature — die Vereinfachungs-Phase hatte vorne poliert, während das
