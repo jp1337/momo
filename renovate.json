@@ -75,6 +75,13 @@
       ]
     },
     {
+      "description": "magic-string v1 breaks the PWA build and no test notices. It is an override forcing a transitive version onto workbox-build's rollup plugins, which do `new MagicString(...)`; v1 moved the constructor off the default export, so `next build` dies with 'MagicString is not a constructor' while all 1728 tests still pass. Tried on 2026-08-21 and reverted. Revisit only when @ducanh2912/next-pwa ships a workbox-build that declares magic-string ^1.",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["magic-string"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "description": "The Alexa Lambda is a separate npm project with its own lockfile. It had no dependabot.yml entry at all, which is why its four PRs only ever arrived as security alerts. Renovate finds it without being told; this rule only scopes its commits so they are legible in the log.",
       "matchFileNames": ["alexa-skill/**"],
       "semanticCommitScope": "deps",

@@ -70,7 +70,7 @@
     "workbox-build": "^7.4.1",
     "glob": "^13.0.0",
     "magic-string": "^0.30.21",
-    "source-map": "^0.7.6",
+    "source-map": "^0.8.0",
     "node-domexception": "npm:@nolyfill/domexception@^1.0.28",
     "@esbuild-kit/esm-loader": "npm:noop-package@^1.0.0",
     "@esbuild-kit/core-utils": "npm:noop-package@^1.0.0"
