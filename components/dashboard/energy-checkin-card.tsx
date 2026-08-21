@@ -77,14 +77,21 @@ function clientLocalToday(): string {
   return new Date().toLocaleDateString("en-CA");
 }
 
-/** Visual style metadata for each energy level button. */
-const LEVEL_STYLES: Record<
-  EnergyLevel,
-  { color: string; icon: string }
-> = {
-  HIGH: { color: "var(--accent-amber)", icon: "⚡" },
-  MEDIUM: { color: "var(--accent-green)", icon: "☀" },
-  LOW: { color: "var(--text-muted)", icon: "🌙" },
+/**
+ * Icon per energy level. Fix round 1 (2026-08-21): the three buttons used
+ * to be colour-coded (HIGH amber, MEDIUM green, LOW muted) so that whenever
+ * the picker was open — i.e. the user had not checked in yet today — the
+ * dashboard silently had a second amber element next to the quest's "start
+ * now", breaking the "exactly one" rule for a very common first-visit-of-
+ * the-day state. HIGH/MEDIUM/LOW are a choice among peers, not a primary
+ * action or a "done" state, so none of them should carry an accent colour
+ * at all; the icon alone identifies the level, and selection is shown by
+ * weight/border/checkmark instead (see the button markup below).
+ */
+const LEVEL_ICONS: Record<EnergyLevel, string> = {
+  HIGH: "⚡",
+  MEDIUM: "☀",
+  LOW: "🌙",
 };
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -260,8 +267,7 @@ export function EnergyCheckinCard({
           </div>
 
           <div className="flex flex-wrap gap-2.5" role="group" aria-label={t("energy_checkin_title")}>
-            {(Object.keys(LEVEL_STYLES) as EnergyLevel[]).map((level) => {
-              const style = LEVEL_STYLES[level];
+            {(Object.keys(LEVEL_ICONS) as EnergyLevel[]).map((level) => {
               const isCurrent = isCheckedInToday && energyLevel === level;
               return (
                 <button
@@ -270,19 +276,17 @@ export function EnergyCheckinCard({
                   onClick={() => submitCheckin(level)}
                   disabled={submitting !== null}
                   aria-pressed={isCurrent}
-                  className="flex-1 min-w-[90px] px-3 py-3 rounded-xl text-sm font-medium transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  style={{
-                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    backgroundColor: isCurrent
-                      ? `color-mix(in srgb, ${style.color} 18%, var(--bg-elevated))`
-                      : `color-mix(in srgb, ${style.color} 8%, var(--bg-elevated))`,
-                    border: `1px solid color-mix(in srgb, ${style.color} ${isCurrent ? 50 : 25}%, var(--border))`,
-                    color: style.color,
-                  }}
+                  className={`flex-1 min-w-[90px] rounded-[var(--radius-md)] border bg-[var(--raised)] px-3 py-3 text-sm transition-all
+                    duration-150 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer font-[family-name:var(--font-ui)] ${
+                    isCurrent
+                      ? "border-[var(--ink-2)] font-semibold text-[var(--ink)]"
+                      : "border-[var(--hairline)] font-medium text-[var(--ink-2)]"
+                  }`}
                 >
                   <span className="block text-lg mb-1" aria-hidden="true">
-                    {style.icon}
+                    {LEVEL_ICONS[level]}
                   </span>
+                  {isCurrent && <span aria-hidden="true">✓ </span>}
                   {t(`energy_${level.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low")}
                 </button>
               );
@@ -302,20 +306,20 @@ export function EnergyCheckinCard({
             </p>
           )}
 
-          {/* Swap notification — visible while in picker mode after a re-roll */}
+          {/* Swap notification — visible while in picker mode after a re-roll.
+              Fixed alongside the picker buttons above (fix round 1): this
+              also carried --accent-amber as a second accent, which the
+              amber-once rule does not allow — moved to the same quiet
+              --raised/--hairline/--ink-2 treatment as everything else that
+              isn't the page's one action. */}
           <AnimatePresence>
             {swapNotice && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-xs"
-                style={{
-                  backgroundColor: "color-mix(in srgb, var(--accent-amber) 10%, transparent)",
-                  border: "1px solid color-mix(in srgb, var(--accent-amber) 30%, transparent)",
-                  color: "var(--text-primary)",
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                }}
+                className="flex items-center justify-between gap-2 rounded-[var(--radius-md)] border border-[var(--hairline)]
+                  bg-[var(--raised)] px-3 py-2 text-xs font-[family-name:var(--font-ui)] text-[var(--ink)]"
               >
                 <span className="truncate">
                   {t("energy_card_swapped", { title: swapNotice.previousTitle })}
@@ -323,8 +327,7 @@ export function EnergyCheckinCard({
                 <button
                   type="button"
                   onClick={handleUndoSwap}
-                  className="flex-shrink-0 underline cursor-pointer"
-                  style={{ color: "var(--accent-amber)" }}
+                  className="flex-shrink-0 cursor-pointer text-[var(--ink-2)] underline hover:text-[var(--ink)]"
                 >
                   {t("energy_card_swapped_undo")}
                 </button>

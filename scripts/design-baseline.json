@@ -221,8 +221,8 @@
   },
   "components/dashboard/energy-checkin-card.tsx": {
     "color": 0,
-    "radius": 3,
-    "inline": 7
+    "radius": 1,
+    "inline": 4
   },
   "components/dashboard/quick-wins-section.tsx": {
     "color": 0,

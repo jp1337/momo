@@ -273,6 +273,20 @@ body {
  * weicher Wash von oben. Die Keule ist absichtlich breit: eine engere
  * Version liest als Fleck hinter der Schrift statt als Licht.
  *
+ * Horizontaler Anker bei 30%, nicht 50% (Fix Round 1 2026-08-21): der Titel
+ * ist linksbuendig und variabel breit (kurzer Titel wie "Call mom" bis zu
+ * max-w-[26ch]), aber die Box, auf der der Anker prozentual sitzt, ist
+ * immer die volle Breite des Quest-Containers — bei 50% lag die Lichtmitte
+ * dadurch strukturell rechts von der Ueberschrift, nie darauf, egal wie
+ * lang der Titel war. 30% liegt nah genug am linken Rand, wo jeder Titel
+ * beginnt, dass die breite, weiche Streuung ihn traegt, ohne bei sehr
+ * kurzen Titeln komplett danebenzuliegen. Verifiziert mit Titel-Laengen von
+ * "Call mom" bis zum 26ch-Maximum. Die Breite ueber die Box hinauszuziehen
+ * (190% statt vom 64rem-Clamp gekappt) wurde probiert und verworfen: das
+ * verbreitert nur die Streuung, verschiebt aber die Mitte nicht — bei
+ * Container-Mitte als Anker bleibt sie bei Container-Mitte, egal wie breit
+ * die Box ist.
+ *
  * Die Opazitaet atmet leicht (6s, 0.85 → 1) statt zu pulsieren — das Licht
  * soll wirken, als stuende es einfach da, nicht als bluepe es. Unter
  * prefers-reduced-motion bleibt das Licht selbst stehen, nur die Animation
@@ -290,7 +304,7 @@ body {
   width: min(190%, 64rem);
   height: 30rem;
   transform: translateX(-50%);
-  background: radial-gradient(ellipse 55% 48% at 50% 46%,
+  background: radial-gradient(ellipse 55% 48% at 30% 46%,
     color-mix(in srgb, var(--amber) 11%, transparent) 0%,
     color-mix(in srgb, var(--amber) 7%,  transparent) 26%,
     color-mix(in srgb, var(--amber) 3%,  transparent) 48%,
