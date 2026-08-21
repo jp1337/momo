@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 /**
  * Prueft, dass das Token-Fundament in beiden Themes vollstaendig aufgeloest
@@ -12,7 +12,7 @@ const REQUIRED = [
   "--shadow-overlay",
 ];
 
-async function readTokens(page: import("@playwright/test").Page) {
+async function readTokens(page: Page) {
   return page.evaluate((names: string[]) => {
     const s = getComputedStyle(document.documentElement);
     const out: Record<string, string> = {};
@@ -21,12 +21,40 @@ async function readTokens(page: import("@playwright/test").Page) {
   }, REQUIRED);
 }
 
+/**
+ * Navigiert deterministisch mit einem festen Theme — ohne mit next-themes'
+ * Hydration zu wettlaufen.
+ *
+ * Ein frueherer Ansatz setzte `data-theme` per `page.evaluate` NACH
+ * `page.goto`. Das gewinnt das Rennen gegen next-themes' Hydration nur
+ * manchmal: next-themes (defaultTheme="system", enableSystem) synchronisiert
+ * das Attribut beim Mount erneut mit dem aufgeloesten System-Theme. Die
+ * Playwright-Storage-State hier enthaelt kein `origins`-Array (kein
+ * localStorage-Eintrag), also entscheidet allein `prefers-color-scheme` —
+ * und Headless-Chromium liefert dafuer standardmaessig "light". Ergebnis:
+ * ein ca. 50-prozentiger Flake in Kombi-Laeufen, je nachdem ob next-themes'
+ * Effekt vor oder nach dem Token-Read feuert.
+ *
+ * Fix: das Rennen gar nicht erst stattfinden lassen. `emulateMedia` setzt
+ * die System-Praeferenz VOR der Navigation, sodass next-themes beim Mount
+ * exakt das Theme aufloest, das wir wollen — jede Resynchronisation ist
+ * dann idempotent. `addInitScript` setzt zusaetzlich `data-theme` schon vor
+ * dem ersten App-Skript, deckt also auch den Frame vor der Hydration ab.
+ * Beide Mechanismen zusammen sind synchron mit next-themes statt gegen es
+ * zu laufen — es gibt kein "warte auf das Hydrations-Rennen" mehr, weil es
+ * kein Rennen mehr gibt.
+ */
+async function gotoWithTheme(page: Page, theme: "dark" | "light") {
+  await page.emulateMedia({ colorScheme: theme });
+  await page.addInitScript((t: string) => {
+    document.documentElement.setAttribute("data-theme", t);
+  }, theme);
+  await page.goto("/dashboard");
+}
+
 test.describe("Design-Tokens", () => {
   test("sind im Dark Mode vollstaendig", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.evaluate(() =>
-      document.documentElement.setAttribute("data-theme", "dark"),
-    );
+    await gotoWithTheme(page, "dark");
     const t = await readTokens(page);
     for (const name of REQUIRED) expect(t[name], name).not.toBe("");
     expect(t["--ground"]).toBe("#0e100f");
@@ -35,10 +63,7 @@ test.describe("Design-Tokens", () => {
   });
 
   test("sind im Light Mode vollstaendig und anders", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.evaluate(() =>
-      document.documentElement.setAttribute("data-theme", "light"),
-    );
+    await gotoWithTheme(page, "light");
     const t = await readTokens(page);
     for (const name of REQUIRED) expect(t[name], name).not.toBe("");
     expect(t["--ground"]).toBe("#eceee5");
@@ -66,11 +91,7 @@ test.describe("Design-Tokens", () => {
     test(`Schatten-Token sind im ${theme} Mode in Listen verwendbar`, async ({
       page,
     }) => {
-      await page.goto("/dashboard");
-      await page.evaluate(
-        (t: string) => document.documentElement.setAttribute("data-theme", t),
-        theme,
-      );
+      await gotoWithTheme(page, theme);
       const shadow = await page.evaluate(() => {
         const probe = document.createElement("div");
         probe.style.boxShadow =
