@@ -23,8 +23,8 @@ interface HabitCardProps {
     statStreak: string;
     statStreakEmpty: string;
     recurrenceEveryDay: string;
-    recurrenceEveryNDays: string; // "alle {n} Tage"
-    pausedUntilLabel: string; // "Pausiert bis {date}"
+    recurrenceEveryNDays: string; // "alle %n% Tage"
+    pausedUntilLabel: string; // "Pausiert bis %date%"
     gridLabels: {
       gridAriaLabel: string;
       tooltipOne: string;
@@ -49,14 +49,25 @@ interface HabitCardProps {
   streakBestText: string | null;
 }
 
-/** Pretty-prints the recurrence interval, e.g. "täglich" or "alle 3 Tage". */
+/**
+ * Pretty-prints the recurrence interval, e.g. "täglich" or "alle 3 Tage".
+ *
+ * The `%n%` placeholder (not next-intl's `{n}` ICU syntax) is intentional:
+ * `recurrenceEveryNDays` is translated ONCE per page render (see
+ * progress-tabs.tsx) and reused for every habit card, each with its own
+ * interval — so the substitution has to happen here, per-card, not at
+ * translation time. Using `{n}` would make next-intl parse it as a required
+ * ICU argument; calling `t()` without supplying one throws, and next-intl's
+ * fallback renders the raw message key instead of the label (that fallback
+ * is exactly the bug this comment is here to prevent someone reintroducing).
+ */
 function formatRecurrence(
   interval: number | null,
   labels: HabitCardProps["labels"]
 ): string {
   const n = interval ?? 1;
   if (n <= 1) return labels.recurrenceEveryDay;
-  return labels.recurrenceEveryNDays.replace("{n}", String(n));
+  return labels.recurrenceEveryNDays.replace("%n%", String(n));
 }
 
 export function HabitCard({
@@ -134,8 +145,8 @@ export function HabitCard({
                 >
                   <FontAwesomeIcon icon={faPause} style={{ width: "8px", height: "8px" }} />
                   {habit.pausedUntil
-                    ? labels.pausedUntilLabel.replace("{date}", habit.pausedUntil)
-                    : labels.pausedUntilLabel.replace("{date}", "")}
+                    ? labels.pausedUntilLabel.replace("%date%", habit.pausedUntil)
+                    : labels.pausedUntilLabel.replace("%date%", "")}
                 </span>
               </>
             )}
