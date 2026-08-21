@@ -361,6 +361,20 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
   `eslint-plugin-react` oder indem `eslint-config-next` es fallen lässt. Reingezogen wird es über
   `eslint-config-next@16.3.1`, das an `next` 16.3.1 gekoppelt ist. Wiedervorlage bei jedem
   next-Minor.
+- **Automerge ist praktisch ungesichert — und ein Gegenbeispiel liegt jetzt vor.** Drei Fakten, die
+  zusammen das Problem ergeben: (1) `build-and-publish.yml`, das `lint` und `next build` fährt,
+  triggert nur auf `push: branches: [main]` — also **nach** dem Merge, nicht davor; bei einem PR
+  läuft nur `test.yml` plus CodeQL. (2) Die Branch Protection von `main` hat
+  `required_status_checks: null` — **kein einziger Check ist required**. (3) `renovate.json` setzt
+  `platformAutomerge: true` und mergt `patch`/`pin`/`digest` sowie devDependency-Minors
+  automatisch. Ergebnis: eine Renovate-Patch-PR kann einziehen, ohne dass irgendetwas sie aufhält.
+  Die Beschreibung der Patch-Regel behauptet „a patch that breaks the 1684-test suite does not
+  merge" — das stimmt nur, wenn der Suite-Check required ist, und er ist es nicht.
+  Das Gegenbeispiel ist nicht hypothetisch: der `magic-string`-v1-Override auf diesem Branch ließ
+  **alle 1728 Tests grün** und brach `next build`. Genau diese Klasse — Build-Tooling kaputt, Suite
+  ahnungslos — ist die, die durchrutscht. Fix in zwei Teilen: `pull_request` als Trigger für die
+  `lint`- und `build`-Jobs ergänzen, und `test`, `lint` und `build` als required status checks auf
+  `main` eintragen. Erst dann bedeutet Automerge, was die Regel-Beschreibungen behaupten.
 - **`alexa-skill/` hat keine eigene eslint-Config, und niemand hat es gemerkt.** `npm run lint`
   dort fällt auf die Root-`eslint.config.mjs` zurück — die Next.js-Config — und meldet folgerichtig
   „Pages directory cannot be found". Der Lambda-Code wird also gegen React-/Next-Regeln geprüft
