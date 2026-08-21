@@ -194,11 +194,13 @@ describe("readonlyKeyResponse", () => {
     expect(response.status).not.toBe(401);
   });
 
-  it("body does not include a 'code' field (unlike verifiedAuthErrorResponse)", async () => {
+  it("includes a machine-readable code field of READONLY_KEY", async () => {
     const response = readonlyKeyResponse();
     const body = await response.json();
-    // readonlyKeyResponse uses 'message', not 'code'
-    expect(body).not.toHaveProperty("code");
+    // readonlyKeyResponse now carries 'code' alongside 'message', matching
+    // its sibling helpers (RATE_LIMITED, BEARER_SESSION_REQUIRED, etc.) and
+    // CLAUDE.md's { error, code? } contract for API errors.
+    expect(body.code).toBe("READONLY_KEY");
   });
 
   it("mentions the read-write key suggestion in the message", async () => {

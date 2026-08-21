@@ -180,7 +180,11 @@ const RATE_LIMIT_EXEMPT = new Set<string>([
   "app/api/cron/route.ts",
 ]);
 
-const MUTATION_EXPORT = /export\s+(?:async\s+)?function\s+(?:POST|PUT|PATCH|DELETE)\b/;
+/** HTTP methods that mutate state — the property both invariants below enforce. */
+const MUTATION_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/** Matches an exported route handler declaration, capturing its HTTP method. */
+const EXPORT_RE = /export\s+(?:async\s+)?function\s+(GET|POST|PUT|PATCH|DELETE)\b/g;
 
 /** Recursively collects every `route.ts` file under `dir`. */
 function findRouteFiles(dir: string): string[] {
@@ -196,27 +200,124 @@ function findRouteFiles(dir: string): string[] {
   return files;
 }
 
+/** One exported handler's own source, isolated from its siblings in the same file. */
+interface HandlerRegion {
+  /** Path relative to the repo root, e.g. "app/api/tasks/[id]/route.ts". */
+  readonly file: string;
+  /** HTTP method this handler exports. */
+  readonly method: string;
+  /** 1-based line number of the `export async function <METHOD>` declaration. */
+  readonly line: number;
+  /** Source text from this handler's export up to (not including) the next export. */
+  readonly source: string;
+}
+
 /**
- * Walks `app/api/**\/route.ts`, keeps every file that exports a mutation
- * method, and returns the relative paths of any that neither call
- * `checkRateLimit` nor appear in `RATE_LIMIT_EXEMPT`. Mirrors the brief's
- * Step 1 verification command so the same check keeps running after this
- * task closes, not just while it was written.
+ * Splits a route file's source into per-handler regions.
+ *
+ * This is the fix for the actual blind spot: a whole-file
+ * `source.includes("checkRateLimit")` reads a file as "covered" the moment
+ * *any one* of its handlers calls the guard, even when a sibling export in
+ * the same file never does. Slicing at each `export async function
+ * <METHOD>` boundary — up to the next such boundary, or EOF for the file's
+ * last export — gives every handler only its own text to be judged against.
  */
-function findUnguardedMutationRoutes(): string[] {
+function splitHandlerRegions(source: string, relPath: string): HandlerRegion[] {
+  const matches: { method: string; index: number }[] = [];
+  const re = new RegExp(EXPORT_RE);
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(source))) {
+    matches.push({ method: m[1], index: m.index });
+  }
+
+  return matches.map(({ method, index }, i) => {
+    const end = i + 1 < matches.length ? matches[i + 1].index : source.length;
+    return {
+      file: relPath,
+      method,
+      line: source.slice(0, index).split("\n").length,
+      source: source.slice(index, end),
+    };
+  });
+}
+
+/** Every exported mutation (POST/PUT/PATCH/DELETE) handler under `app/api`. */
+function findAllMutationHandlers(): HandlerRegion[] {
   const apiDir = join(process.cwd(), "app", "api");
-  const offenders: string[] = [];
+  const handlers: HandlerRegion[] = [];
 
   for (const file of findRouteFiles(apiDir)) {
     const source = readFileSync(file, "utf8");
-    if (!MUTATION_EXPORT.test(source)) continue;
-
     const relPath = relative(process.cwd(), file);
-    if (RATE_LIMIT_EXEMPT.has(relPath)) continue;
-    if (!source.includes("checkRateLimit")) offenders.push(relPath);
+    for (const region of splitHandlerRegions(source, relPath)) {
+      if (MUTATION_METHODS.has(region.method)) handlers.push(region);
+    }
   }
 
-  return offenders;
+  return handlers;
+}
+
+/**
+ * Total number of exported mutation handlers under `app/api`, measured
+ * directly (walk every route.ts, split at handler boundaries, count
+ * POST/PUT/PATCH/DELETE exports) rather than assumed from file count — 70
+ * handlers across 57 files, which is exactly why two could hide behind
+ * guarded siblings before this test looked per-handler.
+ *
+ * If this assertion fails because you added or removed a mutation handler on
+ * purpose, update this constant to the new true count. If it fails and you
+ * did not touch a route file, a merge introduced a new mutation handler that
+ * nobody wired a rate-limit guard for — find it via
+ * `findAllMutationHandlers()` before changing this number.
+ */
+const TOTAL_MUTATION_HANDLERS = 70;
+
+/**
+ * Mutation handlers that neither call `checkRateLimit` within their own
+ * region nor live in a file listed in `RATE_LIMIT_EXEMPT`. Per-handler, not
+ * per-file: a guarded sibling in the same file no longer hides an unguarded
+ * one.
+ */
+function findUnguardedMutationHandlers(): HandlerRegion[] {
+  return findAllMutationHandlers().filter(
+    (h) => !RATE_LIMIT_EXEMPT.has(h.file) && !h.source.includes("checkRateLimit")
+  );
+}
+
+/**
+ * True when a handler's own region resolves its caller via `resolveApiUser`
+ * — the only resolver that can hand back a read-only API key.
+ * `resolveVerifiedApiUser` (2FA-aware; bearer tokens exempt from the 2FA
+ * check but still subject to `.readonly` at the call site, so routes using
+ * it manage the check themselves) and `resolveSessionOnlyApiUser` /
+ * plain `auth()` (cookie session only — no API key, so no read-only key can
+ * ever reach them) have their own semantics and are out of scope for the
+ * read-only-gate invariant below.
+ */
+function usesResolveApiUser(region: string): boolean {
+  return (
+    /resolveApiUser\(/.test(region) &&
+    !/resolveVerifiedApiUser\(/.test(region) &&
+    !/resolveSessionOnlyApiUser\(/.test(region)
+  );
+}
+
+/**
+ * Mutation handlers that resolve their caller via `resolveApiUser` (and can
+ * therefore be called with a read-only API key) but never reference
+ * `.readonly` anywhere in their own region.
+ *
+ * No separate exemption list is needed for `RATE_LIMIT_EXEMPT`'s two files:
+ * `app/api/admin/seed/route.ts` calls `resolveApiUser` and already checks
+ * `user.readonly` itself (it is dev-only, but still gated), so it satisfies
+ * this invariant unaided; `app/api/cron/route.ts` authenticates via
+ * `CRON_SECRET` and never calls `resolveApiUser`, so `usesResolveApiUser`
+ * already excludes it before this filter runs.
+ */
+function findUngatedReadonlyHandlers(): HandlerRegion[] {
+  return findAllMutationHandlers().filter(
+    (h) => usesResolveApiUser(h.source) && !/\.readonly\b/.test(h.source)
+  );
 }
 
 beforeEach(() => {
@@ -258,14 +359,42 @@ describe("rate limiting on mutation routes", () => {
     });
   }
 
-  it("rate-limits every mutation route except the recorded exemptions", () => {
-    const offenders = findUnguardedMutationRoutes();
+  it("has the expected number of mutation handlers", () => {
+    expect(
+      findAllMutationHandlers().length,
+      "The mutation-handler count changed. If you added or removed a " +
+        "POST/PUT/PATCH/DELETE export on purpose, update " +
+        "TOTAL_MUTATION_HANDLERS above to the new true count. If you did " +
+        "not touch a route file, a new mutation handler slipped in " +
+        "unnoticed — find it before changing this number."
+    ).toBe(TOTAL_MUTATION_HANDLERS);
+  });
+
+  it("rate-limits every mutation handler except the recorded exemptions", () => {
+    const offenders = findUnguardedMutationHandlers();
     expect(
       offenders,
-      `Mutation routes missing a rate-limit guard: ${offenders.join(", ")}. ` +
-        `Add a checkRateLimit() call per CLAUDE.md's "rate limiting on all ` +
-        `mutation API routes" rule, or add the route to RATE_LIMIT_EXEMPT ` +
+      "Mutation handlers missing a rate-limit guard: " +
+        offenders.map((h) => `${h.file}:${h.line} ${h.method}`).join(", ") +
+        `. Add a checkRateLimit() call per CLAUDE.md's "rate limiting on all ` +
+        `mutation API routes" rule, or add the file to RATE_LIMIT_EXEMPT ` +
         `above with a comment justifying the exemption in the route's own header.`
+    ).toEqual([]);
+  });
+});
+
+describe("read-only API key gate on mutation routes", () => {
+  it("every resolveApiUser-based mutation handler checks user.readonly", () => {
+    const offenders = findUngatedReadonlyHandlers();
+    expect(
+      offenders,
+      "Mutation handlers that resolve via resolveApiUser but never check " +
+        ".readonly: " +
+        offenders.map((h) => `${h.file}:${h.line} ${h.method}`).join(", ") +
+        ". A read-only API key can call these and mutate data — add " +
+        "`if (user.readonly) return readonlyKeyResponse();` right after the " +
+        "auth check, or switch to resolveVerifiedApiUser / " +
+        "resolveSessionOnlyApiUser if read-only semantics genuinely do not apply."
     ).toEqual([]);
   });
 });

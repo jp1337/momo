@@ -175,13 +175,15 @@ export function verifiedAuthErrorResponse(
 /**
  * Returns a standard 403 response for read-only API key violations.
  *
- * @returns Response with 403 status and a descriptive error message
+ * @returns Response with 403 status, a descriptive error message, and
+ *   `code: "READONLY_KEY"` so clients can detect this refusal programmatically.
  */
 export function readonlyKeyResponse(): Response {
   return Response.json(
     {
       error: "Forbidden",
       message: "This API key is read-only. Use a read-write key to modify data.",
+      code: "READONLY_KEY",
     },
     { status: 403 }
   );

@@ -11,7 +11,7 @@
  * Returns: { success: true }
  */
 
-import { resolveApiUser } from "@/lib/api-auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -74,12 +74,7 @@ export async function PATCH(request: Request) {
   if (!user) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (user.readonly) {
-    return Response.json(
-      { error: "Forbidden", message: "This API key is read-only." },
-      { status: 403 }
-    );
-  }
+  if (user.readonly) return readonlyKeyResponse();
 
   const rateCheck = checkRateLimit(`settings-timezone:${user.userId}`, 10, 60_000);
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);

@@ -102,6 +102,9 @@ export async function DELETE(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (user.readonly) return readonlyKeyResponse() as NextResponse;
 
+  const rateCheck = checkRateLimit(`webhooks-update:${user.userId}`, 20, 60_000);
+  if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt) as NextResponse;
+
   const { id } = await params;
   try {
     await deleteWebhookEndpoint(id, user.userId);

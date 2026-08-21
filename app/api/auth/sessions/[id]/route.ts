@@ -6,7 +6,7 @@
  * Returns: { success: true } or 404
  */
 
-import { resolveApiUser } from "@/lib/api-auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { revokeSession } from "@/lib/sessions";
 import { readSessionTokenFromCookieStore } from "@/lib/totp";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
@@ -24,12 +24,7 @@ export async function DELETE(
   if (!user) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (user.readonly) {
-    return Response.json(
-      { error: "Forbidden", message: "This API key is read-only." },
-      { status: 403 }
-    );
-  }
+  if (user.readonly) return readonlyKeyResponse();
 
   const rateCheck = checkRateLimit(
     `sessions-revoke:${user.userId}`,

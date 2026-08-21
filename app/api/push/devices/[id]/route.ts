@@ -14,7 +14,7 @@
  * Returns: { success: true }
  */
 
-import { resolveApiUser } from "@/lib/api-auth";
+import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { users, pushSubscriptions } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -41,7 +41,7 @@ export async function PATCH(
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (user.readonly) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (user.readonly) return readonlyKeyResponse() as NextResponse;
 
   const rate = checkRateLimit(`push-device-mutate:${user.userId}`, 20, 60_000);
   if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
@@ -100,7 +100,7 @@ export async function DELETE(
   const user = await resolveApiUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (user.readonly) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (user.readonly) return readonlyKeyResponse() as NextResponse;
 
   const rate = checkRateLimit(`push-device-mutate:${user.userId}`, 20, 60_000);
   if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
