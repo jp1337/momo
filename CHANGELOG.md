@@ -7,7 +7,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`npm run check:design`** — ein Ratschen-Test gegen hartkodierte Farben, Radien außerhalb der
+  vier erlaubten Werte und neue Inline-Styles in `.tsx`. Läuft in CI (PR Gate); der Zähler darf nur
+  fallen, aktuell 1947 Verstöße über die noch nicht umgestellten Seiten. Ergänzt um
+  Playwright-Prüfungen (`e2e/design-tokens.spec.ts`), die den Flächenabstand zwischen Grund und
+  angehobener Fläche als CIE-ΔL\* messen (statt WCAG-Kontrastverhältnis, das bei hoher Helligkeit
+  komprimiert) und sicherstellen, dass die „leeren" Schatten-Tokens (`0 0 #0000`) als Listenglied
+  in `box-shadow` gültig bleiben — als reines `none` verschwindet sonst die gesamte Deklaration.
+
 ### Changed
+
+- **Neues visuelles Fundament („Lichtkegel"): zwei Flächenwerte statt Rahmen und Schatten überall.**
+  Statt acht gleich gerahmten, gleich beschatteten Kästen liegt gewöhnlicher Inhalt jetzt direkt auf
+  dem Hintergrund; eine sichtbare Fläche mit Kontur erscheint nur noch dort, wo sie eine echte
+  Bedienmöglichkeit markiert — ein Eingabefeld, ein Button. Amber (die Akzentfarbe) ist nur noch
+  Licht: Textfarbe oder ein weicher Glanz, nirgends mehr eine gefüllte Fläche, und pro Seite
+  höchstens einmal vorhanden. Radien sind auf vier Werte vereinheitlicht (vorher sechs
+  unterschiedliche, dazu von Tailwind geerbte Defaults ohne eigene Definition).
+- **Neue Schriften: Fraunces statt Lora, Instrument Sans statt DM Sans.** JetBrains Mono bleibt für
+  Aufgabentext und Zahlen. Beide neuen Schriften sind variabel bzw. selbst gehostet über
+  `next/font/google` — keine externen Requests zur Laufzeit.
+- **Dashboard neu geordnet.** Die vier Stat-Kacheln (Münzen, Level, Streak, Erledigt) und die
+  Schnellzugriffe auf „Alle Aufgaben"/„Alle Themen" sind entfernt — dieselben Zahlen stehen bereits
+  in der Navigationsleiste bzw. der Seitenleiste, sie standen doppelt. Energie-Check-in und der
+  „bester Tag"-Hinweis sind zu einer einzigen Metazeile über der Tagesaufgabe zusammengefasst. Die
+  Tagesaufgabe selbst hat keinen Kasten mehr, sondern ist als große, warm beleuchtete Überschrift
+  das einzig hervorgehobene Element der Seite.
+- **Quick Wins auf dem Dashboard sind jetzt eine schlichte Liste statt drei Karten.** Der geschätzte
+  Zeitaufwand zeigt sich in der Schriftgröße der Zeile — 5-Minuten-Aufgaben klein, 15/30-Minuten
+  mittel — sodass der Aufwand sichtbar ist, bevor man den Titel liest.
+- **Die Begrüßung auf dem Dashboard** setzt den Namen jetzt innerhalb des übersetzten Satzes ein,
+  statt ihn mit einem festen „, " und "." aus dem Code anzuhängen. Das reparierte falsche
+  Zeichensetzung in mehreren Sprachen (z. B. ein Komma nach einem Fragezeichen bei „Noch wach?").
 
 - **Node.js 22 → 24 in App und CI**, und **Node.js 20 → 24 im Alexa-Lambda**. Node 20 ist seit
   2026-04-30 EOL, Node 24 läuft bis 2028-04-30 (Quelle: `nodejs/Release`). Betrifft
@@ -45,6 +78,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **`docs-site/Gemfile.lock` ist jetzt eingecheckt.** Der Docs-Build löste Gems bisher bei jedem
   Lauf neu auf — ein neues Jekyll-Release konnte den Deploy ohne Code-Änderung brechen. Der Lock
   pinnt jekyll 4.4.1 und deckt 19 Plattformen inkl. `x86_64-linux-gnu` ab.
+
+### Removed
+
+- **Die `Card`-Komponente.** Ersetzt durch `Surface`, die nur noch bei echten Bedienelementen
+  (Eingabe, Button) und bei Dialogen/Popovers auftritt — gewöhnlicher Inhalt liegt direkt auf dem
+  Hintergrund und braucht keine eigene Fläche.
+- **Button-Varianten `secondary`, `ghost`, `outline`, `success`.** Es bleiben `primary` (die eine
+  hervorgehobene Handlung pro Seite), `quiet` (Standard) und `danger`.
+- **Die „I only have 5 minutes"-Banner-Fläche und die separate Focus-Mode-Kachel auf dem
+  Dashboard.** Beide Wege bleiben erreichbar (5-Minuten-Modus über die Seitenleiste, Focus Mode
+  über die Tagesaufgabe selbst), standen auf dem Dashboard aber doppelt zur Sidebar bzw.
+  konkurrierten optisch mit der Tagesaufgabe.
 
 ### Fixed
 

@@ -407,6 +407,18 @@ h6 {
   font-family: var(--font-mono, "JetBrains Mono", monospace);
 }
 
+/* Fraunces is a variable font — SOFT and WONK carry its character. These
+   two utilities exist solely for /design-system, so the axes are visibly
+   live on the page rather than just named in a caption. Defined here
+   (not inline) so the reference page itself stays free of style={{}},
+   which npm run check:design counts as a violation. */
+.font-display-axis-rest {
+  font-variation-settings: "SOFT" 0, "WONK" 0;
+}
+.font-display-axis-soft {
+  font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144;
+}
+
 /* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;

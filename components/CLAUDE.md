@@ -5,7 +5,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 
 ## Contents
 - `theme-toggle.tsx` — Cycles dark → light → system using next-themes
-- `layout/navbar.tsx` — Top bar: app name (Lora font), ThemeToggle, coin display, user avatar dropdown
+- `layout/navbar.tsx` — Top bar: app name (Fraunces font), ThemeToggle, coin display, user avatar dropdown
 - `layout/sidebar.tsx` — Left navigation (hidden on mobile), active route highlighting; includes 5-Min quick mode entry (faBolt)
 - `layout/mobile-nav.tsx` — Fixed bottom tab bar (mobile only, md:hidden): Dashboard/5 Min/Tasks/Topics/Wishlist
 - `layout/user-menu.tsx` — Avatar dropdown: Settings, API Keys, Stats, Admin (if isAdmin), Sign out
@@ -68,7 +68,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `animations/confetti.tsx` — Confetti burst on task completion / level-up
 - `animations/achievement-toast.tsx` — Toast overlay when an achievement is unlocked
 - `animations/level-up-overlay.tsx` — Full-screen overlay animation on level-up
-- `animations/emotional-closure.tsx` — Affirmation/quote shown after daily quest completion; day-based deterministic pick (same quote all day), Motion fade-in, Lora italic; 12 quotes per language via closure.quote_N i18n keys
+- `animations/emotional-closure.tsx` — Affirmation/quote shown after daily quest completion; day-based deterministic pick (same quote all day), Motion fade-in, Fraunces italic; 12 quotes per language via closure.quote_N i18n keys
 
 ## Patterns
 - Use CSS variables from `globals.css` for all colors (never hardcode hex)
