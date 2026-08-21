@@ -20,7 +20,7 @@
     "@typescript-eslint/parser": "^8",
     "esbuild": "^0.28.1",
     "eslint": "^9",
-    "typescript": "^5"
+    "typescript": "^6"
   },
   "engines": {
     "node": ">=24"

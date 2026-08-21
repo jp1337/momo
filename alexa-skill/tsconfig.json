@@ -9,7 +9,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    // TypeScript 6 stopped auto-including every package under node_modules/@types
+    // (the `types` default moved from ["*"] to []), so the Lambda's use of
+    // console, process, fetch and RequestInit no longer resolved. Listing "node"
+    // explicitly is the documented migration and is what TypeScript 7 will
+    // require as well.
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

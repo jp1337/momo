@@ -344,6 +344,23 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
   `warn`: der Fix ist ein Umbau des State-Flusses in zehn Komponenten und gehört in einen eigenen
   PR, nicht in einen Dependency-Sweep. Solange sie `warn` ist, steht sie in jedem Lint-Lauf —
   ein Pin auf 7.0.1 wäre still gewesen.
+- **TypeScript 7 ist blockiert, aber nicht an uns.** `tsc --noEmit` läuft mit 7.0.2 sauber durch und
+  `next build` auch — der Blocker ist `typescript-eslint`, das mit
+  `Error: typescript-eslint does not support TS 7.0` hart abbricht und damit `npm run lint`
+  komplett tötet. Grund: TS 7 ist der Go-Port und stellt noch keine stabile programmatische API
+  bereit; die ist für 7.1 angekündigt. Wiedervorlage, sobald `typescript-eslint` TS 7 unterstützt —
+  die tsconfig des Hauptprojekts ist bereits 7-tauglich (`moduleResolution: bundler`, kein
+  `baseUrl`, kein `downlevelIteration`, kein `target: es5`).
+- **`alexa-skill/` hat keine eigene eslint-Config, und niemand hat es gemerkt.** `npm run lint`
+  dort fällt auf die Root-`eslint.config.mjs` zurück — die Next.js-Config — und meldet folgerichtig
+  „Pages directory cannot be found". Der Lambda-Code wird also gegen React-/Next-Regeln geprüft
+  statt gegen Node-Regeln. Konsequenz: die beiden devDependencies
+  `@typescript-eslint/eslint-plugin` und `@typescript-eslint/parser`, die das Projekt installiert,
+  werden **von keiner Config referenziert** — Renovate hat sie zuletzt brav auf 8.67.0 gehoben, für
+  einen Linter, der so nicht existiert. Dazu ist `--ext .ts` im Lint-Skript unter eslint 9 Flat
+  Config bedeutungslos. Fix ist eine eigene `alexa-skill/eslint.config.mjs` mit
+  `typescript-eslint` — dann werden die beiden Pakete echt und das Skript prüft, was es zu prüfen
+  behauptet.
 
 **Erledigt** ✅ — Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
 0.4.0) · E2E-Tests (Playwright, 13 Specs, seit 0.4.0) · Dependency-Stau aufgelöst
