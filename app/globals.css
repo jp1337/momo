@@ -24,24 +24,49 @@
 /* statt sich an den Wänden zu reiben.                                         */
 :root,
 [data-theme="dark"] {
-  /* Backgrounds — Deeper, "Forest Charcoal" tones for maximum coziness.
-     Warmer blacks that feel like earth/stone rather than cold plastic. */
-  --bg-primary: #121413;   /* L 8 % — Deep, grounding base */
-  --bg-surface: #1b1f1d;   /* L 12 % — Subtle forest depth */
-  --bg-elevated: #242a27;  /* L 16 % — Lifted surfaces */
+  /* ─── Lichtkegel: Flächen-Leiter ─────────────────────────────────────── */
+  --ground:   #0e100f;
+  --s1:       #151917;
+  --s2:       #1b201d;
+  --s3:       #222826;
+  --hairline: #2a322e;
 
-  /* Borders — Soft and integrated, avoiding high-contrast harshness */
-  --border: #313a35;       /* L 21 % */
+  --ink:   #f2e9d8;
+  --ink-2: #a4b0a7;
+  --ink-3: #6c7a71;
 
-  /* Text — Soft cream for primary, misty sage for muted */
-  --text-primary: #f2e9d8;
-  --text-muted: #8d9990;
+  --amber:    #f0a500;
+  --on-amber: #171408;
+  --done:     #5ec47e;
+  --danger:   #d06460;
 
-  /* Accent colours */
-  --accent-amber: #f0a500;
-  --accent-green: #5ec47e; /* heller/lebendiger für bessere Sichtbarkeit im Dark Mode */
-  --accent-red: #d06460;   /* minimal heller für besseren Kontrast auf dunklen Flächen */
-  --coin-gold: #ffd060;
+  /* Radius — vier Stufen, keine mehr. */
+  --radius-sm:   7px;
+  --radius-md:   11px;
+  --radius-lg:   14px;
+  --radius-pill: 999px;
+
+  /* Abstand — Basis 4px. */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+  --space-6: 24px;  --space-8: 32px;  --space-12: 48px; --space-18: 72px;
+
+  /* Der einzige verbleibende Schatten: Flächen, die wirklich schweben. */
+  --shadow-overlay: 0 12px 40px rgba(0,0,0,.55);
+
+  /* ─── Aliase auf die Lichtkegel-Token ────────────────────────────────────
+     Uebergangsschicht: nicht migrierte Dateien lesen weiter die alten Namen,
+     bekommen aber die neuen Werte. Faellt weg, wenn die Ratsche in
+     scripts/check-design-tokens.mjs bei 0 steht. */
+  --bg-primary:   var(--ground);
+  --bg-surface:   var(--s1);
+  --bg-elevated:  var(--s3);
+  --border:       var(--hairline);
+  --text-primary: var(--ink);
+  --text-muted:   var(--ink-2);
+  --accent-amber: var(--amber);
+  --accent-green: var(--done);
+  --accent-red:   var(--danger);
+  --coin-gold:    var(--amber);
   --rarity-legendary: #c084fc; /* Violett für Legendary-Achievements */
 
   /*
@@ -89,37 +114,52 @@
   --color-danger: var(--accent-red);
   --color-coin: var(--coin-gold);
 
-  /* Shadow tokens — in Dark Mode: opaker + subtiler Inset-Highlight für Tiefenwirkung */
-  --shadow-sm: 0 1px 4px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.05);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.05);
+  /* Shadow tokens — die Elevation kommt aus der Fläche, nicht mehr aus dem Schatten */
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: var(--shadow-overlay);
 }
 
 /* ─── Light Mode ────────────────────────────────────────────────────────────── */
 [data-theme="light"] {
-  /* Backgrounds */
-  --bg-primary: #f7f2e8;
-  --bg-surface: #fdf9f2;
-  --bg-elevated: #ede5d5;
+  /* ─── Lichtkegel: Flächen-Leiter ─────────────────────────────────────── */
+  --ground:   #eceee5;
+  --s1:       #f5f6f0;
+  --s2:       #e3e7db;
+  --s3:       #d8ddce;
+  --hairline: #c9d0be;
 
-  /* Borders */
-  --border: #d6c9b2;
+  --ink:   #1b241e;
+  --ink-2: #55635a;
+  --ink-3: #7d8a80;
 
-  /* Text */
-  --text-primary: #1e2922;
-  --text-muted: #6b7d6e;
+  --amber:    #a86f00;
+  --on-amber: #fffaf0;
+  --done:     #2e7048;
+  --danger:   #9e3b38;
 
-  /* Accent colours */
-  --accent-amber: #c98a00;
-  --accent-green: #2e7048;
-  --accent-red: #9e3b38;
-  --coin-gold: #b8960a;
+  --shadow-overlay: 0 12px 40px rgba(0,0,0,.18);
+
+  /* ─── Aliase auf die Lichtkegel-Token ────────────────────────────────────
+     Uebergangsschicht: nicht migrierte Dateien lesen weiter die alten Namen,
+     bekommen aber die neuen Werte. Faellt weg, wenn die Ratsche in
+     scripts/check-design-tokens.mjs bei 0 steht. */
+  --bg-primary:   var(--ground);
+  --bg-surface:   var(--s1);
+  --bg-elevated:  var(--s3);
+  --border:       var(--hairline);
+  --text-primary: var(--ink);
+  --text-muted:   var(--ink-2);
+  --accent-amber: var(--amber);
+  --accent-green: var(--done);
+  --accent-red:   var(--danger);
+  --coin-gold:    var(--amber);
   --rarity-legendary: #9333ea; /* Violett für Legendary-Achievements */
 
-  /* Shadow tokens — lighter in light mode */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+  /* Shadow tokens — die Elevation kommt aus der Fläche, nicht mehr aus dem Schatten */
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: var(--shadow-overlay);
 }
 
 /* ─── Tailwind v4 theme bridge ──────────────────────────────────────────────── */
@@ -135,6 +175,20 @@
   --color-accent-green: var(--accent-green);
   --color-accent-red: var(--accent-red);
   --color-coin-gold: var(--coin-gold);
+
+  /* Lichtkegel: Flächen-Leiter, Ink-Skala, Amber als Licht */
+  --color-ground: var(--ground);
+  --color-s1: var(--s1);
+  --color-s2: var(--s2);
+  --color-s3: var(--s3);
+  --color-hairline: var(--hairline);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-amber: var(--amber);
+  --color-on-amber: var(--on-amber);
+  --color-done: var(--done);
+  --color-danger: var(--danger);
 
   /* Font families */
   --font-display: "Lora", Georgia, serif;
