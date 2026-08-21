@@ -81,7 +81,7 @@
       "allowedVersions": "^24"
     },
     {
-      "description": "magic-string v1 breaks the PWA build and no test notices. It is an override forcing a transitive version onto workbox-build's rollup plugins, which do `new MagicString(...)`; v1 moved the constructor off the default export, so `next build` dies with 'MagicString is not a constructor' while all 1728 tests still pass. Tried on 2026-08-21 and reverted. Revisit only when @ducanh2912/next-pwa ships a workbox-build that declares magic-string ^1.",
+      "description": "magic-string v1 breaks the PWA build and no test notices. magic-string 1.x is ESM-only (type: module, exports only ./dist/index.mjs, no CommonJS build). It reaches the build through workbox-build's rollup plugins @rollup/plugin-replace and @trickfilm400/rollup-plugin-off-main-thread, which are both CommonJS and both declare magic-string ^0.30 themselves. Their require() therefore yields a module namespace rather than the class, and `new MagicString(...)` throws 'MagicString is not a constructor' during next build, while all 1728 tests still pass. Note what the override was doing: npm overrides ignore the dependents' declared ranges, so this forced a version neither plugin claims to support. Tried on 2026-08-21 and reverted. Revisit when those plugins ship ESM or declare magic-string ^1 — not merely when a new magic-string appears.",
       "matchManagers": ["npm"],
       "matchPackageNames": ["magic-string"],
       "matchUpdateTypes": ["major"],
