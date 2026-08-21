@@ -109,3 +109,35 @@ test.describe("Design-Tokens", () => {
     });
   }
 });
+
+test.describe("Schriften", () => {
+  test("die drei Rollen sind gesetzt und geladen", async ({ page }) => {
+    await page.goto("/dashboard");
+    const fams = await page.evaluate(() => {
+      const s = getComputedStyle(document.documentElement);
+      return {
+        display: s.getPropertyValue("--font-display").trim(),
+        ui: s.getPropertyValue("--font-ui").trim(),
+        mono: s.getPropertyValue("--font-mono").trim(),
+        body: s.getPropertyValue("--font-body").trim(),
+      };
+    });
+    expect(fams.display).toContain("Fraunces");
+    expect(fams.ui).toContain("Instrument");
+    expect(fams.mono).toContain("JetBrains");
+    // Alias fuer nicht migrierte Dateien
+    expect(fams.body).toContain("JetBrains");
+    expect(fams.display).not.toContain("Lora");
+    expect(fams.ui).not.toContain("DM Sans");
+  });
+
+  test("Fraunces ist wirklich geladen, nicht auf Serif zurueckgefallen", async ({ page }) => {
+    await page.goto("/dashboard");
+    await page.waitForLoadState("networkidle");
+    const loaded = await page.evaluate(async () => {
+      await document.fonts.ready;
+      return document.fonts.check('1rem "Fraunces"');
+    });
+    expect(loaded).toBe(true);
+  });
+});

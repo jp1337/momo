@@ -147,7 +147,8 @@ All documentation lives in `docs-site/` (GitHub Pages). When a phase or major fe
 - Dark and light mode must both work correctly for every new component
 - Responsive design is mandatory: test at 375px (mobile) and 1280px (desktop) minimum
 - Animations via Motion for complex interactions, CSS-only for simple hover/focus states
-- Font usage: `--font-display` (Lora) for page-level headings (h1/h2), `--font-body` (JetBrains Mono) for all card/item titles (tasks, topics, wishlist — must be consistent across all three), `--font-ui` (DM Sans) for UI elements (labels, badges, buttons, metadata)
+- Font usage: `--font-display` (Fraunces, variabel — Achsen SOFT/WONK) genau **einmal pro Seite** in großer Größe: auf dem Dashboard die Quest, sonst die Seitenüberschrift. `--font-mono` (JetBrains Mono) für Aufgaben- und Zahlentext. `--font-ui` (Instrument Sans) für alles andere — Labels, Badges, Buttons, Fließtext. Abschnittsüberschriften innerhalb einer Seite sind Mono-Eyebrows, nicht Fraunces.
+- Radius ausschließlich über `--radius-sm|md|lg|pill`. Keine Schatten außer `--shadow-overlay`. Amber erscheint genau einmal pro Seite und nur als Licht — nie als Fläche, nie als Rahmen.
 
 ---
 
@@ -191,7 +192,7 @@ docs/          → Technical docs for devs/selfhosters (see docs/CLAUDE.md)
 docs-site/     → User-facing GitHub Pages (Jekyll) — see docs-site/CLAUDE.md
 deploy/        → Kubernetes manifests (see deploy/CLAUDE.md)
 drizzle/       → DB migrations (see drizzle/CLAUDE.md)
-messages/      → i18n translations de/en/fr (see messages/CLAUDE.md)
+messages/      → i18n-Übersetzungen de/en/es/fr/nl/ru/zh (sieben Locales — jeder Key muss in allen sieben stehen, `npm run check:i18n` erzwingt das) (see messages/CLAUDE.md)
 i18n/          → next-intl config: locales.ts (LOCALES/DEFAULT_LOCALE), request.ts (cookie-based locale resolution)
 scripts/       → Dev/ops scripts (see scripts/CLAUDE.md)
 alexa-skill/   → Separate Lambda project for Alexa integration
