@@ -109,7 +109,7 @@
     "radius": 3,
     "inline": 16
   },
-  "app/(docs)/layout.tsx": {
+  "app/(docs)/api-docs/layout.tsx": {
     "color": 2,
     "radius": 0,
     "inline": 1
@@ -218,16 +218,6 @@
     "color": 0,
     "radius": 0,
     "inline": 2
-  },
-  "components/dashboard/energy-checkin-card.tsx": {
-    "color": 0,
-    "radius": 1,
-    "inline": 4
-  },
-  "components/dashboard/quick-wins-section.tsx": {
-    "color": 0,
-    "radius": 1,
-    "inline": 7
   },
   "components/focus/focus-mode-view.tsx": {
     "color": 10,
@@ -473,11 +463,6 @@
     "color": 4,
     "radius": 1,
     "inline": 3
-  },
-  "components/tasks/task-breakdown-modal.tsx": {
-    "color": 3,
-    "radius": 4,
-    "inline": 8
   },
   "components/tasks/task-form.tsx": {
     "color": 0,
