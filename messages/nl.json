@@ -75,6 +75,7 @@
     "meta_streak": "{days, plural, one {# dag reeks} other {# dagen reeks}}",
     "meta_energy_unknown": "energie nog niet gezet",
     "meta_energy_change_aria": "Energie van vandaag wijzigen (huidig: {level})",
+    "meta_energy_set_aria": "Energie van vandaag instellen op {level}",
     "meta_day_mon": "maandag",
     "meta_day_tue": "dinsdag",
     "meta_day_wed": "woensdag",

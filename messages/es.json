@@ -75,6 +75,7 @@
     "meta_streak": "{days, plural, one {# día de racha} other {# días de racha}}",
     "meta_energy_unknown": "energía sin definir",
     "meta_energy_change_aria": "Cambiar la energía de hoy (actual: {level})",
+    "meta_energy_set_aria": "Establecer la energía de hoy en {level}",
     "meta_day_mon": "lunes",
     "meta_day_tue": "martes",
     "meta_day_wed": "miércoles",

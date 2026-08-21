@@ -75,6 +75,7 @@
     "meta_streak": "{days, plural, one {# день} few {# дня} other {# дней}} подряд",
     "meta_energy_unknown": "энергия не указана",
     "meta_energy_change_aria": "Изменить энергию на сегодня (сейчас: {level})",
+    "meta_energy_set_aria": "Указать сегодняшнюю энергию: {level}",
     "meta_day_mon": "понедельник",
     "meta_day_tue": "вторник",
     "meta_day_wed": "среда",

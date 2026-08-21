@@ -75,6 +75,7 @@
     "meta_streak": "{days, plural, one {# jour de suite} other {# jours de suite}}",
     "meta_energy_unknown": "énergie non définie",
     "meta_energy_change_aria": "Changer l'énergie du jour (actuellement : {level})",
+    "meta_energy_set_aria": "Définir l'énergie du jour sur {level}",
     "meta_day_mon": "lundi",
     "meta_day_tue": "mardi",
     "meta_day_wed": "mercredi",

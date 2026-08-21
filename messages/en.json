@@ -75,6 +75,7 @@
     "meta_streak": "{days, plural, one {# day streak} other {# days streak}}",
     "meta_energy_unknown": "energy not set",
     "meta_energy_change_aria": "Change today's energy (currently: {level})",
+    "meta_energy_set_aria": "Set today's energy to {level}",
     "meta_day_mon": "monday",
     "meta_day_tue": "tuesday",
     "meta_day_wed": "wednesday",

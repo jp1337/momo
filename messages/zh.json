@@ -75,6 +75,7 @@
     "meta_streak": "{days, plural, other {连续 # 天}}",
     "meta_energy_unknown": "未设定精力",
     "meta_energy_change_aria": "更改今天的精力(当前:{level})",
+    "meta_energy_set_aria": "将今天的精力设为{level}",
     "meta_day_mon": "星期一",
     "meta_day_tue": "星期二",
     "meta_day_wed": "星期三",
