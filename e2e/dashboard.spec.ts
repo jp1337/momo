@@ -4,8 +4,9 @@ import { createTask, deleteTask } from "./helpers/api";
 /**
  * Dashboard E2E tests — the main home screen.
  *
- * Covers: greeting, stats section, quest section, focus CTA,
- * quick wins, and navigation links.
+ * Covers: greeting, quest section, quest meta line (weekday/energy/streak),
+ * quick wins, and the absence of the removed stat tiles / quick links /
+ * standalone focus banner (Task 6 — dashboard entschlacken).
  */
 test.describe("Dashboard", () => {
   test("loads without error", async ({ page }) => {
@@ -15,14 +16,10 @@ test.describe("Dashboard", () => {
     await expect(page.locator("h1").first()).toBeVisible();
   });
 
-  test("renders the stats row (Coins, Streak, Level, Completed)", async ({
-    page,
-  }) => {
+  test("zeigt keine Stat-Tiles mehr", async ({ page }) => {
     await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-    // The stats grid contains 4 stat cards
-    const statCards = page.locator(".grid > div").filter({ hasText: /\d/ });
-    await expect(statCards.first()).toBeVisible();
+    // Coins und Level stehen in der Navbar; auf dem Dashboard standen sie doppelt.
+    await expect(page.getByTestId("stat-tiles")).toHaveCount(0);
   });
 
   test("renders the Daily Quest section", async ({ page }) => {
@@ -33,33 +30,17 @@ test.describe("Dashboard", () => {
     await expect(questSection).toBeVisible();
   });
 
-  test("Focus Mode CTA link is visible and navigates", async ({ page }) => {
+  test("zeigt keine Quick-Links mehr", async ({ page }) => {
     await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-    // Scoped to <main>: the sidebar and the mobile nav also link to /focus,
-    // and an unscoped locator is a strict-mode violation with three matches.
-    const focusLink = page.locator('main a[href="/focus"]').first();
-    await expect(focusLink).toBeVisible();
-    await focusLink.click();
-    await expect(page).toHaveURL(/focus/);
+    // Dupliziert die Sidebar.
+    await expect(page.getByTestId("dashboard-quick-links")).toHaveCount(0);
   });
 
-  test("Tasks quick link navigates to /tasks", async ({ page }) => {
+  test("Wochentag, Energie und Streak stehen in einer Metazeile", async ({ page }) => {
     await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-    const tasksLink = page.locator('a[href="/tasks"]').first();
-    await expect(tasksLink).toBeVisible();
-    await tasksLink.click();
-    await expect(page).toHaveURL(/tasks/);
-  });
-
-  test("Topics quick link navigates to /topics", async ({ page }) => {
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-    const topicsLink = page.locator('a[href="/topics"]').first();
-    await expect(topicsLink).toBeVisible();
-    await topicsLink.click();
-    await expect(page).toHaveURL(/topics/);
+    const meta = page.getByTestId("quest-meta");
+    await expect(meta).toBeVisible();
+    await expect(meta).toContainText(/\d+/); // Streak-Zahl
   });
 
   test("quick wins appear when short tasks exist", async ({
@@ -79,16 +60,6 @@ test.describe("Dashboard", () => {
     await expect(body).not.toContainText(/500|error/i);
     // Cleanup
     await deleteTask(request, task.id);
-  });
-
-  test("Focus Mode CTA is present (replaces 5-Min CTA)", async ({ page }) => {
-    // The 5-Min CTA was removed from the dashboard in favour of the Focus Mode CTA.
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-    // Scoped to <main> so this asserts the dashboard's own entry point and not
-    // the sidebar or mobile-nav links to the same route.
-    const focusLink = page.locator('main a[href="/focus"]').first();
-    await expect(focusLink).toBeVisible();
   });
 
   test("page renders without JavaScript errors", async ({ page }) => {
