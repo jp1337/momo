@@ -46,18 +46,43 @@ export default function DesignSystemPage() {
         </div>
       </section>
 
-      {/* Surfaces */}
+      {/* Surfaces — revidiert 2026-08-21: zwei Stufen statt vier. Gewöhnlicher
+          Inhalt liegt auf --ground und braucht keine Surface; die Leiter war
+          selbst das Problem, das dieser Entwurf abschaffen wollte. */}
       <section className="space-y-6">
         <h2 className="text-2xl font-semibold border-b border-[var(--border)] pb-2">
           Flächen
         </h2>
-        <div className="flex flex-wrap gap-4">
-          <Surface data-testid="surface-flat" className="p-6">flat — unbeleuchtet</Surface>
-          <Surface data-testid="surface-raised" level="raised" className="p-6">raised</Surface>
-          <Surface data-testid="surface-input" level="input" className="p-6">input, hover</Surface>
-          <Surface data-testid="surface-overlay" level="overlay" radius="lg" className="p-6">
-            overlay — die einzige Stufe mit Schatten
-          </Surface>
+        <div className="flex flex-wrap gap-4 items-start">
+          <div className="space-y-2 max-w-[16rem]">
+            <Surface data-testid="surface-raised" level="raised" className="p-6">
+              raised
+            </Surface>
+            <p className="text-sm text-[var(--text-muted)]">
+              Fläche + Haarlinie. Nur für Affordanzen: „hier kannst du tippen
+              oder drücken".
+            </p>
+          </div>
+          <div className="space-y-2 max-w-[16rem]">
+            <Surface data-testid="surface-overlay" level="overlay" radius="lg" className="p-6">
+              overlay
+            </Surface>
+            <p className="text-sm text-[var(--text-muted)]">
+              Fläche + Schatten, keine Haarlinie. Für Dialog und Popover —
+              der Scrim grenzt schon ab.
+            </p>
+          </div>
+          <div className="space-y-2 max-w-[16rem]">
+            <input
+              data-testid="surface-affordance-input"
+              placeholder="hier tippen …"
+              className="w-full h-12 px-4 rounded-[var(--radius-md)] bg-[var(--raised)] border border-[var(--hairline)] text-[var(--ink)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--amber)]"
+            />
+            <p className="text-sm text-[var(--text-muted)]">
+              Ein Eingabefeld ist der Grund, warum es --raised überhaupt
+              gibt: die Kante sagt „hier kannst du tippen".
+            </p>
+          </div>
         </div>
       </section>
 

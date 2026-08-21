@@ -24,16 +24,27 @@
 /* statt sich an den Wänden zu reiben.                                         */
 :root,
 [data-theme="dark"] {
-  /* ─── Lichtkegel: Flächen-Leiter ─────────────────────────────────────── */
+  /* ─── Lichtkegel: zwei Flächenwerte, keine Leiter ────────────────────────
+     Revidiert 2026-08-21: die vierstufige Leiter (--s1/--s2/--s3) ist
+     gestrichen — Nachbarstufen lagen bei ΔL* 3, unter der Wahrnehmungsgrenze
+     von ΔL* 8 fuer grosse Flaechen. --raised ist die einzige verbleibende
+     Stufe und erscheint nur bei echten Affordanzen (Eingabe, Button, Hover).
+     Gemessen: ΔL*(raised, ground) = 9.98. */
   --ground:   #0e100f;
-  --s1:       #151917;
-  --s2:       #1b201d;
-  --s3:       #222826;
-  --hairline: #2a322e;
+  --raised:   #202623;
+  /* --hairline ist gegenueber der urspruenglichen Spec (#3d463f) angehoben:
+     bei #3d463f betrug der Kontrast gegen --raised nur 1.57:1 — die Linie
+     verschwand genau dort, wo sie die Affordanz markieren soll. #6a7a6d
+     erreicht 3.39:1 gegen --raised und 4.20:1 gegen --ground (WCAG
+     1.4.11 Non-Text-Contrast-Richtwert 3:1 fuer UI-Komponentengrenzen). */
+  --hairline: #6a7a6d;
 
   --ink:   #f2e9d8;
   --ink-2: #a4b0a7;
-  --ink-3: #6c7a71;
+  /* --ink-3 angehoben 2026-08-21: die urspruenglichen Werte erreichten bei
+     11px nur 4.24:1 (dark) / 3.08:1 (light) gegen den Grund, unter dem
+     AA-Mindestwert 4.5:1 fuer kleinen Text. Gemessen jetzt: 5.66:1 (dark). */
+  --ink-3: #828f86;
 
   --amber:    #f0a500;
   --on-amber: #171408;
@@ -58,8 +69,8 @@
      bekommen aber die neuen Werte. Faellt weg, wenn die Ratsche in
      scripts/check-design-tokens.mjs bei 0 steht. */
   --bg-primary:   var(--ground);
-  --bg-surface:   var(--s1);
-  --bg-elevated:  var(--s3);
+  --bg-surface:   var(--ground);
+  --bg-elevated:  var(--raised);
   --border:       var(--hairline);
   --text-primary: var(--ink);
   --text-muted:   var(--ink-2);
@@ -125,16 +136,29 @@
 
 /* ─── Light Mode ────────────────────────────────────────────────────────────── */
 [data-theme="light"] {
-  /* ─── Lichtkegel: Flächen-Leiter ─────────────────────────────────────── */
+  /* ─── Lichtkegel: zwei Flächenwerte, keine Leiter ────────────────────────
+     Die urspruengliche Leiter war zudem nicht monoton: --s1 (#f5f6f0) lag
+     HELLER als --ground (#eceee5), waehrend --s2/--s3 dunkler lagen —
+     "angehoben" las sich als vertieft. --raised ist hier bewusst dunkler
+     als --ground: im Hellen ist eine Eingabe ein Trog, in den man tippt.
+     --raised ist ausserdem gegenueber der urspruenglichen Spec (#d3d9c9)
+     leicht nachgedunkelt: dort betrug ΔL* gegen --ground nur 7.88, unter
+     der Wahrnehmungsgrenze 8. Gemessen jetzt: ΔL* = 9.30. */
   --ground:   #eceee5;
-  --s1:       #f5f6f0;
-  --s2:       #e3e7db;
-  --s3:       #d8ddce;
-  --hairline: #c9d0be;
+  --raised:   #cfd5c5;
+  /* --hairline stark nachgedunkelt gegenueber der urspruenglichen Spec
+     (#b9c2ab): dort betrug der Kontrast gegen --raised nur 1.28:1 — die
+     Linie war praktisch unsichtbar genau dort, wo sie die Affordanz
+     markieren soll. #6d7860 erreicht 3.10:1 gegen --raised und 3.98:1
+     gegen --ground. */
+  --hairline: #6d7860;
 
   --ink:   #1b241e;
   --ink-2: #55635a;
-  --ink-3: #7d8a80;
+  /* --ink-3 angehoben 2026-08-21, siehe Dark-Kommentar oben. Der Spec-
+     Zielwert #666f68 erreichte nur 4.44:1 gegen --ground, knapp unter der
+     AA-Schwelle 4.5:1. #636c65 erreicht 4.64:1. */
+  --ink-3: #636c65;
 
   --amber:    #a86f00;
   --on-amber: #fffaf0;
@@ -148,8 +172,8 @@
      bekommen aber die neuen Werte. Faellt weg, wenn die Ratsche in
      scripts/check-design-tokens.mjs bei 0 steht. */
   --bg-primary:   var(--ground);
-  --bg-surface:   var(--s1);
-  --bg-elevated:  var(--s3);
+  --bg-surface:   var(--ground);
+  --bg-elevated:  var(--raised);
   --border:       var(--hairline);
   --text-primary: var(--ink);
   --text-muted:   var(--ink-2);
@@ -182,11 +206,9 @@
   --color-accent-red: var(--accent-red);
   --color-coin-gold: var(--coin-gold);
 
-  /* Lichtkegel: Flächen-Leiter, Ink-Skala, Amber als Licht */
+  /* Lichtkegel: zwei Flächenwerte, Ink-Skala, Amber als Licht */
   --color-ground: var(--ground);
-  --color-s1: var(--s1);
-  --color-s2: var(--s2);
-  --color-s3: var(--s3);
+  --color-raised: var(--raised);
   --color-hairline: var(--hairline);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);

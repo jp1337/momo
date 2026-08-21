@@ -17,7 +17,10 @@ function Badge({ className, variant = "neutral", style, children, ...props }: Ba
     "transition-colors font-ui outline-none";
 
   const variantStyles = {
-    neutral: "bg-[var(--s2)] text-[var(--ink-2)]",
+    // Ein Badge ist ein Label, keine Affordanz — es bekommt --raised als
+    // Flaeche, aber bewusst KEINE Haarlinie: die Pillenform traegt die
+    // Abgrenzung schon.
+    neutral: "bg-[var(--raised)] text-[var(--ink-2)]",
     done: "bg-[color-mix(in_srgb,var(--done)_15%,transparent)] text-[var(--done)]",
     danger: "bg-[color-mix(in_srgb,var(--danger)_15%,transparent)] text-[var(--danger)]",
     amber: "bg-[color-mix(in_srgb,var(--amber)_15%,transparent)] text-[var(--amber)]",

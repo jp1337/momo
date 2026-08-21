@@ -5,7 +5,7 @@ import { test, expect, type Page } from "@playwright/test";
  * wird. Ein leerer String heisst: das Token existiert im aktiven Theme nicht.
  */
 const REQUIRED = [
-  "--ground", "--s1", "--s2", "--s3", "--hairline",
+  "--ground", "--raised", "--hairline",
   "--ink", "--ink-2", "--ink-3",
   "--amber", "--on-amber", "--done", "--danger",
   "--radius-sm", "--radius-md", "--radius-lg", "--radius-pill",
@@ -142,37 +142,99 @@ test.describe("Schriften", () => {
   });
 });
 
+/**
+ * Berechnet CIE L* aus sRGB-Kanaelen (relative Luminanz Y nach der WCAG-
+ * Formel, dann Y -> L* nach CIE). Gleiche Formel wie im Report gefordert:
+ * L* = Y <= 0.008856 ? 903.3*Y : 116*Y^(1/3) - 16.
+ */
+function relLuminance([r, g, b]: [number, number, number]): number {
+  const lin = (c: number) => {
+    const v = c / 255;
+    return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+function lStar(rgb: [number, number, number]): number {
+  const Y = relLuminance(rgb);
+  return Y <= 0.008856 ? 903.3 * Y : 116 * Math.pow(Y, 1 / 3) - 16;
+}
+
+function contrastRatio(a: [number, number, number], b: [number, number, number]): number {
+  const La = relLuminance(a);
+  const Lb = relLuminance(b);
+  const [lighter, darker] = La >= Lb ? [La, Lb] : [Lb, La];
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 test.describe("Surface", () => {
-  test("hat keinen Rahmen und keinen Schatten", async ({ page }) => {
+  test("raised hat eine Haarlinie und eine vom Grund verschiedene Flaeche", async ({ page }) => {
     await page.goto("/design-system");
-    const el = page.getByTestId("surface-flat");
+    const el = page.getByTestId("surface-raised");
     await expect(el).toBeVisible();
     const s = await el.evaluate((n) => {
       const c = getComputedStyle(n);
-      return { border: c.borderTopWidth, shadow: c.boxShadow, radius: c.borderTopLeftRadius };
+      return {
+        border: c.borderTopWidth,
+        borderColor: c.borderTopColor,
+        bg: c.backgroundColor,
+        radius: c.borderTopLeftRadius,
+      };
     });
-    expect(s.border).toBe("0px");
-    expect(s.shadow).toBe("none");
+    expect(s.border).not.toBe("0px");
+    expect(s.bg).not.toBe("rgba(0, 0, 0, 0)");
+    expect(s.bg).not.toBe("transparent");
     expect(s.radius).toBe("11px");
   });
 
-  test("flat, raised und input sind unterschiedlich hell", async ({ page }) => {
+  test("overlay hat einen Schatten und keine Haarlinie", async ({ page }) => {
     await page.goto("/design-system");
-    const bg = async (id: string) =>
-      page.getByTestId(id).evaluate((n) => getComputedStyle(n).backgroundColor);
-    const flat = await bg("surface-flat");
-    const raised = await bg("surface-raised");
-    const input = await bg("surface-input");
-    expect(new Set([flat, raised, input]).size).toBe(3);
+    const el = page.getByTestId("surface-overlay");
+    const s = await el.evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { shadow: c.boxShadow, border: c.borderTopWidth };
+    });
+    expect(s.shadow).not.toBe("none");
+    expect(s.border).toBe("0px");
   });
 
-  test("overlay ist die einzige Stufe mit Schatten", async ({ page }) => {
-    await page.goto("/design-system");
-    const shadow = await page
-      .getByTestId("surface-overlay")
-      .evaluate((n) => getComputedStyle(n).boxShadow);
-    expect(shadow).not.toBe("none");
-  });
+  // Die Assertion, die den urspruenglichen Fehler gefangen haette: die
+  // vierstufige Leiter mass ΔL* ≈ 3 zwischen Nachbarstufen, weit unter der
+  // Wahrnehmungsgrenze fuer grosse Flaechen (ΔL* ≥ 8). Schlaegt fehl, wenn
+  // jemand --raised wieder naeher an --ground rueckt.
+  for (const theme of ["dark", "light"] as const) {
+    test(`ΔL*(--raised, --ground) ist mindestens 8 im ${theme} Mode`, async ({ page }) => {
+      await gotoWithTheme(page, theme, "/design-system");
+      const [groundCss, raisedCss] = await page.evaluate(() => {
+        const s = getComputedStyle(document.documentElement);
+        return [s.getPropertyValue("--ground").trim(), s.getPropertyValue("--raised").trim()];
+      });
+      const hexToRgb = (hex: string): [number, number, number] => {
+        const h = hex.replace("#", "");
+        return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+      };
+      const deltaL = Math.abs(lStar(hexToRgb(raisedCss)) - lStar(hexToRgb(groundCss)));
+      expect(deltaL, `${theme}: ground=${groundCss} raised=${raisedCss}`).toBeGreaterThanOrEqual(8);
+    });
+  }
+});
+
+test.describe("Kontrast", () => {
+  for (const theme of ["dark", "light"] as const) {
+    test(`--ink-3 erreicht 4.5:1 gegen --ground im ${theme} Mode`, async ({ page }) => {
+      await gotoWithTheme(page, theme, "/design-system");
+      const [groundCss, ink3Css] = await page.evaluate(() => {
+        const s = getComputedStyle(document.documentElement);
+        return [s.getPropertyValue("--ground").trim(), s.getPropertyValue("--ink-3").trim()];
+      });
+      const hexToRgb = (hex: string): [number, number, number] => {
+        const h = hex.replace("#", "");
+        return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+      };
+      const ratio = contrastRatio(hexToRgb(ink3Css), hexToRgb(groundCss));
+      expect(ratio, `${theme}: ground=${groundCss} ink-3=${ink3Css}`).toBeGreaterThanOrEqual(4.5);
+    });
+  }
 });
 
 test.describe("Button", () => {
