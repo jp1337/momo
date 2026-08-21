@@ -96,3 +96,64 @@ test.describe("Dashboard", () => {
     expect(errors.filter((e) => !e.includes("hydrat"))).toHaveLength(0);
   });
 });
+
+test.describe("Aufwandsstufen", () => {
+  test("die Schriftgroesse folgt der geschaetzten Dauer", async ({
+    page,
+    request,
+  }) => {
+    // estimatedMinutes is an enum, not a free integer: 5 | 15 | 30 | 60 | null
+    // (lib/validators/index.ts) — 5 and 15 are the only values the dashboard's
+    // Quick Wins query (lte(tasks.estimatedMinutes, 15)) can ever surface, so
+    // only "small" and "medium" are exercised here. "large" (60 min, >30)
+    // is untested on this page by construction and will be covered once
+    // /tasks is migrated to the same token system in a later plan.
+    const a = await createTask(request, `Klein ${Date.now()}`, {
+      estimatedMinutes: 5,
+    });
+    const b = await createTask(request, `Mittel ${Date.now()}`, {
+      estimatedMinutes: 15,
+    });
+
+    try {
+      await page.goto("/dashboard");
+      const rows = page.getByTestId("quick-win-row");
+      const n = await rows.count();
+      test.skip(n === 0, "keine Quick Wins im Testdatensatz");
+
+      const seen = new Map<string, number>();
+      for (let i = 0; i < n; i++) {
+        const row = rows.nth(i);
+        const effort = await row.getAttribute("data-effort");
+        const size = await row
+          .getByTestId("quick-win-title")
+          .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+        if (effort) seen.set(effort, size);
+      }
+      // Groessere Stufe → groessere Schrift, und nie unter 14px.
+      for (const size of seen.values()) expect(size).toBeGreaterThanOrEqual(14);
+      if (seen.has("small") && seen.has("medium")) {
+        expect(seen.get("medium")!).toBeGreaterThan(seen.get("small")!);
+      }
+      if (seen.has("medium") && seen.has("large")) {
+        expect(seen.get("large")!).toBeGreaterThan(seen.get("medium")!);
+      }
+    } finally {
+      await deleteTask(request, a.id);
+      await deleteTask(request, b.id);
+    }
+  });
+
+  test("die Liste hat keine Kaesten", async ({ page }) => {
+    await page.goto("/dashboard");
+    const rows = page.getByTestId("quick-win-row");
+    const n = await rows.count();
+    test.skip(n === 0, "keine Quick Wins im Testdatensatz");
+    const s = await rows.first().evaluate((el) => {
+      const c = getComputedStyle(el);
+      return { bg: c.backgroundColor, radius: c.borderTopLeftRadius };
+    });
+    expect(["rgba(0, 0, 0, 0)", "transparent"]).toContain(s.bg);
+    expect(s.radius).toBe("0px");
+  });
+});
