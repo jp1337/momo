@@ -15,6 +15,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "check:i18n": "node scripts/check-i18n.mjs",
+    "check:design": "node scripts/check-design-tokens.mjs",
     "ncu": "ncu",
     "ncu:update": "ncu -u && npm install"
   },

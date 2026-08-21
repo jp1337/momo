@@ -1,0 +1,607 @@
+{
+  "app/(app)/admin/page.tsx": {
+    "color": 9,
+    "radius": 17,
+    "inline": 91
+  },
+  "app/(app)/api-keys/page.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "app/(app)/dashboard/loading.tsx": {
+    "color": 0,
+    "radius": 7,
+    "inline": 14
+  },
+  "app/(app)/dashboard/page.tsx": {
+    "color": 1,
+    "radius": 9,
+    "inline": 30
+  },
+  "app/(app)/layout.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "app/(app)/progress/page.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "app/(app)/quick/page.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 4
+  },
+  "app/(app)/settings/data/page.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 1
+  },
+  "app/(app)/settings/integrations/page.tsx": {
+    "color": 0,
+    "radius": 2,
+    "inline": 5
+  },
+  "app/(app)/settings/notifications/page.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 3
+  },
+  "app/(app)/settings/security/page.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 5
+  },
+  "app/(app)/stats/page.tsx": {
+    "color": 1,
+    "radius": 7,
+    "inline": 55
+  },
+  "app/(app)/tasks/loading.tsx": {
+    "color": 0,
+    "radius": 4,
+    "inline": 7
+  },
+  "app/(app)/tasks/page.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "app/(app)/topics/[id]/page.tsx": {
+    "color": 0,
+    "radius": 2,
+    "inline": 6
+  },
+  "app/(app)/topics/loading.tsx": {
+    "color": 0,
+    "radius": 4,
+    "inline": 7
+  },
+  "app/(app)/topics/page.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "app/(app)/wishlist/loading.tsx": {
+    "color": 0,
+    "radius": 5,
+    "inline": 12
+  },
+  "app/(app)/wishlist/page.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "app/(auth)/layout.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "app/(auth)/login/2fa/page.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 7
+  },
+  "app/(auth)/login/page.tsx": {
+    "color": 3,
+    "radius": 3,
+    "inline": 16
+  },
+  "app/(docs)/layout.tsx": {
+    "color": 2,
+    "radius": 0,
+    "inline": 1
+  },
+  "app/(legal)/datenschutz/page.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 80
+  },
+  "app/(legal)/impressum/page.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 15
+  },
+  "app/(legal)/layout.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "app/focus/layout.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "app/layout.tsx": {
+    "color": 3,
+    "radius": 0,
+    "inline": 0
+  },
+  "app/onboarding/layout.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "app/onboarding/page.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "app/page.tsx": {
+    "color": 27,
+    "radius": 0,
+    "inline": 30
+  },
+  "app/setup/2fa/layout.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "app/setup/2fa/page.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 4
+  },
+  "components/achievements/achievement-card.tsx": {
+    "color": 2,
+    "radius": 0,
+    "inline": 15
+  },
+  "components/animations/achievement-toast.tsx": {
+    "color": 2,
+    "radius": 0,
+    "inline": 15
+  },
+  "components/animations/confetti.tsx": {
+    "color": 4,
+    "radius": 0,
+    "inline": 0
+  },
+  "components/animations/emotional-closure.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "components/animations/level-up-overlay.tsx": {
+    "color": 1,
+    "radius": 1,
+    "inline": 6
+  },
+  "components/api-keys/api-keys-view.tsx": {
+    "color": 6,
+    "radius": 12,
+    "inline": 33
+  },
+  "components/auth/forced-totp-setup.tsx": {
+    "color": 1,
+    "radius": 1,
+    "inline": 3
+  },
+  "components/auth/passkey-login-button.tsx": {
+    "color": 2,
+    "radius": 1,
+    "inline": 2
+  },
+  "components/auth/passkey-second-factor-button.tsx": {
+    "color": 1,
+    "radius": 1,
+    "inline": 2
+  },
+  "components/auth/totp-verify-form.tsx": {
+    "color": 2,
+    "radius": 2,
+    "inline": 4
+  },
+  "components/dashboard/daily-quest-card.tsx": {
+    "color": 4,
+    "radius": 4,
+    "inline": 20
+  },
+  "components/dashboard/energy-checkin-card.tsx": {
+    "color": 0,
+    "radius": 6,
+    "inline": 13
+  },
+  "components/dashboard/quick-wins-section.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 7
+  },
+  "components/focus/focus-mode-view.tsx": {
+    "color": 10,
+    "radius": 0,
+    "inline": 53
+  },
+  "components/habits/contribution-grid.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 8
+  },
+  "components/habits/habit-card.tsx": {
+    "color": 0,
+    "radius": 4,
+    "inline": 15
+  },
+  "components/habits/year-selector.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "components/layout/coin-counter.tsx": {
+    "color": 2,
+    "radius": 1,
+    "inline": 1
+  },
+  "components/layout/level-badge.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "components/layout/mobile-nav.tsx": {
+    "color": 1,
+    "radius": 0,
+    "inline": 3
+  },
+  "components/layout/navbar.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "components/layout/quick-add-modal.tsx": {
+    "color": 3,
+    "radius": 0,
+    "inline": 19
+  },
+  "components/layout/sidebar.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 3
+  },
+  "components/layout/user-menu.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 9
+  },
+  "components/onboarding/onboarding-progress.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "components/onboarding/onboarding-wizard.tsx": {
+    "color": 1,
+    "radius": 2,
+    "inline": 8
+  },
+  "components/onboarding/steps/add-tasks-step.tsx": {
+    "color": 1,
+    "radius": 4,
+    "inline": 14
+  },
+  "components/onboarding/steps/completion-step.tsx": {
+    "color": 1,
+    "radius": 1,
+    "inline": 8
+  },
+  "components/onboarding/steps/create-topic-step.tsx": {
+    "color": 9,
+    "radius": 3,
+    "inline": 7
+  },
+  "components/onboarding/steps/notification-step.tsx": {
+    "color": 1,
+    "radius": 4,
+    "inline": 13
+  },
+  "components/onboarding/steps/welcome-step.tsx": {
+    "color": 0,
+    "radius": 2,
+    "inline": 7
+  },
+  "components/progress/progress-tabs.tsx": {
+    "color": 0,
+    "radius": 10,
+    "inline": 89
+  },
+  "components/quick/five-minute-view.tsx": {
+    "color": 0,
+    "radius": 2,
+    "inline": 10
+  },
+  "components/settings/active-sessions.tsx": {
+    "color": 5,
+    "radius": 0,
+    "inline": 16
+  },
+  "components/settings/backup-codes-display.tsx": {
+    "color": 0,
+    "radius": 3,
+    "inline": 5
+  },
+  "components/settings/calendar-feed-section.tsx": {
+    "color": 5,
+    "radius": 4,
+    "inline": 11
+  },
+  "components/settings/delete-account.tsx": {
+    "color": 1,
+    "radius": 5,
+    "inline": 10
+  },
+  "components/settings/emotional-closure-settings.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 2
+  },
+  "components/settings/language-switcher.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 1
+  },
+  "components/settings/linked-accounts.tsx": {
+    "color": 7,
+    "radius": 4,
+    "inline": 7
+  },
+  "components/settings/login-notification-settings.tsx": {
+    "color": 2,
+    "radius": 0,
+    "inline": 5
+  },
+  "components/settings/morning-briefing-settings.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 6
+  },
+  "components/settings/notification-channels.tsx": {
+    "color": 19,
+    "radius": 29,
+    "inline": 67
+  },
+  "components/settings/notification-history.tsx": {
+    "color": 1,
+    "radius": 4,
+    "inline": 24
+  },
+  "components/settings/notification-settings.tsx": {
+    "color": 1,
+    "radius": 10,
+    "inline": 32
+  },
+  "components/settings/passkeys-section.tsx": {
+    "color": 6,
+    "radius": 3,
+    "inline": 15
+  },
+  "components/settings/profile-settings.tsx": {
+    "color": 2,
+    "radius": 6,
+    "inline": 22
+  },
+  "components/settings/push-devices-section.tsx": {
+    "color": 0,
+    "radius": 5,
+    "inline": 23
+  },
+  "components/settings/quest-settings.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 4
+  },
+  "components/settings/security-section.tsx": {
+    "color": 8,
+    "radius": 7,
+    "inline": 16
+  },
+  "components/settings/settings-nav.tsx": {
+    "color": 0,
+    "radius": 2,
+    "inline": 5
+  },
+  "components/settings/settings-section.tsx": {
+    "color": 0,
+    "radius": 2,
+    "inline": 7
+  },
+  "components/settings/timezone-settings.tsx": {
+    "color": 0,
+    "radius": 2,
+    "inline": 7
+  },
+  "components/settings/totp-setup-wizard.tsx": {
+    "color": 4,
+    "radius": 5,
+    "inline": 14
+  },
+  "components/settings/vacation-mode-settings.tsx": {
+    "color": 0,
+    "radius": 4,
+    "inline": 9
+  },
+  "components/settings/webhooks.tsx": {
+    "color": 15,
+    "radius": 0,
+    "inline": 36
+  },
+  "components/shared/search-filter-bar.tsx": {
+    "color": 0,
+    "radius": 2,
+    "inline": 9
+  },
+  "components/stats/energy-week-block.tsx": {
+    "color": 1,
+    "radius": 3,
+    "inline": 20
+  },
+  "components/stats/streak-sparkline.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 4
+  },
+  "components/stats/weekday-chart.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 8
+  },
+  "components/tasks/bulk-action-bar.tsx": {
+    "color": 0,
+    "radius": 6,
+    "inline": 12
+  },
+  "components/tasks/due-today-banner.tsx": {
+    "color": 4,
+    "radius": 1,
+    "inline": 3
+  },
+  "components/tasks/task-breakdown-modal.tsx": {
+    "color": 3,
+    "radius": 4,
+    "inline": 8
+  },
+  "components/tasks/task-form.tsx": {
+    "color": 0,
+    "radius": 5,
+    "inline": 27
+  },
+  "components/tasks/task-item.tsx": {
+    "color": 1,
+    "radius": 9,
+    "inline": 35
+  },
+  "components/tasks/task-list.tsx": {
+    "color": 0,
+    "radius": 7,
+    "inline": 39
+  },
+  "components/theme-toggle.tsx": {
+    "color": 0,
+    "radius": 2,
+    "inline": 2
+  },
+  "components/topics/icon-picker.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 7
+  },
+  "components/topics/sortable-task-item.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "components/topics/sortable-task-list.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "components/topics/template-picker.tsx": {
+    "color": 6,
+    "radius": 5,
+    "inline": 15
+  },
+  "components/topics/topic-card.tsx": {
+    "color": 0,
+    "radius": 7,
+    "inline": 21
+  },
+  "components/topics/topic-detail-actions.tsx": {
+    "color": 1,
+    "radius": 2,
+    "inline": 4
+  },
+  "components/topics/topic-detail-view.tsx": {
+    "color": 0,
+    "radius": 4,
+    "inline": 15
+  },
+  "components/topics/topic-form.tsx": {
+    "color": 9,
+    "radius": 3,
+    "inline": 17
+  },
+  "components/topics/topics-grid.tsx": {
+    "color": 1,
+    "radius": 7,
+    "inline": 19
+  },
+  "components/ui/badge.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "components/ui/card.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "components/ui/checkbox.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 2
+  },
+  "components/ui/confirm-button.tsx": {
+    "color": 3,
+    "radius": 0,
+    "inline": 4
+  },
+  "components/ui/dialog.tsx": {
+    "color": 0,
+    "radius": 2,
+    "inline": 4
+  },
+  "components/ui/input.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "components/ui/label.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1
+  },
+  "components/ui/tooltip.tsx": {
+    "color": 0,
+    "radius": 1,
+    "inline": 2
+  },
+  "components/wishlist/budget-bar.tsx": {
+    "color": 0,
+    "radius": 5,
+    "inline": 16
+  },
+  "components/wishlist/wishlist-card.tsx": {
+    "color": 0,
+    "radius": 8,
+    "inline": 37
+  },
+  "components/wishlist/wishlist-form.tsx": {
+    "color": 2,
+    "radius": 3,
+    "inline": 10
+  },
+  "components/wishlist/wishlist-view.tsx": {
+    "color": 0,
+    "radius": 4,
+    "inline": 23
+  }
+}

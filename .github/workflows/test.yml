@@ -141,6 +141,11 @@ jobs:
       - name: Check i18n completeness
         run: npm run check:i18n
 
+      - name: Check design-token ratchet
+        run: |
+          npm run check:design -- --selftest
+          npm run check:design
+
       - name: Run migrations on test DB
         run: npx drizzle-kit migrate
         env:
