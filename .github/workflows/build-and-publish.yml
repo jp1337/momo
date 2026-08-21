@@ -1,6 +1,17 @@
 name: Build & Publish
 
-# Triggers on every push to main and on version tags (e.g. v1.2.3)
+# Triggers on every push to main and on version tags (e.g. v1.2.3).
+#
+# This workflow gates *publishing*, not merging, and it cannot gate merging: it
+# must never gain a pull_request trigger (see the security note on the deploy
+# job below). The merge gate is test.yml — "PR Gate" — which runs the same lint
+# and build commands on a hosted runner and is what the required status checks
+# on main point at.
+#
+# The lint/build/test jobs here are therefore not redundant with that workflow.
+# They still guard the tag builds and any direct push to main that bypasses a
+# pull request, which is the only path by which unchecked code could reach the
+# published image.
 on:
   push:
     branches: [main]
@@ -291,7 +302,11 @@ jobs:
   # are now gated by branch protection). NEVER add a `pull_request` or
   # `pull_request_target` trigger to this workflow, or to any job that runs on
   # `self-hosted` — that turns any fork PR into arbitrary code execution on the
-  # intranet runner.
+  # intranet runner. Splitting the deploy job into its own workflow would not
+  # make it safe either; the trigger is the hazard, not the file boundary.
+  #
+  # If you came here to make lint or build run on pull requests: they already do,
+  # in test.yml ("PR Gate"), on a hosted runner. Add the check there, not here.
   deploy:
     needs: [merge]
     if: github.ref == 'refs/heads/main'

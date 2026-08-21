@@ -1,5 +1,20 @@
-name: Tests & Coverage
+name: PR Gate
 
+# This is the workflow that gates merging: it is the only one that runs on
+# pull_request, so its jobs are the ones to list as required status checks on
+# main.
+#
+# The lint and build jobs deliberately duplicate the equivalent jobs in
+# build-and-publish.yml. That is not redundancy to clean up — build-and-publish
+# gates *publishing* an image and cannot be given a pull_request trigger,
+# because its deploy job runs on a self-hosted intranet runner in a public repo
+# (see the security note there). So the same commands need a second home on a
+# hosted runner to gate *merging*.
+#
+# Everything here must stay safe to run on an untrusted fork PR: hosted runners
+# only, read-only permissions, and no secret that matters. The one secret in use
+# is CODECOV_TOKEN, with fail_ci_if_error: false, so a fork without it still
+# passes.
 on:
   push:
     branches: [main]
@@ -7,6 +22,80 @@ on:
     branches: [main]
 
 jobs:
+  # Typecheck and lint. Mirrors the lint job in build-and-publish.yml, including
+  # running both in parallel and summing the exit codes so a failure in either
+  # one fails the job.
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Cache node_modules
+        id: nm-cache
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.nm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Typecheck & Lint (parallel)
+        run: |
+          npx tsc --noEmit & PID_TSC=$!
+          npm run lint      & PID_LINT=$!
+          CODE=0
+          wait $PID_TSC  || CODE=$?
+          wait $PID_LINT || CODE=$((CODE + $?))
+          exit $CODE
+
+  # The job that would have caught the magic-string v1 override: it broke
+  # `next build` while all 1728 tests stayed green. A test suite does not
+  # exercise the build toolchain, so the build needs its own gate.
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Cache node_modules
+        id: nm-cache
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.nm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      # lib/env.ts skips server-env validation when NEXT_PHASE is
+      # phase-production-build, so these are not strictly needed today. They are
+      # passed anyway, inline and never as `env:`, exactly as the Dockerfile
+      # does — so this job keeps working if that bypass is ever tightened, and
+      # so it fails for the same reasons the real image build would.
+      - name: Production build
+        run: |
+          AUTH_SECRET="build-time-placeholder-not-used-in-production" \
+          DATABASE_URL="postgresql://momo:password@localhost:5432/momo" \
+          npm run build
+
   test:
     runs-on: ubuntu-latest
     permissions:
