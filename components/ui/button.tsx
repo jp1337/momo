@@ -12,24 +12,26 @@ import { cn } from "@/lib/utils";
 export interface ButtonProps
   extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, keyof HTMLMotionProps<"button">>,
     HTMLMotionProps<"button"> {
-  variant?: "primary" | "secondary" | "ghost" | "danger" | "success" | "outline";
+  variant?: "primary" | "quiet" | "danger";
   size?: "sm" | "md" | "lg" | "icon";
   asChild?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "secondary", size = "md", asChild = false, style, children, ...props }, ref) => {
+  ({ className, variant = "quiet", size = "md", asChild = false, style, children, ...props }, ref) => {
     const Comp = (asChild ? Slot : motion.button) as typeof motion.button;
 
-    const baseStyles = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+    const baseStyles =
+      "inline-flex items-center justify-center gap-2 whitespace-nowrap border-0 " +
+      "rounded-[var(--radius-sm)] text-sm font-semibold transition-colors duration-150 " +
+      "disabled:opacity-50 disabled:pointer-events-none cursor-pointer outline-none";
 
+    // primary traegt Amber als Textfarbe, nicht als Flaeche: Amber ist Licht.
+    // Es gibt genau eine primary-Handlung pro Seite.
     const variantStyles = {
-      primary: "bg-[var(--accent-amber)] text-[var(--bg-primary)] hover:opacity-90",
-      secondary: "bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border)] hover:border-[var(--text-muted)]",
-      ghost: "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]",
-      danger: "bg-[var(--accent-red)] text-white hover:opacity-90",
-      success: "bg-[var(--accent-green)] text-white hover:opacity-90",
-      outline: "bg-transparent border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]",
+      primary: "bg-transparent text-[var(--amber)] hover:bg-[var(--s2)]",
+      quiet: "bg-[var(--s2)] text-[var(--ink)] hover:bg-[var(--s3)]",
+      danger: "bg-transparent text-[var(--danger)] hover:bg-[var(--s2)]",
     };
 
     const sizeStyles = {

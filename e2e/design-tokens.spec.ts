@@ -44,12 +44,12 @@ async function readTokens(page: Page) {
  * zu laufen — es gibt kein "warte auf das Hydrations-Rennen" mehr, weil es
  * kein Rennen mehr gibt.
  */
-async function gotoWithTheme(page: Page, theme: "dark" | "light") {
+async function gotoWithTheme(page: Page, theme: "dark" | "light", path = "/dashboard") {
   await page.emulateMedia({ colorScheme: theme });
   await page.addInitScript((t: string) => {
     document.documentElement.setAttribute("data-theme", t);
   }, theme);
-  await page.goto("/dashboard");
+  await page.goto(path);
 }
 
 test.describe("Design-Tokens", () => {
@@ -172,5 +172,30 @@ test.describe("Surface", () => {
       .getByTestId("surface-overlay")
       .evaluate((n) => getComputedStyle(n).boxShadow);
     expect(shadow).not.toBe("none");
+  });
+});
+
+test.describe("Button", () => {
+  test("primary traegt Amber als Text, nicht als Flaeche", async ({ page }) => {
+    // Amber selbst ist theme-abhaengig (#f0a500 dark vs. #a86f00 light) —
+    // gotoWithTheme fixiert das Theme vor der Navigation, siehe Kommentar oben.
+    await gotoWithTheme(page, "dark", "/design-system");
+    const s = await page.getByTestId("btn-primary").evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { bg: c.backgroundColor, color: c.color, border: c.borderTopWidth };
+    });
+    // Amber #f0a500 = rgb(240, 165, 0) — als Textfarbe, nicht als Hintergrund
+    expect(s.color).toBe("rgb(240, 165, 0)");
+    expect(s.bg).not.toBe("rgb(240, 165, 0)");
+    expect(s.border).toBe("0px");
+  });
+
+  test("es gibt genau drei Varianten", async ({ page }) => {
+    await page.goto("/design-system");
+    await expect(page.getByTestId("btn-primary")).toBeVisible();
+    await expect(page.getByTestId("btn-quiet")).toBeVisible();
+    await expect(page.getByTestId("btn-danger")).toBeVisible();
+    await expect(page.getByTestId("btn-success")).toHaveCount(0);
+    await expect(page.getByTestId("btn-outline")).toHaveCount(0);
   });
 });

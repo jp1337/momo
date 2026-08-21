@@ -8,30 +8,23 @@ import { cn } from "@/lib/utils";
  */
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "secondary" | "success" | "danger" | "amber" | "outline";
+  variant?: "neutral" | "done" | "danger" | "amber";
 }
 
-function Badge({ className, variant = "default", style, children, ...props }: BadgeProps) {
-  const baseStyles = "inline-flex items-center rounded-[var(--radius-sm)] border px-2 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+function Badge({ className, variant = "neutral", style, children, ...props }: BadgeProps) {
+  const baseStyles =
+    "inline-flex items-center rounded-[var(--radius-sm)] border-0 px-2 py-0.5 text-xs font-medium " +
+    "transition-colors font-ui outline-none";
 
   const variantStyles = {
-    default: "border-transparent bg-[var(--bg-elevated)] text-[var(--text-primary)]",
-    secondary: "border-transparent bg-[var(--bg-elevated)] text-[var(--text-muted)]",
-    success: "border-transparent bg-[color-mix(in_srgb,var(--accent-green)_15%,transparent)] text-[var(--accent-green)] border-[color-mix(in_srgb,var(--accent-green)_25%,transparent)]",
-    danger: "border-transparent bg-[color-mix(in_srgb,var(--accent-red)_15%,transparent)] text-[var(--accent-red)] border-[color-mix(in_srgb,var(--accent-red)_25%,transparent)]",
-    amber: "border-transparent bg-[color-mix(in_srgb,var(--accent-amber)_15%,transparent)] text-[var(--accent-amber)] border-[color-mix(in_srgb,var(--accent-amber)_25%,transparent)]",
-    outline: "text-[var(--text-primary)] border-[var(--border)]",
+    neutral: "bg-[var(--s2)] text-[var(--ink-2)]",
+    done: "bg-[color-mix(in_srgb,var(--done)_15%,transparent)] text-[var(--done)]",
+    danger: "bg-[color-mix(in_srgb,var(--danger)_15%,transparent)] text-[var(--danger)]",
+    amber: "bg-[color-mix(in_srgb,var(--amber)_15%,transparent)] text-[var(--amber)]",
   };
 
   return (
-    <div
-      className={cn(baseStyles, variantStyles[variant], className)}
-      style={{
-        fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-        ...style,
-      }}
-      {...props}
-    >
+    <div className={cn(baseStyles, variantStyles[variant], className)} style={style} {...props}>
       {children}
     </div>
   );

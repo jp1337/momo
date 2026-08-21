@@ -24,12 +24,9 @@ export default function DesignSystemPage() {
       <section className="space-y-6">
         <h2 className="text-2xl font-semibold border-b border-[var(--border)] pb-2">Buttons</h2>
         <div className="flex flex-wrap gap-4 items-center">
-          <Button variant="primary">Primary</Button>
-          <Button variant="secondary">Secondary</Button>
-          <Button variant="outline">Outline</Button>
-          <Button variant="ghost">Ghost</Button>
-          <Button variant="success">Success</Button>
-          <Button variant="danger">Danger</Button>
+          <Button data-testid="btn-primary" variant="primary">jetzt anfangen</Button>
+          <Button data-testid="btn-quiet" variant="quiet">aufteilen</Button>
+          <Button data-testid="btn-danger" variant="danger">löschen</Button>
         </div>
         <div className="flex flex-wrap gap-4 items-center">
           <Button size="sm">Small</Button>
@@ -42,12 +39,10 @@ export default function DesignSystemPage() {
       <section className="space-y-6">
         <h2 className="text-2xl font-semibold border-b border-[var(--border)] pb-2">Badges</h2>
         <div className="flex flex-wrap gap-4 items-center">
-          <Badge>Default</Badge>
-          <Badge variant="secondary">Secondary</Badge>
+          <Badge>Neutral</Badge>
           <Badge variant="amber">Amber</Badge>
-          <Badge variant="success">Success</Badge>
+          <Badge variant="done">Done</Badge>
           <Badge variant="danger">Danger</Badge>
-          <Badge variant="outline">Outline</Badge>
         </div>
       </section>
 
