@@ -741,7 +741,11 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/Error" },
-            example: { error: "Forbidden: read-only key cannot perform write operations" },
+            example: {
+              error: "Forbidden",
+              message: "This API key is read-only. Use a read-write key to modify data.",
+              code: "READONLY_KEY",
+            },
           },
         },
       },
