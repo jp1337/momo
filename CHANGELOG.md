@@ -78,9 +78,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Zwei von Renovate angebotene Updates wurden getestet und liegen gelassen — Begründung und
 Wiedervorlage-Bedingung stehen in `ROADMAP.md` bzw. in den `renovate.json`-Regeln:
 
-- **`magic-string` v1**: bricht den PWA-Build (`MagicString is not a constructor`), weil
-  workbox-builds Rollup-Plugins den Default-Export konstruieren. **Alle 1728 Tests blieben dabei
-  grün** — nur `next build` fängt es. Major in `renovate.json` deaktiviert.
+- **`magic-string` v1**: bricht den PWA-Build (`MagicString is not a constructor`). Die Ursache ist
+  nicht die Version, sondern das Modulformat: 1.x ist **ESM-only** (kein CommonJS-Build mehr), und
+  es landet über zwei Rollup-Plugins von `workbox-build` im Build, die beide CommonJS sind und
+  beide selbst `magic-string ^0.30` deklarieren. Ihr `require()` bekommt dadurch ein
+  Namespace-Objekt statt der Klasse. Erwähnenswert ist, was der Override dabei tat: npm-`overrides`
+  ignorieren die Ranges der Abhängigen, hier wurde also eine Version erzwungen, die **keiner der
+  beiden Konsumenten für sich beansprucht**. **Alle 1728 Tests blieben grün** — nur `next build`
+  fängt es. Major in `renovate.json` deaktiviert, mit der Wiedervorlage-Bedingung an den Plugins
+  statt an magic-string.
 - **TypeScript 7**: `tsc --noEmit` und `next build` laufen sauber, aber `typescript-eslint` bricht
   mit „does not support TS 7.0" ab und tötet `npm run lint`. Der Guard ist ein unbedingtes `throw`
   bei Major ≥ 7; es gibt kein `typescript-eslint` v9, und auch die Canary deklariert noch
