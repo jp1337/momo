@@ -351,16 +351,23 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
   bereit; die ist für 7.1 angekündigt. Wiedervorlage, sobald `typescript-eslint` TS 7 unterstützt —
   die tsconfig des Hauptprojekts ist bereits 7-tauglich (`moduleResolution: bundler`, kein
   `baseUrl`, kein `downlevelIteration`, kein `target: es5`).
-- **ESLint 10 ist ebenfalls blockiert, und zwar an einem Paket ohne Nachfolger.** eslint 10.8.1
-  installiert sauber — `typescript-eslint` 8.67 und `eslint-plugin-react-hooks` 7.1.1 deklarieren
-  beide `^10.0.0` —, aber `npm run lint` stirbt mit
-  `TypeError: Error while loading rule 'react/display-name': contextOrFilename.getFilename is not a function`.
-  ESLint 10 hat das deprecated `context.getFilename()` entfernt, `eslint-plugin-react` ruft es noch.
-  Der Haken: **7.37.5 ist die neueste Version dieses Plugins**, und ihr Peer-Range endet bei `^9.7`.
-  Es gibt also nichts, worauf man overriden könnte — der Fix muss upstream passieren, entweder in
-  `eslint-plugin-react` oder indem `eslint-config-next` es fallen lässt. Reingezogen wird es über
-  `eslint-config-next@16.3.1`, das an `next` 16.3.1 gekoppelt ist. Wiedervorlage bei jedem
-  next-Minor.
+  Der Guard in `typescript-eslint/dist/index.js` ist ein unbedingtes `throw` bei
+  `ts.versionMajorMinor >= 7` — keine Env-Var, kein Flag, und auch die Canary
+  (`8.67.1-alpha.24`) deklariert noch `typescript >=4.8.4 <6.1.0`. Es gibt kein `typescript-eslint`
+  v9. Der von Microsoft dokumentierte Side-by-side-Weg über `@typescript/typescript6` (existiert,
+  6.0.2) wurde ebenfalls probiert: npm-`overrides` auf die acht Pakete, die `typescript` als *Peer*
+  deklarieren, erzeugen keine verschachtelte Installation — `require("typescript")` landet weiter
+  auf dem Root-TS-7 und der Throw feuert. Umgekehrt aufzusetzen (TS 6 als `typescript`, TS 7 unter
+  anderem Namen) würde `next build` mit TS 6 typprüfen und damit den Zweck aufheben. Wiedervorlage
+  an `typescript-eslint` Issue #10940, das TS >= 7.1 verfolgt.
+- **`eslint-plugin-react` 7.37.5 ruft weiter das entfernte `context.getFilename()`** — nur trifft
+  es uns nicht mehr. Der Aufruf sitzt in `detectReactVersion`, und der läuft ausschließlich, wenn
+  `settings.react.version` auf `"detect"` steht, was `eslint-config-next` so ausliefert.
+  `eslint.config.mjs` setzt die Version jetzt explizit (aus `react/package.json` gelesen), damit
+  die Erkennung nie anläuft. 7.37.5 ist die neueste Version des Plugins und deklariert nur bis
+  `eslint ^9.7` — dieser Workaround kann also wegfallen, sobald das Plugin nachzieht oder
+  `eslint-config-next` es fallen lässt. Bis dahin ist die explizite Version ohnehin die schnellere
+  Variante: kein Dateisystem-Probe pro geprüfter Datei.
 - **Automerge ist praktisch ungesichert — und ein Gegenbeispiel liegt jetzt vor.** Drei Fakten, die
   zusammen das Problem ergeben: (1) `build-and-publish.yml`, das `lint` und `next build` fährt,
   triggert nur auf `push: branches: [main]` — also **nach** dem Merge, nicht davor; bei einem PR

@@ -22,14 +22,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **CI-Tests laufen jetzt gegen Postgres 18** statt 16. `build-and-publish.yml` und
   `docker-compose.yml` waren längst auf 18-alpine; jeder Test validierte gegen einen Major, auf dem
   die App nicht läuft.
-- **Docs-Build von Ruby 3.1 auf 3.4.** 3.1 ist seit März 2025 EOL. Jekyll löst innerhalb von
-  `~> 4.3` auf 4.4.1 auf, das `base64` und `csv` selbst als Runtime-Deps deklariert — die
-  Ruby-3.4-Default-Gem-Extraktion trifft die Seite also nicht. Verifiziert mit echtem Build im
-  `ruby:3.4`-Container.
+- **Docs-Build von Ruby 3.1 auf 4.0.** 3.1 ist seit März 2025 EOL. Der Sprung überspringt 3.4
+  bewusst: Jekyll löst innerhalb von `~> 4.3` auf 4.4.1 auf, das `base64` und `csv` selbst als
+  Runtime-Deps deklariert, also trifft die Default-Gem-Extraktion von Ruby 3.4 die Seite gar nicht.
+  Verifiziert mit echtem Build in beiden Containern — `ruby:3.4` und `ruby:4.0.6` bauen die Seite
+  gleichermaßen, und der `Gemfile.lock` fällt unter Ruby 4 **byte-identisch** aus.
 - **`@types/node` von ^25 auf ^24** — bewusst ein Downgrade gegen Renovates Vorschlag ^26. Die
   Typen sollen die Runtime beschreiben, nicht ihr vorauslaufen; vorher stand ^25 über einem
   node:22-alpine-Image. Jetzt lesen beide Projekte gleich: Runtime 24, Typen ^24. In
   `renovate.json` mit `allowedVersions: "^24"` festgehalten.
+- **ESLint 9 → 10** in beiden npm-Projekten. Möglich geworden durch eine Zeile Config statt eines
+  Downgrades: `eslint-config-next` liefert `settings.react.version = "detect"` aus, was
+  `eslint-plugin-react` dazu bringt, pro geprüfter Datei `context.getFilename()` aufzurufen — eine
+  Methode, die ESLint 10 entfernt hat. `eslint.config.mjs` setzt die React-Version jetzt explizit
+  (gelesen aus `react/package.json`), damit die Erkennung nie anläuft. Nebenbei schneller, weil das
+  Dateisystem-Probe entfällt.
 - **`ical-generator` 10 → 11**, **`npm-check-updates` 22 → 23**, **`source-map`-Override
   ^0.7 → ^0.8**, Lambda-**TypeScript 5 → 6**, plus Patch-Sweep und Lockfile-Maintenance in beiden
   npm-Projekten (`pg`, `@types/pg`, `vitest`, `next-intl`, `swagger-ui-react`, `eslint` 9.39.5,
@@ -55,19 +62,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Nicht übernommen
 
-Vier von Renovate angebotene Updates wurden getestet und liegen gelassen — Begründung und
+Zwei von Renovate angebotene Updates wurden getestet und liegen gelassen — Begründung und
 Wiedervorlage-Bedingung stehen in `ROADMAP.md` bzw. in den `renovate.json`-Regeln:
 
 - **`magic-string` v1**: bricht den PWA-Build (`MagicString is not a constructor`), weil
   workbox-builds Rollup-Plugins den Default-Export konstruieren. **Alle 1728 Tests blieben dabei
   grün** — nur `next build` fängt es. Major in `renovate.json` deaktiviert.
-- **TypeScript 7**: `tsc --noEmit` und `next build` laufen sauber, aber `typescript-eslint`
-  bricht mit „does not support TS 7.0" ab und tötet damit `npm run lint`. TS 7 ist der Go-Port und
-  hat noch keine stabile programmatische API (angekündigt für 7.1).
-- **ESLint 10**: `eslint-plugin-react` ruft das entfernte `context.getFilename()`. 7.37.5 ist die
-  neueste Version dieses Plugins und deklariert nur bis `eslint ^9.7` — es gibt kein Ziel für einen
-  Override, der Fix muss upstream kommen.
-- **Ruby 4.0**: 3.4 reicht bis 2028; 4.0 gegen Jekyll 4.4 hat keine Erfahrungswerte.
+- **TypeScript 7**: `tsc --noEmit` und `next build` laufen sauber, aber `typescript-eslint` bricht
+  mit „does not support TS 7.0" ab und tötet `npm run lint`. Der Guard ist ein unbedingtes `throw`
+  bei Major ≥ 7; es gibt kein `typescript-eslint` v9, und auch die Canary deklariert noch
+  `typescript <6.1.0`. Der von Microsoft dokumentierte Side-by-side-Weg über
+  `@typescript/typescript6` wurde probiert und funktioniert hier nicht: die acht betroffenen Pakete
+  deklarieren `typescript` als *Peer*, npm-`overrides` erzeugen dafür keine verschachtelte
+  Installation, und `require("typescript")` landet weiter auf TS 7. Verfolgt in
+  `typescript-eslint` Issue #10940 (Support für TS >= 7.1).
 
 
 ## [0.6.0] - 2026-08-21
