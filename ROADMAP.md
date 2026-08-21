@@ -332,6 +332,18 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
 - **Rate-Limits sind pro Prozess**, und `deploy/examples/deployment.yaml` fährt `replicas: 2`. Jedes
   Limit gilt auf der empfohlenen Topologie faktisch doppelt. Steht so im Header von
   `lib/rate-limit.ts`, aber nicht in der API-Doku.
+- **Zehn Komponenten rufen `setState` synchron in einem Effect** (`react-hooks/set-state-in-effect`):
+  `layout/quick-add-modal.tsx:53`, `onboarding/steps/notification-step.tsx:29`,
+  `settings/linked-accounts.tsx:66`, `settings/notification-history.tsx:103`,
+  `settings/notification-settings.tsx:114`, `settings/push-devices-section.tsx:163`,
+  `settings/timezone-settings.tsx:97`, `tasks/task-form.tsx:145`, `topics/topic-form.tsx:97`,
+  `wishlist/wishlist-form.tsx:83`. Jede Stelle kostet einen zusätzlichen Render-Pass.
+  Aufgetaucht sind sie nicht durch Hinsehen, sondern weil `eslint-plugin-react-hooks` 7.1 die
+  Regel von opt-in auf `error` gezogen hat — zehn rote Dateien aus einem Lockfile-Refresh, der
+  keine Zeile Anwendungscode anfasst. Die Regel steht deshalb in `eslint.config.mjs` bewusst auf
+  `warn`: der Fix ist ein Umbau des State-Flusses in zehn Komponenten und gehört in einen eigenen
+  PR, nicht in einen Dependency-Sweep. Solange sie `warn` ist, steht sie in jedem Lint-Lauf —
+  ein Pin auf 7.0.1 wäre still gewesen.
 
 **Erledigt** ✅ — Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
 0.4.0) · E2E-Tests (Playwright, 13 Specs, seit 0.4.0) · Dependency-Stau aufgelöst
