@@ -11,8 +11,16 @@
  *  1. **Not checked in** (no entry for today's local date): three large
  *     buttons HIGH / MEDIUM / LOW. Clicking one POSTs to /api/energy-checkin
  *     and the server may swap the daily quest for a better-matching task.
- *  2. **Already checked in**: collapses to a thin status bar showing the
- *     current level + an "Edit" button to expand back into picker mode.
+ *  2. **Already checked in**: renders `null`. The dashboard's meta line
+ *     (above the quest) already states today's energy level in plain text;
+ *     a collapsed "Today: Medium / Change" status bar here would repeat the
+ *     same fact ~65px away (Task 6 fix — the two were found duplicated in a
+ *     real-browser review). The card owns this decision itself: the server
+ *     always renders `<EnergyCheckinCard>` unconditionally, and only the
+ *     client's own local-date comparison decides whether that renders as
+ *     the picker, or as nothing. This keeps the "already checked in today?"
+ *     question exactly where the timezone-bug fix put it — in the browser
+ *     — instead of moving it back to the server to make this easier.
  *
  * Why "today" is computed client-side: `users.energyLevelDate` is written
  * with the user's local date (via `getLocalDateString(timezone)` on the
@@ -163,81 +171,13 @@ export function EnergyCheckinCard({
     }
   }
 
-  // ── Collapsed status bar ────────────────────────────────────────────────
+  // ── Already checked in today, nothing left to ask ───────────────────────
+  // No collapsed status bar: the meta line above the quest already says
+  // "friday · medium" in plain text. Rendering null here (rather than the
+  // server skipping this component) keeps the "is today already set?"
+  // decision in the browser, where the real local date lives.
   if (isCheckedInToday && !expanded) {
-    const style = LEVEL_STYLES[energyLevel];
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        className="rounded-xl px-4 py-2.5 flex items-center justify-between gap-3"
-        style={{
-          backgroundColor: "var(--bg-surface)",
-          border: `1px solid color-mix(in srgb, ${style.color} 25%, var(--border))`,
-        }}
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span aria-hidden="true" style={{ fontSize: "1.1rem" }}>
-            {style.icon}
-          </span>
-          <span
-            className="text-sm truncate"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {t("energy_card_subtitle_collapsed", {
-              level: t(`energy_${energyLevel.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low"),
-            })}
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="text-xs px-2.5 py-1 rounded-lg cursor-pointer transition-opacity duration-150"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: style.color,
-            backgroundColor: `color-mix(in srgb, ${style.color} 8%, transparent)`,
-            border: `1px solid color-mix(in srgb, ${style.color} 25%, transparent)`,
-          }}
-        >
-          {t("energy_card_change")}
-        </button>
-
-        {/* Swap notification — fallback if card somehow collapses while swapNotice is set */}
-        <AnimatePresence>
-          {swapNotice && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="w-full rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-xs mt-1"
-              style={{
-                backgroundColor: "color-mix(in srgb, var(--accent-amber) 10%, transparent)",
-                border: "1px solid color-mix(in srgb, var(--accent-amber) 30%, transparent)",
-                color: "var(--text-primary)",
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              }}
-            >
-              <span className="truncate">
-                {t("energy_card_swapped", { title: swapNotice.previousTitle })}
-              </span>
-              <button
-                type="button"
-                onClick={handleUndoSwap}
-                className="flex-shrink-0 underline cursor-pointer"
-                style={{ color: "var(--accent-amber)" }}
-              >
-                {t("energy_card_swapped_undo")}
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    );
+    return null;
   }
 
   // ── Expanded picker ─────────────────────────────────────────────────────

@@ -254,96 +254,113 @@ export default async function DashboardPage() {
     : t("meta_energy_unknown" as Parameters<typeof t>[0]);
 
   return (
-    // Wider on lg+ and bigger gaps between sections — gives the dashboard
-    // breathing room on desktop without restructuring the natural top-down
-    // reading order. Anti-procrastination users do better with a single
-    // linear scan path than with a multi-column dashboard.
-    <div className="max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-8 lg:gap-12">
-      {/* ── Greeting ─────────────────────────────────────────────────────────── */}
-      {/* Begrüßung, nicht die Hauptsache der Seite — Fraunces ist für die Quest
-          reserviert. Bleibt vorerst ein h1 (siehe Task-6-Brief Step 3b): erst
-          Task 7 macht die Quest zur h1 und demotet dieses Element zu <p>. */}
-      <h1 className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] font-normal tracking-[0.01em] text-[var(--ink-2)]">
-        {greeting}, {firstName}.
-      </h1>
+    // Rhythmus statt Gleichverteilung (Task 6 fix — ein flaches `gap-*` auf
+    // dem Container setzte 48px zwischen JEDES Element: die 17px-Begruessung
+    // stand vom eigenen Meta-Zeilen-Nachbarn genauso weit weg wie der 246px
+    // hohe Quest-Block von Quick Wins. Gleicher Abstand ueberall gruppiert
+    // nichts. Struktur jetzt: eine enge Kopf-Gruppe (Begruessung + Meta-Zeile
+    // + optionale Energie-Karte — sie gehoeren zusammen, alles Kontext),
+    // dann ein grosser Bruch zur Quest (das eine wichtige Ding), dann ein
+    // mittlerer Abstand zu Quick Wins (verwandt, aber nachrangig). Flexbox
+    // `gap` statt Margin, weil sowohl die Energie-Karte als auch Quick Wins
+    // client-seitig `null` rendern koennen — `gap` fuegt dann keine Luecke
+    // ein, eine feste Margin auf einem leeren Element schon.
+    <div className="max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-12">
+      {/* ── Kopf-Gruppe: Begruessung, Meta-Zeile, Energie-Check-in ──────────
+          Eng zusammen (gap-2 = 8px) — ein Gedanke, nicht drei Flaechen. */}
+      <div className="flex flex-col gap-2">
+        {/* Begrüßung, nicht die Hauptsache der Seite — Fraunces ist für die
+            Quest reserviert. Bleibt vorerst ein h1 (siehe Task-6-Brief Step
+            3b): erst Task 7 macht die Quest zur h1 und demotet dieses
+            Element zu <p>. */}
+        <h1 className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] font-normal tracking-[0.01em] text-[var(--ink-2)]">
+          {greeting}, {firstName}.
+        </h1>
 
-      {/* ── New-user empty state ──────────────────────────────────────────────── */}
-      {isNewUser && (
-        <div
-          className="rounded-xl px-6 py-8 flex flex-col items-center text-center gap-4"
-          style={{
-            backgroundColor: "var(--bg-surface)",
-            border: "1px solid var(--border)",
-          }}
-        >
+        {/* ── New-user empty state ──────────────────────────────────────── */}
+        {isNewUser && (
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-            style={{ backgroundColor: "color-mix(in srgb, var(--accent-green) 12%, transparent)" }}
-            aria-hidden="true"
-          >
-            🌱
-          </div>
-          <div>
-            <p
-              className="text-lg font-semibold mb-1"
-              style={{ fontFamily: "var(--font-display, 'Lora', serif)", fontStyle: "italic", color: "var(--text-primary)" }}
-            >
-              {t("empty_state_title" as Parameters<typeof t>[0])}
-            </p>
-            <p
-              className="text-sm max-w-sm"
-              style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
-            >
-              {t("empty_state_body" as Parameters<typeof t>[0])}
-            </p>
-          </div>
-          <Link
-            href="/topics"
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 no-underline"
+            className="rounded-xl px-6 py-8 flex flex-col items-center text-center gap-4"
             style={{
-              backgroundColor: "var(--accent-green)",
-              color: "#ffffff",
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              backgroundColor: "var(--bg-surface)",
+              border: "1px solid var(--border)",
             }}
           >
-            {t("empty_state_cta" as Parameters<typeof t>[0])}
-          </Link>
-        </div>
-      )}
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+              style={{ backgroundColor: "color-mix(in srgb, var(--accent-green) 12%, transparent)" }}
+              aria-hidden="true"
+            >
+              🌱
+            </div>
+            <div>
+              <p
+                className="text-lg font-semibold mb-1"
+                style={{ fontFamily: "var(--font-display, 'Lora', serif)", fontStyle: "italic", color: "var(--text-primary)" }}
+              >
+                {t("empty_state_title" as Parameters<typeof t>[0])}
+              </p>
+              <p
+                className="text-sm max-w-sm"
+                style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
+              >
+                {t("empty_state_body" as Parameters<typeof t>[0])}
+              </p>
+            </div>
+            <Link
+              href="/topics"
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 no-underline"
+              style={{
+                backgroundColor: "var(--accent-green)",
+                color: "#ffffff",
+                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+              }}
+            >
+              {t("empty_state_cta" as Parameters<typeof t>[0])}
+            </Link>
+          </div>
+        )}
 
-      {/* ── Metazeile: Wochentag, Energie, Streak ─────────────────────────────
-          Ersetzt drei fruehere Flaechen (Energie-Karte, Insight-Chip,
-          Stat-Tiles). Alles Mono, alles gedimmt — es ist Kontext, keine
-          Handlung. */}
-      <div
-        data-testid="quest-meta"
-        className="flex items-center justify-between gap-3 flex-wrap font-[family-name:var(--font-mono)] text-[0.6875rem] tracking-[0.06em] text-[var(--ink-3)]"
-      >
-        <span>{weekdayLabel} · {energyLabel}</span>
-        <span className="flex gap-4">
-          <span>{t("meta_streak", { days: stats.streakCurrent })}</span>
-          {bestDayInsight && <span>{bestDayInsight}</span>}
-        </span>
+        {/* ── Metazeile: Wochentag, Energie, Streak ───────────────────────
+            Ersetzt drei fruehere Flaechen (Energie-Karte, Insight-Chip,
+            Stat-Tiles). Alles Mono, alles gedimmt — es ist Kontext, keine
+            Handlung. Zeigt der Server hier ein Energielevel an, rendert
+            EnergyCheckinCard direkt darunter bewusst nichts (siehe dort) —
+            dieselbe Tatsache steht sonst zweimal auf der Seite. */}
+        <div
+          data-testid="quest-meta"
+          className="flex items-center justify-between gap-3 flex-wrap font-[family-name:var(--font-mono)] text-[0.6875rem] tracking-[0.06em] text-[var(--ink-3)]"
+        >
+          <span>{weekdayLabel} · {energyLabel}</span>
+          <span className="flex gap-4">
+            <span>{t("meta_streak", { days: stats.streakCurrent })}</span>
+            {bestDayInsight && <span>{bestDayInsight}</span>}
+          </span>
+        </div>
+
+        <EnergyCheckinCard
+          energyLevel={cachedEnergyLevel}
+          energyLevelDate={cachedEnergyLevelDate}
+        />
       </div>
 
-      <EnergyCheckinCard
-        energyLevel={cachedEnergyLevel}
-        energyLevelDate={cachedEnergyLevelDate}
-      />
+      {/* ── Quest + Quick Wins: mittlerer Abstand (gap-8 = 32px) zwischen
+          den beiden, verwandt aber nachrangig zur Kopf-Gruppe darueber. ── */}
+      <div className="flex flex-col gap-8">
+        {/* ── Daily Quest Hero Card ───────────────────────────────────────── */}
+        <section>
+          <DailyQuestCard
+            quest={quest}
+            postponesToday={postponesToday}
+            postponeLimit={postponeLimit}
+            emotionalClosureEnabled={emotionalClosureEnabled}
+            userEnergyToday={userEnergyToday}
+          />
+        </section>
 
-      {/* ── Daily Quest Hero Card ─────────────────────────────────────────────── */}
-      <section>
-        <DailyQuestCard
-          quest={quest}
-          postponesToday={postponesToday}
-          postponeLimit={postponeLimit}
-          emotionalClosureEnabled={emotionalClosureEnabled}
-          userEnergyToday={userEnergyToday}
-        />
-      </section>
-
-      {/* ── Quick Wins ── interaktiv: Tasks direkt hier abhaken ─────────────── */}
-      <QuickWinsSection tasks={sortedQuickWins} />
+        {/* ── Quick Wins ── interaktiv: Tasks direkt hier abhaken ─────────── */}
+        <QuickWinsSection tasks={sortedQuickWins} />
+      </div>
     </div>
   );
 }
