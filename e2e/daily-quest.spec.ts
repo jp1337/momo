@@ -135,14 +135,32 @@ test.describe("Lichtkegel", () => {
     expect(["rgba(0, 0, 0, 0)", "transparent"]).toContain(s.bg);
   });
 
+  // Fix round 2 (2026-08-21): scoped to `main *` alone, this assertion
+  // cannot see a Radix dialog — `RadixDialog.Portal` renders `DialogContent`
+  // to `document.body`, as a sibling of `<main>`, not inside it (see
+  // components/ui/dialog.tsx). The breakdown modal opened from the quest's
+  // "aufteilen" action carried three amber elements (a filled submit
+  // button, an "add step" text, a chip) that this test never saw, because
+  // it never looked outside `main`. Every count below is rescoped to
+  // `main *, [role="dialog"] *` — Radix gives every DialogContent
+  // `role="dialog"` (verified in @radix-ui/react-dialog's own source, not
+  // assumed) — so an open dialog can no longer hide a second amber element
+  // from this rule. The navbar's coin counter is deliberately left out of
+  // both scopes: it is persistent chrome, not part of "the page" this rule
+  // governs, and its own migration is a separate, not-yet-scheduled
+  // decision (see components/layout/coin-counter.tsx) — scoping to `body *`
+  // would fail this test on every page for a reason unrelated to what this
+  // rule checks.
+  function countAmberInPageAndDialogs(): number {
+    const amber = "rgb(240, 165, 0)";
+    return Array.from(
+      document.querySelectorAll("main *, [role='dialog'] *"),
+    ).filter((n) => getComputedStyle(n).color === amber).length;
+  }
+
   test("Amber kommt auf dem Dashboard genau einmal als Textfarbe vor", async ({ page }) => {
     await page.goto("/dashboard");
-    const count = await page.evaluate(() => {
-      const amber = "rgb(240, 165, 0)";
-      return Array.from(document.querySelectorAll("main *")).filter(
-        (n) => getComputedStyle(n).color === amber,
-      ).length;
-    });
+    const count = await page.evaluate(countAmberInPageAndDialogs);
     expect(count).toBeLessThanOrEqual(1);
   });
 
@@ -173,12 +191,37 @@ test.describe("Lichtkegel", () => {
     // independent) — otherwise this test would silently degrade back into
     // the fixture-lucky version it's meant to replace.
     await expect(page.locator("button[aria-pressed]")).toHaveCount(3);
-    const count = await page.evaluate(() => {
-      const amber = "rgb(240, 165, 0)";
-      return Array.from(document.querySelectorAll("main *")).filter(
-        (n) => getComputedStyle(n).color === amber,
-      ).length;
-    });
+    const count = await page.evaluate(countAmberInPageAndDialogs);
+    expect(count).toBeLessThanOrEqual(1);
+  });
+
+  // Fix round 2 (2026-08-21): the case the two tests above couldn't catch —
+  // an open dialog. Opens the breakdown modal (wired up in Task 7 but never
+  // covered by this describe block) and re-runs the same count with the
+  // widened, dialog-aware scope. A rule that only holds while no dialog is
+  // open is not the rule the spec wrote down.
+  test("Amber bleibt einmalig bei geöffnetem Aufteilen-Dialog", async ({ page }) => {
+    await page.goto("/dashboard");
+    await page.waitForLoadState("networkidle");
+
+    // Checked via the rendered DOM, not the (separately broken, see the
+    // pre-existing "GET /api/daily-quest returns expected shape" failure
+    // above) API response shape: the breakdown action only renders on an
+    // active, uncompleted quest.
+    const breakdownBtn = page
+      .locator("button")
+      .filter({ hasText: /aufteilen|break it down/i })
+      .first();
+    test.skip(
+      (await breakdownBtn.count()) === 0,
+      "No active quest — breakdown action is not rendered",
+    );
+    await breakdownBtn.click();
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
+    const count = await page.evaluate(countAmberInPageAndDialogs);
     expect(count).toBeLessThanOrEqual(1);
   });
 });
