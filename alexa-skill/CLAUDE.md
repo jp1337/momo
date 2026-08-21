@@ -4,9 +4,9 @@
 Standalone AWS Lambda project that powers the Momo Alexa Skill. Completely separate from the Next.js app — own `package.json`, own `tsconfig.json`, own `node_modules`. The Lambda calls back into the Momo REST API using a per-user API key obtained via Account Linking.
 
 ## Tech Stack
-- AWS Lambda (Node.js 20)
+- AWS Lambda (Node.js 24)
 - `ask-sdk-core` for the Alexa Skills Kit handler model
-- `node-fetch` (or native fetch on Node 20) for HTTP calls back to `https://momotask.app/api/*`
+- `node-fetch` (or native fetch on Node 24) for HTTP calls back to `https://momotask.app/api/*`
 
 ## Structure
 ```

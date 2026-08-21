@@ -140,7 +140,7 @@ account.
 | **i18n** | next-intl — German, English, French (cookie-based, no URL prefix) |
 | **Push Notifications** | Web Push API (VAPID, no third-party) |
 | **API** | OpenAPI 3.1.0 + Personal Access Tokens (Bearer) |
-| **Container** | Docker (Node.js 22 LTS) |
+| **Container** | Docker (Node.js 24 LTS) |
 | **Orchestration** | Kubernetes |
 | **CI/CD** | GitHub Actions (native multi-arch: amd64 + arm64) |
 | **Image Registries** | GHCR, Docker Hub, Quay.io |
@@ -165,7 +165,7 @@ Momo is intentionally cozy. Both the dark and light themes use warm, earthy tone
 ### Prerequisites
 
 - Docker & Docker Compose
-- Node.js 22+ (for local development only)
+- Node.js 24+ (for local development only)
 - A GitHub or Discord OAuth App (see [OAuth Setup](docs/oauth-setup.md))
 
 ### 1. Clone the repository

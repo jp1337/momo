@@ -85,7 +85,7 @@ Use this if you want to edit the code and see changes live.
 
 ### Prerequisites
 
-- **Node.js 20+** — [Install Node.js](https://nodejs.org/)
+- **Node.js 24+** — [Install Node.js](https://nodejs.org/)
 - **npm** (included with Node.js)
 - **Docker** (for the PostgreSQL database)
 
