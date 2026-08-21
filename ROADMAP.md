@@ -12,32 +12,43 @@ Das technische Fundament ist solide — Self-hostable, GDPR-ready, sieben Sprach
 
 Die Vereinfachungs-Phase ist durch: Quick-Add überall, Navigation konsolidiert, keine
 `window.confirm`-Dialoge mehr. Die Codebase ist dabei erstaunlich disziplinert geblieben —
-kein einziges `TODO`, kein `ts-ignore`, zehn `any` auf 244 Dateien, 1684 Unit-Tests und
-13 E2E-Specs. Jedes große Modul in `lib/` ist von Tests abgedeckt. Das ist die gute Nachricht.
+kein einziges `TODO`, kein `ts-ignore`, **1728 Unit-Tests** und 13 E2E-Specs. Jedes große Modul in
+`lib/` ist von Tests abgedeckt. Das ist die gute Nachricht.
 
-Die schlechte: **das Fundament hat gebröckelt, während vorne poliert wurde.** 19 Dependabot-PRs
-hatten sich angestaut, und mit ihnen 75 offene Security-Alerts (3 critical, 36 high). Das ist
-jetzt aufgeräumt — **5 Alerts, davon 1 high, und 0 offene Dependency-PRs**. Aber es war kein
-Zufall, und es kommt wieder, solange die Ursachen stehen. Vier der fünf verbleibenden Alerts
-gehören zu `nodemailer` — und genau die kann Dependabot nicht liefern, weil der Fix einen
-Major-Bump braucht. Keiner der vier ist in Momos Nutzung erreichbar; die Begründung steht
-unten.
+Die schlechte war: **das Fundament hat gebröckelt, während vorne poliert wurde.** 19 Dependabot-PRs
+hatten sich angestaut, und mit ihnen 75 offene Security-Alerts (3 critical, 36 high). Das ist mit
+0.6.0 abgeräumt — **`npm audit` steht bei 1** (ein `@babel/core`-Low), 0 offene Dependency-PRs, und
+die Ursachen sind weg statt nur die Symptome: Renovate ersetzt Dependabot, Rate-Limiting deckt alle
+70 Mutation-Handler ab, Read-only-Keys sind es tatsächlich.
 
-Die nächste Phase heißt deshalb: **absichern, verbreiten, polieren.** In dieser Reihenfolge.
+Was diese Phase gelehrt hat, steht nicht in der Alert-Zahl: **die Hälfte der behobenen Befunde stand
+nicht auf dieser Liste.** Sie kam durch die Reviews der geplanten Arbeit ans Licht — drei Routen ohne
+Readonly-Gate, ein Endpunkt, dessen Dokumentation seit jeher etwas anderes behauptete als sein Code
+tat, zwei ungeschützte Handler hinter einer Datei-basierten Zählung. Und dreimal war der Defekt
+derselbe Typ: *ein Dokument, das eine Sicherheitseigenschaft behauptet, die der Code nicht hat.* Ein
+solcher Satz ist schlimmer als eine undokumentierte Lücke, weil er die nächste Prüfung abhält.
+
+Die nächste Phase heißt deshalb: **verbreiten, polieren** — absichern ist durch.
 
 ---
 
 ## Die drei Themen
 
-### 1. Absichern — das Fundament halten
+### 1. Absichern — das Fundament halten ✅ (0.6.0, bis auf Error-Tracking)
 
 Nicht spannend. Aber vor zwei Wochen wäre Momo als „die Self-Hosted-App mit den 36
 High-Alerts" auffindbar gewesen — und genau jetzt beginnt die Verbreitungs-Phase, die
-Besucher auf den Security-Tab schickt. Der Rest dieser Liste hält das so.
+Besucher auf den Security-Tab schickt.
 
-Die Reihenfolge hier ist bewusst nach *Erreichbarkeit* sortiert, nicht nach
-Alert-Severity: was ein Nutzer heute anfassen kann, steht vor dem, was nur im
-Advisory-Feed steht.
+Die Reihenfolge war bewusst nach *Erreichbarkeit* sortiert, nicht nach Alert-Severity: was ein
+Nutzer damals anfassen konnte, stand vor dem, was nur im Advisory-Feed steht. Das hat sich
+ausgezahlt — der erreichbarste Punkt (Rate-Limiting) führte über seine eigenen Reviews zu den zwei
+schwersten Befunden dieser Phase, die beide nicht auf der Liste standen.
+
+Die Einträge bleiben mit ihrer Begründung stehen, statt gelöscht zu werden. Wer in einem halben Jahr
+wissen will, *warum* eine Ausnahme eine Ausnahme ist, findet es hier und muss es nicht neu herleiten.
+Offen ist von diesem Thema nur noch **Error-Tracking** (unten) und ein Repo-Setting: `test` als
+required status check auf `main`.
 
 **Rate-Limiting auf 70 Mutation-Handlern** ✅ (2026-08-20/21, #71, #80)
 
@@ -65,7 +76,7 @@ Die Auth-Lage selbst war sauber: `/api/cron` ist per `CRON_SECRET` mit `timingSa
 geschützt, `calendar-feed` hinter `resolveSessionOnlyApiUser` (Bearer-Aufrufer werden für die
 Mutationen dort seit #78 ganz zurückgewiesen). Es fehlte nur die Bremse, nicht die Tür.
 
-**nodemailer 8 → 9 — vier von fünf Alerts, alle nicht erreichbar**
+**nodemailer 8 → 9** ✅ (2026-08-21, #72) — vier von fünf Alerts, alle nicht erreichbar
 
 Von den fünf offenen Dependabot-Alerts gehören **vier** zu `nodemailer` (im Projekt steht
 `^8.0.7`). `npm audit` fasst sie zu einem Paket-Eintrag zusammen und zeigt deshalb nur „2" —
@@ -99,24 +110,20 @@ Schlag ab, und die Verbreitungs-Phase schickt Besucher auf den Security-Tab des 
 ist ein Reputations- und Hygiene-Argument, kein Sicherheits-Notfall. Danach bleibt nur noch
 der `@babel/core`-Low übrig.
 
-Der Fix verlangt einen Major-Bump. `.github/dependabot.yml` ignoriert aber pauschal *jeden*
-Major für *jedes* Paket:
+Der Fix verlangte einen Major-Bump, und `.github/dependabot.yml` ignorierte pauschal *jeden*
+Major für *jedes* Paket. Dieser Fix wäre also **strukturell nie als PR erschienen** — er kam von
+Hand. Die Ursache ist inzwischen weg (siehe Renovate unten); bemerkenswert ist, dass Renovate den
+Advisory binnen Minuten nach der Installation von selbst aufmachte, inklusive beider Pin-Stellen.
 
-```yaml
-ignore:
-  - dependency-name: "*"
-    update-types: ["version-update:semver-major"]
-```
+Die Falle dabei war die doppelte Pinnung: `nodemailer` stand **zweimal** in `package.json` — als
+Dependency und als `overrides`-Eintrag, beide auf `^8.0.7`. Der Override pinnt die 8.x-Linie über
+den ganzen Abhängigkeitsbaum; wer nur die Dependency hebt, wird still zurückgezogen. Beide Stellen
+stehen jetzt auf `^9.0.5`, `npm ls nodemailer` zeigt kein 8.x mehr im Baum.
 
-Dieser Fix wird also **strukturell nie als PR erscheinen**. Er muss von Hand kommen.
-
-Eine Falle dabei: `nodemailer` steht **zweimal** in `package.json` — als Dependency (Zeile 49)
-und als `overrides`-Eintrag (Zeile 67), beide auf `^8.0.7`. Der Override pinnt die 8.x-Linie
-über den ganzen Abhängigkeitsbaum. Wer nur die Dependency auf 9 hebt, wird vom Override
-still zurückgezogen und wundert sich. **Beide Stellen müssen gleichzeitig ändern** — und
-danach gehört der Notification-Mail-Versand manuell verifiziert, weil `npm test` den echten
-SMTP-Transport nicht abdeckt. Die Oberfläche ist dabei winzig: ein `createTransport` mit
-Singleton-Cache, ein `sendMail`. Beides in `lib/notifications.ts`.
+Offen bleibt die eine Prüfung, die keine Maschine übernehmen kann: **der echte SMTP-Versand ist
+nicht verifiziert.** `nodemailer` ist in allen Tests `vi.mock`-ersetzt, eine grüne Suite beweist
+hier nur, dass Typen und Aufrufformen passen. Der Pfad dafür existiert — Settings → Notifications →
+E-Mail-Kanal → Test.
 
 **next 16.3.1** ✅ (2026-08-20, #65)
 
@@ -126,21 +133,56 @@ das gebündelte `sharp` (libvips-CVEs). Damit steht `npm audit` bei **2** — nu
 neue Regel `@next/next/no-location-assign-relative-destination` mit und markiert damit zwei
 vorbestehende Stellen, die `window.location.href` für interne Navigation nutzen —
 `components/auth/passkey-login-button.tsx:62` und
-`components/auth/passkey-second-factor-button.tsx:52`. Beides Warnungen, keine Errors;
-der Fix ist `useRouter().push()`.
+`components/auth/passkey-second-factor-button.tsx:52`. Beides Warnungen, keine Errors.
 
-**`dependabot.yml` reparieren, damit der Stau nicht wiederkommt**
+**Passkey-Navigation** ✅ (2026-08-21, #74) — und hier lag die Roadmap falsch. Sie schrieb „der Fix
+ist `useRouter().push()`". Das wäre eine Regression gewesen: die markierte Zeile trug einen
+Kommentar, der den Full Reload begründete — das `fetch` davor tauscht das Session-Cookie, und
+`/dashboard` wird serverseitig daraus gerendert. Ein blankes `push()` kann aus dem Router-Cache
+bedient werden und liefert dann ein Dashboard für die Session *vor* dem Login, was den Nutzer
+zurück auf die Login-Seite wirft. Der richtige Fix ist `router.refresh()` **vor** `router.push()`.
+Dass keine E2E-Spec den Passkey-Login abdeckt, bleibt eine echte Lücke — die Verifikation war
+manuell.
 
-Vier Ursachen, alle in einer Datei:
+**Dependabot durch Renovate ersetzt** ✅ (2026-08-21, #73)
 
-- `open-pull-requests-limit: 10`, während Security-Updates die Gruppierung umgehen — so
-  entstehen zwölf einzelne PRs auf derselben `package-lock.json`, die sich gegenseitig
-  bei jedem Merge invalidieren.
-- Majors global ignoriert → siehe nodemailer. Besser: Majors erlauben und einzeln bewerten,
-  oder wenigstens Security-Majors nicht ausschließen.
-- `github-actions` ohne Gruppierung → vier separate Action-PRs statt einem.
-- **`alexa-skill/` hat gar keinen Eintrag.** Die vier alexa-PRs kamen ausschließlich als
-  Security-Alerts durch; geplante Version-Updates gibt es dort nicht.
+Nicht repariert, ersetzt. Die vier Ursachen des Staus steckten alle in einer Datei, und Renovate
+löst drei davon *strukturell* statt per einmalig richtig gesetzter Config:
+
+- `open-pull-requests-limit: 10`, während Security-Updates die Gruppierung umgingen — so entstanden
+  zwölf einzelne PRs auf derselben `package-lock.json`, die sich bei jedem Merge gegenseitig
+  invalidierten. Renovate behandelt Vulnerability-PRs mit denselben `packageRules` und Limits.
+- Majors global ignoriert → deshalb musste der nodemailer-Fix von Hand kommen. Renovate trennt sie
+  in eigene PRs *und* listet sie im Dependency Dashboard, wo ein hängender Major sichtbar ist statt
+  abwesend.
+- `github-actions` ohne Gruppierung → jetzt ein gruppierter PR.
+- **`alexa-skill/` hatte gar keinen Eintrag** — Renovate findet Package-Files selbst, der Fehler ist
+  damit nicht mehr möglich. Neu abgedeckt sind außerdem `Dockerfile` und `docker-compose.yml`.
+
+Dazu `lockFileMaintenance`, wofür es bei Dependabot keine Entsprechung gibt. Automerge-Politik:
+devDependencies mergen Patch und Minor selbst, Runtime-Dependencies nur Patches, Runtime-Minors und
+alle Majors bleiben Handarbeit. Postgres-Majors sind explizit gesperrt.
+
+**Eine Sache fehlt dafür noch, und sie ist eine Falle:** `main` hat **keine required status checks**.
+Solange GitHubs Auto-Merge ausgeschaltet ist, greift Renovates eigener Mechanismus, der den
+Branch-Status prüft — sicher aus Versehen, nicht aus Konstruktion. Wird Auto-Merge eingeschaltet,
+mergen Patch-, Digest- und devDeps-Minor-PRs sowie der wöchentliche Lockfile-PR sofort und **ohne
+einen einzigen Testlauf**, weil nichts verlangt wird. `test` gehört als required check auf `main`,
+bevor die Automation scharf läuft.
+
+**Read-only API-Keys waren nicht read-only** ✅ (2026-08-21, #77, #78)
+
+Stand nicht auf dieser Liste — gefunden als Nebenbefund beim Review des Rate-Limitings. Fünf
+Mutation-Routen prüften das Readonly-Flag nicht. Die schlimmste: `DELETE /api/user/api-keys/[id]`
+ließ einen Read-only-Key **API-Keys widerrufen**, während `POST` auf derselben Ressource korrekt
+gegated war. Ein Credential, dessen Zweck es ist, gefahrlos weitergegeben werden zu können, konnte
+die Credentials um sich herum zerstören.
+
+Zwei der fünf lagen in `/api/settings/calendar-feed`, und dort war der Befund schärfer: der Docstring
+der Route behauptete seit jeher *„Bearer/API-key callers are rejected"*, während der Code sie annahm
+und dabei sogar vom 2FA-Gate befreite. Ein Read-only-Key konnte einen Feed-Token erzeugen, der
+unauthentifizierten Dauerlesezugriff auf die Metadaten aller Aufgaben gewährt. Gefixt, indem die
+dokumentierte Absicht endlich implementiert wurde — Breaking Change für programmatische Aufrufer.
 
 **Error-Tracking**
 
@@ -249,14 +291,19 @@ Der eigentliche Fix ist nicht „25 Endpunkte nachdokumentieren", sondern **ein 
 Spec gegen `app/api/**/route.ts` abgleicht** und bei Drift fehlschlägt. Sonst ist die Lücke
 in drei Monaten wieder da.
 
-**Flaky Webhook-Test**
+**Das ist mit 0.6.0 vom kosmetischen zum dringenden Posten geworden** — und damit der wichtigste
+offene Punkt dieser Liste. Während der Härtungsarbeit hat die Spec zweimal etwas Falsches behauptet:
+sie versprach ein `429` auf einer Route ohne Limit, und sie enthielt **zwei tote `$ref`s** auf eine
+`RateLimited`-Komponente, die nie existiert hat — eine Spec, die an der Stelle schlicht nicht
+auflöst, jahrelang unbemerkt. Beides wurde nicht durch einen Test gefunden, sondern weil jemand
+hingesehen hat. Der Beweis, dass der Test billig ist: ein ~40-zeiliges Skript, das Handler-Guards
+gegen die dokumentierten Response-Codes abgleicht, fand beide Befunde in einem Lauf. Dieses Skript
+*ist* der fehlende Test — er muss nur noch in `__tests__/` einziehen.
 
-`__tests__/webhooks.test.ts` → „aborts fetch via AbortController when delivery takes longer
-than timeout" ist ein Race gegen den absichtlich fire-and-forget nicht-`await`-eten
-`db.insert` in `lib/webhooks.ts:470`. In CI gewinnt der Insert das Rennen meist, lokal
-zuverlässig nicht. Heute grün — aber er wird rot, und dann verliert man Vertrauen in die
-Suite genau dann, wenn man sie braucht. Der Produktionscode ist in Ordnung; der Test muss
-auf den Insert warten können.
+Ein Muster dafür existiert seit 0.6.0 im Repo: `__tests__/api-rate-limits.test.ts` läuft über
+`app/api/**/route.ts`, zerlegt jede Datei in ihre Handler-Regionen und prüft pro Handler statt pro
+Datei. Genau diese Granularität ist der Punkt — die erste Fassung prüfte pro Datei und übersah
+dadurch zwei ungeschützte Handler, deren Datei-Nachbar bereits ein Limit hatte.
 
 **Offline-Queue**
 
@@ -271,9 +318,30 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
 - `lib/openapi.ts` (3715 LOC) und `components/tasks/task-list.tsx` (1467 LOC) sind die
   beiden Dateien, bei denen Aufteilen sich am ehesten lohnt.
 
+**Neu auf dieser Liste, aus 0.6.0 heraus**
+
+- **Die 20 Route-Test-Mocks von `readonlyKeyResponse` kennen den neuen `code` nicht.** Sie stubben
+  `{ error, message }` ohne `code: "READONLY_KEY"`, sodass der Code an genau einer Stelle geprüft
+  wird — eine Regression im echten Helper würde kein Route-Test bemerken.
+- **Drei Handler liefern 403, ohne es in der Spec zu dokumentieren**: `POST /api/auth/sessions/revoke-others`,
+  `DELETE /api/auth/sessions/{id}`, `PATCH /api/settings/vacation-mode`. Fällt weg, sobald der
+  Drift-Test oben existiert.
+- **Sechs Tests in `__tests__/webhooks.test.ts`** warten mit festem `setTimeout(r, 300)` auf denselben
+  fire-and-forget-Insert, für den es seit 0.6.0 einen sauberen Helper gibt (`waitForEndpointDelivery`).
+  Nie rot gesehen, aber dasselbe Rennen mit großzügigerem Puffer — und der Umbau spart ~2 s Laufzeit.
+- **Rate-Limits sind pro Prozess**, und `deploy/examples/deployment.yaml` fährt `replicas: 2`. Jedes
+  Limit gilt auf der empfohlenen Topologie faktisch doppelt. Steht so im Header von
+  `lib/rate-limit.ts`, aber nicht in der API-Doku.
+
 **Erledigt** ✅ — Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
 0.4.0) · E2E-Tests (Playwright, 13 Specs, seit 0.4.0) · Dependency-Stau aufgelöst
-(19 → 0 offene PRs, 75 → 5 Security-Alerts, 2026-08-20) · next 16.3.1 (#65, 2026-08-20)
+(19 → 0 offene PRs, 75 → 1 Alert, 2026-08-20) · next 16.3.1 (#65) · Rate-Limiting auf allen
+70 Mutation-Handlern (#71, #80) · nodemailer 9 (#72) · Renovate statt Dependabot (#73) ·
+Passkey-Navigation (#74) · Read-only-Gates (#77, #78) · Flaky Webhook-Test — der Test rannte
+gegen einen absichtlich nicht `await`-eten `db.insert`; er wartet ihn jetzt ab, Produktionscode
+unverändert (#69, #70) · Zeitzonenblinder Streak-Test — rechnete „gestern" in UTC, während der
+Code „heute" in der Nutzer-Zeitzone bestimmt, und war dadurch jede Nacht zwei Stunden lang
+deterministisch rot (#79)
 
 ---
 

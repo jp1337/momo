@@ -7,6 +7,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-21
+
+Härtungs-Release. Kein neues Feature — die Vereinfachungs-Phase hatte vorne poliert, während das
+Fundament bröckelte: 19 aufgestaute Dependabot-PRs und 75 Security-Alerts. Dieses Release schließt
+den Rest davon und stellt sicher, dass es nicht wiederkommt.
+
+Zwei Dinge sind dabei erwähnenswert, weil sie die Arbeit ehrlicher beschreiben als eine Feature-Liste.
+Erstens: **die Hälfte der hier behobenen Befunde stand nicht auf der Liste.** Rate-Limiting,
+nodemailer, Renovate und die Passkey-Navigation waren geplant; die drei Mutation-Routen ohne
+Readonly-Gate, der Calendar-Feed-Endpunkt, dessen Dokumentation seit jeher etwas anderes behauptete
+als sein Code tat, und zwei ungeschützte Handler, die eine Datei-basierte Zählung verdeckt hatte,
+kamen erst durch die Reviews der geplanten Arbeit ans Licht. Zweitens: **drei Defekte waren derselbe
+Fehlertyp** — ein Dokument, das eine Sicherheitseigenschaft behauptet, die der Code nicht hat, und
+das dadurch die nächste Prüfung abhält. Deshalb enthält dieses Release neben Code auch Korrekturen
+an Kommentaren, JSDoc und Spec.
+
+Minor statt Patch: Rate-Limiting führt auf 15 Routen ein 429 ein, der Calendar-Feed weist API-Keys
+jetzt mit 403 ab. Das sind Änderungen am öffentlichen Vertrag.
+
+**Breaking:** `POST` und `DELETE` auf `/api/settings/calendar-feed` akzeptieren keine API-Keys mehr.
+Feed-Tokens lassen sich nur noch aus einer 2FA-verifizierten Browser-Session verwalten — was der
+Docstring der Route schon immer behauptet hat. `GET` bleibt unverändert.
+
 ### Changed
 
 - **Dependency-Konsolidierung: 19 offene Dependabot-PRs abgearbeitet** — Sieben PRs (GitHub Actions + `alexa-skill`) wurden einzeln gemergt; die zwölf konkurrierenden `package-lock.json`-PRs sind hier zu einem verifizierten Commit zusammengefasst, weil jeder Einzel-Merge die übrigen elf invalidiert hätte. Enthalten sind u. a. next 16.2.6 → 16.2.12, React 19.2.6 → 19.2.8, next-auth beta.31 → beta.32, sharp 0.34.5 → 0.35.3, swagger-ui-react 5.32.5 → 5.32.14, next-intl 4.11.1 → 4.13.7, pg 8.20 → 8.23, framer-motion 12.38 → 12.43, alle Radix- und FontAwesome-Primitives sowie die Security-Bumps von dompurify, fast-uri, brace-expansion, axios, form-data, js-yaml, immutable und vite.
