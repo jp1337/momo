@@ -118,7 +118,7 @@ AA-Mindestwert 4,5:1 für Fließtext und Meta.
 | `--ink` | `#f2e9d8` | `#1b241e` | Primärtext |
 | `--ink-2` | `#a4b0a7` | `#55635a` | Sekundärtext |
 | `--ink-3` | `#828f86` | `#666f68` | Meta, Eyebrow — **AA-fest**, siehe unten |
-| `--amber` | `#f0a500` | `#a86f00` | Licht, die eine Handlung |
+| `--amber` | `#f0a500` | `#8c5b00` | Licht, die eine Handlung |
 | `--on-amber` | `#171408` | `#fffaf0` | Text auf Amber — **das fehlende Token** |
 | `--done` | `#5ec47e` | `#2e7048` | ausschließlich „erledigt" |
 | `--danger` | `#d06460` | `#9e3b38` | ausschließlich Zerstörung |
@@ -135,6 +135,21 @@ beiden Themes.
 
 Regel daraus: **kein Token unter 4,5:1 gegen seinen Grund**, wenn darin Text
 steht. „Dekorativ" ist keine Ausnahme — was man lesen soll, muss lesbar sein.
+
+**Light `--amber` wurde am 2026-08-22 angehoben** (aus dem finalen
+Branch-Review, Finding B4). Der ursprüngliche Wert `#a86f00` erreichte nur
+3,63:1 gegen `--ground` — unter der eigenen Regel dieses Abschnitts, obwohl
+Amber an mehreren Stellen Text trägt (die eine Handlung, `Button
+variant="primary"`, `Badge variant="amber"`, der Coin-Zähler). `#8c5b00`
+behält Farbton (39,6°) und volle Sättigung, ist nur dunkler (L 33 % → 28 %),
+und erreicht 4,96:1. Bewusst NICHT so weit abgedunkelt, dass auch Amber auf
+`--raised` 4,5:1 erreicht (`#8c5b00` liegt dort bei 3,87:1) — der dafür
+nötige Wert (~`#7d5200`) liest als Braun, nicht mehr als Amber, und `--amber`
+trägt an weit mehr Stellen Text auf `--ground` als auf `--raised`. Die
+einzige Stelle, an der Amber-Text je auf `--raised` lag — der Hover von
+`Button variant="primary"` — wurde stattdessen auf `hover:underline` auf
+transparentem Grund umgestellt, statt den Ton für die ganze übrige Seite zu
+verdunkeln.
 
 ### Radius, Abstand, Schatten
 

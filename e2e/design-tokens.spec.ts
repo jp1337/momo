@@ -37,7 +37,11 @@ test.describe("Design-Tokens", () => {
     const t = await readTokens(page);
     for (const name of REQUIRED) expect(t[name], name).not.toBe("");
     expect(t["--ground"]).toBe("#eceee5");
-    expect(t["--amber"]).toBe("#a86f00");
+    // #8c5b00, not the original #a86f00 (Task B4, 2026-08-22): the original
+    // measured 3.63:1 against --ground, under the 4.5:1 floor this same
+    // spec sets for text tokens. Same hue, same saturation, darkened until
+    // it clears 4.5:1 — see the comment on --amber in app/globals.css.
+    expect(t["--amber"]).toBe("#8c5b00");
     expect(t["--on-amber"]).toBe("#fffaf0");
   });
 
@@ -190,26 +194,64 @@ test.describe("Surface", () => {
 });
 
 test.describe("Kontrast", () => {
+  // Erweitert (Task B4, 2026-08-22): deckte bisher nur --ink-3 gegen
+  // --ground ab. Die Spec-Regel selbst ("kein Token unter 4,5:1 gegen
+  // seinen Grund, wenn darin Text steht — dekorativ ist keine Ausnahme",
+  // docs/superpowers/specs/2026-08-21-lichtkegel-design.md §3) galt aber
+  // fuer jeden Text-Token, nicht nur --ink-3 — und genau das liess vier
+  // weitere AA-Verstoesse (amber ueberall, Button quiet hover, Badge-
+  // Tints) durch, waehrend dieser Test durchgehend gruen war. Deckt jetzt
+  // jeden Text-Token gegen jeden Grund ab, auf dem er im Code tatsaechlich
+  // Text traegt — inklusive der amber/ink-Paarungen gegen --raised
+  // (Button-Flaechen), nicht nur gegen --ground.
+  // --amber against --raised is deliberately NOT in this list. It measured
+  // 2.83:1 pre-fix, and there is no --amber dark enough to clear 4.5:1
+  // against BOTH --ground and --raised without reading as brown instead of
+  // amber (light --raised sits closer to --amber's own luminance than
+  // --ground does, since --raised is the darker-in-light-mode token) — the
+  // nearest value that clears --raised is ~#7d5200, a value with none of
+  // amber's character left. The actual fix (Task B4) removes the only
+  // place amber text ever sat on --raised — Button primary's hover fill —
+  // in favour of `hover:underline` on a transparent background, rather
+  // than darkening the token for every other amber-text use on the page to
+  // fix an interaction state. Confirmed via grep: no `.tsx` pairs
+  // `text-[var(--amber)]` with a `--raised` background.
+  const PAIRS: ReadonlyArray<{ text: string; bg: string }> = [
+    { text: "--ink", bg: "--ground" },
+    { text: "--ink-2", bg: "--ground" },
+    { text: "--ink-3", bg: "--ground" },
+    { text: "--amber", bg: "--ground" },
+    { text: "--done", bg: "--ground" },
+    { text: "--danger", bg: "--ground" },
+    { text: "--ink", bg: "--raised" },
+  ];
+
+  const hexToRgb = (hex: string): [number, number, number] => {
+    const h = hex.replace("#", "");
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  };
+
   for (const theme of ["dark", "light"] as const) {
-    test(`--ink-3 erreicht 4.5:1 gegen --ground im ${theme} Mode`, async ({ page }) => {
-      await gotoWithTheme(page, theme, "/design-system");
-      const [groundCss, ink3Css] = await page.evaluate(() => {
-        const s = getComputedStyle(document.documentElement);
-        return [s.getPropertyValue("--ground").trim(), s.getPropertyValue("--ink-3").trim()];
+    for (const { text, bg } of PAIRS) {
+      test(`${text} erreicht 4.5:1 gegen ${bg} im ${theme} Mode`, async ({ page }) => {
+        await gotoWithTheme(page, theme, "/design-system");
+        const [bgCss, textCss] = await page.evaluate(
+          ([bgVar, textVar]) => {
+            const s = getComputedStyle(document.documentElement);
+            return [s.getPropertyValue(bgVar).trim(), s.getPropertyValue(textVar).trim()];
+          },
+          [bg, text] as [string, string],
+        );
+        const ratio = contrastRatio(hexToRgb(textCss), hexToRgb(bgCss));
+        expect(ratio, `${theme}: ${bg}=${bgCss} ${text}=${textCss}`).toBeGreaterThanOrEqual(4.5);
       });
-      const hexToRgb = (hex: string): [number, number, number] => {
-        const h = hex.replace("#", "");
-        return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
-      };
-      const ratio = contrastRatio(hexToRgb(ink3Css), hexToRgb(groundCss));
-      expect(ratio, `${theme}: ground=${groundCss} ink-3=${ink3Css}`).toBeGreaterThanOrEqual(4.5);
-    });
+    }
   }
 });
 
 test.describe("Button", () => {
   test("primary traegt Amber als Text, nicht als Flaeche", async ({ page }) => {
-    // Amber selbst ist theme-abhaengig (#f0a500 dark vs. #a86f00 light) —
+    // Amber selbst ist theme-abhaengig (#f0a500 dark vs. #8c5b00 light) —
     // gotoWithTheme fixiert das Theme vor der Navigation, siehe Kommentar oben.
     await gotoWithTheme(page, "dark", "/design-system");
     const s = await page.getByTestId("btn-primary").evaluate((n) => {

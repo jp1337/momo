@@ -46,6 +46,9 @@
      AA-Mindestwert 4.5:1 fuer kleinen Text. Gemessen jetzt: 5.66:1 (dark). */
   --ink-3: #828f86;
 
+  /* Dark amber (#f0a500) traegt bereits 9.17:1 gegen --ground und 7.40:1
+     gegen --raised — kein Handlungsbedarf hier, siehe Light-Kommentar unten
+     fuer den Grund, warum Light anders liegt. */
   --amber:    #f0a500;
   --on-amber: #171408;
   --done:     #5ec47e;
@@ -160,7 +163,18 @@
      AA-Schwelle 4.5:1. #636c65 erreicht 4.64:1. */
   --ink-3: #636c65;
 
-  --amber:    #a86f00;
+  /* --amber angehoben (Task B4, 2026-08-22): #a86f00 erreichte nur 3.63:1
+     gegen --ground — unter der 4.5:1-Regel dieser Spec, obwohl amber Text
+     traegt ("start now", Button primary, Badge amber, der Coin-Zaehler).
+     Gleicher Farbton (39.6°), gleiche volle Saettigung, nur dunkler (L 33%
+     -> 28%): #8c5b00 erreicht 4.96:1 gegen --ground. Bewusst nicht bis auf
+     Kontrast gegen --raised (3.87:1) weiter abgedunkelt — das haette einen
+     Wert um #7d5200 verlangt, der als Braun liest, nicht mehr als Amber;
+     die einzige Stelle, die amber-auf-raised je zeigte, war Button
+     primary's Hover-Flaeche, die dieser Task stattdessen entfernt (siehe
+     components/ui/button.tsx) statt den Ton fuer den ganzen Rest der Seite
+     zu verdunkeln. */
+  --amber:    #8c5b00;
   --on-amber: #fffaf0;
   --done:     #2e7048;
   --danger:   #9e3b38;
