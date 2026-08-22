@@ -64,6 +64,17 @@
   --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
   --space-6: 24px;  --space-8: 32px;  --space-12: 48px; --space-18: 72px;
 
+  /* ─── Maß, Rand, Rinne ───────────────────────────────────────────────────
+     Die Lesespalte gilt auf jeder Seite; der Rand ist optional pro Seite.
+     Der Block aus Spalte + Rinne + Rand wird als GANZES zentriert (siehe
+     components/ui/page-frame.tsx): auf 1440 px sind das 640 + 48 + 208 =
+     896 px und je ~180 px Luft. Der Leerraum verschwindet nicht, er wird
+     verteilt statt rechts geparkt.
+     Bewusst NICHT theme-abhängig — ein Maß ist kein Farbwert. */
+  --measure: 40rem;   /* 640px — die Lesespalte. Jede Seite. */
+  --rail:    13rem;   /* 208px — die Randnotiz. Optional pro Seite. */
+  --gutter:   3rem;   /*  48px — dazwischen */
+
   /* Der einzige verbleibende Schatten: Flächen, die wirklich schweben. */
   --shadow-overlay: 0 12px 40px rgba(0,0,0,.55);
 
@@ -238,6 +249,11 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   /* Alias fuer nicht migrierte Dateien — faellt mit der Ratsche weg. */
   --font-body: var(--font-mono);
+
+  /* Der Umbruchpunkt des Randes. 1100px, nicht Tailwinds lg (1024px):
+     unter 1100 px reichen 640 + 48 + 208 plus Seitenpolster nicht mehr,
+     ohne die Lesespalte zu stauchen. Erzeugt die Variante `rail:`. */
+  --breakpoint-rail: 1100px;
 }
 
 /* ─── Base Styles ───────────────────────────────────────────────────────────── */

@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PageFrame } from "@/components/ui/page-frame";
 import { useState } from "react";
 
 const RADII = [
@@ -245,6 +246,53 @@ export default function DesignSystemPage() {
           bedeutet ausschließlich „erledigt“, <code className="font-[family-name:var(--font-mono)]">--danger</code>{" "}
           ausschließlich Zerstörung — keins der beiden ist ein zweiter Akzent.
         </p>
+      </section>
+
+      {/* ── Maß und Rand ──────────────────────────────────────────────────
+          Die Handles frame-with-rail / frame-no-rail liest
+          e2e/design-tokens.spec.ts; nicht umbenennen. */}
+      <section className="space-y-6">
+        <h2 className="border-b border-[var(--hairline)] pb-2 text-2xl font-semibold text-[var(--ink)]">
+          Maß und Rand
+        </h2>
+        <p className="max-w-[60ch] text-[var(--ink-2)]">
+          640 px Lesespalte, 48 px Rinne, 208 px Randnotiz — als Block
+          zentriert, nicht links geklebt. Unter 1100 px fällt der Rand unter
+          den Inhalt.
+        </p>
+        {/* -mx-4 gibt der Seitenpolsterung des äußeren Containers (px-4)
+            genau die 32px zurück, die 640 + 48 + 208 = 896px sonst fehlen —
+            eine Eigenheit dieser Demo-Seite (max-w-4xl + px-4), keine
+            Eigenschaft von PageFrame selbst: eine echte Seite (Task 9)
+            übergibt PageFrame die volle Breite, ohne einen solchen
+            Container davor. */}
+        <div data-testid="frame-with-rail" className="-mx-4">
+          <PageFrame
+            rail={
+              <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--ink-3)]">
+                Serie · 4 Tage
+              </p>
+            }
+          >
+            <p className="m-0 text-[var(--ink-2)]">
+              Die Lesespalte. Hier steht, was der Nutzer tut.
+            </p>
+          </PageFrame>
+        </div>
+        {/* Dieser Testknoten trägt data-testid direkt (nicht ein Kind
+            davon) — ohne eigenes max-width wäre er ein ganz normaler Block,
+            der die volle verfügbare Breite füllt, unabhängig von PageFrames
+            eigenem max-width darunter. Dieselbe w-full/max-w-Kombination
+            wie in PageFrame selbst hält ihn deterministisch bei genau
+            einer Lesespalte, statt auf die zufällige Textbreite zu
+            schrumpfen (was w-fit hier täte). */}
+        <div data-testid="frame-no-rail" className="mx-auto w-full max-w-[var(--measure)]">
+          <PageFrame>
+            <p className="m-0 text-[var(--ink-2)]">
+              Ohne Rand: eine Bühne, eine Sache.
+            </p>
+          </PageFrame>
+        </div>
       </section>
 
       {/* Effort steps — three discrete font sizes, not a continuous scale.

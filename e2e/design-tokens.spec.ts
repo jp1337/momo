@@ -11,6 +11,7 @@ const REQUIRED = [
   "--amber", "--on-amber", "--done", "--danger",
   "--radius-sm", "--radius-md", "--radius-lg", "--radius-pill",
   "--shadow-overlay",
+  "--measure", "--rail", "--gutter",
 ];
 
 async function readTokens(page: Page) {
@@ -271,5 +272,55 @@ test.describe("Button", () => {
     await expect(page.getByTestId("btn-danger")).toBeVisible();
     await expect(page.getByTestId("btn-success")).toHaveCount(0);
     await expect(page.getByTestId("btn-outline")).toHaveCount(0);
+  });
+});
+
+test.describe("Maß und Rand", () => {
+  test("die drei Layout-Token haben die Werte der Spec", async ({ page }) => {
+    await page.goto("/design-system");
+    const t = await readTokens(page);
+    expect(t["--measure"]).toBe("40rem");
+    expect(t["--rail"]).toBe("13rem");
+    expect(t["--gutter"]).toBe("3rem");
+  });
+
+  test("die Lesespalte ist bei 1440 px genau 640 px breit", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/design-system");
+    const box = await page.getByTestId("frame-with-rail").locator("[data-column]").boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeLessThanOrEqual(641);
+    expect(box!.width).toBeGreaterThanOrEqual(639);
+  });
+
+  test("der Rand steht bei 1440 px neben der Spalte, mit 48 px Rinne", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/design-system");
+    const frame = page.getByTestId("frame-with-rail");
+    const col = (await frame.locator("[data-column]").boundingBox())!;
+    const rail = (await frame.locator("[data-rail]").boundingBox())!;
+    expect(rail.x).toBeGreaterThan(col.x + col.width - 1);
+    expect(rail.x - (col.x + col.width)).toBeGreaterThanOrEqual(47);
+    expect(rail.x - (col.x + col.width)).toBeLessThanOrEqual(49);
+    expect(rail.width).toBeLessThanOrEqual(209);
+  });
+
+  // Der Umbruch der Spec: unter 1100 px fällt der Rand UNTER den Inhalt.
+  // 1024 px ist bewusst gewählt — es ist Tailwinds `lg`, und genau der
+  // Standard-Breakpoint wäre der falsche Umbruchpunkt gewesen.
+  test("unter 1100 px fällt der Rand unter den Inhalt", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await page.goto("/design-system");
+    const frame = page.getByTestId("frame-with-rail");
+    const col = (await frame.locator("[data-column]").boundingBox())!;
+    const rail = (await frame.locator("[data-rail]").boundingBox())!;
+    expect(rail.y).toBeGreaterThan(col.y + col.height - 1);
+  });
+
+  test("ohne Rand ist der Rahmen genau eine Lesespalte breit", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/design-system");
+    const box = await page.getByTestId("frame-no-rail").boundingBox();
+    expect(box!.width).toBeLessThanOrEqual(641);
   });
 });
