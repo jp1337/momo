@@ -50,16 +50,31 @@ for (const path of MIGRATED_PAGES) {
         const inside = hits.filter((h) => h.inLight);
         const dump = (hs: typeof hits) =>
           hs.map((h) => `${h.tag}[${h.testid ?? "-"}] ${h.prop} "${h.text}"`).join("\n");
-        // Positivprobe: der Lichtkegel-Wash (`.lichtkegel::before`, siehe
-        // globals.css) ist unbedingt vorhanden — er hängt an keinem
-        // Seed-Zustand. Fehlt dieser Treffer, misst der Zähler nichts statt
-        // "kein Amber"; eine reine Obergrenze (unten) kann diesen
-        // Unterschied nicht sehen, weil 0/0 sie genauso erfüllt wie eine
-        // echte Messung (Task-3-Review, C1).
-        expect(
-          hits.some((h) => h.prop === "::before"),
-          "der Lichtkegel-Wash wird nicht gesehen — der Zähler misst nichts, nicht 'kein Amber'",
-        ).toBe(true);
+        // Positivprobe, aber NUR auf Seiten mit einem `.lichtkegel` — die
+        // Spec kennt eine amberfarbene HANDLUNG (z. B. reiner Textlink)
+        // genauso wie ein Licht (Task-3-Review, Runde 3: `/tasks` & Co.
+        // haben keinen Lichtkegel und waeren mit einer unbedingten Probe
+        // hier faelschlich rot, obwohl die Zeile 69 direkt darunter genau
+        // diesen Fall schon vorsieht — `inside.length > 0 ? 0 : 1`). Ohne
+        // die Bedingung wuerde die Probe sich selbst widersprechen: sie
+        // verlangt einen Lichtkegel-Treffer auf einer Seite, deren eigene
+        // Regel sagt, dass es keinen braucht. `gotoSettled` (oben) stellt
+        // bereits fest, ob `.lichtkegel` ueberhaupt existiert — dieselbe
+        // Bedingung hier, damit die Probe nur dort greift, wo sie etwas
+        // behauptet, das auch stimmen soll.
+        const hasLight = (await page.locator(".lichtkegel").count()) > 0;
+        if (hasLight) {
+          // Der Lichtkegel-Wash (`.lichtkegel::before`, siehe globals.css)
+          // ist auf einer Seite MIT Lichtkegel unbedingt vorhanden — er
+          // haengt an keinem Seed-Zustand. Fehlt dieser Treffer, misst der
+          // Zaehler nichts statt "kein Amber"; eine reine Obergrenze (unten)
+          // kann diesen Unterschied nicht sehen, weil 0/0 sie genauso
+          // erfuellt wie eine echte Messung (Task-3-Review, C1).
+          expect(
+            hits.some((h) => h.prop === "::before"),
+            "der Lichtkegel-Wash wird nicht gesehen — der Zähler misst nichts, nicht 'kein Amber'",
+          ).toBe(true);
+        }
         // Innerhalb der einen Lichtquelle sind Wash und die Textfarbe der
         // einen Handlung erlaubt — das ist ein Licht, nicht zwei Elemente.
         expect(inside.length, `im Licht:\n${dump(inside)}`).toBeLessThanOrEqual(2);
@@ -86,7 +101,13 @@ for (const path of MIGRATED_PAGES) {
           svgImages,
           "ein <img src=*.svg> trägt Farbe, die der Amber-Zähler nicht sehen kann",
         ).toBe(0);
-        const inlineFeather = await page.locator("header svg").count();
+        // Scoped auf den Wortmarken-Link selbst (das <header> enthaelt sonst
+        // auch den Muenz-Icon und den Theme-Toggle als <svg> — "header svg"
+        // waere schon vom Muenzzaehler erfuellt, egal ob die Feder existiert
+        // oder nicht). Sidebar und Mobile-Nav haben ebenfalls einen Link auf
+        // /dashboard, liegen aber in <aside>/<nav>, nicht <header> — die
+        // Kombination trifft eindeutig nur die Wortmarke.
+        const inlineFeather = await page.locator('header a[href="/dashboard"] svg').count();
         expect(inlineFeather, "die Feder ist kein Inline-SVG mehr").toBeGreaterThan(0);
       });
 

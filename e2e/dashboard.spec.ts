@@ -87,11 +87,16 @@ test.describe("Dashboard", () => {
     const task = await createTask(request, `Quick Win ${Date.now()}`, {
       estimatedMinutes: 5,
     });
-    await page.goto("/dashboard");
+    // Task 3 review round 3: this used to assert `body not toContainText
+    // /500|error/i` — a substring match that the dashboard's own content can
+    // trip once the rail (added in this task) renders a coin balance that
+    // happens to contain "500" (1500, 5000, ...). A digit sequence is not a
+    // server error; the actual HTTP response status is. Checking that
+    // directly tests what the comment always meant, with no fixture-data
+    // collision possible.
+    const response = await page.goto("/dashboard");
+    expect(response?.status(), "dashboard responded with a server error").toBeLessThan(500);
     await page.waitForLoadState("networkidle");
-    // Quick wins section or the task title should appear
-    const body = page.locator("body");
-    await expect(body).not.toContainText(/500|error/i);
     // Cleanup
     await deleteTask(request, task.id);
   });
