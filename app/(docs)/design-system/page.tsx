@@ -279,14 +279,7 @@ export default function DesignSystemPage() {
             </p>
           </PageFrame>
         </div>
-        {/* Dieser Testknoten trägt data-testid direkt (nicht ein Kind
-            davon) — ohne eigenes max-width wäre er ein ganz normaler Block,
-            der die volle verfügbare Breite füllt, unabhängig von PageFrames
-            eigenem max-width darunter. Dieselbe w-full/max-w-Kombination
-            wie in PageFrame selbst hält ihn deterministisch bei genau
-            einer Lesespalte, statt auf die zufällige Textbreite zu
-            schrumpfen (was w-fit hier täte). */}
-        <div data-testid="frame-no-rail" className="mx-auto w-full max-w-[var(--measure)]">
+        <div data-testid="frame-no-rail">
           <PageFrame>
             <p className="m-0 text-[var(--ink-2)]">
               Ohne Rand: eine Bühne, eine Sache.

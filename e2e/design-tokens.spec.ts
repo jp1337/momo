@@ -317,10 +317,30 @@ test.describe("Maß und Rand", () => {
     expect(rail.y).toBeGreaterThan(col.y + col.height - 1);
   });
 
-  test("ohne Rand ist der Rahmen genau eine Lesespalte breit", async ({ page }) => {
+  test("ohne Rand ist die Lesespalte eine Spalte breit und im Inhaltsbereich zentriert", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/design-system");
-    const box = await page.getByTestId("frame-no-rail").boundingBox();
-    expect(box!.width).toBeLessThanOrEqual(641);
+    const frame = page.getByTestId("frame-no-rail");
+    const wrapper = (await frame.boundingBox())!;
+    const col = (await frame.locator("[data-column]").boundingBox())!;
+    expect(col.width).toBeLessThanOrEqual(641);
+    // Spec §3: der Block wird als GANZES im Inhaltsbereich zentriert — die
+    // Lücke links und rechts der Spalte in ihrem Wrapper muss also gleich
+    // sein (max. 1px Differenz für Rundung), nicht linksbündig.
+    const leftGap = col.x - wrapper.x;
+    const rightGap = wrapper.x + wrapper.width - (col.x + col.width);
+    expect(Math.abs(leftGap - rightGap)).toBeLessThanOrEqual(1);
+  });
+
+  // Spec: unter 640 px entfaellt der Rand ganz und seine Inhalte wandern an
+  // das Seitenende — gleiche Form wie der 1024px-Test oben, nur unterhalb
+  // des sm-Breakpoints statt nur unterhalb von `rail:`.
+  test("unter 640 px steht der Rand ebenfalls unter dem Inhalt", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 900 });
+    await page.goto("/design-system");
+    const frame = page.getByTestId("frame-with-rail");
+    const col = (await frame.locator("[data-column]").boundingBox())!;
+    const rail = (await frame.locator("[data-rail]").boundingBox())!;
+    expect(rail.y).toBeGreaterThan(col.y + col.height - 1);
   });
 });
