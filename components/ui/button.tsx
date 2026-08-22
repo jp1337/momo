@@ -47,11 +47,27 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Dark) — der Hover behaelt deshalb --raised als Flaeche und hebt sich
     // stattdessen ueber die Haarlinie als Rahmenfarbe ab (siehe unten), statt
     // --ink-Text auf eine zu helle/dunkle Flaeche zu legen.
+    // Text-color utilities carry a trailing `!` (Task B2 fix, 2026-08-22):
+    // globals.css has an unlayered `a { color: var(--accent-amber); }` link
+    // default (line ~599). Tailwind's own utilities live inside `@layer
+    // utilities`, and an unlayered rule beats every layered one regardless
+    // of selector specificity per the CSS Cascade Layers spec — so a plain
+    // `text-[var(--ink)]` class LOSES to that global rule whenever `asChild`
+    // renders Button as an `<a>` (e.g. wrapping a next/link `Link`), even
+    // though the class is more specific by the ordinary specificity rules
+    // everyone reasons about. Found by actually looking at the dashboard's
+    // new-user state: the "Create first topic" quiet Button, composed with
+    // Link via asChild, rendered amber text instead of --ink — a second
+    // amber element on the page, invisible to any test that never exercises
+    // that state. `!important` from Tailwind's own syntax is the correct
+    // tool for "this component's variant intent must not lose to page
+    // chrome," not a hack — it does not touch the unrelated global rule,
+    // which many un-migrated pages still rely on for their plain links.
     const variantStyles = {
-      primary: "bg-transparent text-[var(--amber)] hover:underline",
+      primary: "bg-transparent text-[var(--amber)]! hover:underline",
       quiet:
-        "bg-[var(--raised)] border border-[var(--hairline)] text-[var(--ink)] hover:border-[var(--ink-2)]",
-      danger: "bg-transparent text-[var(--danger)] hover:bg-[var(--raised)]",
+        "bg-[var(--raised)] border border-[var(--hairline)] text-[var(--ink)]! hover:border-[var(--ink-2)]",
+      danger: "bg-transparent text-[var(--danger)]! hover:bg-[var(--raised)]",
     };
 
     const sizeStyles = {
@@ -66,10 +82,21 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ...style,
     };
 
+    // `whileTap` used to be passed as `asChild ? undefined : {...}` — a prop
+    // with the KEY always present, just sometimes holding `undefined`. When
+    // asChild renders Comp as Radix's Slot, Slot merges every own key of its
+    // props onto the single child regardless of value, so the child (e.g. a
+    // next/link Link, which resolves to a plain `<a>`) received a literal
+    // `whileTap` attribute and React warned about an unrecognized DOM prop.
+    // Omitting the key entirely when asChild is true (found by actually
+    // looking at the dashboard's new-user state and reading the console,
+    // not by the type system) avoids Slot ever seeing it.
+    const motionProps = asChild ? {} : { whileTap: { scale: 0.98 } };
+
     return (
       <Comp
         ref={ref}
-        whileTap={asChild ? undefined : { scale: 0.98 }}
+        {...motionProps}
         className={cn(baseStyles, variantStyles[variant], sizeStyles[size], className)}
         style={combinedStyle}
         {...props}
