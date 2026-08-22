@@ -9,7 +9,7 @@
  */
 
 import type { Metadata, Viewport } from "next";
-import { Lora, JetBrains_Mono, DM_Sans } from "next/font/google";
+import { Fraunces, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
@@ -27,27 +27,36 @@ config.autoAddCss = false;
  * Self-hosted fonts via next/font/google.
  * Downloaded at build time, served from the app's own domain — no requests to
  * fonts.googleapis.com or fonts.gstatic.com at runtime (DSGVO/performance).
+ *
+ * Fraunces ist variabel: die Achsen SOFT und WONK tragen den Charakter und
+ * werden pro Verwendung über font-variation-settings gesetzt.
  */
-const lora = Lora({
+const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  axes: ["SOFT", "WONK", "opsz"],
+  // Task B7 (2026-08-22): `style` was missing entirely, so next/font only
+  // downloaded and registered the normal face. ~10 sites set
+  // `fontStyle: "italic"` on --font-display (landing hero, focus mode,
+  // emotional closure, progress tabs, onboarding, login) and got synthetic
+  // oblique from the browser instead of Fraunces' real italic — the
+  // previous font (Lora) was loaded with style: ["normal", "italic"] and
+  // this dropped silently when Fraunces replaced it.
   style: ["normal", "italic"],
+});
+
+const instrumentSans = Instrument_Sans({
+  subsets: ["latin"],
+  variable: "--font-ui",
+  display: "swap",
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-body",
+  variable: "--font-mono",
   display: "swap",
-  weight: ["300", "400", "500", "600"],
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-ui",
-  display: "swap",
-  weight: ["300", "400", "500", "600"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -160,7 +169,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${lora.variable} ${jetbrainsMono.variable} ${dmSans.variable}`}
+      className={`${fraunces.variable} ${jetbrainsMono.variable} ${instrumentSans.variable}`}
       suppressHydrationWarning
     >
       <head>

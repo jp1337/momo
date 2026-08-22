@@ -13,6 +13,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface TaskBreakdownModalProps {
   /** The task to break down */
@@ -83,50 +85,32 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "8px 12px",
-    borderRadius: "8px",
-    border: "1px solid var(--border)",
-    backgroundColor: "var(--bg-elevated)",
-    color: "var(--text-primary)",
-    fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-    fontSize: "14px",
-    outline: "none",
-  };
-
   return (
     <Dialog open={true} onOpenChange={(open) => { if (!open) onCancel(); }}>
       <DialogContent title={t("breakdown_title")} size="md">
         {/* Original task name */}
-        <p
-          className="text-sm mb-1"
-          style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
-        >
+        <p className="text-sm mb-1 font-[family-name:var(--font-ui)] text-[var(--ink-2)]">
           {t("breakdown_hint")}
         </p>
-        <p
-          className="text-sm font-medium mb-4 px-3 py-2 rounded-lg"
-          style={{
-            fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-            color: "var(--accent-amber)",
-            backgroundColor: "color-mix(in srgb, var(--accent-amber) 10%, var(--bg-elevated))",
-            border: "1px solid color-mix(in srgb, var(--accent-amber) 25%, transparent)",
-          }}
+        {/*
+         * The reference chip: was amber text on an amber-tinted fill — a
+         * second lit element competing with the dashboard's quest, per the
+         * fix-round-2 finding. It's a passive label, not an affordance, so
+         * it takes the Badge primitive's `neutral` variant (--raised fill,
+         * --ink-2 text, no hairline — see badge.tsx) instead of any accent.
+         */}
+        <Badge
+          variant="neutral"
+          className="mb-4 block w-fit px-3 py-2 text-sm font-medium font-[family-name:var(--font-mono)] whitespace-normal"
         >
           {task.title}
-        </p>
+        </Badge>
 
         {/* Error */}
         {error && (
           <div
-            className="mb-4 px-4 py-3 rounded-lg text-sm"
-            style={{
-              backgroundColor: "rgba(184,84,80,0.12)",
-              color: "var(--accent-red)",
-              border: "1px solid rgba(184,84,80,0.3)",
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            }}
+            role="alert"
+            className="mb-4 px-4 py-3 rounded-[var(--radius-md)] text-sm font-[family-name:var(--font-ui)] text-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_15%,transparent)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)]"
           >
             {error}
           </div>
@@ -135,10 +119,7 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           {steps.map((step, index) => (
             <div key={index} className="flex gap-2 items-center">
-              <span
-                className="text-xs w-6 text-center flex-shrink-0"
-                style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)" }}
-              >
+              <span className="text-xs w-6 text-center flex-shrink-0 font-[family-name:var(--font-ui)] text-[var(--ink-2)]">
                 {index + 1}.
               </span>
               <input
@@ -146,15 +127,14 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
                 value={step}
                 onChange={(e) => updateStep(index, e.target.value)}
                 placeholder={`${t("breakdown_subtask_label", { n: index + 1 })}...`}
-                style={inputStyle}
                 maxLength={255}
+                className="w-full px-3 py-2 rounded-[var(--radius-sm)] border border-[var(--hairline)] bg-[var(--raised)] text-[var(--ink)] font-[family-name:var(--font-mono)] text-sm outline-none"
               />
               {steps.length > 2 && (
                 <button
                   type="button"
                   onClick={() => removeStep(index)}
-                  className="flex-shrink-0 text-lg leading-none"
-                  style={{ color: "var(--text-muted)", opacity: 0.6 }}
+                  className="flex-shrink-0 text-lg leading-none text-[var(--ink-2)] opacity-60 hover:opacity-100 transition-opacity"
                   aria-label="Remove step"
                 >
                   ×
@@ -163,50 +143,63 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
             </div>
           ))}
 
-          {/* Add step button */}
+          {/*
+           * Add-step affordance: was amber text — the fix-round-2 finding's
+           * second occurrence. A plain in-flow text action gets --ink-2 with
+           * an --ink hover, the same quiet treatment as every other
+           * secondary action on the migrated pages (no fill, no accent).
+           */}
           {steps.length < 10 && (
             <button
               type="button"
               onClick={addStep}
-              className="text-sm self-start transition-colors"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--accent-amber)",
-              }}
+              className="text-sm self-start transition-colors font-[family-name:var(--font-ui)] text-[var(--ink-2)] hover:text-[var(--ink)]"
             >
               {t("breakdown_add_step")}
             </button>
           )}
 
-          {/* Footer buttons */}
-          <div className="flex gap-3 pt-2">
+          {/*
+           * Footer: the submit button was a filled amber surface with a
+           * hardcoded dark-hex label color — amber as a button fill is
+           * forbidden outright (amber is light, never a surface).
+           *
+           * "Split & create topic" is `Button variant="quiet"`, not
+           * `primary`. This dialog opens over the dashboard while its one
+           * amber element ("jetzt anfangen" / quest_start) is still on
+           * screen behind the scrim — the page's "exactly one amber
+           * element" rule is scoped to the page, and a page with an open
+           * dialog is still one page. Giving Confirm `primary` (amber
+           * text) would make two. Rule 1 covers this exact case: a screen
+           * that needs two equally weighted things gives amber to neither.
+           *
+           * Round 3 fix: Cancel used to be the SAME `quiet` Button as
+           * Confirm — visually identical weight for a reversible action
+           * (close the dialog) and an irreversible one (delete the
+           * original task, permanently). Under the dialog's focus trap
+           * that made two indistinguishable tab stops next to each other.
+           * Cancel is now a bare text action — no fill, no border, no
+           * Button variant (Button only has three: `primary`/`quiet`/
+           * `danger`, and none of them is "no surface at all", so this
+           * is a plain `<button>` styled by hand) — the same register as
+           * the quest's own `abhaken`/`aufteilen`/`morgen` text actions
+           * (see daily-quest-card.tsx). Only "Split & create topic" now
+           * looks like a control; Cancel looks like an escape, matching
+           * which one actually is which.
+           */}
+          <div className="flex items-center gap-4 pt-2">
             <DialogClose asChild>
               <button
                 type="button"
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: "var(--text-muted)",
-                  border: "1px solid var(--border)",
-                  backgroundColor: "transparent",
-                }}
+                className="cursor-pointer border-0 bg-transparent p-0 text-sm font-medium font-[family-name:var(--font-ui)] text-[var(--ink-2)] hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {tc("cancel")}
               </button>
             </DialogClose>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                backgroundColor: "var(--accent-amber)",
-                color: "#0f1410",
-              }}
-            >
+            <Button type="submit" variant="quiet" disabled={isSubmitting} className="flex-1">
               {isSubmitting ? tc("saving") : t("breakdown_confirm")}
-            </button>
+            </Button>
           </div>
         </form>
       </DialogContent>

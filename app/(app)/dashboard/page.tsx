@@ -2,11 +2,18 @@
  * Dashboard page — the home screen for authenticated users.
  *
  * Shows:
- *  - Time-aware greeting with the user's first name
- *  - Daily Quest Hero Card (live quest selected by algorithm)
+ *  - Small, mono greeting with the user's first name (a <p>, not the page h1 —
+ *    the Daily Quest supplies that, see Task 7)
+ *  - Meta line above the quest: weekday, energy state, streak
+ *  - Daily Quest Hero Card (live quest selected by algorithm) — the page's
+ *    one lit thing: no card, no border, a wide amber Lichtkegel wash and a
+ *    large Fraunces headline that is also this page's <h1>
  *  - Quick Wins section (tasks ≤ 15 min, uncompleted)
- *  - Stats row: coins, streak, level, total completions
- *  - Quick links to Tasks and Topics
+ *
+ * Task 6 stripped the stat tiles, the quick-link section and the standalone
+ * Focus Mode banner — coins/level already live in the navbar, tasks/topics
+ * links already live in the sidebar. Task 7 folded the Focus-Mode CTA into
+ * the quest's own action row ("jetzt anfangen").
  *
  * This is a Server Component that fetches data server-side.
  * Interactive quest actions are delegated to the DailyQuestCard client component.
@@ -23,10 +30,8 @@ import { eq, count, lte, isNull, isNotNull, and, or, min, sql } from "drizzle-or
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { EnergyCheckinCard } from "@/components/dashboard/energy-checkin-card";
 import { QuickWinsSection } from "@/components/dashboard/quick-wins-section";
+import { Button } from "@/components/ui/button";
 import { getTranslations } from "next-intl/server";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCoins, faFire, faTrophy, faCircleCheck, faBullseye } from "@fortawesome/free-solid-svg-icons";
-import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -44,17 +49,6 @@ function getGreetingKey(hour: number): string {
   if (hour < 12) return "greeting_morning";
   if (hour < 17) return "greeting_afternoon";
   return "greeting_evening";
-}
-
-/**
- * Converts a coin count to a "level feel" description for atmospheric display.
- * Used to give the coins stat more storytelling character.
- */
-function getCoinTier(coins: number): string {
-  if (coins >= 1000) return "✦✦✦";
-  if (coins >= 300) return "✦✦";
-  if (coins >= 50) return "✦";
-  return "·";
 }
 
 /**
@@ -233,19 +227,16 @@ export default async function DashboardPage() {
     .sort((a, b) => energyMatchScore(a.energyLevel) - energyMatchScore(b.energyLevel))
     .slice(0, 3);
 
-  // Determine greeting based on time of day
+  // Determine greeting based on time of day. The name is interpolated INSIDE
+  // the translated string (fix round 1, 2026-08-22) rather than concatenated
+  // in JSX with a hardcoded ", " and ".": that assumed every locale puts the
+  // name after the greeting with an ASCII comma and ends in an ASCII period,
+  // which is false for at least zh (name-first, full-width punctuation) and
+  // broke greeting_night specifically — "Still up?" is a question, and
+  // gluing ", {name}." onto its "?" produced "Still up?, E2E." Each locale's
+  // string now owns its own word order and punctuation.
   const hour = new Date().getHours();
-  const greeting = t(getGreetingKey(hour) as Parameters<typeof t>[0]);
-
-  // Determine subtitle based on quest state
-  const subtitle =
-    quest && quest.completedAt === null
-      ? t("subtitle_quest")
-      : quest && quest.completedAt !== null
-      ? t("subtitle_done")
-      : t("subtitle_empty");
-
-  const coinTier = getCoinTier(stats.coins);
+  const greeting = t(getGreetingKey(hour) as Parameters<typeof t>[0], { name: firstName });
 
   // Empty-state detection — no topics means a brand-new user who just completed onboarding.
   const topicCount = topicCountRows[0]?.count ?? 0;
@@ -264,358 +255,107 @@ export default async function DashboardPage() {
     }
   }
 
+  // Wochentag als Wort — der Nutzer liest "donnerstag", nicht ein Datum.
+  const weekdayKeys = ["meta_day_mon","meta_day_tue","meta_day_wed","meta_day_thu","meta_day_fri","meta_day_sat","meta_day_sun"] as const;
+  const isoDow = ((new Date().getDay() + 6) % 7); // 0 = Montag
+  const weekdayLabel = t(weekdayKeys[isoDow] as Parameters<typeof t>[0]);
+
+  // Streak-Fragment fuer die Metazeile — bei 0 ganz weglassen, nicht als
+  // "0 Tage Serie" anzeigen. Momo ist fuer Menschen mit Vermeidungstendenz;
+  // eine Null als Tatsache zu praesentieren ist ein taeglicher kleiner
+  // Vorwurf an der ersten Stelle, die sie sehen (Task 6 round 2 finding).
+  const streakText =
+    stats.streakCurrent > 0
+      ? t("meta_streak", { days: stats.streakCurrent })
+      : null;
+
   return (
-    // Wider on lg+ and bigger gaps between sections — gives the dashboard
-    // breathing room on desktop without restructuring the natural top-down
-    // reading order. Anti-procrastination users do better with a single
-    // linear scan path than with a multi-column dashboard.
-    <div className="max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-8 lg:gap-12">
-      {/* ── Greeting ─────────────────────────────────────────────────────────── */}
-      <div className="relative">
-        {/* Atmospheric background glow behind greeting */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            top: "-2rem",
-            left: "-3rem",
-            width: "300px",
-            height: "180px",
-            background:
-              "radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-amber) 8%, transparent) 0%, transparent 70%)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <h1
-            className="text-3xl font-semibold"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              fontStyle: "italic",
-              color: "var(--text-primary)",
-              lineHeight: 1.2,
-            }}
-          >
-            {greeting}, {firstName}.
-          </h1>
-          <p
-            className="mt-1.5 text-sm"
-            style={{
-              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-              color: "var(--text-muted)",
-              letterSpacing: "0.01em",
-            }}
-          >
-            {subtitle}
-          </p>
-        </div>
-      </div>
+    // Rhythmus statt Gleichverteilung (Task 6 fix — ein flaches `gap-*` auf
+    // dem Container setzte 48px zwischen JEDES Element: die 17px-Begruessung
+    // stand vom eigenen Meta-Zeilen-Nachbarn genauso weit weg wie der 246px
+    // hohe Quest-Block von Quick Wins. Gleicher Abstand ueberall gruppiert
+    // nichts. Struktur jetzt: eine enge Kopf-Gruppe (Begruessung + Meta-Zeile
+    // + optionale Energie-Karte — sie gehoeren zusammen, alles Kontext),
+    // dann ein grosser Bruch zur Quest (das eine wichtige Ding), dann ein
+    // mittlerer Abstand zu Quick Wins (verwandt, aber nachrangig). Flexbox
+    // `gap` statt Margin, weil sowohl die Energie-Karte als auch Quick Wins
+    // client-seitig `null` rendern koennen — `gap` fuegt dann keine Luecke
+    // ein, eine feste Margin auf einem leeren Element schon.
+    <div className="max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-12">
+      {/* ── Kopf-Gruppe: Begruessung, Meta-Zeile, Energie-Check-in ──────────
+          Eng zusammen (gap-2 = 8px) — ein Gedanke, nicht drei Flaechen. */}
+      <div className="flex flex-col gap-2">
+        {/* Begrüßung, nicht die Hauptsache der Seite — Fraunces ist für die
+            Quest reserviert. Task 7: die Quest liefert jetzt die Seiten-h1,
+            deshalb ist dieses Element ein <p> — zwei h1 waeren falsch. */}
+        <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] font-normal tracking-[0.01em] text-[var(--ink-2)]">
+          {greeting}
+        </p>
 
-      {/* ── Best-day insight chip ─────────────────────────────────────────────── */}
-      {bestDayInsight && (
-        <div
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm"
-          style={{
-            backgroundColor: "color-mix(in srgb, var(--accent-amber) 8%, var(--bg-surface))",
-            border: "1px solid color-mix(in srgb, var(--accent-amber) 20%, var(--border))",
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          <span style={{ color: "var(--accent-amber)" }}>✦</span>
-          <span>{bestDayInsight}</span>
-        </div>
-      )}
-
-      {/* ── New-user empty state ──────────────────────────────────────────────── */}
-      {isNewUser && (
-        <div
-          className="rounded-xl px-6 py-8 flex flex-col items-center text-center gap-4"
-          style={{
-            backgroundColor: "var(--bg-surface)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-            style={{ backgroundColor: "color-mix(in srgb, var(--accent-green) 12%, transparent)" }}
-            aria-hidden="true"
-          >
-            🌱
-          </div>
-          <div>
-            <p
-              className="text-lg font-semibold mb-1"
-              style={{ fontFamily: "var(--font-display, 'Lora', serif)", fontStyle: "italic", color: "var(--text-primary)" }}
-            >
-              {t("empty_state_title" as Parameters<typeof t>[0])}
-            </p>
-            <p
-              className="text-sm max-w-sm"
-              style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
-            >
-              {t("empty_state_body" as Parameters<typeof t>[0])}
-            </p>
-          </div>
-          <Link
-            href="/topics"
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 no-underline"
-            style={{
-              backgroundColor: "var(--accent-green)",
-              color: "#ffffff",
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            }}
-          >
-            {t("empty_state_cta" as Parameters<typeof t>[0])}
-          </Link>
-        </div>
-      )}
-
-      {/* ── Energy Check-in (above quest) ───────────────────────────────────── */}
-      <section className="-mb-4">
+        {/* ── Metazeile + Energie-Check-in ─────────────────────────────────
+            EnergyCheckinCard rendert jetzt beides: die Metazeile
+            (data-testid="quest-meta", Wochentag/Energie/Streak — ersetzt
+            drei fruehere Flaechen) UND, direkt darunter, den Picker — aber
+            nur wenn noch nicht eingecheckt oder der Nutzer das Energiewort
+            in der Metazeile angeklickt hat, um es zu aendern. Eine
+            Komponente, weil beide dieselbe "heute schon eingecheckt?"-
+            Entscheidung teilen, die aus Timezone-Gruenden im Client
+            getroffen wird (siehe Kommentar dort) — nicht hier im Server. */}
         <EnergyCheckinCard
           energyLevel={cachedEnergyLevel}
           energyLevelDate={cachedEnergyLevelDate}
+          weekdayLabel={weekdayLabel}
+          streakText={streakText}
+          bestDayInsight={bestDayInsight}
         />
-      </section>
+      </div>
 
-      {/* ── Daily Quest Hero Card ─────────────────────────────────────────────── */}
-      <section>
-        <h2
-          className="text-xs font-semibold uppercase tracking-widest mb-3"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {t("section_quest")}
-        </h2>
-        <DailyQuestCard
-          quest={quest}
-          postponesToday={postponesToday}
-          postponeLimit={postponeLimit}
-          emotionalClosureEnabled={emotionalClosureEnabled}
-          userEnergyToday={userEnergyToday}
-        />
-      </section>
+      {/* ── New-user empty state (Task B2 fix) ───────────────────────────
+          Moved out of the head group: it used to sit inside the
+          greeting/meta gap-2 group and broke that group's tight 8px
+          rhythm. As its own top-level flex child it gets the same 48px
+          gap as every other section here.
+          No box, no fill, no green CTA, no Lora italic. `--font-display`
+          stays reserved for the quest headline, which is this page's one
+          large Fraunces element even in the no-quest state (see
+          DailyQuestCard's `!quest` branch, "quest_no_quest"). That branch
+          also already carries the page's one amber element (its hint
+          link to /tasks), so this CTA is a quiet Button rather than a
+          second amber action — and it points to /topics, because a user
+          with zero topics needs one before a task can exist at all. */}
+      {isNewUser && (
+        <div className="flex flex-col gap-3">
+          <p className="m-0 font-[family-name:var(--font-ui)] text-base font-semibold text-[var(--ink)]">
+            {t("empty_state_title" as Parameters<typeof t>[0])}
+          </p>
+          <p className="m-0 max-w-sm font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
+            {t("empty_state_body" as Parameters<typeof t>[0])}
+          </p>
+          <div>
+            <Button asChild variant="quiet" size="md">
+              <Link href="/topics">{t("empty_state_cta" as Parameters<typeof t>[0])}</Link>
+            </Button>
+          </div>
+        </div>
+      )}
 
-      {/* ── Focus Mode CTA ──────────────────────────────────────────────────── */}
-      <Link
-        href="/focus"
-        className="flex items-center gap-4 rounded-xl px-5 py-4 transition-all duration-150 no-underline group"
-        style={{
-          backgroundColor: "color-mix(in srgb, var(--accent-green) 8%, var(--bg-surface))",
-          border: "1px solid color-mix(in srgb, var(--accent-green) 25%, var(--border))",
-        }}
-      >
-        <div
-          className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
-          style={{
-            backgroundColor: "color-mix(in srgb, var(--accent-green) 15%, transparent)",
-          }}
-        >
-          <FontAwesomeIcon
-            icon={faBullseye}
-            className="w-5 h-5"
-            style={{ color: "var(--accent-green)" }}
-            aria-hidden="true"
+      {/* ── Quest + Quick Wins: mittlerer Abstand (gap-8 = 32px) zwischen
+          den beiden, verwandt aber nachrangig zur Kopf-Gruppe darueber. ── */}
+      <div className="flex flex-col gap-8">
+        {/* ── Daily Quest Hero Card ───────────────────────────────────────── */}
+        <section>
+          <DailyQuestCard
+            quest={quest}
+            postponesToday={postponesToday}
+            postponeLimit={postponeLimit}
+            emotionalClosureEnabled={emotionalClosureEnabled}
+            userEnergyToday={userEnergyToday}
           />
-        </div>
-        <div className="flex-1 min-w-0">
-          <span
-            className="text-sm font-semibold block"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              fontStyle: "italic",
-              color: "var(--text-primary)",
-            }}
-          >
-            {t("focus_cta")}
-          </span>
-          <span
-            className="text-xs block mt-0.5"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {t("focus_cta_hint")}
-          </span>
-        </div>
-        <span
-          className="text-sm transition-transform group-hover:translate-x-1"
-          style={{ color: "var(--accent-green)" }}
-        >
-          →
-        </span>
-      </Link>
+        </section>
 
-
-      {/* ── Quick Wins ── interaktiv: Tasks direkt hier abhaken ─────────────── */}
-      <QuickWinsSection tasks={sortedQuickWins} />
-
-      {/* ── Stats ────────────────────────────────────────────────────────────── */}
-      <section>
-        <h2
-          className="text-xs font-semibold uppercase tracking-widest mb-3"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {t("section_overview")}
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {(
-            [
-              {
-                label: t("stat_coins"),
-                value: String(stats.coins),
-                sub: coinTier,
-                icon: faCoins as IconDefinition,
-                accent: "var(--coin-gold)",
-                pulse: false,
-              },
-              {
-                label: t("stat_streak"),
-                value: `${stats.streakCurrent}d`,
-                sub: (() => {
-                  const fire = stats.streakCurrent >= 7 ? "🔥" : stats.streakCurrent >= 3 ? "↑" : "·";
-                  return stats.streakShieldAvailable ? `${fire} ✨` : fire;
-                })(),
-                icon: faFire as IconDefinition,
-                accent: stats.streakCurrent >= 3 ? "var(--accent-amber)" : "var(--text-muted)",
-                pulse: stats.streakCurrent > 0,
-              },
-              {
-                label: t("stat_level"),
-                value: String(stats.level),
-                sub: `${stats.coins} coins`,
-                icon: faTrophy as IconDefinition,
-                accent: "var(--accent-amber)",
-                pulse: false,
-              },
-              {
-                label: t("stat_completed"),
-                value: String(totalCompletions),
-                sub: totalCompletions >= 100 ? "✦✦✦" : totalCompletions >= 10 ? "✦" : "·",
-                icon: faCircleCheck as IconDefinition,
-                accent: "var(--accent-green)",
-                pulse: false,
-              },
-            ] as { label: string; value: string; sub: string; icon: IconDefinition; accent: string; pulse: boolean }[]
-          ).map((stat) => (
-            <div
-              key={stat.label}
-              className="card-hover rounded-2xl p-5 flex flex-col gap-2"
-              style={{
-                backgroundColor: "var(--bg-surface)",
-                border: "1px solid var(--border)",
-                boxShadow: "var(--shadow-sm)",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              {/* Subtle accent glow top-right */}
-              <div
-                aria-hidden="true"
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  right: 0,
-                  width: "60px",
-                  height: "60px",
-                  background: `radial-gradient(circle at top right, color-mix(in srgb, ${stat.accent} 12%, transparent) 0%, transparent 70%)`,
-                  pointerEvents: "none",
-                }}
-              />
-              <div className="flex items-center justify-between" style={{ position: "relative" }}>
-                <span
-                  className="text-xs font-medium uppercase tracking-wider"
-                  style={{
-                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    color: "var(--text-muted)",
-                  }}
-                >
-                  {stat.label}
-                </span>
-                <FontAwesomeIcon
-                  icon={stat.icon}
-                  className={stat.pulse ? "streak-pulse w-4 h-4" : "w-4 h-4"}
-                  style={{ color: stat.accent }}
-                  aria-hidden="true"
-                />
-              </div>
-              <div style={{ position: "relative" }}>
-                <span
-                  className="text-2xl font-semibold block"
-                  style={{
-                    fontFamily: "var(--font-display, 'Lora', serif)",
-                    color: "var(--text-primary)",
-                    lineHeight: 1.1,
-                  }}
-                >
-                  {stat.value}
-                </span>
-                <span
-                  style={{
-                    fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-                    fontSize: "0.7rem",
-                    color: stat.accent,
-                    opacity: 0.7,
-                    display: "block",
-                    marginTop: "2px",
-                  }}
-                >
-                  {stat.sub}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Quick links ──────────────────────────────────────────────────────── */}
-      <section>
-        <h2
-          className="text-xs font-semibold uppercase tracking-widest mb-3"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {t("navigate")}
-        </h2>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/tasks"
-            className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              backgroundColor: "var(--bg-surface)",
-              border: "1px solid var(--border)",
-              color: "var(--text-primary)",
-              textDecoration: "none",
-            }}
-          >
-            {t("all_tasks")}
-          </Link>
-          <Link
-            href="/topics"
-            className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              backgroundColor: "var(--bg-surface)",
-              border: "1px solid var(--border)",
-              color: "var(--text-primary)",
-              textDecoration: "none",
-            }}
-          >
-            {t("all_topics")}
-          </Link>
-        </div>
-      </section>
+        {/* ── Quick Wins ── interaktiv: Tasks direkt hier abhaken ─────────── */}
+        <QuickWinsSection tasks={sortedQuickWins} />
+      </div>
     </div>
   );
 }

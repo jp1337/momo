@@ -39,7 +39,12 @@ export async function createTask(
   if (!res.ok()) {
     throw new Error(`createTask failed: ${res.status()} ${await res.text()}`);
   }
-  return res.json() as Promise<Task>;
+  // POST /api/tasks returns { task }, not the bare task — unwrap it.
+  // Previously this function returned the whole wrapper cast as Task, so
+  // every caller's `task.id` / `task.title` was silently undefined
+  // (found during Task B3's final verification pass, 2026-08-22).
+  const { task } = (await res.json()) as { task: Task };
+  return task;
 }
 
 /** Delete a task by ID (cleanup helper). */
@@ -62,7 +67,9 @@ export async function createTopic(
   if (!res.ok()) {
     throw new Error(`createTopic failed: ${res.status()} ${await res.text()}`);
   }
-  return res.json() as Promise<Topic>;
+  // POST /api/topics returns { topic }, not the bare topic — see createTask().
+  const { topic } = (await res.json()) as { topic: Topic };
+  return topic;
 }
 
 /** Delete a topic by ID (cleanup helper). */
@@ -87,7 +94,9 @@ export async function createWishlistItem(
       `createWishlistItem failed: ${res.status()} ${await res.text()}`
     );
   }
-  return res.json() as Promise<WishlistItem>;
+  // POST /api/wishlist returns { item }, not the bare item — see createTask().
+  const { item } = (await res.json()) as { item: WishlistItem };
+  return item;
 }
 
 /** Delete a wishlist item by ID. */

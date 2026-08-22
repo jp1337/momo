@@ -1,18 +1,48 @@
 "use client";
 
 /**
- * EnergyCheckinCard — inline check-in widget at the top of the dashboard.
+ * EnergyCheckinCard — the dashboard's meta line (weekday · energy · streak).
  *
  * Replaces the old prompt that lived inside DailyQuestCard, which was bound
  * to `!quest` and therefore practically invisible to anyone with at least
  * one eligible task.
  *
- * Renders in two states:
- *  1. **Not checked in** (no entry for today's local date): three large
- *     buttons HIGH / MEDIUM / LOW. Clicking one POSTs to /api/energy-checkin
- *     and the server may swap the daily quest for a better-matching task.
- *  2. **Already checked in**: collapses to a thin status bar showing the
- *     current level + an "Edit" button to expand back into picker mode.
+ * Fix round 2 (2026-08-22): Task 6 said "merge the energy check-in into the
+ * meta line" but only did half the job — once energy was SET, the meta line
+ * showed it as a quiet text button; until it was set, a separate 177px block
+ * (heading + three filled tiles) appeared above the quest instead. That
+ * block was fix round 1's finding: the only filled surfaces left on the
+ * page, sitting directly above the one thing that must arrive first. This
+ * round finishes the merge instead of just shrinking the tiles: there is no
+ * card anymore, checked-in or not.
+ *
+ *  1. **Already checked in, not expanded**: the meta line reads
+ *     "saturday · Medium", where "Medium" is a quiet text button
+ *     (`meta_energy_change_aria`) that reopens the choice. Unchanged from
+ *     round 1.
+ *  2. **Not checked in, or expanded to change**: the meta line instead reads
+ *     "saturday · High energy · Medium · Low energy" — the three levels as
+ *     quiet text actions, in the same register as the quest's own
+ *     "Complete" / "aufteilen" / "Not today" row. No tiles, no icons, no
+ *     `--raised` fill on any of them — they are peers being chosen among,
+ *     not a primary action, so none of them gets a surface. Only the
+ *     currently-selected one (when changing an existing check-in) is marked,
+ *     via weight + a checkmark, not colour.
+ *
+ * Fix round 3 (2026-08-22): round 2 grew each choice's tap target with
+ * `-my-4 py-4` — real padding cancelled by an equal negative margin, so the
+ * clickable box was bigger than the space it reserved in layout. At 375px
+ * the row wraps, and the two invisible overflow regions of the first and
+ * last choice then overlapped each other across the wrap boundary — worst
+ * in German ("Viel Energie" / "Wenig Energie", 31×32px overlap), because a
+ * longer label pushes the wrap point earlier. Whichever choice sits later
+ * in the DOM wins ties in that overlap, so a tap on "Wenig Energie" could
+ * register as "Viel Energie" — the opposite of what was pressed. Fixed by
+ * dropping the negative margin: `py-4` is now genuine padding on a real
+ * `inline-flex flex-wrap` row, so the browser's own box layout — not an
+ * invisible bleed past the box edge — is what makes each target ≥44px
+ * tall, and wrapped rows are pushed apart by their own real height instead
+ * of colliding. Verified at 375×800 in de/ru/en: zero pairwise overlap.
  *
  * Why "today" is computed client-side: `users.energyLevelDate` is written
  * with the user's local date (via `getLocalDateString(timezone)` on the
@@ -20,23 +50,37 @@
  * — comparing the raw date string against `new Date().toISOString()` (UTC)
  * was the source of the previous timezone bug. Doing the comparison in the
  * browser, where we know the real local timezone, sidesteps the issue
- * entirely without needing a `users.timezone` column.
+ * entirely without needing a `users.timezone` column. This component still
+ * owns that comparison exclusively — the weekday/streak/insight text it
+ * receives as props is presentational only and never decides "is this
+ * already set for today?".
  */
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "motion/react";
+import { cn } from "@/lib/utils";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 type EnergyLevel = "HIGH" | "MEDIUM" | "LOW";
+
+const LEVELS: readonly EnergyLevel[] = ["HIGH", "MEDIUM", "LOW"];
 
 interface EnergyCheckinCardProps {
   /** Cached level on `users.energyLevel` — may be from any past day. */
   energyLevel: EnergyLevel | null;
   /** Cached date `users.energyLevelDate` — raw "YYYY-MM-DD" string. */
   energyLevelDate: string | null;
+  /** Pre-translated weekday word, e.g. "friday" / "freitag". */
+  weekdayLabel: string;
+  /** Pre-formatted streak fragment, e.g. "5 Tage Serie" — omit (null) at a
+   *  zero streak: a "0 days streak" line is a daily reproach, not a fact
+   *  worth stating, for an app built for people who avoid and procrastinate. */
+  streakText: string | null;
+  /** Pre-translated best-day insight sentence, or null when not applicable. */
+  bestDayInsight: string | null;
 }
 
 /** Shape of the response from POST /api/energy-checkin */
@@ -58,29 +102,23 @@ function clientLocalToday(): string {
   return new Date().toLocaleDateString("en-CA");
 }
 
-/** Visual style metadata for each energy level button. */
-const LEVEL_STYLES: Record<
-  EnergyLevel,
-  { color: string; icon: string }
-> = {
-  HIGH: { color: "var(--accent-amber)", icon: "⚡" },
-  MEDIUM: { color: "var(--accent-green)", icon: "☀" },
-  LOW: { color: "var(--text-muted)", icon: "🌙" },
-};
-
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 /**
- * Inline energy check-in card.
+ * Meta line, including the energy check-in when it's still open for today.
  *
  * Self-contained: handles its own API call, state, and post-checkin
- * notification banner. After a successful check-in it triggers
- * `router.refresh()` so the parent dashboard pulls the (possibly new)
- * quest and re-renders DailyQuestCard with fresh data.
+ * notification. After a successful check-in it triggers `router.refresh()`
+ * so the parent dashboard pulls the (possibly new) quest and re-renders
+ * DailyQuestCard with fresh data — the meta line's own text
+ * (weekday/streak/insight) also comes from that refreshed props.
  */
 export function EnergyCheckinCard({
   energyLevel,
   energyLevelDate,
+  weekdayLabel,
+  streakText,
+  bestDayInsight,
 }: EnergyCheckinCardProps) {
   const t = useTranslations("dashboard");
   const router = useRouter();
@@ -101,7 +139,7 @@ export function EnergyCheckinCard({
 
   /**
    * Sends the check-in to the server. On success: refreshes the dashboard,
-   * collapses the card, and shows a transient swap notification if the
+   * collapses the choices, and shows a transient swap notification if the
    * daily quest changed.
    */
   async function submitCheckin(level: EnergyLevel) {
@@ -163,175 +201,99 @@ export function EnergyCheckinCard({
     }
   }
 
-  // ── Collapsed status bar ────────────────────────────────────────────────
-  if (isCheckedInToday && !expanded) {
-    const style = LEVEL_STYLES[energyLevel];
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        className="rounded-xl px-4 py-2.5 flex items-center justify-between gap-3"
-        style={{
-          backgroundColor: "var(--bg-surface)",
-          border: `1px solid color-mix(in srgb, ${style.color} 25%, var(--border))`,
-        }}
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span aria-hidden="true" style={{ fontSize: "1.1rem" }}>
-            {style.icon}
-          </span>
-          <span
-            className="text-sm truncate"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {t("energy_card_subtitle_collapsed", {
-              level: t(`energy_${energyLevel.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low"),
-            })}
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setExpanded(true)}
-          className="text-xs px-2.5 py-1 rounded-lg cursor-pointer transition-opacity duration-150"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: style.color,
-            backgroundColor: `color-mix(in srgb, ${style.color} 8%, transparent)`,
-            border: `1px solid color-mix(in srgb, ${style.color} 25%, transparent)`,
-          }}
-        >
-          {t("energy_card_change")}
-        </button>
+  const energyWord =
+    isCheckedInToday && energyLevel
+      ? t(`energy_${energyLevel.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low")
+      : t("meta_energy_unknown");
 
-        {/* Swap notification — fallback if card somehow collapses while swapNotice is set */}
-        <AnimatePresence>
-          {swapNotice && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="w-full rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-xs mt-1"
-              style={{
-                backgroundColor: "color-mix(in srgb, var(--accent-amber) 10%, transparent)",
-                border: "1px solid color-mix(in srgb, var(--accent-amber) 30%, transparent)",
-                color: "var(--text-primary)",
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              }}
-            >
-              <span className="truncate">
-                {t("energy_card_swapped", { title: swapNotice.previousTitle })}
-              </span>
-              <button
-                type="button"
-                onClick={handleUndoSwap}
-                className="flex-shrink-0 underline cursor-pointer"
-                style={{ color: "var(--accent-amber)" }}
-              >
-                {t("energy_card_swapped_undo")}
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    );
-  }
+  // Show the choices whenever there's nothing checked in yet, or the user
+  // asked to change today's level by clicking the word in the meta line.
+  const showChoices = !isCheckedInToday || expanded;
 
-  // ── Expanded picker ─────────────────────────────────────────────────────
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="rounded-2xl p-5 flex flex-col gap-4"
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        border: "1px solid var(--border)",
-        boxShadow: "var(--shadow-sm)",
-      }}
-    >
-      <div className="flex flex-col gap-1">
-        <h3
-          className="text-base font-semibold"
-          style={{
-            fontFamily: "var(--font-display, 'Lora', serif)",
-            fontStyle: "italic",
-            color: "var(--text-primary)",
-          }}
-        >
-          {t("energy_checkin_title")}
-        </h3>
-        <p
-          className="text-xs"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {t("energy_checkin_subtitle")}
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2.5" role="group" aria-label={t("energy_checkin_title")}>
-        {(Object.keys(LEVEL_STYLES) as EnergyLevel[]).map((level) => {
-          const style = LEVEL_STYLES[level];
-          const isCurrent = isCheckedInToday && energyLevel === level;
-          return (
-            <button
-              key={level}
-              type="button"
-              onClick={() => submitCheckin(level)}
-              disabled={submitting !== null}
-              aria-pressed={isCurrent}
-              className="flex-1 min-w-[90px] px-3 py-3 rounded-xl text-sm font-medium transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                backgroundColor: isCurrent
-                  ? `color-mix(in srgb, ${style.color} 18%, var(--bg-elevated))`
-                  : `color-mix(in srgb, ${style.color} 8%, var(--bg-elevated))`,
-                border: `1px solid color-mix(in srgb, ${style.color} ${isCurrent ? 50 : 25}%, var(--border))`,
-                color: style.color,
-              }}
-            >
-              <span className="block text-lg mb-1" aria-hidden="true">
-                {style.icon}
+    <>
+      {/* ── Metazeile: Wochentag, Energie, Streak ─────────────────────────
+          Ersetzt drei fruehere Flaechen (Energie-Karte, Insight-Chip,
+          Stat-Tiles). Alles Mono, alles gedimmt — es ist Kontext, keine
+          Handlung, mit EINER Ausnahme: das Energiewort selbst ist die
+          Aenderungs-Kontrolle (Task 6 round 2) — kein zweites Element dafuer.
+          Fix round 2: die drei Wahlmoeglichkeiten leben jetzt IN dieser
+          Zeile statt in einer eigenen Flaeche darunter — kein Kasten mehr in
+          keinem der beiden Zustaende. */}
+      <div
+        data-testid="quest-meta"
+        className="flex items-center gap-3 flex-wrap font-[family-name:var(--font-mono)] text-[0.6875rem] tracking-[0.06em] text-[var(--ink-3)]"
+      >
+        <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-1">
+          <span>{weekdayLabel} ·</span>
+          {showChoices ? (
+            submitting !== null ? (
+              <span aria-live="polite">{t("energy_checking_in")}</span>
+            ) : (
+              <span
+                className="inline-flex flex-wrap items-center gap-x-1 gap-y-1 align-middle"
+                role="group"
+                aria-label={t("energy_checkin_title")}
+              >
+                {LEVELS.map((level, i) => {
+                  const isCurrent = isCheckedInToday && energyLevel === level;
+                  const label = t(
+                    `energy_${level.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low"
+                  );
+                  return (
+                    <span key={level} className="inline-flex items-center">
+                      {i > 0 && (
+                        <span aria-hidden="true" className="mr-1 text-[var(--ink-3)]">
+                          ·
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => submitCheckin(level)}
+                        aria-pressed={isCurrent}
+                        aria-label={t("meta_energy_set_aria", { level: label })}
+                        className={cn(
+                          "inline-flex cursor-pointer items-center rounded-[var(--radius-sm)] border-0 bg-transparent px-1.5 py-4",
+                          "font-[family-name:var(--font-mono)] text-[0.6875rem] tracking-[0.06em] transition-colors",
+                          "hover:bg-[var(--raised)] hover:underline underline-offset-2",
+                          isCurrent ? "font-semibold text-[var(--ink)]" : "text-[var(--ink-2)]"
+                        )}
+                      >
+                        {isCurrent && "✓ "}
+                        {label}
+                      </button>
+                    </span>
+                  );
+                })}
               </span>
-              {t(`energy_${level.toLowerCase()}` as "energy_high" | "energy_medium" | "energy_low")}
+            )
+          ) : (
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              aria-label={t("meta_energy_change_aria", { level: energyWord })}
+              className="bg-transparent border-0 p-0 m-0 cursor-pointer font-[family-name:var(--font-mono)] text-[0.6875rem] tracking-[0.06em] text-[var(--ink-2)] hover:underline underline-offset-2"
+            >
+              {energyWord}
             </button>
-          );
-        })}
+          )}
+        </span>
+        {streakText && <span>· {streakText}</span>}
+        {bestDayInsight && <span>· {bestDayInsight}</span>}
       </div>
 
-      {submitting && (
-        <p
-          className="text-xs text-center"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-          aria-live="polite"
-        >
-          {t("energy_checking_in")}
-        </p>
-      )}
-
-      {/* Swap notification — visible while in picker mode after a re-roll */}
+      {/* Swap notification — quiet text, no fill or border (fix round 2):
+          previously lived inside the now-deleted picker card with a
+          --raised/--hairline treatment; that made sense for a box that
+          already existed, but building a new box just to host this transient
+          line would reintroduce exactly the surface fix round 1 removed. */}
       <AnimatePresence>
         {swapNotice && (
-          <motion.div
+          <motion.p
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-xs"
-            style={{
-              backgroundColor: "color-mix(in srgb, var(--accent-amber) 10%, transparent)",
-              border: "1px solid color-mix(in srgb, var(--accent-amber) 30%, transparent)",
-              color: "var(--text-primary)",
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            }}
+            className="m-0 flex items-center gap-2 overflow-hidden font-[family-name:var(--font-mono)] text-[0.6875rem] text-[var(--ink-3)]"
           >
             <span className="truncate">
               {t("energy_card_swapped", { title: swapNotice.previousTitle })}
@@ -339,14 +301,13 @@ export function EnergyCheckinCard({
             <button
               type="button"
               onClick={handleUndoSwap}
-              className="flex-shrink-0 underline cursor-pointer"
-              style={{ color: "var(--accent-amber)" }}
+              className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-[var(--ink-2)] underline hover:text-[var(--ink)]"
             >
               {t("energy_card_swapped_undo")}
             </button>
-          </motion.div>
+          </motion.p>
         )}
       </AnimatePresence>
-    </motion.div>
+    </>
   );
 }

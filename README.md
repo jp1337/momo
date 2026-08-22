@@ -32,7 +32,7 @@ Momo is a task management app built for people who struggle with avoidance, proc
 
 | Dashboard | Topics |
 |:---------:|:------:|
-| ![Dashboard — Daily Quest, energy check-in, and quick actions](public/screenshots/01-dashboard.png) | ![Topics — project cards with progress bars and archive hint](public/screenshots/02-topics.png) |
+| ![Dashboard — Daily Quest lit as the page's one highlighted element, with a naked Quick Wins list below](public/screenshots/01-dashboard.png) | ![Topics — project cards with progress bars and archive hint](public/screenshots/02-topics.png) |
 
 | Habits | Statistics |
 |:------:|:----------:|
@@ -91,9 +91,9 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **Immutable Statistics Counter** — `totalTasksCreated` is a cumulative counter that only ever increases. Deleting a task never decrements it, giving an accurate lifetime picture of your output.
 - **Time Estimates** — Assign a time estimate (5, 15, 30, or 60 minutes) to any task. Estimates are displayed as a badge on task cards.
 - **Quick Wins** — Dashboard section that surfaces all tasks estimated at 15 minutes or less, so a short window of focus never goes to waste.
-- **5-Minute Mode** — Dedicated focused view (`/quick`) showing only tasks with a 5-minute estimate. Prominent dashboard CTA, sidebar and mobile nav entry. Complete tasks directly with full animation support.
-- **Focus Mode** — Distraction-free view (`/focus`) showing only the Daily Quest and Quick Wins (tasks ≤ 15 min). No stats, no links, no noise — just the quest and a few short tasks. Full completion animations. Replaces 5-Min in mobile nav for maximum impact.
-- **Public Landing Page** — Atmospheric Momo-themed landing page (Lora italic, dark forest green, feather animation, Michael Ende quote) for unauthenticated visitors.
+- **5-Minute Mode** — Dedicated focused view (`/quick`) showing only tasks with a 5-minute estimate. Sidebar and mobile nav entry. Complete tasks directly with full animation support.
+- **Focus Mode** — Distraction-free view (`/focus`) showing only the Daily Quest and Quick Wins (tasks ≤ 15 min). No stats, no links, no noise — just the quest and a few short tasks. Full completion animations. Reachable from the Daily Quest's own action row on the dashboard, the sidebar, and mobile nav.
+- **Public Landing Page** — Atmospheric Momo-themed landing page (Fraunces italic, dark forest green, feather animation, Michael Ende quote) for unauthenticated visitors.
 - **Dark & Light Mode** — Cozy warm tones in both themes. Because productivity shouldn't feel clinical.
 - **DSGVO / GDPR Ready** — Data export (JSON), account deletion with full cascade, Impressum + Datenschutzerklärung pages, no tracking cookies.
 - **Open Source & Self-Hostable** — Your data, your server, your rules. Migrations run automatically on container start.
@@ -154,8 +154,8 @@ account.
 Momo is intentionally cozy. Both the dark and light themes use warm, earthy tones — no harsh whites, no cold blues, no sterile greys. The goal is an app you *want* to open, not one that feels like a spreadsheet.
 
 - **Dark theme:** Deep forest greens and near-blacks with warm amber accents
-- **Light theme:** Soft parchment whites and warm sand tones
-- **Typography:** Lora (headings) · JetBrains Mono (tasks) · DM Sans (UI)
+- **Light theme:** Pale sage paper, not cream — a daylight-in-the-woods tone rather than the warm-serif-on-cream look most productivity apps default to
+- **Typography:** Fraunces (once per page, large — the Daily Quest or a page title) · JetBrains Mono (tasks, figures) · Instrument Sans (everything else)
 - **Animations:** Subtle, purposeful — a small celebration when you finish something, not a distraction
 
 ---

@@ -49,12 +49,25 @@ export function CoinCounter({ initialCoins }: CoinCounterProps) {
   return (
     <span
       ref={nodeRef}
-      className="flex items-center gap-1.5 text-sm font-medium px-2.5 rounded-lg h-9"
+      data-testid="coin-counter"
+      className="flex items-center gap-1.5 text-sm font-medium px-2.5 rounded-[var(--radius-sm)] h-9"
       style={{
         fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
         color: "var(--coin-gold)",
-        backgroundColor: "rgba(212,160,23,0.12)",
-        border: "1px solid rgba(212,160,23,0.25)",
+        // Task B12 (2026-08-22): was a hardcoded RGB-with-alpha fill at 12%
+        // plus a hardcoded RGB-with-alpha border at 25%, both pinned to
+        // amber's old hex — literals, so neither responded to the theme, and
+        // the fill measured 3.34:1 in light mode. Now a
+        // token-based wash, with the tint at 6% rather than the 12% used by
+        // similar amber washes elsewhere (e.g. components/layout/level-badge.tsx):
+        // --amber was darkened for AA in Task B4, and at 12% the composited
+        // background only reaches 4.23:1 against the resulting fill in light
+        // mode; 6% clears 4.5:1 with margin in both themes (4.58 light,
+        // 8.44 dark — computed against --bg-surface, the navbar's actual
+        // background). The border is dropped rather than tokenised: a wash
+        // is a fill, not an affordance, and rule 3 gives an edge only to
+        // affordances.
+        backgroundColor: "color-mix(in srgb, var(--amber) 6%, transparent)",
       }}
       title="Your coin balance"
     >

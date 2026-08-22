@@ -5,7 +5,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 
 ## Contents
 - `theme-toggle.tsx` — Cycles dark → light → system using next-themes
-- `layout/navbar.tsx` — Top bar: app name (Lora font), ThemeToggle, coin display, user avatar dropdown
+- `layout/navbar.tsx` — Top bar: app name (Fraunces font), ThemeToggle, coin display, user avatar dropdown
 - `layout/sidebar.tsx` — Left navigation (hidden on mobile), active route highlighting; includes 5-Min quick mode entry (faBolt)
 - `layout/mobile-nav.tsx` — Fixed bottom tab bar (mobile only, md:hidden): Dashboard/5 Min/Tasks/Topics/Wishlist
 - `layout/user-menu.tsx` — Avatar dropdown: Settings, API Keys, Stats, Admin (if isAdmin), Sign out
@@ -26,8 +26,8 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `topics/sortable-task-list.tsx` — Drag-and-drop reorderable task list using @dnd-kit; PointerSensor (mouse), TouchSensor (200ms delay), KeyboardSensor; DragOverlay for smooth preview; restrictToVerticalAxis modifier; optimistic reorder via onReorder callback
 - `topics/sortable-task-item.tsx` — Wraps TaskItem with dnd-kit useSortable hook; renders drag handle (6-dot grip SVG) to the left; touch-action: none on handle to avoid swipe conflict
 - `topics/icon-picker.tsx` — 6-column FA icon grid picker; used in topic-form instead of emoji-picker
-- `dashboard/daily-quest-card.tsx` — Hero card: quest display, postpone (with daily limit counter), energy-match badge on active quest, celebration state all day after completion; fires coinsEarned event. Energy check-in itself lives in EnergyCheckinCard above this card on the dashboard
-- `dashboard/energy-checkin-card.tsx` — Inline energy check-in widget at the top of the dashboard. Renders 3 large buttons (HIGH/MEDIUM/LOW) when not yet checked in today; collapses to a thin status bar with "Change" button after check-in. Computes "today" client-side via `new Date().toLocaleDateString("en-CA")` (NOT server-side) — this is the structural fix for the Bug B timezone bug. Calls POST /api/energy-checkin which auto-rerolls the quest; on `swapped=true` shows an inline Undo banner that POSTs to /api/daily-quest/restore. Self-contained — receives only `energyLevel` + `energyLevelDate` raw props from the dashboard SSR
+- `dashboard/daily-quest-card.tsx` — The page's one lit thing (Task 7 "Lichtkegel"): no card, no border, no shadow — a wide amber `.lichtkegel` wash lights a large Fraunces headline that doubles as the page's `<h1>` in all three states (open/completed/empty). Action row is quiet text, not filled buttons; only "jetzt anfangen" carries amber. Postpone (with daily limit counter), breakdown (opens TaskBreakdownModal), energy-match badge on active quest, celebration state all day after completion; fires coinsEarned event. Energy check-in itself lives in EnergyCheckinCard above this card on the dashboard
+- `dashboard/energy-checkin-card.tsx` — Renders the dashboard's meta line (`data-testid="quest-meta"`: weekday · energy · streak · best-day insight) — the check-in lives entirely INSIDE this line, in both states (Task 8 fix round 2 finished the merge Task 6 started). Not checked in (or reopened to change): the three levels render as quiet inline text choices — `saturday · High energy · Medium · Low energy` — each a plain-text button (`aria-label` via `meta_energy_set_aria`), no fill, no icon, no card; the currently-selected one (when changing an existing check-in) gets weight + a checkmark, not colour. Checked in and collapsed: the energy word IN the meta line becomes a quiet text button (`aria-label` via `meta_energy_change_aria`) that reopens the choices — no separate status bar. Computes "today" client-side via `new Date().toLocaleDateString("en-CA")` (NOT server-side) — this is the structural fix for the Bug B timezone bug. Calls POST /api/energy-checkin which auto-rerolls the quest; on `swapped=true` shows an inline quiet-text Undo notice (no fill) that POSTs to /api/daily-quest/restore. Receives `energyLevel`/`energyLevelDate` raw props plus pre-translated `weekdayLabel`/`streakText`/`bestDayInsight` presentational strings from the dashboard SSR
 - `stats/energy-week-block.tsx` — Stats page energy summary block. Three count pills (HIGH/MEDIUM/LOW for the last 7 days) + 90-day GitHub-style heatmap (13 columns × 7 rows, no chart lib). Pure server component; receives pre-fetched data via props. Empty-state hint when the user has never checked in
 - `quick/five-minute-view.tsx` — Focused 5-min task view: flat list of tasks with estimatedMinutes ≤ 5, reuses TaskItem, full completion animations (confetti, coins, level-up, achievements), AnimatePresence exit animation, empty state + "all done" celebration
 - `focus/focus-mode-view.tsx` — Distraction-free focus view: DailyQuestCard hero + flat quick-win task list (≤15 min), full completion flow (confetti, coins, level-up, achievements), "all done" celebration, empty state; combines dashboard quest logic with FiveMinuteView task management pattern
@@ -68,11 +68,11 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `animations/confetti.tsx` — Confetti burst on task completion / level-up
 - `animations/achievement-toast.tsx` — Toast overlay when an achievement is unlocked
 - `animations/level-up-overlay.tsx` — Full-screen overlay animation on level-up
-- `animations/emotional-closure.tsx` — Affirmation/quote shown after daily quest completion; day-based deterministic pick (same quote all day), Motion fade-in, Lora italic; 12 quotes per language via closure.quote_N i18n keys
+- `animations/emotional-closure.tsx` — Affirmation/quote shown after daily quest completion; day-based deterministic pick (same quote all day), Motion fade-in, Fraunces italic; 12 quotes per language via closure.quote_N i18n keys
 
 ## Patterns
 - Use CSS variables from `globals.css` for all colors (never hardcode hex)
 - Dark and light mode must work for every component (`data-theme` attribute on `<html>`)
 - Motion for complex animations; CSS-only for simple hover/focus states
-- Fonts: `--font-display` (Lora) for headings, `--font-body` (JetBrains Mono) for task text, `--font-ui` (DM Sans) for UI
+- Fonts: `--font-display` (Fraunces) once per page in large size, `--font-mono` (JetBrains Mono) for task/number text, `--font-ui` (Instrument Sans) for everything else
 - Responsive: test at 375px and 1280px minimum

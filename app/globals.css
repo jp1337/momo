@@ -5,7 +5,7 @@
  *  - Background, surface, border, and text tokens
  *  - Accent colours (amber, green, red, coin gold)
  *  - Typography scale via CSS custom properties
- *  - Font families: Lora (headings), JetBrains Mono (tasks/body), DM Sans (UI)
+ *  - Font families: Fraunces (headings), JetBrains Mono (tasks/body), Instrument Sans (UI)
  *
  * Dark mode is the default. Light mode is applied via the [data-theme="light"]
  * attribute set by next-themes on the <html> element.
@@ -24,24 +24,63 @@
 /* statt sich an den Wänden zu reiben.                                         */
 :root,
 [data-theme="dark"] {
-  /* Backgrounds — Deeper, "Forest Charcoal" tones for maximum coziness.
-     Warmer blacks that feel like earth/stone rather than cold plastic. */
-  --bg-primary: #121413;   /* L 8 % — Deep, grounding base */
-  --bg-surface: #1b1f1d;   /* L 12 % — Subtle forest depth */
-  --bg-elevated: #242a27;  /* L 16 % — Lifted surfaces */
+  /* ─── Lichtkegel: zwei Flächenwerte, keine Leiter ────────────────────────
+     Revidiert 2026-08-21: die vierstufige Leiter (--s1/--s2/--s3) ist
+     gestrichen — Nachbarstufen lagen bei ΔL* 3, unter der Wahrnehmungsgrenze
+     von ΔL* 8 fuer grosse Flaechen. --raised ist die einzige verbleibende
+     Stufe und erscheint nur bei echten Affordanzen (Eingabe, Button, Hover).
+     Gemessen: ΔL*(raised, ground) = 9.98. */
+  --ground:   #0e100f;
+  --raised:   #202623;
+  /* --hairline ist gegenueber der urspruenglichen Spec (#3d463f) angehoben:
+     bei #3d463f betrug der Kontrast gegen --raised nur 1.57:1 — die Linie
+     verschwand genau dort, wo sie die Affordanz markieren soll. #6a7a6d
+     erreicht 3.39:1 gegen --raised und 4.20:1 gegen --ground (WCAG
+     1.4.11 Non-Text-Contrast-Richtwert 3:1 fuer UI-Komponentengrenzen). */
+  --hairline: #6a7a6d;
 
-  /* Borders — Soft and integrated, avoiding high-contrast harshness */
-  --border: #313a35;       /* L 21 % */
+  --ink:   #f2e9d8;
+  --ink-2: #a4b0a7;
+  /* --ink-3 angehoben 2026-08-21: die urspruenglichen Werte erreichten bei
+     11px nur 4.24:1 (dark) / 3.08:1 (light) gegen den Grund, unter dem
+     AA-Mindestwert 4.5:1 fuer kleinen Text. Gemessen jetzt: 5.66:1 (dark). */
+  --ink-3: #828f86;
 
-  /* Text — Soft cream for primary, misty sage for muted */
-  --text-primary: #f2e9d8;
-  --text-muted: #8d9990;
+  /* Dark amber (#f0a500) traegt bereits 9.17:1 gegen --ground und 7.40:1
+     gegen --raised — kein Handlungsbedarf hier, siehe Light-Kommentar unten
+     fuer den Grund, warum Light anders liegt. */
+  --amber:    #f0a500;
+  --on-amber: #171408;
+  --done:     #5ec47e;
+  --danger:   #d06460;
 
-  /* Accent colours */
-  --accent-amber: #f0a500;
-  --accent-green: #5ec47e; /* heller/lebendiger für bessere Sichtbarkeit im Dark Mode */
-  --accent-red: #d06460;   /* minimal heller für besseren Kontrast auf dunklen Flächen */
-  --coin-gold: #ffd060;
+  /* Radius — vier Stufen, keine mehr. */
+  --radius-sm:   7px;
+  --radius-md:   11px;
+  --radius-lg:   14px;
+  --radius-pill: 999px;
+
+  /* Abstand — Basis 4px. */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+  --space-6: 24px;  --space-8: 32px;  --space-12: 48px; --space-18: 72px;
+
+  /* Der einzige verbleibende Schatten: Flächen, die wirklich schweben. */
+  --shadow-overlay: 0 12px 40px rgba(0,0,0,.55);
+
+  /* ─── Aliase auf die Lichtkegel-Token ────────────────────────────────────
+     Uebergangsschicht: nicht migrierte Dateien lesen weiter die alten Namen,
+     bekommen aber die neuen Werte. Faellt weg, wenn die Ratsche in
+     scripts/check-design-tokens.mjs bei 0 steht. */
+  --bg-primary:   var(--ground);
+  --bg-surface:   var(--ground);
+  --bg-elevated:  var(--raised);
+  --border:       var(--hairline);
+  --text-primary: var(--ink);
+  --text-muted:   var(--ink-2);
+  --accent-amber: var(--amber);
+  --accent-green: var(--done);
+  --accent-red:   var(--danger);
+  --coin-gold:    var(--amber);
   --rarity-legendary: #c084fc; /* Violett für Legendary-Achievements */
 
   /*
@@ -89,37 +128,82 @@
   --color-danger: var(--accent-red);
   --color-coin: var(--coin-gold);
 
-  /* Shadow tokens — in Dark Mode: opaker + subtiler Inset-Highlight für Tiefenwirkung */
-  --shadow-sm: 0 1px 4px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.05);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.05);
+  /* Shadow tokens — die Elevation kommt aus der Fläche, nicht mehr aus dem Schatten.
+     0 0 #0000 statt none: none ist nur als Alleinwert von box-shadow gueltig —
+     als Listenglied (z. B. "0 0 16px amber, var(--shadow-md)") macht "none" die
+     GESAMTE Deklaration ungueltig und der Browser verwirft sie komplett. */
+  --shadow-sm: 0 0 #0000;
+  --shadow-md: 0 0 #0000;
+  --shadow-lg: var(--shadow-overlay);
 }
 
 /* ─── Light Mode ────────────────────────────────────────────────────────────── */
 [data-theme="light"] {
-  /* Backgrounds */
-  --bg-primary: #f7f2e8;
-  --bg-surface: #fdf9f2;
-  --bg-elevated: #ede5d5;
+  /* ─── Lichtkegel: zwei Flächenwerte, keine Leiter ────────────────────────
+     Die urspruengliche Leiter war zudem nicht monoton: --s1 (#f5f6f0) lag
+     HELLER als --ground (#eceee5), waehrend --s2/--s3 dunkler lagen —
+     "angehoben" las sich als vertieft. --raised ist hier bewusst dunkler
+     als --ground: im Hellen ist eine Eingabe ein Trog, in den man tippt.
+     --raised ist ausserdem gegenueber der urspruenglichen Spec (#d3d9c9)
+     leicht nachgedunkelt: dort betrug ΔL* gegen --ground nur 7.88, unter
+     der Wahrnehmungsgrenze 8. Gemessen jetzt: ΔL* = 9.30. */
+  --ground:   #eceee5;
+  --raised:   #cfd5c5;
+  /* --hairline stark nachgedunkelt gegenueber der urspruenglichen Spec
+     (#b9c2ab): dort betrug der Kontrast gegen --raised nur 1.28:1 — die
+     Linie war praktisch unsichtbar genau dort, wo sie die Affordanz
+     markieren soll. #6d7860 erreicht 3.10:1 gegen --raised und 3.98:1
+     gegen --ground. */
+  --hairline: #6d7860;
 
-  /* Borders */
-  --border: #d6c9b2;
+  --ink:   #1b241e;
+  --ink-2: #55635a;
+  /* --ink-3 angehoben 2026-08-21, siehe Dark-Kommentar oben. Der Spec-
+     Zielwert #666f68 erreichte nur 4.44:1 gegen --ground, knapp unter der
+     AA-Schwelle 4.5:1. #636c65 erreicht 4.64:1. */
+  --ink-3: #636c65;
 
-  /* Text */
-  --text-primary: #1e2922;
-  --text-muted: #6b7d6e;
+  /* --amber angehoben (Task B4, 2026-08-22): #a86f00 erreichte nur 3.63:1
+     gegen --ground — unter der 4.5:1-Regel dieser Spec, obwohl amber Text
+     traegt ("start now", Button primary, Badge amber, der Coin-Zaehler).
+     Gleicher Farbton (39.6°), gleiche volle Saettigung, nur dunkler (L 33%
+     -> 28%): #8c5b00 erreicht 4.96:1 gegen --ground. Bewusst nicht bis auf
+     Kontrast gegen --raised (3.87:1) weiter abgedunkelt — das haette einen
+     Wert um #7d5200 verlangt, der als Braun liest, nicht mehr als Amber;
+     die einzige Stelle, die amber-auf-raised je zeigte, war Button
+     primary's Hover-Flaeche, die dieser Task stattdessen entfernt (siehe
+     components/ui/button.tsx) statt den Ton fuer den ganzen Rest der Seite
+     zu verdunkeln. */
+  --amber:    #8c5b00;
+  --on-amber: #fffaf0;
+  --done:     #2e7048;
+  --danger:   #9e3b38;
 
-  /* Accent colours */
-  --accent-amber: #c98a00;
-  --accent-green: #2e7048;
-  --accent-red: #9e3b38;
-  --coin-gold: #b8960a;
+  --shadow-overlay: 0 12px 40px rgba(0,0,0,.18);
+
+  /* ─── Aliase auf die Lichtkegel-Token ────────────────────────────────────
+     Uebergangsschicht: nicht migrierte Dateien lesen weiter die alten Namen,
+     bekommen aber die neuen Werte. Faellt weg, wenn die Ratsche in
+     scripts/check-design-tokens.mjs bei 0 steht. */
+  --bg-primary:   var(--ground);
+  --bg-surface:   var(--ground);
+  --bg-elevated:  var(--raised);
+  --border:       var(--hairline);
+  --text-primary: var(--ink);
+  --text-muted:   var(--ink-2);
+  --accent-amber: var(--amber);
+  --accent-green: var(--done);
+  --accent-red:   var(--danger);
+  --coin-gold:    var(--amber);
   --rarity-legendary: #9333ea; /* Violett für Legendary-Achievements */
 
-  /* Shadow tokens — lighter in light mode */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+  /* Shadow tokens — die Elevation kommt aus der Fläche, nicht mehr aus dem Schatten.
+     0 0 #0000 statt none: none ist nur als Alleinwert von box-shadow gueltig —
+     als Listenglied (z. B. "0 0 16px amber, var(--shadow-md)") macht "none" die
+     GESAMTE Deklaration ungueltig und der Browser verwirft sie komplett. */
+  --shadow-sm: 0 0 #0000;
+  --shadow-md: 0 0 #0000;
+  --shadow-lg: var(--shadow-overlay);
 }
 
 /* ─── Tailwind v4 theme bridge ──────────────────────────────────────────────── */
@@ -136,10 +220,24 @@
   --color-accent-red: var(--accent-red);
   --color-coin-gold: var(--coin-gold);
 
+  /* Lichtkegel: zwei Flächenwerte, Ink-Skala, Amber als Licht */
+  --color-ground: var(--ground);
+  --color-raised: var(--raised);
+  --color-hairline: var(--hairline);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-amber: var(--amber);
+  --color-on-amber: var(--on-amber);
+  --color-done: var(--done);
+  --color-danger: var(--danger);
+
   /* Font families */
-  --font-display: "Lora", Georgia, serif;
-  --font-body: "JetBrains Mono", "Courier New", monospace;
-  --font-ui: "DM Sans", system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-ui: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* Alias fuer nicht migrierte Dateien — faellt mit der Ratsche weg. */
+  --font-body: var(--font-mono);
 }
 
 /* ─── Base Styles ───────────────────────────────────────────────────────────── */
@@ -177,43 +275,66 @@ body {
   background-size: 200px 200px, auto, auto;
   background-attachment: fixed;
   color: var(--text-primary);
-  font-family: var(--font-ui, "DM Sans", system-ui, sans-serif);
+  font-family: var(--font-ui, "Instrument Sans", system-ui, sans-serif);
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Daily Quest "breathing" glow ──────────────────────────────────────────── */
-/*
- * Subtle pulse on the amber border + halo of the Daily Quest card. Period
- * is intentionally slow (5s) and amplitude small (~5% opacity variation)
- * so it reads as "the card is alive" rather than "look at me, look at me".
+/* ─── Der Lichtkegel ────────────────────────────────────────────────────────
+ * Die eine Lichtquelle pro Seite. Kein Rahmen, keine Flaeche — ein weiter,
+ * weicher Wash von oben. Die Keule ist absichtlich breit: eine engere
+ * Version liest als Fleck hinter der Schrift statt als Licht.
  *
- * Disabled completely under prefers-reduced-motion — for ADHS users who
- * are sensitive to motion, the breathing would be the opposite of calm.
+ * Horizontaler Anker bei 30%, nicht 50% (Fix Round 1 2026-08-21): der Titel
+ * ist linksbuendig und variabel breit (kurzer Titel wie "Call mom" bis zu
+ * max-w-[26ch]), aber die Box, auf der der Anker prozentual sitzt, ist
+ * immer die volle Breite des Quest-Containers — bei 50% lag die Lichtmitte
+ * dadurch strukturell rechts von der Ueberschrift, nie darauf, egal wie
+ * lang der Titel war. 30% liegt nah genug am linken Rand, wo jeder Titel
+ * beginnt, dass die breite, weiche Streuung ihn traegt, ohne bei sehr
+ * kurzen Titeln komplett danebenzuliegen. Verifiziert mit Titel-Laengen von
+ * "Call mom" bis zum 26ch-Maximum. Die Breite ueber die Box hinauszuziehen
+ * (190% statt vom 64rem-Clamp gekappt) wurde probiert und verworfen: das
+ * verbreitert nur die Streuung, verschiebt aber die Mitte nicht — bei
+ * Container-Mitte als Anker bleibt sie bei Container-Mitte, egal wie breit
+ * die Box ist.
+ *
+ * Die Opazitaet atmet leicht (6s, 0.85 → 1) statt zu pulsieren — das Licht
+ * soll wirken, als stuende es einfach da, nicht als bluepe es. Unter
+ * prefers-reduced-motion bleibt das Licht selbst stehen, nur die Animation
+ * faellt weg: der Kegel ist Inhalt (Beleuchtung), keine Bewegung.
  */
-@keyframes quest-breathe {
-  0%, 100% {
-    box-shadow:
-      0 0 16px color-mix(in srgb, var(--accent-amber) 12%, transparent),
-      var(--shadow-md);
-  }
-  50% {
-    box-shadow:
-      0 0 28px color-mix(in srgb, var(--accent-amber) 22%, transparent),
-      var(--shadow-md);
-  }
+.lichtkegel {
+  position: relative;
+  isolation: isolate;
 }
-.quest-card-breathing {
-  animation: quest-breathe 5s ease-in-out infinite;
+.lichtkegel::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -6rem;
+  width: min(190%, 64rem);
+  height: 30rem;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse 55% 48% at 30% 46%,
+    color-mix(in srgb, var(--amber) 11%, transparent) 0%,
+    color-mix(in srgb, var(--amber) 7%,  transparent) 26%,
+    color-mix(in srgb, var(--amber) 3%,  transparent) 48%,
+    transparent 84%);
+  pointer-events: none;
+  z-index: -1;
+  animation: lichtkegel-atmen 6s ease-in-out infinite;
+}
+@keyframes lichtkegel-atmen {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .quest-card-breathing {
+  .lichtkegel::before {
     animation: none;
-    box-shadow:
-      0 0 16px color-mix(in srgb, var(--accent-amber) 15%, transparent),
-      var(--shadow-md);
+    opacity: 1;
   }
 }
 
@@ -290,14 +411,26 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-display, "Lora", Georgia, serif);
+  font-family: var(--font-display, "Fraunces", Georgia, serif);
   color: var(--text-primary);
   line-height: 1.3;
 }
 
 /* Task text uses JetBrains Mono for that "list" feel */
 .task-text {
-  font-family: var(--font-body, "JetBrains Mono", monospace);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+}
+
+/* Fraunces is a variable font — SOFT and WONK carry its character. These
+   two utilities exist solely for /design-system, so the axes are visibly
+   live on the page rather than just named in a caption. Defined here
+   (not inline) so the reference page itself stays free of style={{}},
+   which npm run check:design counts as a violation. */
+.font-display-axis-rest {
+  font-variation-settings: "SOFT" 0, "WONK" 0;
+}
+.font-display-axis-soft {
+  font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144;
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────────────────── */

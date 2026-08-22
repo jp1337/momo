@@ -121,13 +121,11 @@ When you only have a few minutes to spare, click the **5 Min** entry in the side
 
 The 5-minute page strips away everything except the tasks you can finish right now — no search bar, no filters, no create button. Complete a task directly from this view and enjoy the same confetti, coin, and level-up animations as the regular task list.
 
-If your dashboard has qualifying tasks, a prominent **"I only have 5 minutes"** banner appears between the Daily Quest and Quick Wins sections. Click it to jump straight into the mode.
-
 > **Tip:** Set a 5-minute estimate on tiny tasks like "Take out the trash" or "Reply to that email". They become your go-to list for those moments between meetings.
 
 ### Focus Mode
 
-When you want to block out everything except what matters right now, switch to **Focus Mode**. Open it from the sidebar (bullseye icon), the dashboard banner, or the avatar menu.
+When you want to block out everything except what matters right now, switch to **Focus Mode**. Open it from the sidebar (bullseye icon), or from the **start now** link next to your Daily Quest on the dashboard.
 
 Focus Mode is designed as a visual sanctuary. When you enter it, the interface shifts to a full-screen, immersive view with ambient amber and forest-green lighting — a deliberate signal that you have left the regular app and entered a focused space. You select up to three tasks to work through, then tackle them one at a time on a centered card.
 

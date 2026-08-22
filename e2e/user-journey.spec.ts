@@ -49,14 +49,20 @@ test.describe("Task lifecycle", () => {
     await deleteTask(request, task.id);
   });
 
-  test("dashboard coins stat is visible and numeric after login", async ({ page }) => {
+  // Fix (Task B5, 2026-08-22): this used to target a `section` containing
+  // "Coins" on the dashboard — the 4 stat tiles Task 6 deleted, since coins
+  // and level moved into the navbar. It failed deterministically, not
+  // flakily, for the whole branch. Repointed at the navbar's coin counter
+  // (components/layout/coin-counter.tsx, data-testid="coin-counter"), which
+  // is present on every authenticated page, not just the dashboard.
+  test("navbar coins counter is visible and numeric after login", async ({ page }) => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
 
-    // The stats grid should show a numeric coins value
-    // Coins are displayed as a large number in the stats card
-    const statsSection = page.locator("section").filter({ hasText: /Coins|Münzen/i }).first();
-    await expect(statsSection).toBeVisible({ timeout: 5000 });
+    const coinCounter = page.getByTestId("coin-counter");
+    await expect(coinCounter).toBeVisible({ timeout: 5000 });
+    const text = await coinCounter.innerText();
+    expect(text).toMatch(/\d/);
   });
 
   test("completing a quick-win task removes it from the dashboard list", async ({

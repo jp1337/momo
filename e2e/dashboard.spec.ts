@@ -4,8 +4,9 @@ import { createTask, deleteTask } from "./helpers/api";
 /**
  * Dashboard E2E tests — the main home screen.
  *
- * Covers: greeting, stats section, quest section, focus CTA,
- * quick wins, and navigation links.
+ * Covers: greeting, quest section, quest meta line (weekday/energy/streak),
+ * quick wins, and the absence of the removed stat tiles / quick links /
+ * standalone focus banner (Task 6 — dashboard entschlacken).
  */
 test.describe("Dashboard", () => {
   test("loads without error", async ({ page }) => {
@@ -15,14 +16,10 @@ test.describe("Dashboard", () => {
     await expect(page.locator("h1").first()).toBeVisible();
   });
 
-  test("renders the stats row (Coins, Streak, Level, Completed)", async ({
-    page,
-  }) => {
+  test("zeigt keine Stat-Tiles mehr", async ({ page }) => {
     await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-    // The stats grid contains 4 stat cards
-    const statCards = page.locator(".grid > div").filter({ hasText: /\d/ });
-    await expect(statCards.first()).toBeVisible();
+    // Coins und Level stehen in der Navbar; auf dem Dashboard standen sie doppelt.
+    await expect(page.getByTestId("stat-tiles")).toHaveCount(0);
   });
 
   test("renders the Daily Quest section", async ({ page }) => {
@@ -33,31 +30,42 @@ test.describe("Dashboard", () => {
     await expect(questSection).toBeVisible();
   });
 
-  test("Focus Mode CTA link is visible and navigates", async ({ page }) => {
+  test("zeigt keine Quick-Links mehr", async ({ page }) => {
     await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-    const focusLink = page.locator('a[href="/focus"]');
-    await expect(focusLink).toBeVisible();
-    await focusLink.click();
-    await expect(page).toHaveURL(/focus/);
+    // Dupliziert die Sidebar.
+    await expect(page.getByTestId("dashboard-quick-links")).toHaveCount(0);
   });
 
-  test("Tasks quick link navigates to /tasks", async ({ page }) => {
+  test("Wochentag und Energie stehen in einer Metazeile", async ({ page }) => {
     await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-    const tasksLink = page.locator('a[href="/tasks"]').first();
-    await expect(tasksLink).toBeVisible();
-    await tasksLink.click();
-    await expect(page).toHaveURL(/tasks/);
+    const meta = page.getByTestId("quest-meta");
+    await expect(meta).toBeVisible();
+    // Wochentag und Energie sind durch einen Mittelpunkt verbunden — das
+    // literale Zeichen ist locale-unabhaengig pruefbar, der uebersetzte
+    // Wochentag/Energie-Text nicht.
+    await expect(meta).toContainText("·");
   });
 
-  test("Topics quick link navigates to /topics", async ({ page }) => {
+  test("Streak erscheint in der Metazeile nur, wenn sie nicht null ist", async ({
+    page,
+    request,
+  }) => {
+    // "0 days streak" ist ein taeglicher kleiner Vorwurf fuer eine App, die
+    // Menschen mit Vermeidungstendenz hilft — bei Streak 0 zeigt die
+    // Metazeile gar keine Zahl (Task 6 round 2 finding). Ein hartkodierter
+    // Erwartungswert waere fragil, deshalb erst den echten Wert abfragen.
+    const res = await request.get("/api/user");
+    const body = (await res.json()) as { streakCurrent: number };
+
     await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-    const topicsLink = page.locator('a[href="/topics"]').first();
-    await expect(topicsLink).toBeVisible();
-    await topicsLink.click();
-    await expect(page).toHaveURL(/topics/);
+    const meta = page.getByTestId("quest-meta");
+    await expect(meta).toBeVisible();
+
+    if (body.streakCurrent > 0) {
+      await expect(meta).toContainText(/\d+/);
+    } else {
+      await expect(meta).not.toContainText(/\d+/);
+    }
   });
 
   test("quick wins appear when short tasks exist", async ({
@@ -65,8 +73,10 @@ test.describe("Dashboard", () => {
     request,
   }) => {
     // Create a short task via API
+    // estimatedMinutes is an enum, not a free integer: 5 | 15 | 30 | 60 | null
+    // (lib/validators/index.ts). 10 was rejected with a 422 every run.
     const task = await createTask(request, `Quick Win ${Date.now()}`, {
-      estimatedMinutes: 10,
+      estimatedMinutes: 5,
     });
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
@@ -77,14 +87,6 @@ test.describe("Dashboard", () => {
     await deleteTask(request, task.id);
   });
 
-  test("Focus Mode CTA is present (replaces 5-Min CTA)", async ({ page }) => {
-    // The 5-Min CTA was removed from the dashboard in favour of the Focus Mode CTA.
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-    const focusLink = page.locator('a[href="/focus"]');
-    await expect(focusLink).toBeVisible();
-  });
-
   test("page renders without JavaScript errors", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (err) => errors.push(err.message));
@@ -92,5 +94,66 @@ test.describe("Dashboard", () => {
     await page.waitForLoadState("networkidle");
     // No fatal JS errors
     expect(errors.filter((e) => !e.includes("hydrat"))).toHaveLength(0);
+  });
+});
+
+test.describe("Aufwandsstufen", () => {
+  test("die Schriftgroesse folgt der geschaetzten Dauer", async ({
+    page,
+    request,
+  }) => {
+    // estimatedMinutes is an enum, not a free integer: 5 | 15 | 30 | 60 | null
+    // (lib/validators/index.ts) — 5 and 15 are the only values the dashboard's
+    // Quick Wins query (lte(tasks.estimatedMinutes, 15)) can ever surface, so
+    // only "small" and "medium" are exercised here. "large" (60 min, >30)
+    // is untested on this page by construction and will be covered once
+    // /tasks is migrated to the same token system in a later plan.
+    const a = await createTask(request, `Klein ${Date.now()}`, {
+      estimatedMinutes: 5,
+    });
+    const b = await createTask(request, `Mittel ${Date.now()}`, {
+      estimatedMinutes: 15,
+    });
+
+    try {
+      await page.goto("/dashboard");
+      const rows = page.getByTestId("quick-win-row");
+      const n = await rows.count();
+      test.skip(n === 0, "keine Quick Wins im Testdatensatz");
+
+      const seen = new Map<string, number>();
+      for (let i = 0; i < n; i++) {
+        const row = rows.nth(i);
+        const effort = await row.getAttribute("data-effort");
+        const size = await row
+          .getByTestId("quick-win-title")
+          .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+        if (effort) seen.set(effort, size);
+      }
+      // Groessere Stufe → groessere Schrift, und nie unter 14px.
+      for (const size of seen.values()) expect(size).toBeGreaterThanOrEqual(14);
+      if (seen.has("small") && seen.has("medium")) {
+        expect(seen.get("medium")!).toBeGreaterThan(seen.get("small")!);
+      }
+      if (seen.has("medium") && seen.has("large")) {
+        expect(seen.get("large")!).toBeGreaterThan(seen.get("medium")!);
+      }
+    } finally {
+      await deleteTask(request, a.id);
+      await deleteTask(request, b.id);
+    }
+  });
+
+  test("die Liste hat keine Kaesten", async ({ page }) => {
+    await page.goto("/dashboard");
+    const rows = page.getByTestId("quick-win-row");
+    const n = await rows.count();
+    test.skip(n === 0, "keine Quick Wins im Testdatensatz");
+    const s = await rows.first().evaluate((el) => {
+      const c = getComputedStyle(el);
+      return { bg: c.backgroundColor, radius: c.borderTopLeftRadius };
+    });
+    expect(["rgba(0, 0, 0, 0)", "transparent"]).toContain(s.bg);
+    expect(s.radius).toBe("0px");
   });
 });
