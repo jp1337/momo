@@ -12,7 +12,7 @@ Live-Referenz: Route `/design-system`.
 
 ## Flächen — zwei Werte, keine Leiter
 
-Es gibt `--ground` (die Seite, und den Körper von Dialogen) und `--raised`
+Es gibt `--ground` (die Seite) und `--raised`
 (ausschließlich echte Affordanzen: Eingabe, Button, Hover). Eine
 vierstufige Leiter (`--s1`/`--s2`/`--s3`) gab es im ersten Entwurf — sie
 maß gemessen ΔL* ≈ 3 zwischen Nachbarstufen, weit unter der
@@ -20,7 +20,7 @@ Wahrnehmungsgrenze, und wurde gestrichen.
 
 | Token | Dark | Light | Rolle |
 |---|---|---|---|
-| `--ground` | `#0e100f` | `#eceee5` | Seite, Dialog-Körper |
+| `--ground` | `#0e100f` | `#eceee5` | die Seite |
 | `--raised` | `#202623` | `#cfd5c5` | nur Affordanzen |
 | `--hairline` | `#6a7a6d` | `#6d7860` | die eine Linie, nur wo sie Information ist |
 
@@ -35,7 +35,7 @@ Grund, nicht „immer heller".
 |---|---|---|
 | eine Inhaltsgruppe | keine — Abstand und Typografie gruppieren schon | keine Kante, keine Fläche |
 | ein Eingabefeld, einen Button | „hier kannst du tippen / drücken" | Fläche **und** Haarlinie |
-| einen Dialog | leistet Scrim + `--shadow-overlay` | Fläche, keine Haarlinie |
+| einen Dialog | leistet Scrim + `--shadow-overlay` | `--raised` als Fläche, keine Haarlinie |
 
 Gewöhnlicher Inhalt braucht damit **keine** Surface. Wer eine Fläche
 setzt, muss sagen können, welche Frage sie dem Nutzer beantwortet.

@@ -75,7 +75,7 @@ Die maßgebliche Frage ist nicht *wie machen wir Flächen sichtbar*, sondern
 
 ```css
 /* Dark (Standard) */
---ground:   #0e100f;  /* die Seite — und der Körper von Dialogen */
+--ground:   #0e100f;  /* die Seite */
 --raised:   #202623;  /* NUR echte Affordanzen: Eingabe, Button, Hover */
 --hairline: #3d463f;  /* die eine Linie, nur wo sie Information ist */
 
