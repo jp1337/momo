@@ -344,3 +344,65 @@ test.describe("Maß und Rand", () => {
     expect(rail.y).toBeGreaterThan(col.y + col.height - 1);
   });
 });
+
+test.describe("List und Row", () => {
+  test("Zeilen sind durch Haarlinien getrennt, nicht durch Kästen", async ({ page }) => {
+    await page.goto("/design-system");
+    const rows = page.getByTestId("demo-row");
+    await expect(rows).toHaveCount(3);
+    const first = await rows.nth(0).evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { top: c.borderTopWidth, bottom: c.borderBottomWidth, bg: c.backgroundColor };
+    });
+    const second = await rows.nth(1).evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { top: c.borderTopWidth, bg: c.backgroundColor };
+    });
+    // Erste Zeile ohne Linie oben, jede folgende mit genau einer.
+    expect(first.top).toBe("0px");
+    expect(first.bottom).toBe("0px");
+    expect(second.top).toBe("1px");
+    // Kein Kasten: keine Fläche unter der Zeile.
+    expect(first.bg).toBe("rgba(0, 0, 0, 0)");
+    expect(second.bg).toBe("rgba(0, 0, 0, 0)");
+  });
+
+  test("die Dauer steckt in der Schriftgröße des Titels", async ({ page }) => {
+    await page.goto("/design-system");
+    const sizes: number[] = [];
+    for (const step of ["small", "medium", "large"]) {
+      const px = await page
+        .locator(`[data-testid="demo-row"][data-effort="${step}"] [data-row-title]`)
+        .evaluate((n) => parseFloat(getComputedStyle(n).fontSize));
+      sizes.push(px);
+    }
+    expect(sizes[0]).toBeCloseTo(14, 0);
+    expect(sizes[1]).toBeCloseTo(16, 0);
+    expect(sizes[2]).toBeCloseTo(20, 0);
+  });
+
+  test("die Nutzerfarbe erscheint als 6-px-Punkt, nicht als Fläche", async ({ page }) => {
+    await page.goto("/design-system");
+    const dot = page.getByTestId("row-dot").first();
+    const s = await dot.evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { w: c.width, h: c.height, radius: c.borderTopLeftRadius, border: c.borderTopWidth };
+    });
+    expect(s.w).toBe("6px");
+    expect(s.h).toBe("6px");
+    expect(s.border).toBe("0px");
+    expect(parseFloat(s.radius)).toBeGreaterThanOrEqual(3);
+  });
+
+  test("der leere Zustand ist eine Zeile und eine Handlung, kein Kasten", async ({ page }) => {
+    await page.goto("/design-system");
+    const empty = page.getByTestId("demo-empty");
+    const s = await empty.evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { border: c.borderTopWidth, style: c.borderTopStyle, bg: c.backgroundColor };
+    });
+    expect(s.border).toBe("0px");
+    expect(s.style).not.toBe("dashed");
+    expect(s.bg).toBe("rgba(0, 0, 0, 0)");
+  });
+});

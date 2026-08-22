@@ -26,6 +26,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PageFrame } from "@/components/ui/page-frame";
+import { List, Row, GroupHeading, effortStep } from "@/components/ui/list";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useState } from "react";
 
 const RADII = [
@@ -34,20 +36,6 @@ const RADII = [
   { token: "--radius-lg", cls: "rounded-[var(--radius-lg)]", px: "14px", use: "Dialog, Bühne" },
   { token: "--radius-pill", cls: "rounded-[var(--radius-pill)]", px: "999px", use: "Pille, Avatar" },
 ] as const;
-
-/** Mirrors components/dashboard/quick-wins-section.tsx effortStep() 1:1. */
-function effortStep(minutes: number | null): "small" | "medium" | "large" {
-  if (minutes === null) return "medium";
-  if (minutes <= 5) return "small";
-  if (minutes <= 30) return "medium";
-  return "large";
-}
-
-const EFFORT_TEXT = {
-  small: "text-[0.875rem]",
-  medium: "text-[1rem]",
-  large: "text-[1.25rem]",
-} as const;
 
 const EFFORT_EXAMPLES = [
   { title: "Reply to that one email", minutes: 5 },
@@ -59,7 +47,7 @@ export default function DesignSystemPage() {
   const [checked, setChecked] = useState(false);
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-16 px-4 py-12">
+    <div className="container mx-auto max-w-4xl space-y-12 px-4 py-12">
       <section className="space-y-4">
         <h1 className="font-[family-name:var(--font-display)] text-4xl font-normal text-[var(--ink)]">
           Design System
@@ -288,44 +276,38 @@ export default function DesignSystemPage() {
         </div>
       </section>
 
-      {/* Effort steps — three discrete font sizes, not a continuous scale.
-          Mirrors components/dashboard/quick-wins-section.tsx's effortStep()
-          exactly: 5 min -> small, 15/30 min -> medium, 60 min -> large,
-          no estimate -> medium. Only small and medium are ever reachable on
-          the dashboard itself (Quick Wins filters estimatedMinutes <= 15);
-          this list shows all three because /tasks will use the full scale
-          once it migrates onto these tokens. */}
       <section className="space-y-6">
         <h2 className="border-b border-[var(--hairline)] pb-2 text-2xl font-semibold text-[var(--ink)]">
-          Aufwandsstufen
+          Liste und Zeile
         </h2>
-        <p className="max-w-[60ch] text-sm text-[var(--ink-2)]">
-          Der geschätzte Aufwand einer Aufgabe zeigt sich in der Schriftgröße
-          der Zeile, bevor man den Titel liest — drei Stufen, keine
-          Animation.
+        <p className="max-w-[60ch] text-[var(--ink-2)]">
+          Haarlinie trennt, kein Kasten umrahmt. Die Dauer steckt in der
+          Schriftgröße des Titels; die Minutenzahl steht rechts, damit die
+          Größe nicht die einzige Kodierung ist.
         </p>
-        <ul className="m-0 max-w-md list-none p-0">
-          {EFFORT_EXAMPLES.map((task) => {
-            const step = effortStep(task.minutes);
-            return (
-              <li
-                key={task.title}
-                data-testid="quick-win-row"
-                data-effort={step}
-                className="flex items-center gap-3 border-t border-t-[var(--hairline)] py-3 first:border-t-0"
-              >
-                <span
-                  className={`min-w-0 flex-1 truncate font-[family-name:var(--font-mono)] text-[var(--ink-2)] ${EFFORT_TEXT[step]}`}
-                >
-                  {task.title}
-                </span>
-                <span className="shrink-0 font-[family-name:var(--font-mono)] text-[0.6875rem] tabular-nums text-[var(--ink-3)]">
-                  {task.minutes} min
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        <GroupHeading>Hoch · 3</GroupHeading>
+        <List>
+          {EFFORT_EXAMPLES.map((ex, i) => (
+            <Row
+              key={ex.title}
+              testId="demo-row"
+              effort={effortStep(ex.minutes)}
+              title={ex.title}
+              eyebrow={i === 0 ? "Steuer" : undefined}
+              dotColor={i === 0 ? "var(--done)" : null}
+              trailing={`${ex.minutes} min`}
+            />
+          ))}
+        </List>
+        <EmptyState
+          testId="demo-empty"
+          line="Noch keine Aufgabe. Eine reicht."
+          action={
+            <Button variant="quiet" size="md">
+              Aufgabe anlegen
+            </Button>
+          }
+        />
       </section>
 
       {/* Forms — real Momo primitives (Input, Label, Checkbox), not part of

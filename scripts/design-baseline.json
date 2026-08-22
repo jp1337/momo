@@ -131,12 +131,6 @@
     "inline": 1,
     "spacing": 0
   },
-  "app/(docs)/design-system/page.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 0,
-    "spacing": 1
-  },
   "app/(legal)/datenschutz/page.tsx": {
     "color": 0,
     "radius": 1,
@@ -268,12 +262,6 @@
     "radius": 0,
     "inline": 0,
     "spacing": 1
-  },
-  "components/dashboard/quick-wins-section.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 0,
-    "spacing": 2
   },
   "components/focus/focus-mode-view.tsx": {
     "color": 10,
@@ -688,6 +676,12 @@
     "radius": 0,
     "inline": 1,
     "spacing": 1
+  },
+  "components/ui/list.tsx": {
+    "color": 0,
+    "radius": 0,
+    "inline": 1,
+    "spacing": 0
   },
   "components/ui/tooltip.tsx": {
     "color": 0,
