@@ -30,6 +30,7 @@ import { eq, count, lte, isNull, isNotNull, and, or, min, sql } from "drizzle-or
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { EnergyCheckinCard } from "@/components/dashboard/energy-checkin-card";
 import { QuickWinsSection } from "@/components/dashboard/quick-wins-section";
+import { Button } from "@/components/ui/button";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 
@@ -291,50 +292,6 @@ export default async function DashboardPage() {
           {greeting}
         </p>
 
-        {/* ── New-user empty state ──────────────────────────────────────── */}
-        {isNewUser && (
-          <div
-            className="rounded-xl px-6 py-8 flex flex-col items-center text-center gap-4"
-            style={{
-              backgroundColor: "var(--bg-surface)",
-              border: "1px solid var(--border)",
-            }}
-          >
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-              style={{ backgroundColor: "color-mix(in srgb, var(--accent-green) 12%, transparent)" }}
-              aria-hidden="true"
-            >
-              🌱
-            </div>
-            <div>
-              <p
-                className="text-lg font-semibold mb-1"
-                style={{ fontFamily: "var(--font-display, 'Lora', serif)", fontStyle: "italic", color: "var(--text-primary)" }}
-              >
-                {t("empty_state_title" as Parameters<typeof t>[0])}
-              </p>
-              <p
-                className="text-sm max-w-sm"
-                style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
-              >
-                {t("empty_state_body" as Parameters<typeof t>[0])}
-              </p>
-            </div>
-            <Link
-              href="/topics"
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 no-underline"
-              style={{
-                backgroundColor: "var(--accent-green)",
-                color: "#ffffff",
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              }}
-            >
-              {t("empty_state_cta" as Parameters<typeof t>[0])}
-            </Link>
-          </div>
-        )}
-
         {/* ── Metazeile + Energie-Check-in ─────────────────────────────────
             EnergyCheckinCard rendert jetzt beides: die Metazeile
             (data-testid="quest-meta", Wochentag/Energie/Streak — ersetzt
@@ -352,6 +309,35 @@ export default async function DashboardPage() {
           bestDayInsight={bestDayInsight}
         />
       </div>
+
+      {/* ── New-user empty state (Task B2 fix) ───────────────────────────
+          Moved out of the head group: it used to sit inside the
+          greeting/meta gap-2 group and broke that group's tight 8px
+          rhythm. As its own top-level flex child it gets the same 48px
+          gap as every other section here.
+          No box, no fill, no green CTA, no Lora italic. `--font-display`
+          stays reserved for the quest headline, which is this page's one
+          large Fraunces element even in the no-quest state (see
+          DailyQuestCard's `!quest` branch, "quest_no_quest"). That branch
+          also already carries the page's one amber element (its hint
+          link to /tasks), so this CTA is a quiet Button rather than a
+          second amber action — and it points to /topics, because a user
+          with zero topics needs one before a task can exist at all. */}
+      {isNewUser && (
+        <div className="flex flex-col gap-3">
+          <p className="m-0 font-[family-name:var(--font-ui)] text-base font-semibold text-[var(--ink)]">
+            {t("empty_state_title" as Parameters<typeof t>[0])}
+          </p>
+          <p className="m-0 max-w-sm font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
+            {t("empty_state_body" as Parameters<typeof t>[0])}
+          </p>
+          <div>
+            <Button asChild variant="quiet" size="md">
+              <Link href="/topics">{t("empty_state_cta" as Parameters<typeof t>[0])}</Link>
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* ── Quest + Quick Wins: mittlerer Abstand (gap-8 = 32px) zwischen
           den beiden, verwandt aber nachrangig zur Kopf-Gruppe darueber. ── */}
