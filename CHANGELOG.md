@@ -22,10 +22,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Neues visuelles Fundament („Lichtkegel"): zwei Flächenwerte statt Rahmen und Schatten überall.**
   Statt acht gleich gerahmten, gleich beschatteten Kästen liegt gewöhnlicher Inhalt jetzt direkt auf
   dem Hintergrund; eine sichtbare Fläche mit Kontur erscheint nur noch dort, wo sie eine echte
-  Bedienmöglichkeit markiert — ein Eingabefeld, ein Button. Amber (die Akzentfarbe) ist nur noch
+  Bedienmöglichkeit markiert — ein Eingabefeld, ein Button. Amber (die Akzentfarbe) ist auf den in
+  diesem Schritt umgestellten Flächen — Dashboard und die Referenzseite `/design-system` — nur noch
   Licht: Textfarbe oder ein weicher Glanz, nirgends mehr eine gefüllte Fläche, und pro Seite
-  höchstens einmal vorhanden. Radien sind auf vier Werte vereinheitlicht (vorher sechs
-  unterschiedliche, dazu von Tailwind geerbte Defaults ohne eigene Definition).
+  höchstens einmal vorhanden. Dieser Schritt deckt bewusst nur die Schritte 1–3 des Lichtkegel-Plans
+  ab (Tokens/Primitives, Durchsetzungstests, Dashboard als Pilot); Topics, Tasks, Wishlist, Progress,
+  Habits und die übrigen Seiten sind noch NICHT umgestellt und zeigen bis zu ihrer eigenen Migration
+  weiterhin die alte gefüllte Amber-Fläche — sichtbar z. B. im „+ New Topic"-Button auf
+  `02-topics.png`. Die restlichen Seiten folgen in einem eigenständig geplanten, späteren Schritt
+  (siehe `docs/superpowers/specs/2026-08-21-lichtkegel-design.md` §8). Radien sind auf den
+  umgestellten Flächen auf vier Werte vereinheitlicht (vorher sechs unterschiedliche, dazu von
+  Tailwind geerbte Defaults ohne eigene Definition).
 - **Neue Schriften: Fraunces statt Lora, Instrument Sans statt DM Sans.** JetBrains Mono bleibt für
   Aufgabentext und Zahlen. Beide neuen Schriften sind variabel bzw. selbst gehostet über
   `next/font/google` — keine externen Requests zur Laufzeit.
