@@ -36,6 +36,14 @@ const fraunces = Fraunces({
   variable: "--font-display",
   display: "swap",
   axes: ["SOFT", "WONK", "opsz"],
+  // Task B7 (2026-08-22): `style` was missing entirely, so next/font only
+  // downloaded and registered the normal face. ~10 sites set
+  // `fontStyle: "italic"` on --font-display (landing hero, focus mode,
+  // emotional closure, progress tabs, onboarding, login) and got synthetic
+  // oblique from the browser instead of Fraunces' real italic — the
+  // previous font (Lora) was loaded with style: ["normal", "italic"] and
+  // this dropped silently when Fraunces replaced it.
+  style: ["normal", "italic"],
 });
 
 const instrumentSans = Instrument_Sans({
