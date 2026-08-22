@@ -86,7 +86,7 @@ export default function DesignSystemPage() {
           Eine Kante nur, wo sie etwas aussagt. Um eine Inhaltsgruppe gehört
           keine — Abstand und Typografie gruppieren schon. Um ein
           Eingabefeld oder einen Button gehört eine: sie sagt „hier kannst
-          du tippen oder drücken".
+          du tippen oder drücken“.
         </p>
         <div className="flex flex-wrap items-start gap-4">
           <div className="max-w-[16rem] space-y-2">
@@ -95,7 +95,7 @@ export default function DesignSystemPage() {
             </Surface>
             <p className="text-sm text-[var(--ink-2)]">
               Fläche + Haarlinie. Nur für Affordanzen: „hier kannst du tippen
-              oder drücken".
+              oder drücken“.
             </p>
           </div>
           <div className="max-w-[16rem] space-y-2">
@@ -115,7 +115,7 @@ export default function DesignSystemPage() {
             />
             <p className="text-sm text-[var(--ink-2)]">
               Ein Eingabefeld ist der Grund, warum es --raised überhaupt
-              gibt: die Kante sagt „hier kannst du tippen".
+              gibt: die Kante sagt „hier kannst du tippen“.
             </p>
           </div>
         </div>
@@ -242,7 +242,7 @@ export default function DesignSystemPage() {
           oder ein weicher Wash, nie eine Button-Fläche, nie ein Rahmen.
           Braucht eine Seite zwei gleich wichtige Handlungen, trägt keine
           von beiden Amber. <code className="font-[family-name:var(--font-mono)]">--done</code>{" "}
-          bedeutet ausschließlich „erledigt", <code className="font-[family-name:var(--font-mono)]">--danger</code>{" "}
+          bedeutet ausschließlich „erledigt“, <code className="font-[family-name:var(--font-mono)]">--danger</code>{" "}
           ausschließlich Zerstörung — keins der beiden ist ein zweiter Akzent.
         </p>
       </section>
