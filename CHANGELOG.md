@@ -23,6 +23,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   2026-08-21 im Designentwurf und wurde von nichts erzwungen — gemessen lagen 280
   Utilities in 69 Dateien daneben, allein 115 davon auf 6 px. Die Baseline steigt
   dadurch einmalig von 1934 auf 2214 Verstöße und fällt ab dort wieder nur.
+- **Vier Playwright-Zähler für die Lichtkegel-Regeln** (`e2e/helpers/design-count.ts`,
+  `e2e/design-rules.spec.ts`): Amber (dokumentweit, nicht nur `main`), Fraunces-Vorkommen,
+  umrahmte/gefüllte Inhaltsflächen, und die Spaltenbreite gegen `--measure`. Der Amber-Zähler
+  erkennt sowohl `rgb()` als auch `color(srgb … / α)` — die Serialisierungsform, die Chromium für
+  jede `color-mix(in srgb, …)`-Deklaration verwendet; ein Zähler, der nur `rgb()` kennt, meldete in
+  einer Vormessung vier echte Amber-Treffer als null. `MIGRATED_PAGES` beginnt mit `["/dashboard"]`
+  und wird von jeder folgenden Seiten-Migration verlängert.
+
+### Fixed
+
+- **Das Navbar-Schlupfloch der Amber-Regel.** Bisher zählte die Amber-Regel nur über `<main>` —
+  Federlogo, Münzzähler und Level-Badge lagen außerhalb und trugen Amber auf jeder einzigen Seite,
+  gleichzeitig mit der einen erlaubten Handlung im Inhalt. Die Feder ist jetzt ein Inline-SVG
+  (`components/layout/feather-mark.tsx`) mit `currentColor` statt eines amberfarbenen `/icon.svg`
+  im `<img>`; Münzzähler und Level-Badge sind auf eine reine Ink-Leiter umgestellt (das Level-Badge
+  verlor dabei auch sein `--accent-green` ab Level 4, ein zweiter, unabhängiger Verstoß gegen
+  „`--done` heißt ausschließlich erledigt"). Die globale Link-Farbe (`a { color: var(--accent-amber) }`
+  in `globals.css`) wird durch eine Unterstreichung ersetzt — vorher war jeder Link im Fließtext
+  auf jeder Seite ein zusätzlicher, ungezählter Amber-Treffer.
 
 ### Changed
 

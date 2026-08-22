@@ -26,7 +26,8 @@
     "progress": "进度",
     "section_today": "今天",
     "section_plan": "规划",
-    "section_reward": "奖励"
+    "section_reward": "奖励",
+    "coin_balance": "你的金币余额"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -73,6 +74,8 @@
     "greeting_afternoon": "{name}，下午好。",
     "greeting_evening": "{name}，晚上好。",
     "meta_streak": "{days, plural, other {连续 # 天}}",
+    "rail_coins": "{coins} 枚硬币",
+    "rail_postpones": "还可推迟 {left} 次",
     "meta_energy_unknown": "未设定精力",
     "meta_energy_change_aria": "更改今天的精力(当前:{level})",
     "meta_energy_set_aria": "将今天的精力设为{level}",

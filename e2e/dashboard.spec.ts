@@ -4,7 +4,8 @@ import { createTask, deleteTask } from "./helpers/api";
 /**
  * Dashboard E2E tests — the main home screen.
  *
- * Covers: greeting, quest section, quest meta line (weekday/energy/streak),
+ * Covers: greeting, quest section, quest meta line (weekday/energy), the
+ * streak in the PageFrame rail (Task 3 — moved out of the meta line),
  * quick wins, and the absence of the removed stat tiles / quick links /
  * standalone focus banner (Task 6 — dashboard entschlacken).
  */
@@ -46,25 +47,33 @@ test.describe("Dashboard", () => {
     await expect(meta).toContainText("·");
   });
 
-  test("Streak erscheint in der Metazeile nur, wenn sie nicht null ist", async ({
+  test("Streak erscheint im Rand nur, wenn sie nicht null ist, nie in der Metazeile", async ({
     page,
     request,
   }) => {
     // "0 days streak" ist ein taeglicher kleiner Vorwurf fuer eine App, die
-    // Menschen mit Vermeidungstendenz hilft — bei Streak 0 zeigt die
-    // Metazeile gar keine Zahl (Task 6 round 2 finding). Ein hartkodierter
-    // Erwartungswert waere fragil, deshalb erst den echten Wert abfragen.
+    // Menschen mit Vermeidungstendenz hilft — bei Streak 0 zeigt gar nichts
+    // eine Zahl (Task 6 round 2 finding). Ein hartkodierter Erwartungswert
+    // waere fragil, deshalb erst den echten Wert abfragen.
+    //
+    // Task 3 (2026-08-22): der Streak zog aus der Metazeile in den Rand
+    // (PageFrame `rail`) um — die Metazeile zeigt seither nie eine Zahl,
+    // unabhaengig vom Streak-Wert; `data-testid="rail-streak"` traegt die
+    // Information stattdessen.
     const res = await request.get("/api/user");
     const body = (await res.json()) as { streakCurrent: number };
 
     await page.goto("/dashboard");
     const meta = page.getByTestId("quest-meta");
     await expect(meta).toBeVisible();
+    await expect(meta).not.toContainText(/\d+/);
 
+    const railStreak = page.getByTestId("rail-streak");
     if (body.streakCurrent > 0) {
-      await expect(meta).toContainText(/\d+/);
+      await expect(railStreak).toBeVisible();
+      await expect(railStreak).toContainText(/\d+/);
     } else {
-      await expect(meta).not.toContainText(/\d+/);
+      await expect(railStreak).toHaveCount(0);
     }
   });
 

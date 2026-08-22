@@ -1,0 +1,241 @@
+import type { Page } from "@playwright/test";
+
+/**
+ * Die vier Zähler der Spec (§8), gemessen mit derselben Methode, mit der
+ * die Ausgangslage gezählt wurde.
+ *
+ * Zwei Fallen, an denen eine naive Messung vorbeiläuft:
+ *
+ * 1. `color(srgb … / α)`. Chromium serialisiert alles, was durch
+ *    `color-mix(in srgb, …)` gegangen ist, in dieser Form — nicht als
+ *    `rgb()`. Beim Messen für die Spec hat ein Zähler, der nur `rgb()`
+ *    kannte, vier Amber-Elemente auf /tasks als null gemeldet. Ein Test,
+ *    der die Verstöße nicht sieht, ist schlimmer als keiner.
+ *
+ * 2. Vererbung. `color` erbt: unter einem amberfarbenen Element meldet
+ *    jedes Kind ebenfalls Amber. Deshalb zählt `color` nur an Elementen
+ *    mit eigenem Textknoten — das ist die ehrliche Zahl „so viele Stellen
+ *    tragen amberfarbenen Text".
+ */
+export interface Hit {
+  tag: string;
+  testid: string | null;
+  prop: string;
+  text: string;
+  /** True, wenn der Treffer innerhalb der einen Lichtquelle (.lichtkegel) liegt. */
+  inLight: boolean;
+}
+
+/** Seiten, die auf das Token-System migriert sind. Jede Phase verlängert die Liste. */
+export const MIGRATED_PAGES: string[] = ["/dashboard"];
+
+/**
+ * Zählt Amber über das GESAMTE Dokument — Navbar, Sidebar, Dialoge
+ * eingeschlossen. Die alte Zählung über `main` war das Schlupfloch, durch
+ * das Feder und Münzzähler auf jeder Seite ungezählt Amber trugen.
+ *
+ * @param page - Die Playwright-Seite, bereits navigiert
+ * @returns Ein Treffer pro Element und Eigenschaft, die Amber trägt
+ */
+export async function countAmber(page: Page): Promise<Hit[]> {
+  return page.evaluate(() => {
+    const hex = getComputedStyle(document.documentElement)
+      .getPropertyValue("--amber")
+      .trim()
+      .replace("#", "");
+    const target = [
+      parseInt(hex.slice(0, 2), 16),
+      parseInt(hex.slice(2, 4), 16),
+      parseInt(hex.slice(4, 6), 16),
+    ];
+    const near = (r: number, g: number, b: number) =>
+      Math.abs(r - target[0]) <= 4 &&
+      Math.abs(g - target[1]) <= 4 &&
+      Math.abs(b - target[2]) <= 4;
+    const alpha = (raw: string | undefined) => {
+      if (raw === undefined) return 1;
+      const s = raw.trim();
+      return s.endsWith("%") ? parseFloat(s) / 100 : parseFloat(s);
+    };
+    const carries = (value: string | null) => {
+      if (!value || value === "none") return false;
+      let m: RegExpExecArray | null;
+      const rgb =
+        /rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:\s*[,/]\s*([\d.%]+))?\s*\)/g;
+      while ((m = rgb.exec(value)) !== null) {
+        if (alpha(m[4]) > 0.03 && near(+m[1], +m[2], +m[3])) return true;
+      }
+      const srgb =
+        /color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.%]+))?\s*\)/g;
+      while ((m = srgb.exec(value)) !== null) {
+        if (alpha(m[4]) > 0.03 && near(+m[1] * 255, +m[2] * 255, +m[3] * 255))
+          return true;
+      }
+      return false;
+    };
+    const ownText = (el: Element) =>
+      Array.from(el.childNodes).some(
+        (n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? "").trim() !== "",
+      );
+
+    const hits: Hit[] = [];
+    const push = (el: Element, prop: string) =>
+      hits.push({
+        tag: el.tagName.toLowerCase(),
+        testid: el.getAttribute("data-testid"),
+        prop,
+        text: (el.textContent ?? "").trim().slice(0, 40),
+        inLight: el.closest(".lichtkegel") !== null,
+      });
+
+    for (const el of Array.from(document.querySelectorAll("*"))) {
+      const cs = getComputedStyle(el);
+      if (cs.display === "none" || cs.visibility === "hidden") continue;
+      if (parseFloat(cs.opacity) === 0) continue;
+      const box = el.getBoundingClientRect();
+      if (box.width === 0 || box.height === 0) continue;
+
+      if (ownText(el) && carries(cs.color)) push(el, "color");
+      if (carries(cs.backgroundColor)) push(el, "background");
+      if (carries(cs.backgroundImage)) push(el, "background-image");
+      if (carries(cs.boxShadow)) push(el, "box-shadow");
+      if (carries(cs.fill)) push(el, "fill");
+      if (carries(cs.stroke)) push(el, "stroke");
+
+      for (const side of ["top", "right", "bottom", "left"]) {
+        const w = parseFloat(cs.getPropertyValue(`border-${side}-width`));
+        const style = cs.getPropertyValue(`border-${side}-style`);
+        if (w > 0 && style !== "none" && carries(cs.getPropertyValue(`border-${side}-color`))) {
+          push(el, `border-${side}`);
+          break;
+        }
+      }
+
+      // Der Lichtkegel selbst liegt in ::before — ohne Pseudoelemente
+      // sieht der Zähler die eine erlaubte Lichtquelle gar nicht und die
+      // Regel wäre trivial erfüllt.
+      for (const pseudo of ["::before", "::after"]) {
+        const ps = getComputedStyle(el, pseudo);
+        if (ps.content === "none") continue;
+        if (carries(ps.backgroundImage) || carries(ps.backgroundColor) || carries(ps.color)) {
+          push(el, pseudo);
+        }
+      }
+    }
+    return hits;
+  });
+}
+
+/** Der Wurzelknoten für die Zähler, die sich auf Inhalt beziehen. */
+const CONTENT_ROOT = "main";
+
+/**
+ * Zählt Fraunces innerhalb von `main`. Die Spec erlaubt genau eins pro
+ * Seite; /stats hatte 16.
+ */
+export async function countDisplayFont(page: Page): Promise<Hit[]> {
+  return page.evaluate((rootSel: string) => {
+    const root = document.querySelector(rootSel) ?? document.body;
+    const ownText = (el: Element) =>
+      Array.from(el.childNodes).some(
+        (n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? "").trim() !== "",
+      );
+    const hits: Hit[] = [];
+    for (const el of Array.from(root.querySelectorAll("*"))) {
+      const cs = getComputedStyle(el);
+      if (cs.display === "none" || cs.visibility === "hidden") continue;
+      if (!ownText(el)) continue;
+      if (!/^\s*["']?Fraunces/.test(cs.fontFamily)) continue;
+      hits.push({
+        tag: el.tagName.toLowerCase(),
+        testid: el.getAttribute("data-testid"),
+        prop: `font-size:${cs.fontSize}`,
+        text: (el.textContent ?? "").trim().slice(0, 40),
+        inLight: el.closest(".lichtkegel") !== null,
+      });
+    }
+    return hits;
+  }, CONTENT_ROOT);
+}
+
+/**
+ * Zählt umrahmte oder gefüllte Inhaltsflächen in `main`.
+ *
+ * Ein Kasten ist: eine Kante auf ALLEN VIER Seiten, oder eine Fläche, die
+ * sich von `--ground` unterscheidet. Eine einzelne Linie (Trennlinie unter
+ * einer Überschrift, Haarlinie zwischen Zeilen) ist kein Kasten — sie
+ * trennt, sie umrahmt nicht.
+ *
+ * Ausgenommen sind echte Affordanzen: eine Kante um ein Eingabefeld oder
+ * einen Button sagt „hier kannst du tippen oder drücken" und ist damit
+ * Information. Ausgenommen ist außerdem alles in einem Overlay (Dialog,
+ * Popover) — das schwebt und grenzt sich per Definition ab.
+ */
+export async function countBoxes(page: Page): Promise<Hit[]> {
+  return page.evaluate((rootSel: string) => {
+    const root = document.querySelector(rootSel) ?? document.body;
+    const groundRaw = getComputedStyle(document.documentElement)
+      .getPropertyValue("--ground")
+      .trim();
+    const probe = document.createElement("div");
+    probe.style.backgroundColor = groundRaw;
+    document.body.appendChild(probe);
+    const ground = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+
+    const AFFORDANCE =
+      'button, input, textarea, select, a, label, summary, [role="button"], [role="tab"], [role="switch"], [role="menuitem"], [contenteditable="true"], [data-affordance]';
+    const FLOATING = '[role="dialog"], [role="menu"], [role="tooltip"], [data-radix-popper-content-wrapper]';
+
+    const transparent = (c: string) => c === "rgba(0, 0, 0, 0)" || c === "transparent";
+
+    const hits: Hit[] = [];
+    for (const el of Array.from(root.querySelectorAll("*"))) {
+      const cs = getComputedStyle(el);
+      if (cs.display === "none" || cs.visibility === "hidden") continue;
+      const box = el.getBoundingClientRect();
+      if (box.width === 0 || box.height === 0) continue;
+      if (el.closest(AFFORDANCE) !== null) continue;
+      if (el.closest(FLOATING) !== null) continue;
+
+      const framed = ["top", "right", "bottom", "left"].every((s) => {
+        const w = parseFloat(cs.getPropertyValue(`border-${s}-width`));
+        return w > 0 && cs.getPropertyValue(`border-${s}-style`) !== "none";
+      });
+      const filled = !transparent(cs.backgroundColor) && cs.backgroundColor !== ground;
+
+      if (framed || filled) {
+        hits.push({
+          tag: el.tagName.toLowerCase(),
+          testid: el.getAttribute("data-testid"),
+          prop: framed ? "border" : `background:${cs.backgroundColor}`,
+          text: (el.textContent ?? "").trim().slice(0, 40),
+          inLight: el.closest(".lichtkegel") !== null,
+        });
+      }
+    }
+    return hits;
+  }, CONTENT_ROOT);
+}
+
+/**
+ * Misst jede Inhaltsspalte gegen `--measure`.
+ *
+ * @returns Das Maß in px und die Breiten aller `[data-column]` in `main`
+ */
+export async function measureColumns(
+  page: Page,
+): Promise<{ measurePx: number; widths: number[] }> {
+  return page.evaluate((rootSel: string) => {
+    const probe = document.createElement("div");
+    probe.style.width = "var(--measure)";
+    document.body.appendChild(probe);
+    const measurePx = probe.getBoundingClientRect().width;
+    probe.remove();
+    const root = document.querySelector(rootSel) ?? document.body;
+    const widths = Array.from(root.querySelectorAll("[data-column]")).map(
+      (el) => el.getBoundingClientRect().width,
+    );
+    return { measurePx, widths };
+  }, CONTENT_ROOT);
+}

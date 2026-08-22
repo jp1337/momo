@@ -26,7 +26,8 @@
     "progress": "Voortgang",
     "section_today": "Vandaag",
     "section_plan": "Plannen",
-    "section_reward": "Belonen"
+    "section_reward": "Belonen",
+    "coin_balance": "Je muntsaldo"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -73,6 +74,8 @@
     "greeting_afternoon": "Goedemiddag, {name}.",
     "greeting_evening": "Goedenavond, {name}.",
     "meta_streak": "{days, plural, one {# dag reeks} other {# dagen reeks}}",
+    "rail_coins": "{coins} munten",
+    "rail_postpones": "nog {left}× uitstellen",
     "meta_energy_unknown": "energie nog niet gezet",
     "meta_energy_change_aria": "Energie van vandaag wijzigen (huidig: {level})",
     "meta_energy_set_aria": "Energie van vandaag instellen op {level}",

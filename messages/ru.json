@@ -26,7 +26,8 @@
     "progress": "Прогресс",
     "section_today": "Сегодня",
     "section_plan": "Планировать",
-    "section_reward": "Награды"
+    "section_reward": "Награды",
+    "coin_balance": "Ваш баланс монет"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -73,6 +74,8 @@
     "greeting_afternoon": "Добрый день, {name}.",
     "greeting_evening": "Добрый вечер, {name}.",
     "meta_streak": "{days, plural, one {# день} few {# дня} other {# дней}} подряд",
+    "rail_coins": "{coins} монет",
+    "rail_postpones": "осталось переносов: {left}",
     "meta_energy_unknown": "энергия не указана",
     "meta_energy_change_aria": "Изменить энергию на сегодня (сейчас: {level})",
     "meta_energy_set_aria": "Указать сегодняшнюю энергию: {level}",

@@ -3,11 +3,10 @@
 /**
  * LevelBadge — compact level indicator for the navbar.
  *
- * Shows "Lv. N" with a tier-aware color:
- *   1–3  → muted (Lehrling tier)
- *   4–6  → green  (Meister tier)
- *   7–9  → amber  (Experte tier)
- *   10   → legendary purple (Legende tier)
+ * Shows "Lv. N" with a tier-aware ink shade:
+ *   1–3  → muted    (Lehrling tier)
+ *   4–6  → ink-2    (Meister tier)
+ *   7+   → ink      (Experte/Legende tier)
  *
  * Displays the level title on hover as a tooltip.
  */
@@ -17,25 +16,34 @@ interface LevelBadgeProps {
   title: string;
 }
 
+/**
+ * Tier-Farbe eines Levels — eine Ink-Leiter, keine Bedeutungsfarben.
+ *
+ * Vorher: ab Level 4 --accent-green, ab Level 7 --accent-amber, ab Level 10
+ * violett. Zwei davon sind Verstöße, die sich auf JEDER Seite zeigen:
+ * Chrome ist ausschließlich Ink (Spec §5), und --done heißt ausschließlich
+ * "erledigt" — ein Level ist nichts Erledigtes. Die Stufen bleiben
+ * unterscheidbar, nur über Helligkeit statt über Farbe.
+ *
+ * Das Violett für Legendary lebt weiter auf /achievements, wo eine
+ * Seltenheitsstufe Inhalt ist und keine Navigation. Diese Seite ist
+ * Phase 2.
+ */
 function tierColor(level: number): string {
-  if (level >= 10) return "var(--rarity-legendary)";
-  if (level >= 7) return "var(--accent-amber)";
-  if (level >= 4) return "var(--accent-green)";
-  return "var(--text-muted)";
+  if (level >= 10) return "var(--ink)";
+  if (level >= 7) return "var(--ink)";
+  if (level >= 4) return "var(--ink-2)";
+  return "var(--ink-3)";
 }
 
-function tierBg(level: number): string {
-  if (level >= 10) return "color-mix(in srgb, var(--rarity-legendary) 12%, transparent)";
-  if (level >= 7) return "color-mix(in srgb, var(--accent-amber) 12%, transparent)";
-  if (level >= 4) return "color-mix(in srgb, var(--accent-green) 12%, transparent)";
-  return "color-mix(in srgb, var(--text-muted) 10%, transparent)";
+/** Fläche der Badge-Pille — eine Stufe für alle Tiers, die Unterscheidung steckt in `tierColor`. */
+function tierBg(): string {
+  return "color-mix(in srgb, var(--ink) 8%, transparent)";
 }
 
-function tierBorder(level: number): string {
-  if (level >= 10) return "color-mix(in srgb, var(--rarity-legendary) 30%, transparent)";
-  if (level >= 7) return "color-mix(in srgb, var(--accent-amber) 30%, transparent)";
-  if (level >= 4) return "color-mix(in srgb, var(--accent-green) 30%, transparent)";
-  return "color-mix(in srgb, var(--text-muted) 20%, transparent)";
+/** Kante der Badge-Pille — eine Stufe für alle Tiers. */
+function tierBorder(): string {
+  return "color-mix(in srgb, var(--ink) 20%, transparent)";
 }
 
 /**
@@ -43,8 +51,8 @@ function tierBorder(level: number): string {
  */
 export function LevelBadge({ level, title }: LevelBadgeProps) {
   const color = tierColor(level);
-  const bg = tierBg(level);
-  const border = tierBorder(level);
+  const bg = tierBg();
+  const border = tierBorder();
 
   return (
     <span

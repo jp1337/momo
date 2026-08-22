@@ -302,8 +302,8 @@
   "components/layout/coin-counter.tsx": {
     "color": 0,
     "radius": 0,
-    "inline": 1,
-    "spacing": 2
+    "inline": 0,
+    "spacing": 1
   },
   "components/layout/level-badge.tsx": {
     "color": 0,
@@ -338,7 +338,7 @@
   "components/layout/user-menu.tsx": {
     "color": 0,
     "radius": 1,
-    "inline": 9,
+    "inline": 8,
     "spacing": 2
   },
   "components/onboarding/onboarding-progress.tsx": {

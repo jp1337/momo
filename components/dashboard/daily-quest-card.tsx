@@ -48,7 +48,6 @@ import { AchievementToast } from "@/components/animations/achievement-toast";
 import type { AchievementItem } from "@/components/animations/achievement-toast";
 import { dispatchCoinsEarned } from "@/lib/client/coin-events";
 import { EmotionalClosure } from "@/components/animations/emotional-closure";
-import { Badge } from "@/components/ui/badge";
 import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -361,16 +360,24 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
               {quest.title}
             </h1>
 
-            {/* Badges row — labels, not the page's action, so none of them
-                carry amber. Priority is dropped entirely here: the daily-quest
-                algorithm already picked the one task that matters today, and
-                a HIGH/NORMAL/SOMEDAY label next to a headline-sized title
+            {/* Labels row — text only, no chip: a filled or bordered pill
+                around a label is the box the box-rule (§2, "keine Chips um
+                Text") forbids, and none of them carry amber either.
+                Priority is dropped entirely here: the daily-quest algorithm
+                already picked the one task that matters today, and a
+                HIGH/NORMAL/SOMEDAY label next to a headline-sized title
                 added noise without adding a decision the user needs to make. */}
             <div className="flex flex-wrap items-center gap-2">
-              {typeLabel && <Badge variant="neutral">{typeLabel}</Badge>}
+              {typeLabel && (
+                <span className="font-[family-name:var(--font-ui)] text-xs text-[var(--ink-3)]">
+                  {typeLabel}
+                </span>
+              )}
 
               {quest.energyLevel && userEnergyToday && quest.energyLevel === userEnergyToday && (
-                <Badge variant="neutral">{t("energy_match_badge")}</Badge>
+                <span className="font-[family-name:var(--font-ui)] text-xs text-[var(--ink-3)]">
+                  {t("energy_match_badge")}
+                </span>
               )}
 
               {/* Coin value + postpone bonus — meta, not amber (--coin-gold

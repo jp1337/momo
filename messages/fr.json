@@ -26,7 +26,8 @@
     "progress": "Progrès",
     "section_today": "Aujourd'hui",
     "section_plan": "Planifier",
-    "section_reward": "Récompenser"
+    "section_reward": "Récompenser",
+    "coin_balance": "Votre solde de pièces"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -73,6 +74,8 @@
     "greeting_afternoon": "Bon après-midi, {name}.",
     "greeting_evening": "Bonsoir, {name}.",
     "meta_streak": "{days, plural, one {# jour de suite} other {# jours de suite}}",
+    "rail_coins": "{coins} pièces",
+    "rail_postpones": "report(s) restant(s) : {left}",
     "meta_energy_unknown": "énergie non définie",
     "meta_energy_change_aria": "Changer l'énergie du jour (actuellement : {level})",
     "meta_energy_set_aria": "Définir l'énergie du jour sur {level}",

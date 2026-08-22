@@ -91,12 +91,7 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
       <DropdownMenu.Trigger asChild>
         <button
           aria-label="User menu"
-          className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium flex-shrink-0 transition-opacity hover:opacity-80"
-          style={{
-            backgroundColor: "var(--accent-green)",
-            color: "var(--bg-primary)",
-            border: "2px solid var(--border)",
-          }}
+          className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-pill)] border border-[var(--hairline)] bg-[var(--raised)] text-sm font-medium text-[var(--ink)] transition-opacity hover:opacity-80"
         >
           {userImage ? (
             <Image
@@ -167,8 +162,8 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
               <MenuLinkItem
                 href="/admin"
                 icon={faShieldHalved}
-                iconColor="var(--accent-amber)"
-                textColor="var(--accent-amber)"
+                iconColor="var(--ink-2)"
+                textColor="var(--ink-2)"
               >
                 Admin
               </MenuLinkItem>

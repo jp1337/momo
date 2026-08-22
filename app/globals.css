@@ -612,14 +612,24 @@ h6 {
 }
 
 /* ─── Link defaults ─────────────────────────────────────────────────────────── */
+/*
+ * Bis 2026-08-22 war jeder Link auf jeder Seite amberfarben. Damit brach
+ * die Ein-Amber-Regel strukturell auf jeder Seite, die mehr als einen Link
+ * im Inhalt hat — und zwar unabhängig davon, was die Seite selbst tut.
+ * Ein Link im Fließtext ist keine "eine Handlung"; er ist Text, der wohin
+ * führt. Er wird deshalb unterstrichen statt gefärbt. Amber bleibt der
+ * einen Handlung, die es explizit über Button variant="primary" anfordert.
+ */
 a {
-  color: var(--accent-amber);
-  text-decoration: none;
-  transition: color 0.15s ease;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--hairline);
+  text-underline-offset: 0.15em;
+  transition: text-decoration-color 0.15s ease;
 }
 
 a:hover {
-  color: var(--text-primary);
+  text-decoration-color: currentColor;
 }
 
 /* ─── Gamification Animations ───────────────────────────────────────────────── */

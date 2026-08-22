@@ -31,6 +31,7 @@ import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { EnergyCheckinCard } from "@/components/dashboard/energy-checkin-card";
 import { QuickWinsSection } from "@/components/dashboard/quick-wins-section";
 import { Button } from "@/components/ui/button";
+import { PageFrame } from "@/components/ui/page-frame";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 
@@ -281,7 +282,28 @@ export default async function DashboardPage() {
     // `gap` statt Margin, weil sowohl die Energie-Karte als auch Quick Wins
     // client-seitig `null` rendern koennen — `gap` fuegt dann keine Luecke
     // ein, eine feste Margin auf einem leeren Element schon.
-    <div className="max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-12">
+    <PageFrame
+      rail={
+        <>
+          {streakText && (
+            <p
+              data-testid="rail-streak"
+              className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--ink-3)]"
+            >
+              {streakText}
+            </p>
+          )}
+          <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]">
+            {t("rail_coins", { coins: stats.coins })}
+          </p>
+          {postponeLimit - postponesToday > 0 && (
+            <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--ink-3)]">
+              {t("rail_postpones", { left: postponeLimit - postponesToday })}
+            </p>
+          )}
+        </>
+      }
+    >
       {/* ── Kopf-Gruppe: Begruessung, Meta-Zeile, Energie-Check-in ──────────
           Eng zusammen (gap-2 = 8px) — ein Gedanke, nicht drei Flaechen. */}
       <div className="flex flex-col gap-2">
@@ -305,7 +327,7 @@ export default async function DashboardPage() {
           energyLevel={cachedEnergyLevel}
           energyLevelDate={cachedEnergyLevelDate}
           weekdayLabel={weekdayLabel}
-          streakText={streakText}
+          streakText={null}
           bestDayInsight={bestDayInsight}
         />
       </div>
@@ -356,6 +378,6 @@ export default async function DashboardPage() {
         {/* ── Quick Wins ── interaktiv: Tasks direkt hier abhaken ─────────── */}
         <QuickWinsSection tasks={sortedQuickWins} />
       </div>
-    </div>
+    </PageFrame>
   );
 }

@@ -26,7 +26,8 @@
     "progress": "Fortschritt",
     "section_today": "Heute",
     "section_plan": "Planen",
-    "section_reward": "Belohnen"
+    "section_reward": "Belohnen",
+    "coin_balance": "Dein Münzstand"
   },
   "auth": {
     "app_name": "🪶 Momo",
@@ -73,6 +74,8 @@
     "greeting_afternoon": "Guten Nachmittag, {name}.",
     "greeting_evening": "Guten Abend, {name}.",
     "meta_streak": "{days, plural, one {# Tag Serie} other {# Tage Serie}}",
+    "rail_coins": "{coins} Münzen",
+    "rail_postpones": "noch {left}× verschiebbar",
     "meta_energy_unknown": "Energie noch offen",
     "meta_energy_change_aria": "Energie für heute ändern (aktuell: {level})",
     "meta_energy_set_aria": "Energie für heute auf {level} setzen",
