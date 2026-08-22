@@ -11,17 +11,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **`npm run check:design`** — ein Ratschen-Test gegen hartkodierte Farben, Radien außerhalb der
   vier erlaubten Werte und neue Inline-Styles in `.tsx`. Läuft in CI (PR Gate); der Zähler darf nur
-  fallen, aktuell 1947 Verstöße über die noch nicht umgestellten Seiten. Ergänzt um
+  fallen, aktuell 1934 Verstöße über die noch nicht umgestellten Seiten. Ergänzt um
   Playwright-Prüfungen (`e2e/design-tokens.spec.ts`), die den Flächenabstand zwischen Grund und
   angehobener Fläche als CIE-ΔL\* messen (statt WCAG-Kontrastverhältnis, das bei hoher Helligkeit
   komprimiert) und sicherstellen, dass die „leeren" Schatten-Tokens (`0 0 #0000`) als Listenglied
   in `box-shadow` gültig bleiben — als reines `none` verschwindet sonst die gesamte Deklaration.
 - **Vierte Ratschen-Kategorie `spacing`.** `npm run check:design` verwirft jetzt auch
   `p-`/`m-`/`gap-`/`space-`-Utilities außerhalb der Abstandsskala
-  4 · 8 · 12 · 16 · 24 · 32 · 48 · 72 px. Die Skala stand seit dem 2026-08-21 im
-  Designentwurf und wurde von nichts erzwungen — gemessen lagen 281 Utilities in
-  70 Dateien daneben, allein 115 davon auf 6 px. Die Baseline steigt dadurch
-  einmalig auf den neuen, ehrlichen Boden und fällt ab dort wieder nur.
+  4 · 8 · 12 · 16 · 24 · 32 · 48 · 72 px (Ausnahme: der einzelne, extern per
+  Playwright fixierte Token `[var(--gutter)]`, 3rem = 48px). Die Skala stand seit dem
+  2026-08-21 im Designentwurf und wurde von nichts erzwungen — gemessen lagen 280
+  Utilities in 69 Dateien daneben, allein 115 davon auf 6 px. Die Baseline steigt
+  dadurch einmalig von 1934 auf 2214 Verstöße und fällt ab dort wieder nur.
 
 ### Changed
 

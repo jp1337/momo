@@ -38,10 +38,14 @@
  * statt zu einem stillen Nebeneffekt von `--update`. Wird eine Regel selbst
  * erweitert (neues Muster, bisher blinder Fleck), ist das die eine legitime
  * Ursache fuer eine hoehere Zahl QUER durch viele Dateien. Der Weg dafuer ist
- * nicht --update, sondern scripts/design-baseline.json loeschen und --update
- * erneut laufen lassen: mit alter Baseline = {} greift keine
- * Steigerungspruefung, und das Ergebnis ist ein ehrlicher neuer Boden fuer
- * die erweiterten Regeln.
+ * nicht --update, sondern scripts/design-baseline.json LOESCHEN und --update
+ * erneut laufen lassen: die Steigerungspruefung greift nur, wenn die Datei
+ * vor diesem Lauf existiert hat (existsSync(BASELINE)) — fehlt sie, entfaellt
+ * sie komplett, und das Ergebnis ist ein ehrlicher neuer Boden fuer die
+ * erweiterten Regeln. Wichtig: eine VORHANDENE, aber leere Datei (`echo '{}'
+ * > scripts/design-baseline.json`) zaehlt NICHT als fehlend — dort greift
+ * die Pruefung normal und meldet jeden bestehenden Verstoss als Erhoehung.
+ * Nur das tatsaechliche Fehlen der Datei ist der Reset-Weg.
  */
 
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
@@ -66,7 +70,18 @@ const SPACING_OK = "0|px|auto|1|2|3|4|6|8|12|18";
 // dem Punkt in "mt-1.5", die erlaubte "1" haette dort also den haeufigsten
 // Verstoss im Repo (6px, 115 Vorkommen) freigegeben. Der Wert muss ganz zu
 // Ende sein, nicht nur anfangen.
-const SPACING_GUARD = `(?!(?:${SPACING_OK})(?![\\w./])|\\[var\\(--space-)`;
+//
+// Zusaetzlich als Ausnahme zugelassen (Ruling R7, 2026-08-22): der EINE
+// Token [var(--gutter)] — nicht ein generisches "[var(--*)]"-Freibrief.
+// --gutter ist 3rem = 48px, ein Wert der Skala, und dieser Wert ist per
+// e2e/design-tokens.spec.ts:284 fixiert; eine kuenftige Aenderung von
+// --gutter auf einen off-scale-Wert faellt dort auf, nicht erst hier. Das
+// unterscheidet diese Ausnahme von "jemand definiert --my-gap: 13px": die
+// Regel bleibt geschlossen fuer beliebige Custom Properties, oeffnet sich
+// nur fuer den einen Namen, dessen Wert extern getestet und auf der Skala
+// gehalten wird. gap-[var(--gutter)] (components/ui/page-frame.tsx:42) war
+// sonst ein Falsch-Verstoss der gleichen Art wie gap-x-1 oben.
+const SPACING_GUARD = `(?!(?:${SPACING_OK})(?![\\w./])|\\[var\\(--space-|\\[var\\(--gutter\\)\\])`;
 // Der Wert selbst: Bracket-Wert, oder eine Ziffer gefolgt von weiteren
 // Wortzeichen/Punkt/Slash, oder die Schluesselwoerter px/auto.
 //
@@ -194,28 +209,28 @@ function selftest() {
     {
       name: "neue Datei ohne alten Eintrag zaehlt als 0, nicht als erlaubt",
       old: {},
-      current: { "a.tsx": { color: 1, radius: 0, inline: 0 } },
+      current: { "a.tsx": { color: 1, radius: 0, inline: 0, spacing: 0 } },
       admitted: [],
       want: 1,
     },
     {
       name: "vorher saubere Datei (kein Eintrag, da scan() Nulltreffer auslaesst) darf keine Verstoesse gewinnen",
       old: {},
-      current: { "b.tsx": { color: 0, radius: 2, inline: 0 } },
+      current: { "b.tsx": { color: 0, radius: 2, inline: 0, spacing: 0 } },
       admitted: [],
       want: 1,
     },
     {
       name: "ein echter Rueckgang loest nichts aus",
-      old: { "c.tsx": { color: 5, radius: 0, inline: 0 } },
-      current: { "c.tsx": { color: 2, radius: 0, inline: 0 } },
+      old: { "c.tsx": { color: 5, radius: 0, inline: 0, spacing: 0 } },
+      current: { "c.tsx": { color: 2, radius: 0, inline: 0, spacing: 0 } },
       admitted: [],
       want: 0,
     },
     {
       name: "gleichbleibender Zaehler loest nichts aus",
-      old: { "c.tsx": { color: 5, radius: 0, inline: 0 } },
-      current: { "c.tsx": { color: 5, radius: 0, inline: 0 } },
+      old: { "c.tsx": { color: 5, radius: 0, inline: 0, spacing: 0 } },
+      current: { "c.tsx": { color: 5, radius: 0, inline: 0, spacing: 0 } },
       admitted: [],
       want: 0,
     },
@@ -223,10 +238,19 @@ function selftest() {
       name: "--admit gibt genau den genannten Pfad frei, ein zweiter neuer Verstoss bleibt gemeldet",
       old: {},
       current: {
-        "d.tsx": { color: 3, radius: 0, inline: 0 },
-        "e.tsx": { color: 1, radius: 0, inline: 0 },
+        "d.tsx": { color: 3, radius: 0, inline: 0, spacing: 0 },
+        "e.tsx": { color: 1, radius: 0, inline: 0, spacing: 0 },
       },
       admitted: ["d.tsx"],
+      want: 1,
+    },
+    {
+      // Bislang liefen alle Faelle oben nur, weil undefined > 0 false ist —
+      // die vierte Kategorie war durch die Fixtures selbst nie geprueft.
+      name: "ein steigender spacing-Zaehler wird erkannt, nicht nur color/radius/inline",
+      old: { "h.tsx": { color: 0, radius: 0, inline: 0, spacing: 2 } },
+      current: { "h.tsx": { color: 0, radius: 0, inline: 0, spacing: 3 } },
+      admitted: [],
       want: 1,
     },
   ];
@@ -355,6 +379,16 @@ if (args.includes("--update")) {
   const old = baselineExisted ? JSON.parse(readFileSync(BASELINE, "utf8")) : {};
   const admitted = parseAdmitted(args);
   const raised = raisedForUpdate(baselineExisted, old, current, admitted);
+  if (!baselineExisted) {
+    // Sichtbarkeit wie bei --admit: eine akzeptierte Ausnahme darf kein
+    // stiller Nebeneffekt sein. Ohne diese Zeile sieht ein Reset ("Regel
+    // erweitert, Boden neu gelegt") im Terminal/CI-Log genauso aus wie ein
+    // gewoehnlicher --update-Lauf, der die Zahl senkt — obwohl hier die
+    // Steigerungspruefung fuer JEDE Datei komplett entfallen ist.
+    console.log(
+      "Baseline-Datei fehlte — Steigerungspruefung uebersprungen, neuer Boden wird ungeprueft geschrieben.",
+    );
+  }
   if (raised.length) {
     console.error("Die Baseline ist eine Ratsche — sie darf nicht steigen:\n");
     for (const r of raised) console.error(`  ${r}`);
@@ -402,7 +436,10 @@ if (problems.length) {
   console.error("Design-Token-Ratsche verletzt:\n");
   for (const p of problems) console.error(`  ${p}`);
   console.error("\nErlaubt sind nur var(--…)-Referenzen, Radien nur ueber");
-  console.error("--radius-sm|md|lg|pill.");
+  console.error("--radius-sm|md|lg|pill. Abstand (p-/m-/gap-/space-) nur aus der Skala");
+  console.error(
+    "4·8·12·16·24·32·48·72px — in Tailwind 0|px|auto|1|2|3|4|6|8|12|18 oder [var(--space-N)].",
+  );
   console.error(
     "\nEin echter Rueckgang senkt die Baseline mit: npm run check:design -- --update",
   );

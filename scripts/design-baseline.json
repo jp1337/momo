@@ -689,12 +689,6 @@
     "inline": 1,
     "spacing": 1
   },
-  "components/ui/page-frame.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 0,
-    "spacing": 1
-  },
   "components/ui/tooltip.tsx": {
     "color": 0,
     "radius": 1,
