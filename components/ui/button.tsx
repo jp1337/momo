@@ -21,9 +21,26 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "quiet", size = "md", asChild = false, style, children, ...props }, ref) => {
     const Comp = (asChild ? Slot : motion.button) as typeof motion.button;
 
+    // `no-underline!` (Task 3 review, I4): `app/globals.css`'s global `a {
+    // text-decoration: underline }` is unlayered, and an unlayered rule
+    // beats every layered Tailwind utility regardless of specificity (same
+    // Cascade-Layers mechanism as the `!`s on `variantStyles` below). Without
+    // the override, every Button rendered as an `<a>` via `asChild` (e.g.
+    // wrapping a next/link `Link`) is permanently underlined — and
+    // `variant="primary"`'s `hover:underline`, which is meant to BE the
+    // hover signal, becomes a no-op: only the underline's colour changes on
+    // hover, the underline itself was already there. Base style, not a
+    // per-variant fix, because every variant renders as `<a>` when `asChild`
+    // is used and none of them want the page-default underline.
+    // `hover:underline!` below needs its OWN `!` for the same reason: an
+    // un-important `hover:underline` would lose to this `!important`
+    // `no-underline!` even on hover (`!important` always wins over a
+    // non-important rule, whatever the pseudo-class). With both `!important`,
+    // `:hover`'s extra specificity is what decides — and that is exactly the
+    // state we want to win only on hover.
     const baseStyles =
       "inline-flex items-center justify-center gap-2 whitespace-nowrap border-0 " +
-      "rounded-[var(--radius-sm)] text-sm font-semibold transition-colors duration-150 " +
+      "rounded-[var(--radius-sm)] text-sm font-semibold no-underline! transition-colors duration-150 " +
       "disabled:opacity-50 disabled:pointer-events-none cursor-pointer outline-none";
 
     // primary traegt Amber als Textfarbe, nicht als Flaeche: Amber ist Licht.
@@ -64,7 +81,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // chrome," not a hack — it does not touch the unrelated global rule,
     // which many un-migrated pages still rely on for their plain links.
     const variantStyles = {
-      primary: "bg-transparent text-[var(--amber)]! hover:underline",
+      primary: "bg-transparent text-[var(--amber)]! hover:underline!",
       quiet:
         "bg-[var(--raised)] border border-[var(--hairline)] text-[var(--ink)]! hover:border-[var(--ink-2)]",
       danger: "bg-transparent text-[var(--danger)]! hover:bg-[var(--raised)]",

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { gotoWithTheme } from "./helpers/theme";
 import {
   MIGRATED_PAGES,
@@ -7,6 +7,31 @@ import {
   countDisplayFont,
   measureColumns,
 } from "./helpers/design-count";
+
+/**
+ * Navigiert mit festem Theme und wartet zusätzlich, bis eine etwaige
+ * Eintrittsanimation des Seiten-Lichts (`.lichtkegel`) abgeschlossen ist.
+ *
+ * `design-count.ts`s `countAmber`/`countDisplayFont` überspringen Elemente
+ * mit `opacity: 0` (Inhalt, der wirklich nicht sichtbar ist, soll nicht
+ * zählen) — das Dashboard animiert seinen `.lichtkegel`-Container aber von
+ * `opacity: 0` auf `1` beim Mount (`daily-quest-card.tsx`, `quest-light`).
+ * `gotoWithTheme` endet bei `load`, ohne auf diese Animation zu warten, und
+ * eine Messung mitten in der Animation liest das eine erlaubte Licht als
+ * "nicht da": beide Deckelungs-Regeln unten (`inside ≤ 2`, `outside ≤ …`)
+ * werden von `0/0` genauso erfüllt wie von einer echten Messung, ohne dass
+ * der Test das je bemerkt — genau der Fund der Task-3-Review. Ein
+ * kommendes Task entfernt diese Animation ganz ("Die Ankunft umkehren");
+ * bis dahin wartet dieser Helper auf das reale Ende, statt zu raten, wie
+ * lange 0.35s plus Jitter brauchen.
+ */
+async function gotoSettled(page: Page, theme: "dark" | "light", path: string) {
+  await gotoWithTheme(page, theme, path);
+  const light = page.locator(".lichtkegel").first();
+  if ((await light.count()) > 0) {
+    await expect(light).toHaveCSS("opacity", "1");
+  }
+}
 
 /**
  * Die vier Regeln der Spec (§8), je migrierte Seite, in beiden Themes.
@@ -19,12 +44,22 @@ for (const path of MIGRATED_PAGES) {
   for (const theme of ["dark", "light"] as const) {
     test.describe(`${path} (${theme})`, () => {
       test("trägt Amber höchstens einmal, dokumentweit", async ({ page }) => {
-        await gotoWithTheme(page, theme, path);
+        await gotoSettled(page, theme, path);
         const hits = await countAmber(page);
         const outside = hits.filter((h) => !h.inLight);
         const inside = hits.filter((h) => h.inLight);
         const dump = (hs: typeof hits) =>
           hs.map((h) => `${h.tag}[${h.testid ?? "-"}] ${h.prop} "${h.text}"`).join("\n");
+        // Positivprobe: der Lichtkegel-Wash (`.lichtkegel::before`, siehe
+        // globals.css) ist unbedingt vorhanden — er hängt an keinem
+        // Seed-Zustand. Fehlt dieser Treffer, misst der Zähler nichts statt
+        // "kein Amber"; eine reine Obergrenze (unten) kann diesen
+        // Unterschied nicht sehen, weil 0/0 sie genauso erfüllt wie eine
+        // echte Messung (Task-3-Review, C1).
+        expect(
+          hits.some((h) => h.prop === "::before"),
+          "der Lichtkegel-Wash wird nicht gesehen — der Zähler misst nichts, nicht 'kein Amber'",
+        ).toBe(true);
         // Innerhalb der einen Lichtquelle sind Wash und die Textfarbe der
         // einen Handlung erlaubt — das ist ein Licht, nicht zwei Elemente.
         expect(inside.length, `im Licht:\n${dump(inside)}`).toBeLessThanOrEqual(2);
@@ -35,8 +70,28 @@ for (const path of MIGRATED_PAGES) {
         );
       });
 
+      test("Amber-Zähler ist nicht blind für Bildquellen", async ({ page }) => {
+        // countAmber liest Farbe nur aus computed style — Farbe, die in
+        // einer Bildressource steckt (<img>, background-image: url(...),
+        // <use href>), ist für ihn unsichtbar (siehe JSDoc dort). Diese
+        // Probe schließt genau die Lücke, die den Navbar-Fix (Task 3)
+        // motiviert hat: kein <img src="*.svg"> mehr im Dokument (das war
+        // die alte Feder, /icon.svg, amberfarben und für den Zähler nie
+        // sichtbar), und die Feder ist tatsächlich als Inline-SVG da — ein
+        // Regressionstest ohne diesen bemerkt eine Rückkehr zum Bild nie,
+        // weil alle vier Zähler weiterhin grün blieben.
+        await gotoSettled(page, theme, path);
+        const svgImages = await page.locator('img[src$=".svg"]').count();
+        expect(
+          svgImages,
+          "ein <img src=*.svg> trägt Farbe, die der Amber-Zähler nicht sehen kann",
+        ).toBe(0);
+        const inlineFeather = await page.locator("header svg").count();
+        expect(inlineFeather, "die Feder ist kein Inline-SVG mehr").toBeGreaterThan(0);
+      });
+
       test("trägt Fraunces genau einmal", async ({ page }) => {
-        await gotoWithTheme(page, theme, path);
+        await gotoSettled(page, theme, path);
         const hits = await countDisplayFont(page);
         expect(
           hits.length,
@@ -44,8 +99,8 @@ for (const path of MIGRATED_PAGES) {
         ).toBe(1);
       });
 
-      test("hat keine umrahmte Inhaltsfläche", async ({ page }) => {
-        await gotoWithTheme(page, theme, path);
+      test("hat keine umrahmte oder gefüllte Inhaltsfläche", async ({ page }) => {
+        await gotoSettled(page, theme, path);
         const hits = await countBoxes(page);
         expect(
           hits.length,
@@ -55,7 +110,7 @@ for (const path of MIGRATED_PAGES) {
 
       test("hält jede Inhaltsspalte auf dem Maß", async ({ page }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
-        await gotoWithTheme(page, theme, path);
+        await gotoSettled(page, theme, path);
         const { measurePx, widths } = await measureColumns(page);
         expect(widths.length, "keine [data-column] gefunden").toBeGreaterThan(0);
         for (const w of widths) expect(w).toBeLessThanOrEqual(measurePx + 1);

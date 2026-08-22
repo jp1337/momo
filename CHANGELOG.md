@@ -42,6 +42,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   „`--done` heißt ausschließlich erledigt"). Die globale Link-Farbe (`a { color: var(--accent-amber) }`
   in `globals.css`) wird durch eine Unterstreichung ersetzt — vorher war jeder Link im Fließtext
   auf jeder Seite ein zusätzlicher, ungezählter Amber-Treffer.
+- **Der Amber-Zähler maß 0/0 statt "kein Amber" (Task-3-Review, C1).** `.lichtkegel`s
+  Eintrittsanimation (`opacity: 0 → 1`) rennt gegen `gotoWithTheme`s `page.goto`-Aufruf, und der
+  Zähler übersprang das eine erlaubte Licht, wann immer die Messung zu früh kam — eine reine
+  Obergrenze (`≤ 2`) unterscheidet 0 Treffer nicht von einer korrekten Messung. Behoben mit einer
+  Positivprobe (der Wash muss gesehen werden) statt eines geratenen `sleep`. Außerdem: `fill`/
+  `stroke` zählten pro Icon-Element statt pro Icon (ein `<svg stroke="…">` mit Kindern ohne
+  eigenen Wert zählte doppelt); `countBoxes`s `closest(AFFORDANCE)` exemptierte jeden Nachfahren
+  eines Links, nicht nur seine unmittelbaren Text-/Icon-Kinder — eine ganze in einen `<Link>`
+  gewrappte Karte wäre unsichtbar gewesen.
+- **`Button`s `hover:underline`-Signal war ein No-op.** Die globale `a { text-decoration:
+  underline }`-Regel unterstrich jeden als `<a>` gerenderten Button dauerhaft; `variant="primary"`s
+  Hover-Unterstreichung änderte dadurch nur noch die Farbe, nicht mehr das Vorhandensein. Behoben
+  mit `no-underline!`/`hover:underline!` auf Basis- bzw. Primary-Ebene.
 
 ### Changed
 

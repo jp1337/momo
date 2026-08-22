@@ -271,17 +271,6 @@ export default async function DashboardPage() {
       : null;
 
   return (
-    // Rhythmus statt Gleichverteilung (Task 6 fix — ein flaches `gap-*` auf
-    // dem Container setzte 48px zwischen JEDES Element: die 17px-Begruessung
-    // stand vom eigenen Meta-Zeilen-Nachbarn genauso weit weg wie der 246px
-    // hohe Quest-Block von Quick Wins. Gleicher Abstand ueberall gruppiert
-    // nichts. Struktur jetzt: eine enge Kopf-Gruppe (Begruessung + Meta-Zeile
-    // + optionale Energie-Karte — sie gehoeren zusammen, alles Kontext),
-    // dann ein grosser Bruch zur Quest (das eine wichtige Ding), dann ein
-    // mittlerer Abstand zu Quick Wins (verwandt, aber nachrangig). Flexbox
-    // `gap` statt Margin, weil sowohl die Energie-Karte als auch Quick Wins
-    // client-seitig `null` rendern koennen — `gap` fuegt dann keine Luecke
-    // ein, eine feste Margin auf einem leeren Element schon.
     <PageFrame
       rail={
         <>
@@ -304,79 +293,102 @@ export default async function DashboardPage() {
         </>
       }
     >
-      {/* ── Kopf-Gruppe: Begruessung, Meta-Zeile, Energie-Check-in ──────────
-          Eng zusammen (gap-2 = 8px) — ein Gedanke, nicht drei Flaechen. */}
-      <div className="flex flex-col gap-2">
-        {/* Begrüßung, nicht die Hauptsache der Seite — Fraunces ist für die
-            Quest reserviert. Task 7: die Quest liefert jetzt die Seiten-h1,
-            deshalb ist dieses Element ein <p> — zwei h1 waeren falsch. */}
-        <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] font-normal tracking-[0.01em] text-[var(--ink-2)]">
-          {greeting}
-        </p>
+      {/* Rhythmus statt Gleichverteilung (Task 6 fix — ein flaches `gap-*` auf
+          dem Container setzte 48px zwischen JEDES Element: die 17px-Begruessung
+          stand vom eigenen Meta-Zeilen-Nachbarn genauso weit weg wie der 246px
+          hohe Quest-Block von Quick Wins. Gleicher Abstand ueberall gruppiert
+          nichts. Struktur jetzt: eine enge Kopf-Gruppe (Begruessung + Meta-Zeile
+          + optionale Energie-Karte — sie gehoeren zusammen, alles Kontext),
+          dann ein grosser Bruch zur Quest (das eine wichtige Ding), dann ein
+          mittlerer Abstand zu Quick Wins (verwandt, aber nachrangig). Flexbox
+          `gap` statt Margin, weil sowohl die Energie-Karte als auch Quick Wins
+          client-seitig `null` rendern koennen — `gap` fuegt dann keine Luecke
+          ein, eine feste Margin auf einem leeren Element schon.
 
-        {/* ── Metazeile + Energie-Check-in ─────────────────────────────────
-            EnergyCheckinCard rendert jetzt beides: die Metazeile
-            (data-testid="quest-meta", Wochentag/Energie/Streak — ersetzt
-            drei fruehere Flaechen) UND, direkt darunter, den Picker — aber
-            nur wenn noch nicht eingecheckt oder der Nutzer das Energiewort
-            in der Metazeile angeklickt hat, um es zu aendern. Eine
-            Komponente, weil beide dieselbe "heute schon eingecheckt?"-
-            Entscheidung teilen, die aus Timezone-Gruenden im Client
-            getroffen wird (siehe Kommentar dort) — nicht hier im Server. */}
-        <EnergyCheckinCard
-          energyLevel={cachedEnergyLevel}
-          energyLevelDate={cachedEnergyLevelDate}
-          weekdayLabel={weekdayLabel}
-          streakText={null}
-          bestDayInsight={bestDayInsight}
-        />
-      </div>
-
-      {/* ── New-user empty state (Task B2 fix) ───────────────────────────
-          Moved out of the head group: it used to sit inside the
-          greeting/meta gap-2 group and broke that group's tight 8px
-          rhythm. As its own top-level flex child it gets the same 48px
-          gap as every other section here.
-          No box, no fill, no green CTA, no Lora italic. `--font-display`
-          stays reserved for the quest headline, which is this page's one
-          large Fraunces element even in the no-quest state (see
-          DailyQuestCard's `!quest` branch, "quest_no_quest"). That branch
-          also already carries the page's one amber element (its hint
-          link to /tasks), so this CTA is a quiet Button rather than a
-          second amber action — and it points to /topics, because a user
-          with zero topics needs one before a task can exist at all. */}
-      {isNewUser && (
-        <div className="flex flex-col gap-3">
-          <p className="m-0 font-[family-name:var(--font-ui)] text-base font-semibold text-[var(--ink)]">
-            {t("empty_state_title" as Parameters<typeof t>[0])}
+          Task 3 fix round 1 (2026-08-22): dieser Rhythmus lebt jetzt in einem
+          EINZIGEN Kind von PageFrame, nicht mehr direkt in dessen Spalte.
+          PageFrame setzt `gap-8` zwischen ALLEN direkten Kindern der Spalte —
+          mit drei direkten Kindern (Kopf-Gruppe, optionaler Empty-State,
+          Quest+QuickWins) waere der grosse Bruch zur Quest auf denselben
+          32px wie der mittlere Abstand Quest->QuickWins geschrumpft: exakt
+          die "sichtbare Gleichverteilung", die dieser Entwurf abschafft.
+          Ein einziger Wrapper hier gibt PageFrame nichts zum Verteilen — die
+          Abstaende darunter bleiben allein in unserer Hand. */}
+      <div className="flex flex-col gap-12">
+        {/* ── Kopf-Gruppe: Begruessung, Meta-Zeile, Energie-Check-in ──────────
+            Eng zusammen (gap-2 = 8px) — ein Gedanke, nicht drei Flaechen. */}
+        <div className="flex flex-col gap-2">
+          {/* Begrüßung, nicht die Hauptsache der Seite — Fraunces ist für die
+              Quest reserviert. Task 7: die Quest liefert jetzt die Seiten-h1,
+              deshalb ist dieses Element ein <p> — zwei h1 waeren falsch. */}
+          <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] font-normal tracking-[0.01em] text-[var(--ink-2)]">
+            {greeting}
           </p>
-          <p className="m-0 max-w-sm font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
-            {t("empty_state_body" as Parameters<typeof t>[0])}
-          </p>
-          <div>
-            <Button asChild variant="quiet" size="md">
-              <Link href="/topics">{t("empty_state_cta" as Parameters<typeof t>[0])}</Link>
-            </Button>
-          </div>
-        </div>
-      )}
 
-      {/* ── Quest + Quick Wins: mittlerer Abstand (gap-8 = 32px) zwischen
-          den beiden, verwandt aber nachrangig zur Kopf-Gruppe darueber. ── */}
-      <div className="flex flex-col gap-8">
-        {/* ── Daily Quest Hero Card ───────────────────────────────────────── */}
-        <section>
-          <DailyQuestCard
-            quest={quest}
-            postponesToday={postponesToday}
-            postponeLimit={postponeLimit}
-            emotionalClosureEnabled={emotionalClosureEnabled}
-            userEnergyToday={userEnergyToday}
+          {/* ── Metazeile + Energie-Check-in ─────────────────────────────────
+              EnergyCheckinCard rendert jetzt beides: die Metazeile
+              (data-testid="quest-meta", Wochentag/Energie/Streak — ersetzt
+              drei fruehere Flaechen) UND, direkt darunter, den Picker — aber
+              nur wenn noch nicht eingecheckt oder der Nutzer das Energiewort
+              in der Metazeile angeklickt hat, um es zu aendern. Eine
+              Komponente, weil beide dieselbe "heute schon eingecheckt?"-
+              Entscheidung teilen, die aus Timezone-Gruenden im Client
+              getroffen wird (siehe Kommentar dort) — nicht hier im Server. */}
+          <EnergyCheckinCard
+            energyLevel={cachedEnergyLevel}
+            energyLevelDate={cachedEnergyLevelDate}
+            weekdayLabel={weekdayLabel}
+            streakText={null}
+            bestDayInsight={bestDayInsight}
           />
-        </section>
+        </div>
 
-        {/* ── Quick Wins ── interaktiv: Tasks direkt hier abhaken ─────────── */}
-        <QuickWinsSection tasks={sortedQuickWins} />
+        {/* ── New-user empty state (Task B2 fix) ───────────────────────────
+            Moved out of the head group: it used to sit inside the
+            greeting/meta gap-2 group and broke that group's tight 8px
+            rhythm. As its own top-level flex child it gets the same 48px
+            gap as every other section here.
+            No box, no fill, no green CTA, no Lora italic. `--font-display`
+            stays reserved for the quest headline, which is this page's one
+            large Fraunces element even in the no-quest state (see
+            DailyQuestCard's `!quest` branch, "quest_no_quest"). That branch
+            also already carries the page's one amber element (its hint
+            link to /tasks), so this CTA is a quiet Button rather than a
+            second amber action — and it points to /topics, because a user
+            with zero topics needs one before a task can exist at all. */}
+        {isNewUser && (
+          <div className="flex flex-col gap-3">
+            <p className="m-0 font-[family-name:var(--font-ui)] text-base font-semibold text-[var(--ink)]">
+              {t("empty_state_title" as Parameters<typeof t>[0])}
+            </p>
+            <p className="m-0 max-w-sm font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
+              {t("empty_state_body" as Parameters<typeof t>[0])}
+            </p>
+            <div>
+              <Button asChild variant="quiet" size="md">
+                <Link href="/topics">{t("empty_state_cta" as Parameters<typeof t>[0])}</Link>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Quest + Quick Wins: mittlerer Abstand (gap-8 = 32px) zwischen
+            den beiden, verwandt aber nachrangig zur Kopf-Gruppe darueber. ── */}
+        <div className="flex flex-col gap-8">
+          {/* ── Daily Quest Hero Card ───────────────────────────────────────── */}
+          <section>
+            <DailyQuestCard
+              quest={quest}
+              postponesToday={postponesToday}
+              postponeLimit={postponeLimit}
+              emotionalClosureEnabled={emotionalClosureEnabled}
+              userEnergyToday={userEnergyToday}
+            />
+          </section>
+
+          {/* ── Quick Wins ── interaktiv: Tasks direkt hier abhaken ─────────── */}
+          <QuickWinsSection tasks={sortedQuickWins} />
+        </div>
       </div>
     </PageFrame>
   );
