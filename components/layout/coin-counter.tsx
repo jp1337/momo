@@ -54,9 +54,10 @@ export function CoinCounter({ initialCoins }: CoinCounterProps) {
       style={{
         fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
         color: "var(--coin-gold)",
-        // Task B12 (2026-08-22): was rgba(212,160,23,0.12) fill + a
-        // rgba(212,160,23,0.25) border — both literals, so neither responded
-        // to the theme, and the fill measured 3.34:1 in light mode. Now a
+        // Task B12 (2026-08-22): was a hardcoded RGB-with-alpha fill at 12%
+        // plus a hardcoded RGB-with-alpha border at 25%, both pinned to
+        // amber's old hex — literals, so neither responded to the theme, and
+        // the fill measured 3.34:1 in light mode. Now a
         // token-based wash, with the tint at 6% rather than the 12% used by
         // similar amber washes elsewhere (e.g. components/layout/level-badge.tsx):
         // --amber was darkened for AA in Task B4, and at 12% the composited

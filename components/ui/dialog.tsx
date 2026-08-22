@@ -70,8 +70,8 @@ export function DialogContent({
       />
       {/* Task B9 (2026-08-22): the dialog surface used to be styled inline
           with `var(--bg-surface)` (aliases to --ground — the same fill as
-          the page behind it) plus a 1px hairline and rounded-2xl (16px, off
-          the four-value radius scale). Measured, the dialog fill equalled
+          the page behind it) plus a 1px hairline and a 16px corner radius,
+          off the four-value radius scale. Measured, the dialog fill equalled
           the page fill in both themes: a ΔL* 0 box with a visible hairline
           is a pure outline around a content group, not the "Fläche, keine
           Haarlinie" docs/design-system.md documents for dialogs. `Surface

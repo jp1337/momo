@@ -14,11 +14,6 @@
     "radius": 7,
     "inline": 14
   },
-  "app/(app)/dashboard/page.tsx": {
-    "color": 1,
-    "radius": 3,
-    "inline": 5
-  },
   "app/(app)/layout.tsx": {
     "color": 0,
     "radius": 0,
@@ -240,8 +235,8 @@
     "inline": 2
   },
   "components/layout/coin-counter.tsx": {
-    "color": 2,
-    "radius": 1,
+    "color": 0,
+    "radius": 0,
     "inline": 1
   },
   "components/layout/level-badge.tsx": {
@@ -541,7 +536,7 @@
   },
   "components/ui/dialog.tsx": {
     "color": 0,
-    "radius": 2,
+    "radius": 1,
     "inline": 4
   },
   "components/ui/input.tsx": {
