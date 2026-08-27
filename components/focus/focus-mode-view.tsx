@@ -15,8 +15,12 @@
  * between them, no fill, no border), and the page carries exactly one
  * Fraunces element (the headline in whichever phase is showing — the
  * select/empty/done title, or the chosen task itself in the work phase)
- * and exactly one amber element (the "start"/"done"/"back" primary action,
- * as `Button variant="primary"`'s text colour — never a fill).
+ * and AT MOST one amber element: the "start"/"done"/"back" primary action,
+ * as `Button variant="primary"`'s text colour — never a fill. The empty
+ * sub-state of the select phase (no open tasks) is the one exception and
+ * carries NO amber at all — its only action is `Button variant="quiet"`
+ * ("back to dashboard"), because there is nothing to start (Task-9-Review
+ * F7 — this comment previously claimed every phase carries one).
  *
  * Priority colour-coding and the per-row coin badge are dropped: `Row` has
  * no slot for either (dotColor is the user's topic colour, not priority),
@@ -32,7 +36,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faForward } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
 import { PageFrame } from "@/components/ui/page-frame";
-import { List, Row, effortStep } from "@/components/ui/list";
+import { List, Row, effortStep, stageTitleClassName } from "@/components/ui/list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
@@ -48,8 +52,6 @@ type Phase = "select" | "work" | "done";
 interface FocusTask {
   id: string;
   title: string;
-  priority: "HIGH" | "NORMAL" | "SOMEDAY";
-  coinValue: number;
   topicId: string | null;
   estimatedMinutes: number | null;
   energyLevel: "HIGH" | "MEDIUM" | "LOW" | null;
@@ -71,20 +73,15 @@ const MAX_SELECTION = 3;
 // ─── Stage headline ─────────────────────────────────────────────────────────
 
 /**
- * The page's one Fraunces element, whichever phase is showing. Kept as a
- * single named style object (rather than an inline object literal on each
- * heading) so the ratchet counts zero inline styles for it —
- * `fontVariationSettings` is the one value a CSS custom property cannot
- * carry (same reasoning as `dashboard/daily-quest-card.tsx`'s
- * `questTitleStyle`).
+ * The page's one Fraunces element, whichever phase is showing — always
+ * `--ink` here (none of the three phases dims it). `stageTitleClassName`
+ * (`components/ui/list.tsx`) carries the shared clamp/leading/tracking/
+ * max-width recipe plus the `font-display-stage` class for the variable-font
+ * axes; it is the same class `daily-quest-card.tsx`'s quest headline uses
+ * (Task-9-Review F2/F4 — this used to be a second, byte-identical copy plus
+ * a named inline-style object here, carrying `fontVariationSettings`).
  */
-const stageTitleStyle: React.CSSProperties = {
-  fontVariationSettings: '"SOFT" 50, "WONK" 1, "opsz" 130',
-};
-
-const stageTitleClass =
-  "m-0 max-w-[26ch] font-[family-name:var(--font-display)] font-normal " +
-  "text-[clamp(1.75rem,4.1vw,2.85rem)] leading-[1.08] tracking-[-0.022em] text-balance text-[var(--ink)]";
+const stageTitleClass = `${stageTitleClassName} text-[var(--ink)]`;
 
 // ─── Selection Phase ─────────────────────────────────────────────────────────
 
@@ -123,7 +120,7 @@ function SelectionPhase({
       >
         <PageFrame>
           <div className="flex flex-col gap-4">
-            <h1 data-testid="focus-title" className={stageTitleClass} style={stageTitleStyle}>
+            <h1 data-testid="focus-title" className={stageTitleClass}>
               {t("empty_title")}
             </h1>
             <EmptyState
@@ -153,7 +150,7 @@ function SelectionPhase({
             <p className="m-0 font-[family-name:var(--font-mono)] text-[0.6875rem] font-normal uppercase tracking-[0.16em] text-[var(--ink-3)]">
               {t("page_title")}
             </p>
-            <h1 data-testid="focus-title" className={stageTitleClass} style={stageTitleStyle}>
+            <h1 data-testid="focus-title" className={stageTitleClass}>
               {t("select_title")}
             </h1>
             <p className="m-0 font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
@@ -179,20 +176,33 @@ function SelectionPhase({
                 title={task.title}
                 eyebrow={topic?.title}
                 dotColor={topic?.color ?? null}
-                trailing={task.estimatedMinutes ? `${task.estimatedMinutes} min` : undefined}
+                trailing={task.estimatedMinutes ? t("minutes_abbr", { minutes: task.estimatedMinutes }) : undefined}
+                // Ganze Zeile ist der Auswahl-Ziel (WCAG 2.2 2.5.8) — nicht
+                // nur das 20×20-px-Kästchen. `pointer-events-none` allein
+                // sperrt eine erschöpfte Zeile: es ist die einzige der vorher
+                // ZWEI Sperren (Task-9-Review F3), weil es als einziges auch
+                // diesen neuen Zeilen-Klick mitsperrt — ein `disabled` nur am
+                // Kästchen hätte das nicht getan, Klicks auf Titel/Eyebrow
+                // wären trotzdem durchgekommen.
                 className={cn(isDisabled && "pointer-events-none opacity-40")}
+                onClick={() => toggle(task)}
                 lead={
                   <button
                     type="button"
-                    onClick={() => toggle(task)}
-                    disabled={isDisabled}
+                    onClick={(e) => {
+                      // Sonst würde ein Klick auf das Kästchen `toggle`
+                      // zweimal auslösen: einmal hier, einmal durch das
+                      // Hochblubbern zum `onClick` der `Row` oben.
+                      e.stopPropagation();
+                      toggle(task);
+                    }}
                     aria-label={
                       isSelected
                         ? t("deselect_task_aria", { title: task.title })
                         : t("select_task_aria", { title: task.title })
                     }
                     className={cn(
-                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border-2 bg-transparent p-0 transition-colors disabled:cursor-not-allowed",
+                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border-2 bg-transparent p-0 transition-colors",
                       isSelected ? "border-[var(--ink)] bg-[var(--ink)]" : "border-[var(--ink-3)]",
                     )}
                   >
@@ -309,13 +319,16 @@ function WorkPhase({
               </span>
             )}
 
-            <h2 data-testid="focus-title" className={stageTitleClass} style={stageTitleStyle}>
+            <h2 data-testid="focus-title" className={stageTitleClass}>
               {task.title}
             </h2>
 
+            {/* Minutenzahl trägt hier dieselbe Rolle wie `Row`s eigenes
+                `trailing` (list.tsx) — dieselbe Größe, 0.8125rem, statt
+                einer eigenen Zahl (Task-9-Review, Kleintext-Fund). */}
             {task.estimatedMinutes ? (
               <span className="font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--ink-3)]">
-                {task.estimatedMinutes} min
+                {t("minutes_abbr", { minutes: task.estimatedMinutes })}
               </span>
             ) : null}
 
@@ -324,11 +337,17 @@ function WorkPhase({
                 {t("work_done_btn")}
               </Button>
 
+              {/* text-sm statt des vorherigen 0.85rem (Task-9-Review,
+                  Kleintext-Fund): dieselbe Größe, die `Button` (button.tsx)
+                  für JEDE Variante trägt — "Überspringen" steht als leise
+                  Nebenhandlung direkt neben "Erledigt" (`Button
+                  variant="primary"`) und soll dieselbe Textgröße tragen,
+                  nicht eine eigene, undokumentierte. */}
               <button
                 type="button"
                 onClick={onSkip}
                 disabled={isCompleting}
-                className="cursor-pointer border-0 bg-transparent p-2 font-[family-name:var(--font-ui)] text-[0.85rem] text-[var(--ink-2)] transition-colors hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="cursor-pointer border-0 bg-transparent p-2 font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)] transition-colors hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <FontAwesomeIcon icon={faForward} className="mr-2 text-[0.75rem]" />
                 {t("work_skip")}
@@ -384,7 +403,6 @@ function DonePhase({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
             className={stageTitleClass}
-            style={stageTitleStyle}
           >
             {t("done_title")}
           </motion.h1>

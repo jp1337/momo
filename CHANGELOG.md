@@ -107,6 +107,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Die Begrüßung auf dem Dashboard** setzt den Namen jetzt innerhalb des übersetzten Satzes ein,
   statt ihn mit einem festen „, " und "." aus dem Code anzuhängen. Das reparierte falsche
   Zeichensetzung in mehreren Sprachen (z. B. ein Komma nach einem Fragezeichen bei „Noch wach?").
+- **`/focus` als Bühne (Task 9, „Lichtkegel"): eine Liste statt acht gerahmter Balken, ein Licht.**
+  Wie beim Dashboard vorher: acht gleich gerahmte, gleich beschattete Aufgabenbalken werden eine
+  `List` von `Row`s, ohne Fläche und Rahmen; die Bühne trägt genau ein Fraunces-Element (die
+  Überschrift der jeweiligen Phase) und höchstens ein Amber (die Primäraktion „Fokus starten" /
+  „Erledigt" / „Zurück zum Dashboard"). Zwei Features fallen dabei weg, nicht nur eine
+  Umgestaltung: die Münzvorschau pro Aufgabe und die Prioritäts-Farbcodierung — beide hatten in der
+  neuen Zeile keinen Platz mehr (dieselbe Begründung wie beim Münz-Abzeichen, das schon von
+  `TaskRow` verschwand).
 
 - **Node.js 22 → 24 in App und CI**, und **Node.js 20 → 24 im Alexa-Lambda**. Node 20 ist seit
   2026-04-30 EOL, Node 24 läuft bis 2028-04-30 (Quelle: `nodejs/Release`). Betrifft

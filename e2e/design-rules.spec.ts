@@ -35,6 +35,22 @@ async function gotoSettled(page: Page, theme: "dark" | "light", path: string) {
 }
 
 /**
+ * Welche migrierten Seiten einen Lichtkegel bzw. App-Chrome (`<header>`)
+ * tragen — als benannte Erwartung, nicht vom DOM abgeleitet (Task-9-Review
+ * F1). Eine abgeleitete Prüfung wie `(await page.locator(...).count()) > 0`
+ * schreibt keine Erwartung fest, sie liest nur zurück, was gerade da ist:
+ * verschwindet der Lichtkegel oder der Header irgendwo unbeabsichtigt (z. B.
+ * der Navbar-Header wird zu `<div role="banner">`), geht die Bedingung auf
+ * JEDER Seite lautlos auf `false`, und die Positivprobe, die genau diese
+ * Regression fangen soll, wird auf jeder Seite übersprungen statt rot zu
+ * werden. Mit einer benannten Menge bricht stattdessen ein `expect` auf der
+ * betroffenen Seite, weil die tatsächliche Zahl nicht mehr zur erklärten
+ * Erwartung passt.
+ */
+const WITH_LIGHT = new Set(["/dashboard"]);
+const CHROMELESS = new Set(["/focus"]);
+
+/**
  * Die vier Regeln der Spec (§8), je migrierte Seite, in beiden Themes.
  *
  * Nicht enthalten ist /design-system: die Referenzseite ZEIGT Flächen,
@@ -55,15 +71,21 @@ for (const path of MIGRATED_PAGES) {
         // Spec kennt eine amberfarbene HANDLUNG (z. B. reiner Textlink)
         // genauso wie ein Licht (Task-3-Review, Runde 3: `/tasks` & Co.
         // haben keinen Lichtkegel und waeren mit einer unbedingten Probe
-        // hier faelschlich rot, obwohl die Zeile 69 direkt darunter genau
+        // hier faelschlich rot, obwohl die Zeile direkt darunter genau
         // diesen Fall schon vorsieht — `inside.length > 0 ? 0 : 1`). Ohne
         // die Bedingung wuerde die Probe sich selbst widersprechen: sie
         // verlangt einen Lichtkegel-Treffer auf einer Seite, deren eigene
-        // Regel sagt, dass es keinen braucht. `gotoSettled` (oben) stellt
-        // bereits fest, ob `.lichtkegel` ueberhaupt existiert — dieselbe
-        // Bedingung hier, damit die Probe nur dort greift, wo sie etwas
-        // behauptet, das auch stimmen soll.
-        const hasLight = (await page.locator(".lichtkegel").count()) > 0;
+        // Regel sagt, dass es keinen braucht. `hasLight` ist die benannte
+        // Erwartung `WITH_LIGHT` (oben), nicht mehr vom DOM abgelesen
+        // (Task-9-Review F1) — das `expect` direkt danach macht beide
+        // Richtungen laut: fehlt der Lichtkegel auf einer Seite, die ihn
+        // tragen soll, oder trägt eine andere Seite unerwartet einen, wird
+        // die Zeile rot statt dass die Positivprobe lautlos übersprungen wird.
+        const hasLight = WITH_LIGHT.has(path);
+        expect(
+          (await page.locator(".lichtkegel").count()) > 0,
+          `Lichtkegel-Erwartung für ${path}: ${hasLight ? "erwartet, aber keiner gefunden" : "keiner erwartet, aber einer gefunden"}`,
+        ).toBe(hasLight);
         if (hasLight) {
           // Der Lichtkegel-Wash (`.lichtkegel::before`, siehe globals.css)
           // ist auf einer Seite MIT Lichtkegel unbedingt vorhanden — er
@@ -109,16 +131,24 @@ for (const path of MIGRATED_PAGES) {
         // /dashboard, liegen aber in <aside>/<nav>, nicht <header> — die
         // Kombination trifft eindeutig nur die Wortmarke.
         //
-        // Bedingt auf `hasHeader` (Task 9): `/focus` liegt bewusst außerhalb
-        // der App-Hülle (eigenes `layout.tsx`, kein `(app)`-Route-Group) und
-        // hat deshalb GAR KEIN `<header>` — die Bühne hat keinen Rand, auch
-        // keinen oberen. Die Wortmarken-Probe behauptet dort nichts über
-        // "Bild statt Inline-SVG" (das Bild existiert so wenig wie die
-        // Inline-Variante); sie wäre auf einer chromelosen Seite ein
-        // Test-Artefakt, kein echter Regressionsfang. Derselbe bedingte
-        // Musterstil wie `hasLight` oben in dieser Datei.
-        const hasHeader = (await page.locator("header").count()) > 0;
-        if (hasHeader) {
+        // Bedingt auf `CHROMELESS` (Task 9, Review F1): `/focus` liegt
+        // bewusst außerhalb der App-Hülle (eigenes `layout.tsx`, kein
+        // `(app)`-Route-Group) und hat deshalb GAR KEIN `<header>` — die
+        // Bühne hat keinen Rand, auch keinen oberen. Die Wortmarken-Probe
+        // behauptet dort nichts über "Bild statt Inline-SVG" (das Bild
+        // existiert so wenig wie die Inline-Variante); sie wäre auf einer
+        // chromelosen Seite ein Test-Artefakt, kein echter Regressionsfang.
+        // Die Erwartung selbst ist jetzt eine benannte Menge statt vom DOM
+        // abgelesen — das `expect` macht laut, wenn eine Seite ihren Header
+        // verliert (oder unerwartet einen bekommt), statt die Probe für ALLE
+        // Seiten lautlos zu überspringen (derselbe Fehler wie bei `hasLight`
+        // oben, hier auf den Header übertragen).
+        const isChromeless = CHROMELESS.has(path);
+        expect(
+          (await page.locator("header").count()) > 0,
+          `Chrome-Erwartung (Header) für ${path}: ${isChromeless ? "keiner erwartet, aber einer gefunden" : "erwartet, aber keiner gefunden"}`,
+        ).toBe(!isChromeless);
+        if (!isChromeless) {
           const inlineFeather = await page.locator('header a[href="/dashboard"] svg').count();
           expect(inlineFeather, "die Feder ist kein Inline-SVG mehr").toBeGreaterThan(0);
         }

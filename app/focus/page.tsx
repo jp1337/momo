@@ -68,11 +68,13 @@ export default async function FocusPage() {
       (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1)
   );
 
+  // priority/coinValue are only sort keys (see the query above) — the
+  // client component has no coin preview or priority coding any more
+  // (Task-9-Review, dead-fields fund), so they stop here instead of being
+  // serialized into a prop nothing reads.
   const serializedTasks = sorted.map((t) => ({
     id: t.id,
     title: t.title,
-    priority: t.priority as "HIGH" | "NORMAL" | "SOMEDAY",
-    coinValue: t.coinValue,
     topicId: t.topicId ?? null,
     estimatedMinutes: t.estimatedMinutes ?? null,
     energyLevel: t.energyLevel as "HIGH" | "MEDIUM" | "LOW" | null,

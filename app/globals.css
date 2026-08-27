@@ -454,6 +454,16 @@ h6 {
   font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144;
 }
 
+/* The one Fraunces headline's own axis recipe (dashboard quest, /focus
+   stage) — SOFT 50/WONK 1/opsz 130, distinct from the two demo axes above.
+   A CSS custom property cannot carry font-variation-settings, but a class
+   can: this is that class, so `daily-quest-card.tsx` and
+   `focus-mode-view.tsx` don't need a `style={}` object each for it
+   (Task-9-Review F2). */
+.font-display-stage {
+  font-variation-settings: "SOFT" 50, "WONK" 1, "opsz" 130;
+}
+
 /* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;

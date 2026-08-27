@@ -59,6 +59,22 @@ export const EFFORT_TEXT: Record<EffortStep, string> = {
 };
 
 /**
+ * Die Bühnen-Überschrift — Klammer, Zeilenhöhe, Sperrung, Maximalbreite für
+ * das eine Fraunces-Element einer Seite (Dashboard-Quest, `/focus`-Bühne).
+ * Ohne Farbe: der Aufrufer hängt sie an (aktiv `--ink`, erledigt
+ * `--ink-3` + Durchstreichung) — dieselbe Trennung von Größe und Farbe wie
+ * bei `Row`s `tone`-Prop. `font-display-stage` (in `globals.css`) trägt die
+ * Variable-Font-Achsen (`fontVariationSettings`), die keine
+ * CSS-Custom-Property tragen kann; vorher war das ein Inline-Style-Objekt
+ * in zwei byte-identischen Kopien (`daily-quest-card.tsx`,
+ * `focus-mode-view.tsx`), die vom Ratschen-Regex `/style=\{\{/g` nicht
+ * gesehen wurden — hier zusammengeführt (Task-9-Review F2/F4).
+ */
+export const stageTitleClassName =
+  "m-0 max-w-[26ch] font-[family-name:var(--font-display)] font-display-stage font-normal " +
+  "text-[clamp(1.75rem,4.1vw,2.85rem)] leading-[1.08] tracking-[-0.022em] text-balance";
+
+/**
  * Die Liste: keine Aufzählungspunkte, kein Rahmen, kein Abstand außen.
  *
  * **Eine `List` pro Gruppe.** Eine `GroupHeading` gehört DANEBEN (als

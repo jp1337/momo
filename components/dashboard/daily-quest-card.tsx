@@ -48,6 +48,7 @@ import type { AchievementItem } from "@/components/animations/achievement-toast"
 import { dispatchCoinsEarned } from "@/lib/client/coin-events";
 import { EmotionalClosure } from "@/components/animations/emotional-closure";
 import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
+import { stageTitleClassName } from "@/components/ui/list";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -84,21 +85,6 @@ interface DailyQuestCardProps {
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
-
-/**
- * Shared style for the quest headline in all three states. Kept as a single
- * named object (rather than a literal on each `<h1>`) so the file has one
- * `style={{…}}` occurrence, not three — `fontVariationSettings` is the one
- * value a CSS custom property cannot carry, which is why it stays inline at
- * all (see docs/superpowers/specs/2026-08-21-lichtkegel-design.md §3).
- */
-const questTitleStyle: React.CSSProperties = {
-  fontVariationSettings: '"SOFT" 50, "WONK" 1, "opsz" 130',
-};
-
-const questTitleClassName =
-  "m-0 max-w-[26ch] font-[family-name:var(--font-display)] font-normal " +
-  "text-[clamp(1.75rem,4.1vw,2.85rem)] leading-[1.08] tracking-[-0.022em] text-balance";
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -283,7 +269,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
           has no other h1 in this state, and the design requires exactly one. */}
       {!quest && (
         <div className="flex flex-col gap-3">
-          <h1 data-testid="quest-title" className={`${questTitleClassName} text-[var(--ink)]`} style={questTitleStyle}>
+          <h1 data-testid="quest-title" className={`${stageTitleClassName} text-[var(--ink)]`}>
             {t("quest_no_quest")}
           </h1>
           <p className="m-0 font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
@@ -302,8 +288,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
           </p>
           <h1
             data-testid="quest-title"
-            className={`${questTitleClassName} text-[var(--ink-3)] line-through`}
-            style={questTitleStyle}
+            className={`${stageTitleClassName} text-[var(--ink-3)] line-through`}
           >
             {quest.title}
           </h1>
@@ -359,7 +344,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
             {/* Task title — this IS the page's h1. The Daily Quest is the one
                 lit thing today; it reads as a headline, lit from above by
                 the .lichtkegel wash on the container, not boxed. */}
-            <h1 data-testid="quest-title" className={`${questTitleClassName} text-[var(--ink)]`} style={questTitleStyle}>
+            <h1 data-testid="quest-title" className={`${stageTitleClassName} text-[var(--ink)]`}>
               {quest.title}
             </h1>
 

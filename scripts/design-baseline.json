@@ -242,7 +242,7 @@
   "components/dashboard/daily-quest-card.tsx": {
     "color": 0,
     "radius": 0,
-    "inline": 2,
+    "inline": 1,
     "spacing": 1
   },
   "components/dashboard/energy-checkin-card.tsx": {
