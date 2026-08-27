@@ -30,18 +30,18 @@
  * Erklärung dafür falsch war (Task-10-Review C1):** die vorherige Karte
  * setzte auf dem `<h3>`-Titel `overflowWrap: "break-word"` UND
  * `wordBreak: "break-word"` gleichzeitig und brach mitten im Wort
- * ("Steuererklärun g 2025"). Die erste Fassung dieses Kommentars behauptete,
- * das Entfernen von `word-break: break-word` sei der Fix. Gemessen in
- * Chromium im echten Layout ist das falsch: `Row`s Titel-Span trägt
- * `min-width: 0`, und das neutralisiert den einzigen Unterschied zwischen
- * `break-word` und seinem veralteten Alias `anywhere` — `overflow-wrap:
- * break-word` allein reproduziert den gemeldeten Fehler zeichengenau, mit
- * oder ohne `word-break` daneben (Messtabelle in `components/ui/list.tsx`
- * bei `wrapTitle`). Der tatsächliche Fix ist `hyphens-auto`: es bricht an
- * einer echten Silbengrenze statt mitten im Wort, weil `app/layout.tsx`
+ * ("Steuererklärun g 2025"). `Row`s Titel-Span trägt `min-width: 0`, und
+ * das neutralisiert den einzigen Unterschied zwischen `break-word` und
+ * seinem veralteten Alias `anywhere` — `overflow-wrap: break-word` allein
+ * reproduziert den gemeldeten Fehler zeichengenau, mit oder ohne
+ * `word-break` daneben. Der tatsächliche Fix ist `hyphens-auto`: es bricht
+ * an einer echten Silbengrenze statt mitten im Wort, weil `app/layout.tsx`
  * `<html lang={locale}>` setzt. `Row`s `wrapTitle`-Prop setzt beides,
  * `break-words hyphens-auto` — dieselbe Logik gilt für jede Zeile mit
- * `wrapTitle`, nicht nur für Themen.
+ * `wrapTitle`, nicht nur für Themen. Die kanonische Erklärung des Mechanismus
+ * steht in `components/ui/list.tsx` bei `wrapTitle`, und das tatsächliche
+ * Bruchverhalten wird durch die ausführbare Assertion „ein langer Themenname
+ * bricht nicht mitten im Wort" in `e2e/topics.spec.ts` geprüft.
  */
 
 import Link from "next/link";

@@ -282,26 +282,22 @@ export function Row<T extends React.ElementType = "li">({
               "min-w-0 flex-1 font-[family-name:var(--font-mono)]",
               // `hyphens-auto` ist der Fix, nicht `break-words` (Task-10-
               // Review C1: die ursprüngliche Begründung war falsch).
-              // Gemessen in Chromium, im exakten Layout-Kontext dieser
-              // Zeile (Flex-Elternteil, dieser Span `flex:1 1 0%;
-              // min-width:0`, 16px Mono, `<html lang="de">`), Text
-              // "Steuererklärung 2025":
+              // `overflow-wrap: break-word` allein reproduziert den
+              // gemeldeten Fehler zeichengenau. `word-break: break-word` zu
+              // entfernen ändert hier NICHTS: `min-width: 0` auf diesem
+              // Titel-Span neutralisiert den einzigen echten Unterschied
+              // zwischen `break-word` und `anywhere`. `hyphens-auto` ist
+              // der Teil, der tatsächlich an einer Silbengrenze statt mitten
+              // im Wort bricht; es greift, weil `app/layout.tsx` `<html
+              // lang={locale}>` setzt.
               //
-              // | Breite | nur overflow-wrap | + word-break (alter "Fix") | + hyphens-auto (jetzt) |
-              // |---|---|---|---|
-              // | 160px | Steuererklärung / 2025 | identisch | identisch |
-              // | 140px | Steuererklärun / g 2025 | identisch | Steuererklär / ung 2025 |
-              // | 100px | Steuererkl / ärung 2025 | identisch | Steuere / rklärung / 2025 |
-              //
-              // `word-break: break-word` zu entfernen ändert hier NICHTS:
-              // `min-width: 0` auf diesem Titel-Span neutralisiert den
-              // einzigen echten Unterschied zwischen `break-word` und
-              // `anywhere` (ob Weichumbruch-Stellen in die
-              // Min-Content-Breite einfließen) — `overflow-wrap:
-              // break-word` allein reproduziert den gemeldeten Fehler
-              // zeichengenau. `hyphens-auto` ist der Teil, der tatsächlich
-              // an einer Silbengrenze statt mitten im Wort bricht; er
-              // greift, weil `app/layout.tsx` `<html lang={locale}>` setzt.
+              // Das tatsächliche Bruchverhalten wird durch eine
+              // ausführbare Assertion geprüft, nicht durch abgeschriebene
+              // Beispielwerte: der Test „ein langer Themenname bricht nicht
+              // mitten im Wort" in `e2e/topics.spec.ts` erzwingt einen
+              // engen Container und überprüft die tatsächlichen Zeilenboxen
+              // des Titels. Abgeschriebene Werte können lautlos veralten und
+              // zwei vorherige waren falsch; ein Test kann das nicht.
               wrapTitle ? "break-words hyphens-auto" : "truncate",
               EFFORT_TEXT[visualEffort],
               dimmed
