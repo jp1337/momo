@@ -290,6 +290,7 @@
     "page_title": "Sujets",
     "page_subtitle_empty": "Aucun sujet — regroupe tes tâches en projets.",
     "page_subtitle": "{count, plural, one {# sujet} other {# sujets}}",
+    "rail_open_tasks": "{count} tâches ouvertes",
     "empty_hint": "Regroupe tes tâches en sujets comme \"Déclaration d'impôts\", \"Déménagement\" ou \"Santé\".",
     "create_first": "Créer le premier sujet",
     "new_topic": "+ Nouveau sujet",

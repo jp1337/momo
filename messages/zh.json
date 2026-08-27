@@ -290,6 +290,7 @@
     "page_title": "主题",
     "page_subtitle_empty": "还没有主题 — 把任务分组成项目。",
     "page_subtitle": "{count, plural, other {# 个主题}}",
+    "rail_open_tasks": "{count} 个未完成任务",
     "empty_hint": "把任务归类到「报税」、「搬家」或「健康」这样的主题里。",
     "create_first": "创建第一个主题",
     "new_topic": "+ 新主题",

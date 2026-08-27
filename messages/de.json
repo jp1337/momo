@@ -290,6 +290,7 @@
     "page_title": "Themen",
     "page_subtitle_empty": "Noch keine Themen — gruppiere deine Aufgaben in Projekte.",
     "page_subtitle": "{count, plural, one {# Thema} other {# Themen}}",
+    "rail_open_tasks": "{count} Aufgaben offen",
     "empty_hint": "Gruppiere deine Aufgaben in Themen wie \"Steuererklärung\", \"Umzug\" oder \"Gesundheit\".",
     "create_first": "Erstes Thema erstellen",
     "new_topic": "+ Neues Thema",

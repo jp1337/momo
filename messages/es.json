@@ -290,6 +290,7 @@
     "page_title": "Temas",
     "page_subtitle_empty": "Aún no hay temas — agrupa tus tareas en proyectos.",
     "page_subtitle": "{count, plural, one {# tema} other {# temas}}",
+    "rail_open_tasks": "{count} tareas pendientes",
     "empty_hint": "Agrupa tus tareas en temas como «Declaración de impuestos», «Mudanza» o «Salud».",
     "create_first": "Crear primer tema",
     "new_topic": "+ Nuevo tema",

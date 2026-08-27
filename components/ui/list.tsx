@@ -181,6 +181,14 @@ interface RowOwnProps {
    * offene Aufgabe wäre eine Lüge über ihren Status.
    */
   tone?: "primary" | "secondary";
+  /**
+   * Titel umbrechen statt abschneiden — für Namen, die man ganz lesen muss
+   * (Task 10, `/topics`: ein Themenname ist der einzige Weg, das Thema
+   * wiederzuerkennen, eine Aufgabenzeile darf dagegen abschneiden). `false`/
+   * weggelassen bleibt `truncate`, das bisherige Verhalten jeder anderen
+   * Zeile.
+   */
+  wrapTitle?: boolean;
   className?: string;
   testId?: string;
 }
@@ -222,6 +230,7 @@ export function Row<T extends React.ElementType = "li">({
   dotColor,
   dimmed = false,
   tone = "primary",
+  wrapTitle = false,
   className,
   testId = "row",
   ...rest
@@ -257,7 +266,12 @@ export function Row<T extends React.ElementType = "li">({
           <span
             data-row-title
             className={cn(
-              "min-w-0 flex-1 truncate font-[family-name:var(--font-mono)]",
+              "min-w-0 flex-1 font-[family-name:var(--font-mono)]",
+              // `break-words` ist Tailwinds `overflow-wrap: break-word` —
+              // OHNE `word-break` (siehe `topic-card.tsx`s JSDoc für den
+              // Fehler, den das behebt). `hyphens-auto` greift, weil
+              // `app/layout.tsx` `<html lang={locale}>` setzt.
+              wrapTitle ? "break-words hyphens-auto" : "truncate",
               EFFORT_TEXT[visualEffort],
               dimmed
                 ? "text-[var(--ink-3)] line-through"

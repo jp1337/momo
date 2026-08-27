@@ -1,25 +1,33 @@
 "use client";
 
 /**
- * TopicsGrid component — interactive grid of topic cards.
+ * TopicsGrid component — interactive list of topic rows.
  *
  * Manages topic state after initial server-fetched data.
  * Handles create/edit/delete/archive actions.
  *
  * "New Topic" button opens TemplatePicker (with template cards + blank start).
  * Archived topics are shown in a collapsed section at the bottom.
+ *
+ * Vormals ein 1/2/3-Spalten-Raster für eine einzelne Karte (27
+ * Ratschen-Verstöße) — jetzt zwei `List`s (aktiv, archiviert), je aus
+ * `Row`-Zeilen (`TopicCard`/`ArchivedTopicCard`) zusammengesetzt. Eine
+ * `List` pro Gruppe (siehe `components/ui/list.tsx`s JSDoc) — die
+ * Archiv-Umschalttaste ist eine Aufklapp-Affordanz, keine `GroupHeading`,
+ * und steht deshalb weiterhin als eigener `<button>` vor der `List`.
  */
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { motion } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faChevronRight, faBoxArchive, faXmark, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
-import { TopicCard } from "./topic-card";
+import { faChevronDown, faChevronRight, faBoxArchive, faRotateLeft, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { TopicCard, ACTION_BTN } from "./topic-card";
 import { TopicForm } from "./topic-form";
 import { TemplatePicker } from "./template-picker";
 import { ConfirmButton } from "@/components/ui/confirm-button";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { List, Row } from "@/components/ui/list";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Topic {
   id: string;
@@ -40,83 +48,7 @@ interface TopicsGridProps {
 }
 
 /**
- * Empty state for when the user has no active topics.
- */
-function EmptyState({ onAdd }: { onAdd: () => void }) {
-  const t = useTranslations("topics");
-  return (
-    <div
-      className="relative rounded-2xl p-12 sm:p-16 text-center overflow-hidden"
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        border: "1px dashed var(--border)",
-      }}
-    >
-      {/* Soft green halo behind the icon — same atmospheric pattern as tasks/wishlist */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          top: "20%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "240px",
-          height: "240px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, color-mix(in srgb, var(--accent-green) 14%, transparent) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        className="relative mx-auto mb-5 flex items-center justify-center"
-        style={{
-          width: 72,
-          height: 72,
-          borderRadius: "50%",
-          backgroundColor: "color-mix(in srgb, var(--accent-green) 14%, transparent)",
-        }}
-        role="img"
-        aria-label="Folder"
-      >
-        <FontAwesomeIcon icon={faFolderOpen} style={{ fontSize: 28, color: "var(--accent-green)" }} />
-      </div>
-      <p
-        className="relative text-xl font-semibold mb-2"
-        style={{
-          fontFamily: "var(--font-display, 'Lora', serif)",
-          fontStyle: "italic",
-          color: "var(--text-primary)",
-        }}
-      >
-        {t("page_subtitle_empty")}
-      </p>
-      <p
-        className="relative text-sm max-w-sm mx-auto mb-6"
-        style={{
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          color: "var(--text-muted)",
-          lineHeight: 1.6,
-        }}
-      >
-        {t("empty_hint")}
-      </p>
-      <button
-        onClick={onAdd}
-        className="relative px-5 py-2.5 rounded-lg text-sm font-semibold transition-transform duration-150 hover:scale-105"
-        style={{
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          backgroundColor: "var(--accent-amber)",
-          color: "var(--bg-primary)",
-        }}
-      >
-        {t("create_first")}
-      </button>
-    </div>
-  );
-}
-
-/**
- * Interactive grid of topic cards with CRUD + archive functionality.
+ * Interactive list of topic rows with CRUD + archive functionality.
  */
 export function TopicsGrid({ initialTopics }: TopicsGridProps) {
   const t = useTranslations("topics");
@@ -205,101 +137,76 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
   }, [refreshTopics]);
 
   return (
-    <div>
+    <div className="flex flex-col gap-8">
       {/* New Topic button (opens template picker) */}
-      <div className="flex justify-end mb-6">
-        <button
-          onClick={() => setShowTemplatePicker(true)}
-          className="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            backgroundColor: "var(--accent-amber)",
-            color: "var(--bg-primary)",
-          }}
-        >
+      <div className="flex justify-end">
+        <Button type="button" variant="primary" size="sm" onClick={() => setShowTemplatePicker(true)}>
           {t("new_topic")}
-        </button>
+        </Button>
       </div>
 
       {/* Empty state */}
       {activeTopics.length === 0 && archivedTopics.length === 0 && (
-        <EmptyState onAdd={() => setShowTemplatePicker(true)} />
+        <EmptyState
+          line={t("empty_hint")}
+          action={
+            <Button type="button" variant="quiet" size="md" onClick={() => setShowTemplatePicker(true)}>
+              {t("create_first")}
+            </Button>
+          }
+        />
       )}
 
-      {/* Active topics grid — staggered fade-up on initial mount */}
+      {/* Active topics */}
       {activeTopics.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {activeTopics.map((topic, idx) => (
-            <motion.div
+        <List>
+          {activeTopics.map((topic) => (
+            <TopicCard
               key={topic.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.28,
-                ease: "easeOut",
-                // 40ms stagger feels choreographed without dragging out the load.
-                // Cap the delay at 12 cards so very long lists never feel slow.
-                delay: Math.min(idx, 12) * 0.04,
-              }}
-            >
-              <TopicCard
-                id={topic.id}
-                title={topic.title}
-                description={topic.description}
-                color={topic.color}
-                icon={topic.icon}
-                priority={topic.priority}
-                sequential={topic.sequential}
-                taskCount={topic.taskCount}
-                completedCount={topic.completedCount}
-                onEdit={setEditingTopicId}
-                onDelete={handleDelete}
-                onArchive={handleArchive}
-              />
-            </motion.div>
+              id={topic.id}
+              title={topic.title}
+              color={topic.color}
+              taskCount={topic.taskCount}
+              completedCount={topic.completedCount}
+              onEdit={setEditingTopicId}
+              onDelete={handleDelete}
+              onArchive={handleArchive}
+            />
           ))}
-        </div>
+        </List>
       )}
 
       {/* Archived topics section */}
       {archivedTopics.length > 0 && (
-        <div className="mt-8">
+        <div>
           <button
             onClick={() => setArchivedExpanded((v) => !v)}
-            className="flex items-center gap-2 mb-4 text-sm font-medium"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-            }}
+            className="mb-3 flex items-center gap-2 border-0 bg-transparent p-0 font-[family-name:var(--font-mono)] text-[0.6875rem] font-normal uppercase tracking-[0.16em] text-[var(--ink-3)]"
           >
             <FontAwesomeIcon
               icon={archivedExpanded ? faChevronDown : faChevronRight}
-              style={{ fontSize: 11 }}
+              className="h-2.5 w-2.5"
+              aria-hidden="true"
             />
-            <FontAwesomeIcon icon={faBoxArchive} style={{ fontSize: 13 }} />
+            <FontAwesomeIcon icon={faBoxArchive} className="h-3 w-3" aria-hidden="true" />
             {t("archived_section", { count: archivedTopics.length })}
           </button>
 
           {archivedExpanded && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <List>
               {archivedTopics.map((topic) => (
                 <ArchivedTopicCard
                   key={topic.id}
                   id={topic.id}
                   title={topic.title}
                   color={topic.color}
-                  icon={topic.icon}
                   taskCount={topic.taskCount}
                   completedCount={topic.completedCount}
                   onUnarchive={handleUnarchive}
                   onDelete={handleDelete}
                 />
               ))}
-            </div>
+            </List>
           )}
         </div>
       )}
@@ -347,110 +254,65 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
   );
 }
 
-// ─── Archived Topic Card ───────────────────────────────────────────────────────
+// ─── Archived Topic Row ─────────────────────────────────────────────────────
 
 interface ArchivedTopicCardProps {
   id: string;
   title: string;
   color?: string | null;
-  icon?: string | null;
   taskCount: number;
   completedCount: number;
   onUnarchive: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-import { resolveTopicIcon } from "@/lib/topic-icons";
-
 /**
- * Compact card for an archived topic — shows title, progress and restore/delete actions.
+ * Zeile für ein archiviertes Thema — `truncate` statt `wrapTitle` (bewusst,
+ * Task 10 Brief): die aktive Liste braucht den vollen Namen, die
+ * archivierte ist eine kompakte Nebenansicht, `tone="secondary"` gedämpft.
+ *
+ * @param props - siehe ArchivedTopicCardProps
+ * @returns Eine `Row` mit Wiederherstellen- und Löschen-Aktion
  */
 function ArchivedTopicCard({
   id,
   title,
   color,
-  icon,
   taskCount,
   completedCount,
   onUnarchive,
   onDelete,
 }: ArchivedTopicCardProps) {
   const t = useTranslations("topics");
-  const accentColor = color ?? "var(--text-muted)";
-  const progressPercent = taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0;
 
   return (
-    <div
-      className="rounded-2xl p-4 flex items-center gap-3"
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        border: "1px solid var(--border)",
-        opacity: 0.75,
-      }}
-    >
-      <div
-        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{
-          backgroundColor: color ? `${color}18` : "var(--bg-elevated)",
-          border: `2px solid ${accentColor}33`,
-        }}
-        aria-hidden
-      >
-        <FontAwesomeIcon
-          icon={resolveTopicIcon(icon)}
-          style={{ width: "1rem", height: "1rem", color: accentColor }}
-        />
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <p
-          className="text-sm font-medium truncate"
-          style={{
-            fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {title}
-        </p>
-        <p
-          className="text-xs"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {t("task_progress", { completed: completedCount, total: taskCount })} · {progressPercent}%
-        </p>
-      </div>
-
-      <div className="flex gap-1 flex-shrink-0">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => onUnarchive(id)}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                backgroundColor: "var(--bg-elevated)",
-                border: "1px solid var(--border)",
-                color: "var(--text-primary)",
-              }}
-            >
-              {t("unarchive_btn")}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{t("aria_unarchive")}</TooltipContent>
-        </Tooltip>
-        <ConfirmButton
-          onConfirm={() => onDelete(id)}
-          confirmPrompt={t("confirm_delete")}
-          className="p-1.5 rounded-lg transition-colors"
-          style={{ color: "var(--accent-red)" }}
-          aria-label={t("aria_delete")}
-        >
-          <FontAwesomeIcon icon={faXmark} style={{ fontSize: 12 }} />
-        </ConfirmButton>
-      </div>
-    </div>
+    <Row
+      testId="topic-row"
+      tone="secondary"
+      title={title}
+      trailing={`${completedCount}/${taskCount}`}
+      dotColor={color ?? null}
+      actions={
+        <span className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onUnarchive(id)}
+            className={ACTION_BTN}
+            aria-label={t("aria_unarchive")}
+            title={t("unarchive_btn")}
+          >
+            <FontAwesomeIcon icon={faRotateLeft} className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+          <ConfirmButton
+            onConfirm={() => onDelete(id)}
+            confirmPrompt={t("confirm_delete")}
+            className={ACTION_BTN}
+            aria-label={t("aria_delete")}
+          >
+            <FontAwesomeIcon icon={faXmark} className="h-3.5 w-3.5" aria-hidden="true" />
+          </ConfirmButton>
+        </span>
+      }
+    />
   );
 }

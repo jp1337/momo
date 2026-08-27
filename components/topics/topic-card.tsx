@@ -1,33 +1,54 @@
 "use client";
 
 /**
- * TopicCard component — displays a topic in the topics grid.
+ * TopicCard — ein Thema als Zeile.
  *
- * Shows:
- * - Topic icon and color
- * - Title and description
- * - Priority badge
- * - Progress bar (X/Y tasks completed)
- * - "All done" archive banner when 100% complete
- * - View, Edit, Archive, and Delete action buttons
+ * Ersetzt die vorherige Karte (Icon-Kreis, Prioritäts-Badge, Beschreibung,
+ * Fortschrittsbalken, "sequenziell"-Badge, "alles erledigt"-Banner — 28
+ * Ratschen-Verstöße) durch `Row` (`components/ui/list.tsx`): der Titel
+ * trägt den vollen Namen (`wrapTitle`), der Fortschritt ("3/7") steht
+ * rechts in Mono, die Themenfarbe ist der 6-px-Punkt (`dotColor`).
+ * Priorität, Beschreibung und das sequenziell-Flag bleiben im
+ * Bearbeiten-Formular (`TopicForm`) einstellbar — die Liste selbst ist
+ * nichts als Text, dieselbe Kodierungslogik wie `TaskRow` (siehe dort für
+ * die vollständige Tabelle "vorher → jetzt").
+ *
+ * Der Titel ist zugleich ein `<Link>` zum Thema-Detail — vorher ein
+ * gerahmter "Ansehen →"-Button, jetzt ohne eigene Fläche: der Titel selbst
+ * ist bereits die Affordanz, eine zweite Kante daneben wäre überflüssig.
+ * Keine eigene `className` auf dem `<Link>`: `globals.css`s `a`-Regel
+ * ("Link defaults", 2026-08-22) setzt `color: inherit` und eine
+ * haarlinienfarbene Unterstreichung bereits unlayered — sie schlägt jede
+ * `@layer utilities`-Klasse unabhängig von Spezifität (dieselbe Falle wie
+ * in `button.tsx` dokumentiert), ein `text-inherit no-underline` hier wäre
+ * also nicht nur überflüssig, sondern stumm wirkungslos. Die
+ * Unterstreichung ist inzwischen ohnehin das site-weite Signal "das ist ein
+ * Link" statt Amber (siehe `globals.css` dort) — genau richtig für einen
+ * Titel, der zugleich navigiert.
+ *
+ * **Der Wortumbruch-Fehler, der hier behoben wird:** die vorherige Karte
+ * setzte auf dem `<h3>`-Titel `overflowWrap: "break-word"` UND
+ * `wordBreak: "break-word"` gleichzeitig. `word-break: break-word` ist der
+ * veraltete Alias von `overflow-wrap: anywhere` — er bricht auch innerhalb
+ * eines Wortes, das auf die nächste Zeile gepasst hätte ("Steuererklärun
+ * g 2025"). `overflow-wrap: break-word` allein bricht nur ein Wort, das für
+ * sich allein nicht in die Zeile passt. `Row`s `wrapTitle`-Prop setzt jetzt
+ * ausschließlich Tailwinds `break-words` (= `overflow-wrap: break-word`,
+ * ohne `word-break`) plus `hyphens-auto` — dieselbe Bugfix-Logik gilt für
+ * jede Zeile mit `wrapTitle`, nicht nur für Themen.
  */
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faListOl, faBoxArchive, faPen, faXmark } from "@fortawesome/free-solid-svg-icons";
-import { resolveTopicIcon } from "@/lib/topic-icons";
+import { faBoxArchive, faPen, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { ConfirmButton } from "@/components/ui/confirm-button";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Row } from "@/components/ui/list";
 
 interface TopicCardProps {
   id: string;
   title: string;
-  description?: string | null;
   color?: string | null;
-  icon?: string | null;
-  priority: "HIGH" | "NORMAL" | "SOMEDAY";
-  sequential?: boolean;
   taskCount: number;
   completedCount: number;
   onEdit: (id: string) => void;
@@ -35,35 +56,20 @@ interface TopicCardProps {
   onArchive: (id: string) => void;
 }
 
-const PRIORITY_STYLES = {
-  HIGH: {
-    color: "var(--accent-red)",
-    backgroundColor: "color-mix(in srgb, var(--accent-red) 15%, transparent)",
-    border: "1px solid color-mix(in srgb, var(--accent-red) 25%, transparent)",
-  },
-  NORMAL: {
-    color: "var(--accent-amber)",
-    backgroundColor: "color-mix(in srgb, var(--accent-amber) 15%, transparent)",
-    border: "1px solid color-mix(in srgb, var(--accent-amber) 25%, transparent)",
-  },
-  SOMEDAY: {
-    color: "var(--text-muted)",
-    backgroundColor: "color-mix(in srgb, var(--text-muted) 12%, transparent)",
-    border: "1px solid color-mix(in srgb, var(--text-muted) 20%, transparent)",
-  },
-} as const;
+/** Eine Zeilenaktion ohne Fläche — derselbe Stil wie `TaskRowActions`' `ACTION_BTN`; von `topics-grid.tsx`s `ArchivedTopicCard` mitverwendet. */
+export const ACTION_BTN =
+  "flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-2 text-[var(--ink-3)] transition-colors hover:bg-[var(--raised)]";
 
 /**
- * Topic card component with progress bar and action buttons.
+ * Eine Themenzeile mit Bearbeiten-, Archivieren- und Löschen-Aktionen.
+ *
+ * @param props - siehe TopicCardProps
+ * @returns Eine `Row` ohne Fläche und ohne Rahmen
  */
 export function TopicCard({
   id,
   title,
-  description,
   color,
-  icon,
-  priority,
-  sequential,
   taskCount,
   completedCount,
   onEdit,
@@ -72,213 +78,43 @@ export function TopicCard({
 }: TopicCardProps) {
   const t = useTranslations("topics");
 
-  const PRIORITY_LABELS: Record<"HIGH" | "NORMAL" | "SOMEDAY", string> = {
-    HIGH: t("priority_high"),
-    NORMAL: t("priority_normal"),
-    SOMEDAY: t("priority_someday"),
-  };
-
-  const progressPercent =
-    taskCount > 0 ? Math.round((completedCount / taskCount) * 100) : 0;
-  const isAllDone = taskCount > 0 && completedCount === taskCount;
-  const priorityStyle = PRIORITY_STYLES[priority];
-  const priorityLabel = PRIORITY_LABELS[priority];
-  const accentColor = color ?? "var(--accent-amber)";
-
   return (
-    <div
-      className="group card-hover rounded-2xl p-5 flex flex-col gap-4"
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        border: `1px solid ${isAllDone ? "color-mix(in srgb, var(--accent-green) 40%, var(--border))" : "var(--border)"}`,
-        boxShadow: "var(--shadow-sm)",
-      }}
-    >
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        {/* Icon/Color circle */}
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-          style={{
-            backgroundColor: color ? `${color}22` : "var(--bg-elevated)",
-            border: `2px solid ${accentColor}44`,
-          }}
-          aria-hidden="true"
-        >
-          <FontAwesomeIcon
-            icon={resolveTopicIcon(icon)}
-            style={{ width: "1.1rem", height: "1.1rem", color: accentColor }}
-          />
-        </div>
-
-        {/* Title + description */}
-        <div className="flex-1 min-w-0">
-          <h3
-            className="text-base font-semibold"
-            style={{
-              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-              color: "var(--text-primary)",
-              overflowWrap: "break-word",
-              wordBreak: "break-word",
-            }}
+    <Row
+      testId="topic-row"
+      wrapTitle
+      title={<Link href={`/topics/${id}`}>{title}</Link>}
+      trailing={`${completedCount}/${taskCount}`}
+      dotColor={color ?? null}
+      actions={
+        <span className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onEdit(id)}
+            className={ACTION_BTN}
+            aria-label={t("aria_edit")}
+            title={t("aria_edit")}
           >
-            {title}
-          </h3>
-          {description && (
-            <p
-              className="text-sm mt-0.5 line-clamp-2"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-              }}
-            >
-              {description}
-            </p>
-          )}
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex gap-1 flex-shrink-0">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => onEdit(id)}
-                className="p-1.5 rounded-lg transition-colors"
-                style={{ color: "var(--text-muted)" }}
-                aria-label={t("aria_edit")}
-              >
-                <FontAwesomeIcon icon={faPen} style={{ fontSize: 11 }} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>{t("aria_edit")}</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => onArchive(id)}
-                className="p-1.5 rounded-lg transition-colors"
-                style={{ color: "var(--text-muted)" }}
-                aria-label={t("aria_archive")}
-              >
-                <FontAwesomeIcon icon={faBoxArchive} style={{ fontSize: 13 }} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>{t("aria_archive")}</TooltipContent>
-          </Tooltip>
+            <FontAwesomeIcon icon={faPen} className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onArchive(id)}
+            className={ACTION_BTN}
+            aria-label={t("aria_archive")}
+            title={t("aria_archive")}
+          >
+            <FontAwesomeIcon icon={faBoxArchive} className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
           <ConfirmButton
             onConfirm={() => onDelete(id)}
             confirmPrompt={t("confirm_delete")}
-            className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "var(--accent-red)" }}
+            className={ACTION_BTN}
             aria-label={t("aria_delete")}
           >
-            <FontAwesomeIcon icon={faXmark} style={{ fontSize: 12 }} />
+            <FontAwesomeIcon icon={faXmark} className="h-3.5 w-3.5" aria-hidden="true" />
           </ConfirmButton>
-        </div>
-      </div>
-
-      {/* All-done archive banner */}
-      {isAllDone && (
-        <button
-          onClick={() => onArchive(id)}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-opacity hover:opacity-80 w-full text-left"
-          style={{
-            backgroundColor: "color-mix(in srgb, var(--accent-green) 12%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--accent-green) 30%, transparent)",
-            color: "var(--accent-green)",
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          }}
-        >
-          <FontAwesomeIcon icon={faBoxArchive} style={{ fontSize: 11 }} />
-          {t("all_done_archive_hint")}
-        </button>
-      )}
-
-      {/* Progress bar */}
-      <div>
-        <div className="flex justify-between items-center mb-1.5">
-          <span
-            className="text-xs"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {t("task_progress", { completed: completedCount, total: taskCount })}
-          </span>
-          <span
-            className="text-xs font-medium"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: progressPercent === 100 ? "var(--accent-green)" : "var(--text-muted)",
-            }}
-          >
-            {progressPercent}%
-          </span>
-        </div>
-        <div
-          className="h-1.5 rounded-full overflow-hidden"
-          style={{ backgroundColor: "var(--bg-elevated)" }}
-        >
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${progressPercent}%`,
-              backgroundColor:
-                progressPercent === 100
-                  ? "var(--accent-green)"
-                  : accentColor,
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between gap-2">
-        {/* Priority + sequential badges */}
-        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-          <span
-            className="text-xs px-2 py-0.5 rounded-full font-medium"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              ...priorityStyle,
-            }}
-          >
-            {priorityLabel}
-          </span>
-          {sequential && (
-            <span
-              className="text-xs px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: accentColor,
-                backgroundColor: `color-mix(in srgb, ${accentColor} 12%, transparent)`,
-                border: `1px solid color-mix(in srgb, ${accentColor} 25%, transparent)`,
-              }}
-              title={t("form_sequential_hint")}
-            >
-              <FontAwesomeIcon
-                icon={faListOl}
-                style={{ width: "0.7rem", height: "0.7rem" }}
-              />
-              {t("sequential_badge")}
-            </span>
-          )}
-        </div>
-
-        {/* View link */}
-        <Link
-          href={`/topics/${id}`}
-          className="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors no-underline"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: accentColor,
-            border: `1px solid ${accentColor}44`,
-          }}
-        >
-          {t("view")}
-        </Link>
-      </div>
-    </div>
+        </span>
+      }
+    />
   );
 }

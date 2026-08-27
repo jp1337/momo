@@ -290,6 +290,7 @@
     "page_title": "Onderwerpen",
     "page_subtitle_empty": "Nog geen onderwerpen — groepeer je taken in projecten.",
     "page_subtitle": "{count, plural, one {# onderwerp} other {# onderwerpen}}",
+    "rail_open_tasks": "{count} open taken",
     "empty_hint": "Groepeer je taken in onderwerpen zoals «Belastingaangifte», «Verhuizing» of «Gezondheid».",
     "create_first": "Eerste onderwerp aanmaken",
     "new_topic": "+ Nieuw onderwerp",

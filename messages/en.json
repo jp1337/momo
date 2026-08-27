@@ -290,6 +290,7 @@
     "page_title": "Topics",
     "page_subtitle_empty": "No topics yet — group your tasks into projects.",
     "page_subtitle": "{count, plural, one {# topic} other {# topics}}",
+    "rail_open_tasks": "{count} tasks open",
     "empty_hint": "Group your tasks into topics like \"Tax Return\", \"Moving\", or \"Health\".",
     "create_first": "Create first topic",
     "new_topic": "+ New Topic",

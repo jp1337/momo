@@ -74,6 +74,22 @@ test.describe("Topics Page", () => {
     await expect(page).not.toHaveURL(/login/);
     await expect(page.locator("body")).not.toContainText(/500/i);
   });
+
+  test("ein langer Themenname bricht nicht mitten im Wort", async ({ page, request }) => {
+    const topic = await createTopic(request, "Steuererklärung 2025");
+    await page.goto("/topics");
+    const title = page.getByTestId("topic-row").filter({ hasText: "Steuererkl" }).first();
+    const style = await title.evaluate((n) => {
+      const c = getComputedStyle(n.querySelector("[data-row-title]") ?? n);
+      return { wordBreak: c.wordBreak, overflowWrap: c.overflowWrap };
+    });
+    // word-break: break-word (der veraltete Alias) bricht innerhalb von
+    // Wörtern, die auf die nächste Zeile gepasst hätten. overflow-wrap
+    // break-word bricht nur, wenn ein Wort allein nicht in die Zeile passt.
+    expect(style.wordBreak).not.toBe("break-word");
+    expect(style.overflowWrap).toBe("break-word");
+    await deleteTopic(request, topic.id);
+  });
 });
 
 // ─── Topic Detail View ────────────────────────────────────────────────────────

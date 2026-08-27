@@ -83,12 +83,6 @@
     "inline": 7,
     "spacing": 1
   },
-  "app/(app)/topics/page.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 2,
-    "spacing": 0
-  },
   "app/(app)/wishlist/loading.tsx": {
     "color": 0,
     "radius": 5,
@@ -587,12 +581,6 @@
     "inline": 15,
     "spacing": 2
   },
-  "components/topics/topic-card.tsx": {
-    "color": 0,
-    "radius": 7,
-    "inline": 21,
-    "spacing": 10
-  },
   "components/topics/topic-detail-actions.tsx": {
     "color": 1,
     "radius": 2,
@@ -613,9 +601,9 @@
   },
   "components/topics/topics-grid.tsx": {
     "color": 1,
-    "radius": 7,
-    "inline": 19,
-    "spacing": 8
+    "radius": 0,
+    "inline": 0,
+    "spacing": 0
   },
   "components/ui/badge.tsx": {
     "color": 0,

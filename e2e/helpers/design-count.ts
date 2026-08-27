@@ -27,7 +27,7 @@ export interface Hit {
 }
 
 /** Seiten, die auf das Token-System migriert sind. Jede Phase verlängert die Liste. */
-export const MIGRATED_PAGES: string[] = ["/dashboard", "/tasks", "/focus"];
+export const MIGRATED_PAGES: string[] = ["/dashboard", "/tasks", "/focus", "/topics"];
 
 /**
  * Zählt Amber über das GESAMTE Dokument — Navbar, Sidebar, Dialoge

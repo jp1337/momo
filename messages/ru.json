@@ -290,6 +290,7 @@
     "page_title": "Темы",
     "page_subtitle_empty": "Тем ещё нет — сгруппируйте задачи в проекты.",
     "page_subtitle": "{count, plural, one {# тема} few {# темы} other {# тем}}",
+    "rail_open_tasks": "{count} задач в работе",
     "empty_hint": "Группируйте задачи в темы вроде «Налоговая декларация», «Переезд» или «Здоровье».",
     "create_first": "Создать первую тему",
     "new_topic": "+ Новая тема",
