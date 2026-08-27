@@ -279,7 +279,12 @@
     "undo": "Deshacer",
     "deleted_undo": "Tarea eliminada.",
     "view_by_topic": "Por tema",
-    "view_by_date": "Por fecha"
+    "view_by_date": "Por fecha",
+    "rail_open": "{count} abiertas",
+    "rail_overdue": "{count} vencidas",
+    "rail_coins": "{coins} monedas disponibles",
+    "empty_generic": "Nada por aquí. Con una basta.",
+    "empty_cta": "Crear tarea"
   },
   "topics": {
     "page_title": "Temas",

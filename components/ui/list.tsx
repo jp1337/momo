@@ -93,14 +93,32 @@ export function List({
  * Dekoration: "HOCH · 2" kodiert etwas Wahres über den Inhalt, ein
  * amberfarbenes Abzeichen an jeder Zeile behauptet nur Wichtigkeit.
  *
+ * Rendert als `<h2>`, nicht `<p>` (Task 8, /tasks-Migration): eine
+ * Gruppenüberschrift IST eine Überschrift, und `e2e/tasks.spec.ts`
+ * ("tasks are grouped by priority/due date sections") verlangt bereits ein
+ * `h2`/`h3` auf der Seite. `GroupHeading` hatte vor Task 8 noch keinen
+ * echten Aufrufer außer der Referenzseite `/design-system` — die
+ * Tag-Änderung ändert dort nichts Sichtbares (die Klassen setzen Marge und
+ * Typografie bereits explizit) und macht die Komponente nebenbei
+ * semantisch korrekter.
+ *
+ * `!` auf Schriftart UND Farbe: `globals.css` setzt für `h1` bis `h6` eine
+ * Fraunces-Schriftfamilie und `color: var(--text-primary)`, ungelayert —
+ * ein ungelayerter Selektor schlägt jede `@layer utilities`-Klasse
+ * unabhängig von Spezifität (dieselbe Falle wie in `button.tsx`
+ * dokumentiert). Ohne `!` würde jede `GroupHeading` als `h2` in Fraunces
+ * UND in voller `--ink`-Stärke rendern statt als leiser Mono-Eyebrow —
+ * genau das hat `design-rules.spec.ts` ("trägt Fraunces genau einmal") auf
+ * `/tasks` aufgedeckt.
+ *
  * @param props.children - der Überschriftentext, z. B. "Hoch · 3"
- * @returns Ein `<p>` als Mono-Eyebrow
+ * @returns Ein `<h2>` als Mono-Eyebrow
  */
 export function GroupHeading({ children }: { children: React.ReactNode }) {
   return (
-    <p className="m-0 mt-8 mb-3 font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)] first:mt-0">
+    <h2 className="m-0 mt-8 mb-3 font-[family-name:var(--font-mono)]! text-[0.6875rem] font-normal uppercase tracking-[0.16em] text-[var(--ink-3)]! first:mt-0">
       {children}
-    </p>
+    </h2>
   );
 }
 

@@ -50,7 +50,17 @@ export function PageFrame({ children, rail, className }: PageFrameProps) {
       {rail ? (
         <aside
           data-rail
-          className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-6 rail:w-[var(--rail)] rail:shrink-0 rail:flex-col rail:gap-4"
+          // `!` auf flex-col/gap-4 (Task 8 fix): Tailwinds custom
+          // `--breakpoint-rail` (globals.css) wird nicht numerisch, sondern
+          // hinter den eingebauten Breakpoints einsortiert — `sm:flex-row`
+          // gewinnt dadurch bei jeder Breite ≥ 1100px gegen `rail:flex-col`,
+          // trotz gleicher Spezifität und trotz "sm" (640px) < "rail"
+          // (1100px). Sichtbare Folge: der Rand blieb eine zeilenweise
+          // gewrappte Reihe statt einer engen Spalte, jedes `<p>` auf die
+          // volle Randhöhe gestreckt (`align-items: stretch` im
+          // `flex-row`-Kontext). Betraf `/dashboard` genauso — nur nie
+          // aufgefallen, weil dort niemand genau hingesehen hat.
+          className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-6 rail:w-[var(--rail)] rail:shrink-0 rail:flex-col! rail:gap-4!"
         >
           {rail}
         </aside>

@@ -279,7 +279,12 @@
     "undo": "Ongedaan maken",
     "deleted_undo": "Taak verwijderd.",
     "view_by_topic": "Op onderwerp",
-    "view_by_date": "Op datum"
+    "view_by_date": "Op datum",
+    "rail_open": "{count} open",
+    "rail_overdue": "{count} te laat",
+    "rail_coins": "{coins} munten te halen",
+    "empty_generic": "Niets hier. Eén is genoeg.",
+    "empty_cta": "Taak toevoegen"
   },
   "topics": {
     "page_title": "Onderwerpen",

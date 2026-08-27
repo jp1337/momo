@@ -279,7 +279,12 @@
     "undo": "Rückgängig",
     "deleted_undo": "Aufgabe gelöscht.",
     "view_by_topic": "Nach Thema",
-    "view_by_date": "Nach Datum"
+    "view_by_date": "Nach Datum",
+    "rail_open": "{count} offen",
+    "rail_overdue": "{count} überfällig",
+    "rail_coins": "{coins} Münzen möglich",
+    "empty_generic": "Keine Aufgabe hier. Eine reicht.",
+    "empty_cta": "Aufgabe anlegen"
   },
   "topics": {
     "page_title": "Themen",

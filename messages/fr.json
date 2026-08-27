@@ -279,7 +279,12 @@
     "undo": "Annuler",
     "deleted_undo": "Tâche supprimée.",
     "view_by_topic": "Par sujet",
-    "view_by_date": "Par date"
+    "view_by_date": "Par date",
+    "rail_open": "{count} en cours",
+    "rail_overdue": "{count} en retard",
+    "rail_coins": "{coins} pièces à gagner",
+    "empty_generic": "Rien ici. Une seule suffit.",
+    "empty_cta": "Créer une tâche"
   },
   "topics": {
     "page_title": "Sujets",

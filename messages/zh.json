@@ -279,7 +279,12 @@
     "undo": "撤销",
     "deleted_undo": "任务已删除。",
     "view_by_topic": "按主题",
-    "view_by_date": "按日期"
+    "view_by_date": "按日期",
+    "rail_open": "{count} 项待办",
+    "rail_overdue": "{count} 项已逾期",
+    "rail_coins": "可获得 {coins} 枚硬币",
+    "empty_generic": "这里什么都没有。一个就够了。",
+    "empty_cta": "新建任务"
   },
   "topics": {
     "page_title": "主题",

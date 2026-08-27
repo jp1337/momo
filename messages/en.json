@@ -279,7 +279,12 @@
     "undo": "Undo",
     "deleted_undo": "Task deleted.",
     "view_by_topic": "By Topic",
-    "view_by_date": "By Date"
+    "view_by_date": "By Date",
+    "rail_open": "{count} open",
+    "rail_overdue": "{count} overdue",
+    "rail_coins": "{coins} coins available",
+    "empty_generic": "Nothing here. One is enough.",
+    "empty_cta": "Add a task"
   },
   "topics": {
     "page_title": "Topics",

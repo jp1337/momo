@@ -1,15 +1,12 @@
 /**
- * Tasks list page — Phase 2.
+ * Tasks list page — Lichtkegel-Layout (Task 8).
  *
  * Server component that fetches tasks and topics for the current user,
- * then passes them to the interactive TaskList client component.
- *
- * Groups tasks into:
- *  - Today & Overdue: tasks due today or in the past
- *  - Upcoming: tasks with future due dates
- *  - No due date: active tasks without a due date
- *  - Someday: SOMEDAY priority tasks with no due date
- *  - Completed: finished tasks
+ * then passes them to the interactive TaskList client component, which
+ * groups active tasks by priority (`groupByPriority`) instead of by due
+ * date, and renders the page's rail (open/overdue/coins counters, filters)
+ * itself — that state (`filteredTasks`, `priorityFilter`, `topicFilter`)
+ * lives in `TaskList`, so the rail is built there too.
  */
 
 import type { Metadata } from "next";
@@ -18,7 +15,6 @@ import { redirect } from "next/navigation";
 import { getUserTasks } from "@/lib/tasks";
 import { getUserTopics } from "@/lib/topics";
 import { TaskList } from "@/components/tasks/task-list";
-import { DueTodayBanner } from "@/components/tasks/due-today-banner";
 import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
@@ -41,16 +37,6 @@ export default async function TasksPage() {
     getUserTasks(session.user.id),
     getUserTopics(session.user.id),
   ]);
-
-  // Count tasks that are due today or overdue (for the greeting banner)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dueTodayCount = tasks.filter((t) => {
-    if (t.completedAt !== null) return false;
-    const effectiveDate = t.type === "RECURRING" ? t.nextDueDate : t.dueDate;
-    if (!effectiveDate) return false;
-    return new Date(effectiveDate + "T00:00:00") <= today;
-  }).length;
 
   // Serialize to plain objects for client component
   const serializedTasks = tasks.map((t) => ({
@@ -82,28 +68,10 @@ export default async function TasksPage() {
   }));
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Page header */}
-      <div className="mb-8">
-        <h1
-          className="text-3xl font-semibold mb-2"
-          style={{
-            fontFamily: "var(--font-display, 'Lora', serif)",
-            color: "var(--text-primary)",
-          }}
-        >
-          {t("page_title")}
-        </h1>
-      </div>
-
-      {/* Due today / overdue greeting banner */}
-      <DueTodayBanner dueTodayCount={dueTodayCount} />
-
-      {/* Interactive task list */}
-      <TaskList
-        initialTasks={serializedTasks}
-        topics={serializedTopics}
-      />
-    </div>
+    <TaskList
+      initialTasks={serializedTasks}
+      topics={serializedTopics}
+      pageTitle={t("page_title")}
+    />
   );
 }

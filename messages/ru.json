@@ -279,7 +279,12 @@
     "undo": "Отменить",
     "deleted_undo": "Задача удалена.",
     "view_by_topic": "По темам",
-    "view_by_date": "По дате"
+    "view_by_date": "По дате",
+    "rail_open": "открыто: {count}",
+    "rail_overdue": "просрочено: {count}",
+    "rail_coins": "можно получить: {coins}",
+    "empty_generic": "Здесь ничего нет. Хватит и одной.",
+    "empty_cta": "Создать задачу"
   },
   "topics": {
     "page_title": "Темы",
