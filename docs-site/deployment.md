@@ -81,18 +81,25 @@ app:
 | Feld | Bedeutung |
 |---|---|
 | `status` | `ok`, oder `error` bei nicht erreichbarer Datenbank (HTTP 503) |
-| `version` | Version des laufenden Images. Der schnellste Weg, einen stehengebliebenen Rollout zu erkennen: `curl -s https://<host>/api/health \| jq -r .version` |
+| `version` | Version des laufenden Images (aus `package.json`) |
+| `commit` | Git-Commit-SHA, aus dem das laufende Image gebaut wurde (Build-Arg `MOMO_COMMIT`, siehe Dockerfile); `null` außerhalb eines gebauten Images (lokale Entwicklung) |
 | `timestamp` | Zeitpunkt der Antwort |
 | `cron` | Letzter Cron-Lauf; rein informativ, nie Grund für einen Fehlerstatus |
+
+`version` und `commit` stehen auch in der 503-Fehlerantwort — beide brauchen keine
+Datenbank.
 
 Die Publish-Pipeline (`.github/workflows/build-and-publish.yml`, Job `deploy`) fragt
 dieses Feld nach jedem Push auf `main` ab, um zu bestätigen, dass Watchtower den
 Container tatsächlich getauscht hat — Watchtowers HTTP 200 sagt nur, dass die
-Anfrage angenommen wurde, nicht dass der neue Container läuft. Der Schritt liest
-die zu prüfende URL aus der Repository-Variable `ROLLOUT_HEALTH_URL` (Fallback:
-`NEXT_PUBLIC_APP_URL`, dann `https://momotask.app`). Läuft der Runner in einem
-Intranet ohne Zugriff auf die öffentliche URL, setze `ROLLOUT_HEALTH_URL` auf
-eine intern erreichbare Adresse derselben Instanz.
+Anfrage angenommen wurde, nicht dass der neue Container läuft. Verglichen wird
+`commit` gegen `github.sha`, nicht `version`: kein Workflow bumpt die Version
+automatisch, ein Versionsvergleich wäre bei einem gewöhnlichen Push auf main sofort
+grün — unabhängig vom tatsächlichen Rollout. Der Schritt liest die zu prüfende URL
+aus der Repository-Variable `ROLLOUT_HEALTH_URL` (Fallback: `NEXT_PUBLIC_APP_URL`,
+dann `https://momotask.app`). Läuft der Runner in einem Intranet ohne Zugriff auf
+die öffentliche URL, setze `ROLLOUT_HEALTH_URL` auf eine intern erreichbare Adresse
+derselben Instanz.
 
 ---
 

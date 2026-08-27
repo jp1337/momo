@@ -33,16 +33,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **„Momo ist aktuell" konnte über eine veraltete Instanz stehen.** Der Update-Checker
-  hatte zwei Cache-Schichten übereinander (Modul-Cache 24 h über Next-Data-Cache 24 h).
-  Da die Prüfung nur beim Öffnen der Admin-Seite läuft, lieferte der Data-Cache nach
-  Ablauf per Stale-while-revalidate die vorherige Antwort — die dann mit frischem
-  Zeitstempel für weitere 24 h festgehalten wurde. Die Anzeige war damit dauerhaft einen
-  Besuch hinterher. Zusätzlich zeigte die Admin-Seite „du verwendest die neueste Version"
-  auch dann, wenn die neueste Version unbekannt war. Beides behoben: eine Cache-Schicht,
-  fünf unterscheidbare Zustände, und `GET /api/health` gibt die laufende Version aus, damit
-  ein stehengebliebener Rollout ohne Login sichtbar ist. Die Publish-Pipeline prüft den
-  Rollout jetzt gegen diesen Endpunkt, statt Watchtowers HTTP 200 als Erfolg zu lesen.
+- **„Momo ist aktuell" konnte über eine veraltete Instanz stehen.** Ursache war der
+  Update-Checker: zwei Cache-Schichten übereinander (Modul-Cache 24 h über
+  Next-Data-Cache 24 h). Da die Prüfung nur beim Öffnen der Admin-Seite läuft, lieferte
+  der Data-Cache nach Ablauf per Stale-while-revalidate die vorherige — nicht-null —
+  Antwort, die dann mit frischem Zeitstempel für weitere 24 h festgehalten wurde. Diese
+  veraltete, aber gültige `latestVersion` landete im „aktuell"-Zweig — das war der live
+  aufgetretene Defekt. Daneben lag ein zweiter, latenter Pfad: die Admin-Seite prüfte
+  `!disabled && !error && !updateAvailable` und hätte auch eine unbekannte neueste
+  Version (`latestVersion === null`) als „aktuell" ausgegeben. Dieser Fall trat live nie
+  ein — kein Erzeuger liefert `latestVersion: null` ohne zugleich `disabled` oder `error`
+  zu setzen —, aber die Prüfung deckte ihn nicht ab. Beide Pfade behoben: eine
+  Cache-Schicht statt zwei, und die Admin-Seite unterscheidet jetzt fünf Zustände, von
+  denen vier (`disabled`/`failed`/`current`/`outdated`) heute tatsächlich erreichbar
+  sind — der fünfte (`unknown`) ist Verteidigung in der Tiefe für einen künftigen
+  Erzeuger. `GET /api/health` gibt zusätzlich die laufende Version und den Build-Commit
+  aus, damit ein stehengebliebener Rollout ohne Login sichtbar ist. Die Publish-Pipeline
+  vergleicht den Rollout jetzt gegen `commit`, nicht gegen `version` — kein Workflow
+  bumpt die Version automatisch, ein Versionsvergleich wäre bei einem gewöhnlichen Push
+  auf main sofort grün gewesen, unabhängig davon, ob Watchtower den Container
+  tatsächlich getauscht hat.
 - **Das Navbar-Schlupfloch der Amber-Regel.** Bisher zählte die Amber-Regel nur über `<main>` —
   Federlogo, Münzzähler und Level-Badge lagen außerhalb und trugen Amber auf jeder einzigen Seite,
   gleichzeitig mit der einen erlaubten Handlung im Inhalt. Die Feder ist jetzt ein Inline-SVG

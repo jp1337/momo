@@ -39,12 +39,13 @@ function req(method: string, url: string, body?: unknown, extraHeaders?: Record<
 // ─── GET /api/health ──────────────────────────────────────────────────────────
 
 describe("GET /api/health", () => {
-  it("returns 200 with { status: ok, version, timestamp, cron } — no auth required", async () => {
+  it("returns 200 with { status: ok, version, commit, timestamp, cron } — no auth required", async () => {
     const res = await GETHealth();
     expect(res.status).toBe(200);
     const body = await res.json() as {
       status: string;
       version: string;
+      commit: string | null;
       timestamp: string;
       cron: { lastRunAt: string | null; minutesSinceLastRun: number | null };
     };
@@ -57,6 +58,11 @@ describe("GET /api/health", () => {
     expect(typeof body.version).toBe("string");
     expect(body.version.length).toBeGreaterThan(0);
     expect(body.version).toBe(pkg.version);
+    // commit comes from MOMO_COMMIT (baked into the image at build time via
+    // Dockerfile's runner-stage ARG). Unset outside a built image — this
+    // test runs unbuilt, so `null` here is the correct, honest value, not
+    // an unfilled field.
+    expect(body.commit === null || typeof body.commit === "string").toBe(true);
     expect(typeof body.timestamp).toBe("string");
     expect("cron" in body).toBe(true);
     expect("lastRunAt" in body.cron).toBe(true);

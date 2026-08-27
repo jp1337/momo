@@ -235,3 +235,57 @@ describe("checkForUpdates: eine Cache-Schicht, kein zweiter Boden", () => {
     expect(second.checkedAt?.getTime()).toBe(first.checkedAt?.getTime());
   });
 });
+
+// ─── Cache-TTL — der Modul-Cache ist jetzt die einzige Schicht, also muss
+// seine Frist selbst getestet sein ────────────────────────────────────────
+
+describe("checkForUpdates: Cache-TTL-Grenzen", () => {
+  let fetchSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.resetModules();
+    fetchSpy = vi.spyOn(global, "fetch");
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    fetchSpy.mockRestore();
+  });
+
+  it("fragt nach 24 h erneut ab, statt den Cache weiter zu bedienen", async () => {
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    fetchSpy.mockResolvedValue(ghResponse("v9.9.9"));
+    const { checkForUpdates } = await import("@/lib/update-checker");
+
+    await checkForUpdates();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // Genau an der 24h-Grenze: cache.cachedAt liegt jetzt exakt CACHE_TTL_MS
+    // zurück, `< CACHE_TTL_MS` ist falsch, der Cache gilt als abgelaufen.
+    vi.setSystemTime(new Date("2026-01-02T00:00:01.000Z"));
+    await checkForUpdates();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("wiederholt nach einem Fehler innerhalb von ~5 Minuten, nicht erst nach 24 h", async () => {
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    fetchSpy.mockRejectedValueOnce(new Error("Network timeout"));
+    const { checkForUpdates } = await import("@/lib/update-checker");
+
+    const first = await checkForUpdates();
+    expect(first.error).toBeDefined();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // lib/update-checker.ts:177 backdatiert cachedAt beim Fehlerfall um
+    // (CACHE_TTL_MS - 5 min), sodass nur noch ~5 Minuten der 24h-Frist
+    // übrig bleiben. 6 Minuten später muss der erneute Versuch schon
+    // laufen — bei der vollen 24h-Frist würde er das nicht.
+    fetchSpy.mockResolvedValueOnce(ghResponse("v9.9.9"));
+    vi.setSystemTime(new Date("2026-01-01T00:06:00.000Z"));
+    const second = await checkForUpdates();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(second.error).toBeUndefined();
+    expect(second.latestVersion).toBe("9.9.9");
+  });
+});

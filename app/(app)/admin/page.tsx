@@ -271,11 +271,14 @@ export default async function AdminPage() {
           )}
 
           {/* Neueste Version unbekannt — nicht als "aktuell" ausgeben.
-              Das war der Defekt: latestVersion === null landete im
-              Up-to-date-Zweig und beruhigte über einen Zustand, den
-              niemand geprüft hatte. */}
+              Verteidigung in der Tiefe, kein aktiver Pfad: kein heutiger
+              Erzeuger von UpdateCheckResult liefert latestVersion: null
+              ohne zugleich disabled oder error zu setzen (siehe
+              lib/update-checker.ts) — der "failed"-Zweig oben fängt den
+              tatsächlichen Fehlerfall ab. Dieser Zweig sichert einen
+              künftigen Erzeuger ab, der das nicht mehr täte. */}
           {status === "unknown" && (
-            <div className="flex items-center gap-2 rounded-[var(--radius-md)] px-4 py-3">
+            <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3">
               <FontAwesomeIcon
                 icon={faCircleInfo}
                 className="h-4 w-4 shrink-0 text-[var(--ink-3)]"
@@ -290,45 +293,45 @@ export default async function AdminPage() {
 
           {/* Up to date */}
           {status === "current" && (
-              <div
-                className="flex items-center gap-2 rounded-lg px-4 py-3"
+            <div
+              className="flex items-center gap-2 rounded-lg px-4 py-3"
+              style={{
+                backgroundColor: "rgba(74,222,128,0.08)",
+                border: "1px solid rgba(74,222,128,0.25)",
+              }}
+            >
+              <FontAwesomeIcon
+                icon={faCircleCheck}
+                className="w-4 h-4 flex-shrink-0"
+                style={{ color: "var(--accent-green)" }}
+                aria-hidden="true"
+              />
+              <span
+                className="text-sm"
                 style={{
-                  backgroundColor: "rgba(74,222,128,0.08)",
-                  border: "1px solid rgba(74,222,128,0.25)",
+                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
+                  color: "var(--accent-green)",
                 }}
               >
-                <FontAwesomeIcon
-                  icon={faCircleCheck}
-                  className="w-4 h-4 flex-shrink-0"
-                  style={{ color: "var(--accent-green)" }}
-                  aria-hidden="true"
-                />
+                Momo ist aktuell — v{updateCheck.latestVersion} ist die neueste Version.
+              </span>
+              {updateCheck.checkedAt && (
                 <span
-                  className="text-sm"
+                  className="text-xs ml-auto"
                   style={{
                     fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    color: "var(--accent-green)",
+                    color: "var(--text-muted)",
                   }}
                 >
-                  Momo ist aktuell — v{updateCheck.latestVersion} ist die neueste Version.
+                  Geprüft:{" "}
+                  {updateCheck.checkedAt.toLocaleTimeString("de-DE", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </span>
-                {updateCheck.checkedAt && (
-                  <span
-                    className="text-xs ml-auto"
-                    style={{
-                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    Geprüft:{" "}
-                    {updateCheck.checkedAt.toLocaleTimeString("de-DE", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                )}
-              </div>
-            )}
+              )}
+            </div>
+          )}
 
           {/* Update available */}
           {status === "outdated" && (

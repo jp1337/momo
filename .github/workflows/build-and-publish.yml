@@ -165,6 +165,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL || 'https://momotask.app' }}
+            MOMO_COMMIT=${{ github.sha }}
           outputs: type=image,name=ghcr.io/jp1337/momo,push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ steps.platform.outputs.suffix }}
           cache-to: type=gha,mode=max,scope=${{ steps.platform.outputs.suffix }}
@@ -325,6 +326,16 @@ jobs:
       # lief. Ohne diesen Schritt ist "deploy: success" eine Aussage ueber
       # einen HTTP-Status, nicht ueber den Rollout.
       #
+      # Verglichen wird der COMMIT, nicht die package.json-Version: kein
+      # Workflow bumpt die Version automatisch (0.5.0 -> 0.6.0 war ein
+      # manueller Schritt, drei Monate auseinander), also ist die erwartete
+      # Version bei einem gewoehnlichen Push auf main fast immer bereits die
+      # laufende — der Vergleich waere beim ersten Versuch gruen, egal ob
+      # Watchtower den Container getauscht hat. github.sha aendert sich bei
+      # jedem Commit und wird als MOMO_COMMIT ins Image gebacken (siehe
+      # Dockerfile, runner-Stufe) und vom laufenden Prozess ueber
+      # /api/health.commit ausgegeben.
+      #
       # Dieser Job laeuft auf dem self-hosted Intranet-Runner (siehe oben) —
       # ob der die oeffentliche URL erreicht, ist nicht garantiert. Deshalb
       # zuerst ROLLOUT_HEALTH_URL (Repository-Variable), dann
@@ -342,17 +353,22 @@ jobs:
           EXPECTED: ${{ github.sha }}
         run: |
           set -euo pipefail
-          want="$(curl -sf "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/package.json" | jq -r .version)"
-          echo "erwartete Version: $want"
+          # ${APP_URL%/} strips a trailing slash — otherwise a
+          # ROLLOUT_HEALTH_URL set with one produces "…//api/health".
+          url="${APP_URL%/}"
           for attempt in $(seq 1 30); do
-            got="$(curl -sf "$APP_URL/api/health" | jq -r .version || echo '?')"
-            if [ "$got" = "$want" ]; then
+            # The `|| echo '?'` neutralises `set -e` for this one command:
+            # a transient curl failure must retry, not abort the job.
+            got="$(curl -sf "$url/api/health" | sed -n 's/.*"commit":"\([^"]*\)".*/\1/p' || echo '?')"
+            if [ "$got" = "$EXPECTED" ]; then
               echo "Rollout bestaetigt nach ${attempt} Versuch(en): $got"
               exit 0
             fi
-            echo "Versuch $attempt: laeuft $got, erwartet $want"
-            sleep 20
+            echo "Versuch $attempt: laeuft Commit $got, erwartet $EXPECTED"
+            if [ "$attempt" -lt 30 ]; then
+              sleep 20
+            fi
           done
-          echo "Rollout nicht bestaetigt: /api/health meldet weiter eine andere Version."
+          echo "Rollout nicht bestaetigt: /api/health meldet weiter einen anderen Commit."
           echo "Watchtower hat die Anfrage angenommen, den Container aber nicht getauscht."
           exit 1
