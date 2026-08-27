@@ -519,7 +519,7 @@
     "color": 0,
     "radius": 0,
     "inline": 1,
-    "spacing": 9
+    "spacing": 0
   },
   "components/stats/energy-week-block.tsx": {
     "color": 1,

@@ -18,7 +18,11 @@ const SWIPE_MAX = 110;
  * @param onComplete - wird bei einem Wisch nach rechts aufgerufen
  * @param onDelete - wird bei einem Wisch nach links aufgerufen
  * @param disabled - true, wenn die Zeile gerade bearbeitet oder erledigt ist
- * @returns Auslenkung, Wischzustand und die drei Touch-Handler
+ * @returns Auslenkung, ein auf die Schwelle normalisierter Fortschritt
+ *   (`swipeX / SWIPE_THRESHOLD`, negativ nach links), Wischzustand und die
+ *   drei Touch-Handler. `progress` statt der Schwelle selbst, damit
+ *   `SWIPE_THRESHOLD` privat bleiben kann — die Wisch-Vorschau in
+ *   `task-row.tsx` braucht den Fortschritt, nicht den Rohwert.
  */
 export function useTaskSwipe({
   onComplete,
@@ -67,5 +71,10 @@ export function useTaskSwipe({
     touchStartY.current = null;
   };
 
-  return { swipeX, isSwiping, handlers: { onTouchStart, onTouchMove, onTouchEnd } };
+  return {
+    swipeX,
+    isSwiping,
+    progress: swipeX / SWIPE_THRESHOLD,
+    handlers: { onTouchStart, onTouchMove, onTouchEnd },
+  };
 }

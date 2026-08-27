@@ -63,13 +63,16 @@ export const EFFORT_TEXT: Record<EffortStep, string> = {
  *
  * **Eine `List` pro Gruppe.** Eine `GroupHeading` gehört DANEBEN (als
  * Geschwister davor), nicht HINEIN (Task-4-Review R15): `GroupHeading`
- * rendert ein `<p>`, `List` ein `<ul>` — ein `<p>` als Kind eines `<ul>`
- * ist ungültiges DOM. Es bricht außerdem die eigene Haarlinien-Regel: die
- * erste `Row` nach einer eingebetteten Überschrift wäre nicht mehr
+ * rendert ein `<h2>`, `List` ein `<ul>` — eine Überschrift als Kind eines
+ * `<ul>` ist ungültiges DOM. Es bricht außerdem die eigene Haarlinien-Regel:
+ * die erste `Row` nach einer eingebetteten Überschrift wäre nicht mehr
  * `:first-child`, `first:border-t-0` griffe nicht mehr, und unter der
- * Überschrift erschiene eine Haarlinie. Eine Seite mit mehreren
- * Prioritätsgruppen (z. B. `/tasks`) rendert entsprechend mehrere `<ul>`s,
- * je mit einer `GroupHeading` davor.
+ * Überschrift erschiene eine Haarlinie. Derselbe Fehler entsteht mit JEDEM
+ * Wrapper-Element zwischen `<ul>` und `<li>` — auch ohne Überschrift (Task 8
+ * Review, F1: ein `<div>` pro Zeile für ein Positionierungs-Detail hat
+ * genau das auf `/tasks`' "Nach Thema"-Ansicht getan). Eine Seite mit
+ * mehreren Prioritätsgruppen (z. B. `/tasks`) rendert entsprechend mehrere
+ * `<ul>`s, je mit einer `GroupHeading` davor.
  *
  * @param props.children - `Row`-Kinder
  * @param props.className - zusätzliche Klassen

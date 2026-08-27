@@ -19,6 +19,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { AnimatePresence } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronRight, faCheckDouble, faListOl, faLock } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
@@ -172,6 +173,13 @@ interface CompleteApiResponse {
  * ein-/ausklappbar sind. Zahl steht als Text in der Überschrift ("Pausiert
  * · 2"), nicht als separate gefüllte Pille — dieselbe Kodierung wie
  * `GroupHeading`s "Hoch · 2".
+ *
+ * Trägt ein echtes `<h2>` innerhalb der klickbaren Hülle (Task 8 Review,
+ * "Also fix"): der `div[role="button"]` um einen bloßen `<span>` hatte die
+ * beiden Abschnitte aus der Überschriftengliederung der Seite entfernt.
+ * `!` auf Schriftart/Farbe aus demselben Grund wie bei `GroupHeading`
+ * (siehe dort): `globals.css`s ungelayerte `h1`–`h6`-Regel schlägt jede
+ * `@layer utilities`-Klasse unabhängig von Spezifität.
  */
 function CollapsibleSectionHeading({
   title,
@@ -190,16 +198,16 @@ function CollapsibleSectionHeading({
       tabIndex={0}
       onClick={onToggle}
       onKeyDown={(e) => e.key === "Enter" && onToggle()}
-      className="mt-8 flex cursor-pointer select-none items-center gap-2 border-0 bg-transparent p-0 font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)]"
+      className="mt-8 flex cursor-pointer select-none items-center gap-2 border-0 bg-transparent p-0 text-[var(--ink-3)]"
     >
       <FontAwesomeIcon
         icon={expanded ? faChevronDown : faChevronRight}
         className="h-2.5 w-2.5"
         aria-hidden="true"
       />
-      <span>
+      <h2 className="m-0 font-[family-name:var(--font-mono)]! text-[0.6875rem] font-normal uppercase tracking-[0.16em] text-[var(--ink-3)]!">
         {title} · {count}
-      </span>
+      </h2>
     </div>
   );
 }
@@ -831,10 +839,18 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
                 {t(`priority_${group.key.toLowerCase()}` as "priority_high" | "priority_normal" | "priority_someday")} ·{" "}
                 {group.items.length}
               </GroupHeading>
+              {/* AnimatePresence: eine Zeile verschwindet hier, sobald ihre
+                  Aufgabe abgehakt oder gelöscht wird — die einzige Ansicht,
+                  in der das während der Sitzung wirklich passiert (Snoozed/
+                  Completed sind Archive, "Nach Thema" hat die Sequenz-
+                  Blockade). Ersetzt die Austritts-Animation, die die
+                  frühere "Heute"-Sektion hatte (Task 8 Review, "Also fix"). */}
               <List>
-                {group.items.map((task) => (
-                  <TaskRow key={task.id} {...rowProps(task)} />
-                ))}
+                <AnimatePresence initial={false}>
+                  {group.items.map((task) => (
+                    <TaskRow key={task.id} {...rowProps(task)} exitAnimation />
+                  ))}
+                </AnimatePresence>
               </List>
             </section>
           ))}
@@ -896,48 +912,63 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
                     Sequential groups get a left "stepper" rail: a thin line
                     with circular index badges next to each task. Non-sequential
                     groups stay flat.
+
+                    Eine `<List>` pro Gruppe (Task 8 Review, F1): vorher stand
+                    jede Zeile in ihrer EIGENEN `<List>`, wodurch jede Zeile
+                    `:first-child` ihres eigenen `<ul>` war und `Row`s
+                    `first:border-t-0` überall griff — keine Haarlinie
+                    irgendwo in dieser Ansicht. Der Stufen-Kreis wandert dafür
+                    von einem Wrapper-`<div>` pro Zeile (derselbe Fehler unter
+                    anderem Namen: ein `<div>` zwischen `<ul>` und `<li>`
+                    macht die `<li>` erneut zum alleinigen `:first-child`
+                    ihres Wrappers) in `TaskRow`s eigene `stepBadge`-Prop —
+                    positioniert innerhalb der Zeile selbst, die dafür
+                    `pl-8` bekommt (siehe `task-row.tsx`).
                   */}
-                  <div className={cn("relative mb-2 flex flex-col gap-2", isSequential && "pl-8")}>
-                    {isSequential && (
+                  {isSequential ? (
+                    <div className="relative mb-2">
                       <div
                         aria-hidden="true"
-                        className="absolute bottom-4 left-[11px] top-4 w-[2px] rounded-[1px] bg-[var(--hairline)]"
+                        className="absolute bottom-4 left-4 top-4 w-[2px] rounded-[1px] bg-[var(--hairline)]"
                       />
-                    )}
-                    {group.tasks.map((task, taskIndex) => {
-                      // In a named sequential group, only the first task is actionable
-                      const isBlocked = isSequential && taskIndex > 0;
-                      const isActiveStep = isSequential && taskIndex === 0;
-                      return (
-                        <div
-                          key={task.id}
-                          className={cn("relative", isBlocked && "pointer-events-none opacity-55")}
-                        >
-                          {/* Step index badge for sequential groups */}
-                          {isSequential && (
-                            <div
-                              aria-hidden="true"
-                              className={cn(
-                                "absolute -left-8 top-3.5 z-10 flex h-6 w-6 items-center justify-center rounded-[var(--radius-pill)] border-2 font-[family-name:var(--font-mono)] text-[11px] font-bold",
-                                isActiveStep
-                                  ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--ground)]"
-                                  : "border-[var(--hairline)] bg-transparent text-[var(--ink-3)]",
-                              )}
-                            >
-                              {isBlocked ? (
-                                <FontAwesomeIcon icon={faLock} className="text-[9px]" />
-                              ) : (
-                                taskIndex + 1
-                              )}
-                            </div>
-                          )}
-                          <List>
-                            <TaskRow {...rowProps(task, { isBlocked })} />
-                          </List>
-                        </div>
-                      );
-                    })}
-                  </div>
+                      <List>
+                        {group.tasks.map((task, taskIndex) => {
+                          // In a named sequential group, only the first task is actionable
+                          const isBlocked = taskIndex > 0;
+                          const isActiveStep = taskIndex === 0;
+                          return (
+                            <TaskRow
+                              key={task.id}
+                              {...rowProps(task, { isBlocked })}
+                              stepBadge={
+                                <div
+                                  aria-hidden="true"
+                                  className={cn(
+                                    "absolute left-1 top-3.5 z-10 flex h-6 w-6 items-center justify-center rounded-[var(--radius-pill)] border-2 font-[family-name:var(--font-mono)] text-[11px] font-bold",
+                                    isActiveStep
+                                      ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--ground)]"
+                                      : "border-[var(--hairline)] bg-transparent text-[var(--ink-3)]",
+                                  )}
+                                >
+                                  {isBlocked ? (
+                                    <FontAwesomeIcon icon={faLock} className="text-[9px]" />
+                                  ) : (
+                                    taskIndex + 1
+                                  )}
+                                </div>
+                              }
+                            />
+                          );
+                        })}
+                      </List>
+                    </div>
+                  ) : (
+                    <List className="mb-2">
+                      {group.tasks.map((task) => (
+                        <TaskRow key={task.id} {...rowProps(task)} />
+                      ))}
+                    </List>
+                  )}
                 </div>
               );
             })}

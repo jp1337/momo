@@ -249,6 +249,15 @@ export async function countDisplayFont(page: Page): Promise<Hit[]> {
  *   als Inhaltsfläche wahrgenommen wird.
  * - **Overlays** (Dialog, Popover, Menü) — die schweben und grenzen sich
  *   per Definition ab.
+ *
+ * **Opazitäts-Guard** (Task 8 Review, F6): teilt sich mit {@link countAmber}
+ * und {@link countDisplayFont} den `opacity: 0`-Filter — ohne ihn zählte
+ * eine bei Ruhe unsichtbare, aber im DOM verbleibende Fläche (z. B. eine
+ * Wisch-Vorschau, die nur während einer aktiven Geste sichtbar wird) als
+ * gefüllte Box. Dieselbe Einschränkung wie dort: ein Element mitten in
+ * einer Opazitäts-Einstiegsanimation ist für einen Nutzer sichtbar, aber
+ * für diesen Snapshot nicht — der Aufrufer muss ggf. auf das Ende der
+ * Animation warten, bevor er zählt.
  */
 export async function countBoxes(page: Page): Promise<Hit[]> {
   return page.evaluate((rootSel: string) => {
@@ -277,6 +286,7 @@ export async function countBoxes(page: Page): Promise<Hit[]> {
     for (const el of Array.from(root.querySelectorAll("*"))) {
       const cs = getComputedStyle(el);
       if (cs.display === "none" || cs.visibility === "hidden") continue;
+      if (parseFloat(cs.opacity) === 0) continue;
       const box = el.getBoundingClientRect();
       if (box.width === 0 || box.height === 0) continue;
       if (box.width <= DOT_MAX_PX && box.height <= DOT_MAX_PX) continue;

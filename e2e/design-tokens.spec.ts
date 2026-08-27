@@ -343,6 +343,28 @@ test.describe("Maß und Rand", () => {
     const rail = (await frame.locator("[data-rail]").boundingBox())!;
     expect(rail.y).toBeGreaterThan(col.y + col.height - 1);
   });
+
+  // Die Tests oben messen die Box des `<aside data-rail>` GANZ — nicht seine
+  // eigene innere Fließrichtung. Genau das war der blinde Fleck, durch den
+  // der `rail:` vs. `sm:`-Kaskadenfehler (Task 8) durchrutschte: der Rand
+  // selbst blieb eine zeilenweise gewrappte Reihe statt einer engen Spalte,
+  // ohne dass ein bestehender Test das gesehen hätte (Task 8 Review, F5).
+  test("der Rand selbst ist bei 1440 px eine Spalte, nicht eine Reihe", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/design-system");
+    const rail = page.getByTestId("frame-with-rail").locator("[data-rail]");
+    await expect(rail).toHaveCSS("flex-direction", "column");
+    const first = (await page.getByTestId("rail-fixture-1").boundingBox())!;
+    const second = (await page.getByTestId("rail-fixture-2").boundingBox())!;
+    expect(second.y).toBeGreaterThan(first.y);
+  });
+
+  test("der Rand selbst ist zwischen 640 und 1100 px eine Reihe", async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 900 });
+    await page.goto("/design-system");
+    const rail = page.getByTestId("frame-with-rail").locator("[data-rail]");
+    await expect(rail).toHaveCSS("flex-direction", "row");
+  });
 });
 
 test.describe("List und Row", () => {

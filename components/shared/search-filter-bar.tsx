@@ -67,7 +67,7 @@ export function SearchInput({ searchQuery, onSearchChange, placeholder }: Search
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-[var(--radius-sm)] border border-[var(--hairline)] bg-[var(--raised)] py-2.5 pl-9 pr-9 font-[family-name:var(--font-ui)] text-sm text-[var(--ink)] outline-none transition-colors"
+        className="w-full rounded-[var(--radius-sm)] border border-[var(--hairline)] bg-[var(--raised)] py-2 pl-8 pr-8 font-[family-name:var(--font-ui)] text-sm text-[var(--ink)] outline-none transition-colors"
         aria-label={placeholder}
       />
       {searchQuery.length > 0 && (
@@ -121,11 +121,11 @@ export function FilterPills({
       {filters.map((group) => {
         if (group.options.length === 0) return null;
         return (
-          <div key={group.key} className="flex flex-col gap-1.5">
+          <div key={group.key} className="flex flex-col gap-2">
             <span className="shrink-0 font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)]">
               {group.label}
             </span>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {/* "All" chip — resets this group */}
               <FilterChip
                 label={t("all")}
@@ -204,7 +204,7 @@ export function SearchFilterBar({
     searchQuery.length > 0 || Object.values(activeFilters).some((v) => v !== null);
 
   return (
-    <div className="mb-5 flex flex-col gap-3">
+    <div className="mb-6 flex flex-col gap-3">
       <SearchInput searchQuery={searchQuery} onSearchChange={onSearchChange} placeholder={placeholder} />
       <FilterPills
         filters={filters}
@@ -237,7 +237,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex shrink-0 items-center gap-1.5 rounded-[var(--radius-pill)] border px-2.5 py-1.5 font-[family-name:var(--font-ui)] text-xs font-medium transition-colors duration-150",
+        "flex shrink-0 items-center gap-2 rounded-[var(--radius-pill)] border px-2 py-1 font-[family-name:var(--font-ui)] text-xs font-medium transition-colors duration-150",
         active
           ? "border-[var(--hairline)] bg-[var(--raised)] text-[var(--ink)]"
           : "border-transparent bg-transparent text-[var(--ink-3)]",

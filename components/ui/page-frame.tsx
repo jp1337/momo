@@ -50,17 +50,21 @@ export function PageFrame({ children, rail, className }: PageFrameProps) {
       {rail ? (
         <aside
           data-rail
-          // `!` auf flex-col/gap-4 (Task 8 fix): Tailwinds custom
-          // `--breakpoint-rail` (globals.css) wird nicht numerisch, sondern
-          // hinter den eingebauten Breakpoints einsortiert — `sm:flex-row`
-          // gewinnt dadurch bei jeder Breite ≥ 1100px gegen `rail:flex-col`,
-          // trotz gleicher Spezifität und trotz "sm" (640px) < "rail"
-          // (1100px). Sichtbare Folge: der Rand blieb eine zeilenweise
-          // gewrappte Reihe statt einer engen Spalte, jedes `<p>` auf die
-          // volle Randhöhe gestreckt (`align-items: stretch` im
-          // `flex-row`-Kontext). Betraf `/dashboard` genauso — nur nie
-          // aufgefallen, weil dort niemand genau hingesehen hat.
-          className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-6 rail:w-[var(--rail)] rail:shrink-0 rail:flex-col! rail:gap-4!"
+          // Drei Bänder, sich gegenseitig ausschließend, damit die
+          // Quellreihenfolge der Utilities nie eine Rolle spielt (Task 8
+          // Review-Fund: `rail:flex-col!` funktionierte, war aber ein
+          // Notbehelf gegen eine Sortier-Eigenheit, die ein Tailwind-Upgrade
+          // stillschweigend ändern kann):
+          //   < 640px         — Basisklassen (flex-col gap-3)
+          //   640px – 1100px  — sm:max-rail:flex-row/flex-wrap/gap-6
+          //   ≥ 1100px        — wieder die Basis (flex-col), plus rail:gap-4
+          // `sm:max-rail:` erzeugt ein verschachteltes
+          // `@media (width>=40rem){@media(width<1100px){…}}` — dessen
+          // Bedingung und die von `rail:` (`width>=1100px`) überschneiden
+          // sich nie, also entscheidet nie die Regelreihenfolge, sondern nur
+          // die tatsächliche Breite. `rail:flex-col` entfällt deshalb ganz:
+          // die Basis ist bereits `flex-col`, und kein `!` wird gebraucht.
+          className="flex w-full flex-col gap-3 sm:max-rail:flex-row sm:max-rail:flex-wrap sm:max-rail:gap-6 rail:w-[var(--rail)] rail:shrink-0 rail:gap-4"
         >
           {rail}
         </aside>

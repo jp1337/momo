@@ -257,9 +257,26 @@ export default function DesignSystemPage() {
         <div data-testid="frame-with-rail" className="-mx-4">
           <PageFrame
             rail={
-              <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--ink-3)]">
-                Serie · 4 Tage
-              </p>
+              // Zwei Kinder statt eines (Task 8 Review, F5): der Rand-
+              // eigene Umbruch (`<aside data-rail>`s eigenes flex-col/row,
+              // nicht der äußere Umbruch von Spalte+Rand) braucht mindestens
+              // zwei Geschwister, um seine Fließrichtung an ihrer relativen
+              // Position zu prüfen. Handles rail-fixture-1/2 liest
+              // e2e/design-tokens.spec.ts; nicht umbenennen.
+              <>
+                <p
+                  data-testid="rail-fixture-1"
+                  className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--ink-3)]"
+                >
+                  Serie · 4 Tage
+                </p>
+                <p
+                  data-testid="rail-fixture-2"
+                  className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--ink-3)]"
+                >
+                  Filter · 2
+                </p>
+              </>
             }
           >
             <p className="m-0 text-[var(--ink-2)]">
