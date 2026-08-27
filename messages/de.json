@@ -27,7 +27,13 @@
     "section_today": "Heute",
     "section_plan": "Planen",
     "section_reward": "Belohnen",
-    "coin_balance": "Dein Münzstand"
+    "coin_balance": "Dein Münzstand",
+    "theme_dark": "Dunkel",
+    "theme_light": "Hell",
+    "theme_system": "System",
+    "theme_switch": "{theme} — klicken zum Wechseln",
+    "theme_aria": "Theme wechseln (aktuell {theme})",
+    "user_menu": "Nutzermenü"
   },
   "auth": {
     "app_name": "🪶 Momo",

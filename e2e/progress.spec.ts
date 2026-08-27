@@ -174,3 +174,13 @@ test.describe("Weekly Review Page", () => {
     await expect(content).toBeVisible({ timeout: 5000 });
   });
 });
+
+test("die Habits-Ansicht rendert ohne Formatierungsfehler", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (msg) => {
+    if (msg.type() === "error") errors.push(msg.text());
+  });
+  await page.goto("/progress?tab=habits");
+  await page.waitForLoadState("networkidle");
+  expect(errors.filter((e) => e.includes("FORMATTING_ERROR")).join("\n")).toBe("");
+});

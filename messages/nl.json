@@ -27,7 +27,13 @@
     "section_today": "Vandaag",
     "section_plan": "Plannen",
     "section_reward": "Belonen",
-    "coin_balance": "Je muntsaldo"
+    "coin_balance": "Je muntsaldo",
+    "theme_dark": "Donker",
+    "theme_light": "Licht",
+    "theme_system": "Systeem",
+    "theme_switch": "{theme} — klik om te wisselen",
+    "theme_aria": "Thema wisselen (nu {theme})",
+    "user_menu": "Gebruikersmenu"
   },
   "auth": {
     "app_name": "🪶 Momo",

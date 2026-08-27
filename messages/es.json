@@ -27,7 +27,13 @@
     "section_today": "Hoy",
     "section_plan": "Planificar",
     "section_reward": "Recompensar",
-    "coin_balance": "Tu saldo de monedas"
+    "coin_balance": "Tu saldo de monedas",
+    "theme_dark": "Oscuro",
+    "theme_light": "Claro",
+    "theme_system": "Sistema",
+    "theme_switch": "{theme} — haz clic para cambiar",
+    "theme_aria": "Cambiar tema (actualmente {theme})",
+    "user_menu": "Menú de usuario"
   },
   "auth": {
     "app_name": "🪶 Momo",

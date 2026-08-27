@@ -27,7 +27,13 @@
     "section_today": "今天",
     "section_plan": "规划",
     "section_reward": "奖励",
-    "coin_balance": "你的金币余额"
+    "coin_balance": "你的金币余额",
+    "theme_dark": "深色",
+    "theme_light": "浅色",
+    "theme_system": "跟随系统",
+    "theme_switch": "{theme} — 点击切换",
+    "theme_aria": "切换主题（当前：{theme}）",
+    "user_menu": "用户菜单"
   },
   "auth": {
     "app_name": "🪶 Momo",

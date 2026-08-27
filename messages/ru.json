@@ -27,7 +27,13 @@
     "section_today": "Сегодня",
     "section_plan": "Планировать",
     "section_reward": "Награды",
-    "coin_balance": "Ваш баланс монет"
+    "coin_balance": "Ваш баланс монет",
+    "theme_dark": "Тёмная",
+    "theme_light": "Светлая",
+    "theme_system": "Системная",
+    "theme_switch": "{theme} — нажмите, чтобы переключить",
+    "theme_aria": "Переключить тему (сейчас {theme})",
+    "user_menu": "Меню пользователя"
   },
   "auth": {
     "app_name": "🪶 Momo",

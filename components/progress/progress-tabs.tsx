@@ -139,10 +139,16 @@ async function HabitsTab({
     recurrenceEveryNDays: t("recurrence_every_n_days"),
     pausedUntilLabel: t("habit_paused_until"),
     gridLabels: {
-      gridAriaLabel: t("grid_aria_label"),
-      tooltipOne: t("cell_tooltip_one"),
-      tooltipOther: t("cell_tooltip_other"),
-      tooltipEmpty: t("cell_tooltip_empty"),
+      // t.raw(), nicht t(): contribution-grid.tsx setzt {count}/{year} selbst
+      // ein (dieselbe FORMATTING_ERROR-Ursache wie bei den Tooltips unten).
+      gridAriaLabel: String(t.raw("grid_aria_label")),
+      // t.raw(), nicht t(): contribution-grid.tsx setzt {date} und {count}
+      // selbst ein (eine Zelle pro Tag, clientseitig). t() formatiert die
+      // ICU-Nachricht sofort und wirft ohne die Werte FORMATTING_ERROR —
+      // bei jedem Aufruf von /progress?tab=habits.
+      tooltipOne: String(t.raw("cell_tooltip_one")),
+      tooltipOther: String(t.raw("cell_tooltip_other")),
+      tooltipEmpty: String(t.raw("cell_tooltip_empty")),
       monthLabels,
       weekdayLabels,
     },

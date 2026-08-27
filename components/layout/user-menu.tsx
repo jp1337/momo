@@ -10,6 +10,7 @@
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faGear,
@@ -77,6 +78,7 @@ function MenuLinkItem({ href, icon, iconColor, textColor, children }: MenuLinkIt
  * Avatar-triggered dropdown menu for user actions.
  */
 export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuProps) {
+  const t = useTranslations("nav");
   const initials = userName
     ? userName
         .split(" ")
@@ -90,7 +92,7 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          aria-label="User menu"
+          aria-label={t("user_menu")}
           className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-pill)] border border-[var(--hairline)] bg-[var(--raised)] text-sm font-medium text-[var(--ink)] transition-opacity hover:opacity-80"
         >
           {userImage ? (
