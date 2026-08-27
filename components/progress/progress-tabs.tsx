@@ -1,15 +1,20 @@
 /**
- * ProgressTabs — server component that renders the content for each tab
- * on the unified /progress page (habits | achievements | review).
+ * ProgressTabs — server component that renders the content for the
+ * achievements and review tabs of the unified /progress page.
  *
- * Each branch does its own data fetching; only the active branch runs.
+ * The habits tab is handled directly by `app/(app)/progress/page.tsx`
+ * (Task 11): its `PageFrame` rail needs the same `habits` data its content
+ * column renders, so the page fetches it once and passes it to
+ * `HabitsList` (exported below) — routing it through this generic
+ * dispatcher would mean fetching it a second time just to hand it back up
+ * to a rail the dispatcher itself never sees. Achievements and review each
+ * still do their own data fetching; only the active branch runs.
  */
 
 import Link from "next/link";
 import { getTranslations, getLocale } from "next-intl/server";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faSeedling,
   faCalendarWeek,
   faCircleCheck,
   faForward,
@@ -21,14 +26,12 @@ import {
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import {
-  getHabitsWithHistory,
-  getEarliestCompletion,
-  buildYearOptions,
-  type HabitStreak,
-} from "@/lib/habits";
+import type { HabitWithHistory } from "@/lib/habits";
 import { HabitCard } from "@/components/habits/habit-card";
 import { YearSelector } from "@/components/habits/year-selector";
+import { GroupHeading } from "@/components/ui/list";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 import { getAchievementsWithProgress } from "@/lib/statistics";
 import {
   retroactivelyGrantAchievements,
@@ -40,13 +43,11 @@ import { AchievementCard } from "@/components/achievements/achievement-card";
 import { getWeeklyReview } from "@/lib/weekly-review";
 import { resolveTopicIcon } from "@/lib/topic-icons";
 
-type Tab = "habits" | "achievements" | "review";
+type Tab = "achievements" | "review";
 
 interface ProgressTabsProps {
   tab: Tab;
   userId: string;
-  /** ?year= search param forwarded from the page (habits tab only) */
-  year?: string;
 }
 
 // ── Achievements constants ──────────────────────────────────────────────────
@@ -69,41 +70,33 @@ function formatShortDate(dateStr: string, locale: string): string {
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-export async function ProgressTabs({ tab, userId, year }: ProgressTabsProps) {
-  if (tab === "habits") return <HabitsTab userId={userId} yearParam={year} />;
+export async function ProgressTabs({ tab, userId }: ProgressTabsProps) {
   if (tab === "achievements") return <AchievementsTab userId={userId} />;
   return <ReviewTab userId={userId} />;
 }
 
 // ── Habits tab ───────────────────────────────────────────────────────────────
 
-async function HabitsTab({
-  userId,
-  yearParam,
+/**
+ * The habits tab's content column: a mono `GroupHeading` + subtitle, the
+ * year selector (only when there's more than one year to pick from and at
+ * least one habit), then one `List`+`Row` (via `HabitCard`) plus its
+ * `ContributionGrid` per habit — or `EmptyState` when there is none.
+ *
+ * `habits`/`year`/`yearOptions` are pre-fetched by
+ * `app/(app)/progress/page.tsx`, which also derives the page's rail sums
+ * from the same `habits` array — one query, two consumers.
+ */
+export async function HabitsList({
+  habits,
+  year,
+  yearOptions,
 }: {
-  userId: string;
-  yearParam?: string;
+  habits: HabitWithHistory[];
+  year: number;
+  yearOptions: number[];
 }) {
   const t = await getTranslations("habits");
-  const currentYear = new Date().getFullYear();
-  const parsed = Number(yearParam);
-  const requestedYear =
-    Number.isFinite(parsed) && parsed >= 2024 && parsed <= currentYear + 1
-      ? Math.floor(parsed)
-      : currentYear;
-
-  const userRows = await db
-    .select({ timezone: users.timezone })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-  const timezone = userRows[0]?.timezone ?? null;
-
-  const [habits, earliest] = await Promise.all([
-    getHabitsWithHistory(userId, requestedYear, timezone),
-    getEarliestCompletion(userId),
-  ]);
-  const yearOptions = buildYearOptions(earliest, currentYear);
 
   const monthLabels = [
     t("month_jan"), t("month_feb"), t("month_mar"), t("month_apr"),
@@ -116,25 +109,7 @@ async function HabitsTab({
     t("weekday_fri"), t("weekday_sat"), t("weekday_sun"),
   ] as [string, string, string, string, string, string, string];
 
-  function formatStreakValue(streak: HabitStreak): string {
-    const { current, periodDays } = streak;
-    if (current === 0) return t("stat_streak_empty");
-    switch (periodDays) {
-      case 1:  return t("streak_unit_days",     { n: current });
-      case 7:  return t("streak_unit_weeks",    { n: current });
-      case 14: return t("streak_unit_biweeks",  { n: current });
-      case 30:
-      case 31: return t("streak_unit_months",   { n: current });
-      default: return t("streak_unit_generic",  { n: current, d: periodDays });
-    }
-  }
-
-  const cardLabels = {
-    statTotalYear: t("stat_total_year"),
-    statLast30: t("stat_last_30"),
-    statLast7: t("stat_last_7"),
-    statStreak: t("stat_streak"),
-    statStreakEmpty: t("stat_streak_empty"),
+  const labels = {
     recurrenceEveryDay: t("recurrence_every_day"),
     recurrenceEveryNDays: t("recurrence_every_n_days"),
     pausedUntilLabel: t("habit_paused_until"),
@@ -155,39 +130,15 @@ async function HabitsTab({
   };
 
   return (
-    <div className="max-w-4xl flex flex-col gap-8">
-      <div>
-        <div className="flex items-center gap-3 mb-1">
-          <FontAwesomeIcon
-            icon={faSeedling}
-            className="w-5 h-5"
-            style={{ color: "var(--accent-green)" }}
-            aria-hidden="true"
-          />
-          <h2
-            className="text-2xl font-semibold"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              color: "var(--text-primary)",
-            }}
-          >
-            {t("page_title")}
-          </h2>
-        </div>
-        <p
-          className="text-sm"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {t("page_subtitle")}
-        </p>
-      </div>
+    <section className="flex flex-col gap-6">
+      <GroupHeading>{t("page_title")}</GroupHeading>
+      <p className="m-0 font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
+        {t("page_subtitle")}
+      </p>
 
       {yearOptions.length > 1 && habits.length > 0 && (
         <YearSelector
-          currentYear={requestedYear}
+          currentYear={year}
           years={yearOptions}
           label={t("year_selector_label")}
           baseHref="/progress?tab=habits"
@@ -196,79 +147,22 @@ async function HabitsTab({
       )}
 
       {habits.length === 0 ? (
-        <div
-          className="relative rounded-2xl p-12 sm:p-16 flex flex-col items-center gap-3 text-center overflow-hidden"
-          style={{ backgroundColor: "var(--bg-surface)", border: "1px dashed var(--border)" }}
-        >
-          {/* Soft green halo behind the icon — same atmospheric pattern as the other empty states */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              top: "20%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "240px",
-              height: "240px",
-              borderRadius: "50%",
-              background: "radial-gradient(circle, color-mix(in srgb, var(--accent-green) 14%, transparent) 0%, transparent 70%)",
-              pointerEvents: "none",
-            }}
-          />
-          <FontAwesomeIcon
-            icon={faSeedling}
-            className="relative mb-2"
-            style={{ color: "var(--accent-green)", opacity: 0.7, fontSize: "2.75rem" }}
-            aria-hidden="true"
-          />
-          <h3
-            className="relative text-xl font-semibold"
-            style={{ fontFamily: "var(--font-display, 'Lora', serif)", color: "var(--text-primary)" }}
-          >
-            {t("empty_title")}
-          </h3>
-          <p
-            className="relative text-sm max-w-md"
-            style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)", lineHeight: 1.6 }}
-          >
-            {t("empty_body")}
-          </p>
-          <Link
-            href="/tasks"
-            className="relative mt-2 px-5 py-2.5 rounded-lg text-sm font-semibold no-underline transition-transform duration-150 hover:scale-105"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              backgroundColor: "var(--accent-green)",
-              color: "var(--bg-primary)",
-            }}
-          >
-            {t("empty_cta")}
-          </Link>
-        </div>
+        <EmptyState
+          line={t("empty_body")}
+          action={
+            <Button asChild variant="quiet" size="md">
+              <Link href="/tasks">{t("empty_cta")}</Link>
+            </Button>
+          }
+        />
       ) : (
-        <div className="flex flex-col gap-5">
-          {habits.map((habit) => {
-            const streakValueText = formatStreakValue(habit.streak);
-            const streakBestText =
-              habit.streak.best > 0
-                ? habit.streak.current > 0 && habit.streak.current === habit.streak.best
-                  ? t("stat_streak_best_current")
-                  : t("stat_streak_best", { n: habit.streak.best })
-                : null;
-            return (
-              <HabitCard
-                key={habit.id}
-                habit={habit}
-                year={requestedYear}
-                labels={cardLabels}
-                streakValueText={streakValueText}
-                streakBestText={streakBestText}
-              />
-            );
-          })}
+        <div className="flex flex-col gap-8">
+          {habits.map((habit) => (
+            <HabitCard key={habit.id} habit={habit} year={year} labels={labels} />
+          ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 

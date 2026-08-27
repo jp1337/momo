@@ -184,3 +184,24 @@ test("die Habits-Ansicht rendert ohne Formatierungsfehler", async ({ page }) => 
   await page.waitForLoadState("networkidle");
   expect(errors.filter((e) => e.includes("FORMATTING_ERROR")).join("\n")).toBe("");
 });
+
+// Task 11: §6 nennt den gestrichelten Kasten mit grün gefülltem Knopf als
+// den Fall, den die Spec ausdrücklich verbietet — genau der alte leere
+// Zustand von /progress?tab=habits (progress-tabs.tsx, vor Task 11:
+// `border: "1px dashed var(--border)"` plus ein amberfreier, aber grün
+// GEFÜLLTER Link als CTA). Scope ist `main`, nicht `document`, damit ein
+// zufälliger gestrichelter Rahmen anderswo (Navbar, Dialog) diesen Test
+// nicht fälschlich rot macht — er prüft den Seiteninhalt, nicht die Hülle.
+test("der leere Zustand ist kein gestrichelter Kasten mit grünem Knopf", async ({ page }) => {
+  await page.goto("/progress");
+  const dashed = await page.evaluate(() => {
+    const root = document.querySelector("main") ?? document.body;
+    return Array.from(root.querySelectorAll("*")).filter((el) => {
+      const c = getComputedStyle(el);
+      return ["top", "right", "bottom", "left"].some(
+        (s) => c.getPropertyValue(`border-${s}-style`) === "dashed",
+      );
+    }).length;
+  });
+  expect(dashed).toBe(0);
+});

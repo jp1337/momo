@@ -7,13 +7,19 @@
  * pushes `?year=YYYY` onto the URL, which re-runs the server page with
  * the new year. No local state — the URL is the source of truth.
  *
- * Visual pattern mirrors the active/inactive chip style used elsewhere
- * (language switcher, search filter bar): amber accent for active, flat
- * elevated background for inactive.
+ * Task 11: was an amber-filled pill for the active year — a filled
+ * surface, and amber as a fill (not text, not a wash) is exactly what the
+ * spec forbids (`components/ui/button.tsx`'s own `primary` variant already
+ * documents the same rule: "Amber ist Licht", text only, never a
+ * background). Active/inactive now reuse the same distinction
+ * `app/(app)/progress/page.tsx`'s tab nav uses one level up: `--raised`
+ * fill + `--ink` text for the current year, transparent + `--ink-3` for
+ * the rest.
  */
 
 import { useRouter, usePathname } from "next/navigation";
 import { useTransition } from "react";
+import { cn } from "@/lib/utils";
 
 interface YearSelectorProps {
   currentYear: number;
@@ -44,16 +50,10 @@ export function YearSelector({ currentYear, years, label, baseHref, yearParam = 
       role="group"
       aria-label={label}
     >
-      <span
-        className="text-xs uppercase tracking-wider"
-        style={{
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          color: "var(--text-muted)",
-        }}
-      >
+      <span className="font-[family-name:var(--font-ui)] text-xs uppercase tracking-wider text-[var(--ink-3)]">
         {label}
       </span>
-      <div className="flex gap-1.5 flex-wrap">
+      <div className="flex flex-wrap gap-1.5">
         {years.map((y) => {
           const active = y === currentYear;
           return (
@@ -62,19 +62,12 @@ export function YearSelector({ currentYear, years, label, baseHref, yearParam = 
               type="button"
               onClick={() => selectYear(y)}
               disabled={isPending}
-              className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                backgroundColor: active
-                  ? "var(--accent-amber)"
-                  : "var(--bg-elevated)",
-                color: active ? "var(--bg-primary)" : "var(--text-muted)",
-                border: active
-                  ? "1px solid var(--accent-amber)"
-                  : "1px solid var(--border)",
-                cursor: isPending ? "wait" : "pointer",
-                opacity: isPending && !active ? 0.6 : 1,
-              }}
+              className={cn(
+                "rounded-[var(--radius-pill)] border px-3 py-1.5 font-[family-name:var(--font-ui)] text-sm font-medium transition-colors disabled:cursor-wait",
+                active
+                  ? "border-transparent bg-[var(--raised)] text-[var(--ink)]"
+                  : "border-[var(--hairline)] bg-transparent text-[var(--ink-3)] disabled:opacity-60",
+              )}
               aria-pressed={active}
             >
               {y}

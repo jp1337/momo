@@ -23,12 +23,6 @@
     "inline": 2,
     "spacing": 2
   },
-  "app/(app)/progress/page.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 2,
-    "spacing": 0
-  },
   "app/(app)/quick/page.tsx": {
     "color": 0,
     "radius": 0,
@@ -257,16 +251,10 @@
     "inline": 8,
     "spacing": 0
   },
-  "components/habits/habit-card.tsx": {
-    "color": 0,
-    "radius": 4,
-    "inline": 15,
-    "spacing": 8
-  },
   "components/habits/year-selector.tsx": {
     "color": 0,
     "radius": 0,
-    "inline": 2,
+    "inline": 0,
     "spacing": 2
   },
   "components/layout/coin-counter.tsx": {
@@ -355,9 +343,9 @@
   },
   "components/progress/progress-tabs.tsx": {
     "color": 0,
-    "radius": 10,
-    "inline": 89,
-    "spacing": 10
+    "radius": 8,
+    "inline": 80,
+    "spacing": 6
   },
   "components/quick/five-minute-view.tsx": {
     "color": 0,
