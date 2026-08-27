@@ -40,7 +40,7 @@ const itemBaseStyle: CSSProperties = {
 };
 
 const itemClass =
-  "flex items-center gap-3 px-4 py-2.5 text-sm no-underline outline-none data-[highlighted]:bg-[var(--bg-surface)]";
+  "flex items-center gap-3 px-4 py-2.5 text-sm no-underline! outline-none data-[highlighted]:bg-[var(--bg-surface)]";
 
 interface MenuLinkItemProps {
   href: string;

@@ -7,11 +7,16 @@
  * Fortschrittsbalken, "sequenziell"-Badge, "alles erledigt"-Banner — 28
  * Ratschen-Verstöße) durch `Row` (`components/ui/list.tsx`): der Titel
  * trägt den vollen Namen (`wrapTitle`), der Fortschritt ("3/7") steht
- * rechts in Mono, die Themenfarbe ist der 6-px-Punkt (`dotColor`).
- * Priorität, Beschreibung und das sequenziell-Flag bleiben im
- * Bearbeiten-Formular (`TopicForm`) einstellbar — die Liste selbst ist
- * nichts als Text, dieselbe Kodierungslogik wie `TaskRow` (siehe dort für
- * die vollständige Tabelle "vorher → jetzt").
+ * rechts in Mono, die Themenfarbe ist der 6-px-Punkt (`dotColor`). Das
+ * sequenziell-Flag ändert, wie das Thema sich verhält (nur die erste noch
+ * offene Aufgabe ist quest-fähig) — anders als Priorität und Beschreibung
+ * bleibt es deshalb nicht nur im Bearbeiten-Formular sichtbar, sondern auch
+ * in der Zeile selbst, als Mono-Eyebrow statt als Badge (`eyebrow`, nicht
+ * ein neuer `Row`-Prop; finale Fix-Welle, nachdem der Umzug es zunächst
+ * unbeabsichtigt entfernt hatte). Priorität und Beschreibung bleiben im
+ * Bearbeiten-Formular (`TopicForm`) einstellbar, ohne Zeilen-Darstellung —
+ * die Liste ist sonst nichts als Text, dieselbe Kodierungslogik wie
+ * `TaskRow` (siehe dort für die vollständige Tabelle "vorher → jetzt").
  *
  * Der Titel ist zugleich ein `<Link>` zum Thema-Detail — vorher ein
  * gerahmter "Ansehen →"-Button, jetzt ohne eigene Fläche: der Titel selbst
@@ -57,6 +62,8 @@ interface TopicCardProps {
   color?: string | null;
   taskCount: number;
   completedCount: number;
+  /** Nur die erste noch offene Aufgabe ist quest-fähig — sichtbar als Mono-Eyebrow, kein Pill/Chip (siehe `Row.eyebrow`). */
+  sequential?: boolean;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onArchive: (id: string) => void;
@@ -74,6 +81,7 @@ export function TopicCard({
   color,
   taskCount,
   completedCount,
+  sequential = false,
   onEdit,
   onDelete,
   onArchive,
@@ -85,6 +93,14 @@ export function TopicCard({
       testId="topic-row"
       wrapTitle
       title={<Link href={`/topics/${id}`}>{title}</Link>}
+      // Sequenziell ändert, wie das Thema sich verhält (nur die erste noch
+      // offene Aufgabe ist quest-fähig) — das war vorher ein Badge auf der
+      // Karte, ist beim Umzug auf `Row` (Task-10-Migration) unbeabsichtigt
+      // verschwunden (finale Fix-Welle). Kein Pill, kein Chip: dieselbe
+      // Mono-Eyebrow, die `Row` für jede andere Zeilen-Metadaten-Art schon
+      // benutzt. Schlüssel existiert bereits (`topics.sequential_badge`,
+      // genutzt von `template-picker.tsx`), keine neue i18n-Arbeit.
+      eyebrow={sequential ? t("sequential_badge") : undefined}
       // Sichtbar bleibt das kompakte "3/7" (Mono, Brief-Vorgabe) — die
       // aria-label trägt den vollen Satz, sonst hört ein Screenreader nur
       // zwei nackte Ziffern ohne Nomen (Task-10-Review I5).

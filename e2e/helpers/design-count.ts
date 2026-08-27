@@ -58,6 +58,19 @@ export const MIGRATED_PAGES: string[] = ["/dashboard", "/tasks", "/focus", "/top
  *   zusätzlich mit einer Positivprobe (der Wash muss gesehen werden) —
  *   eine Deckelungs-Regel allein (`≤ 2`) wird sonst von `0/0` genauso
  *   erfüllt wie von einer korrekten Messung.
+ * - **`document.body` ist von dieser Zählung ausdrücklich ausgenommen**
+ *   (finale Fix-Welle, Task-11-Review C-Zusatz) — `body` trägt einen
+ *   absichtlichen 6%-Amber-Wash in `background-image` (`app/globals.css`,
+ *   "Three layered backgrounds"), ambientes Chrome auf jeder Seite, kein
+ *   Inhalt und keine Handlung. Der Ausschluss war vorher ein Zufall der
+ *   Guard-Reihenfolge (`body.getBoundingClientRect().height` ist auf jeder
+ *   migrierten Seite 0, also griff der Null-Größen-Guard) — ein
+ *   Layout-Wechsel, der `body` eine echte Höhe gibt, hätte alle zehn
+ *   Amber-Tests gleichzeitig scharf geschaltet. Jetzt ist er explizit. Der
+ *   Preis: eine echte amberfarbene `background-color` DIREKT auf `body`
+ *   (nicht in `background-image`) würde dieser Zähler ab jetzt dauerhaft
+ *   nicht mehr sehen — ein bewusst akzeptierter blinder Fleck, kein
+ *   zufälliger.
  *
  * @param page - Die Playwright-Seite, bereits navigiert (und, falls die
  *   Seite eine Eintrittsanimation hat, bereits eingestanden — siehe oben)
@@ -125,6 +138,10 @@ export async function countAmber(page: Page): Promise<Hit[]> {
     const strokeSeen = new Set<Element>();
 
     for (const el of Array.from(document.querySelectorAll("*"))) {
+      // `body`'s ambienter Amber-Wash ist absichtlich nicht gezählt — siehe
+      // die Grenze in der JSDoc oben ("document.body ist von dieser Zählung
+      // ausdrücklich ausgenommen").
+      if (el === document.body) continue;
       const cs = getComputedStyle(el);
       if (cs.display === "none" || cs.visibility === "hidden") continue;
       if (parseFloat(cs.opacity) === 0) continue;

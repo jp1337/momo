@@ -58,7 +58,7 @@ export function Navbar({ userName, userImage, userEmail, initialCoins = 0, initi
       {/* App wordmark */}
       <Link
         href="/dashboard"
-        className="flex items-center gap-2 no-underline group"
+        className="flex items-center gap-2 no-underline! group"
       >
         <FeatherMark className="text-[var(--ink-2)]" />
         <span

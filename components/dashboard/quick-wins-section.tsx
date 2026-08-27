@@ -93,6 +93,7 @@ export function QuickWinsSection({ tasks: initialTasks }: QuickWinsSectionProps)
 
   return (
     <motion.section
+      data-testid="quick-wins-section"
       initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}

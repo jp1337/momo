@@ -9,20 +9,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **`npm run check:design`** — ein Ratschen-Test gegen hartkodierte Farben, Radien außerhalb der
-  vier erlaubten Werte und neue Inline-Styles in `.tsx`. Läuft in CI (PR Gate); der Zähler darf nur
-  fallen, aktuell 1934 Verstöße über die noch nicht umgestellten Seiten. Ergänzt um
-  Playwright-Prüfungen (`e2e/design-tokens.spec.ts`), die den Flächenabstand zwischen Grund und
-  angehobener Fläche als CIE-ΔL\* messen (statt WCAG-Kontrastverhältnis, das bei hoher Helligkeit
-  komprimiert) und sicherstellen, dass die „leeren" Schatten-Tokens (`0 0 #0000`) als Listenglied
-  in `box-shadow` gültig bleiben — als reines `none` verschwindet sonst die gesamte Deklaration.
+- **`npm run check:design`** — ein Ratschen-Test gegen vier Regex-Kategorien: hartkodierte Farben,
+  Radien außerhalb der vier erlaubten Werte, `style={{ … }}` und (seit der vierten Kategorie,
+  siehe unten) Abstand außerhalb der Skala. Läuft in CI (PR Gate); der Zähler darf nur fallen. Die
+  aktuelle Zahl steht nicht hier — sie veraltet sofort, sobald sich etwas ändert — sondern kommt aus
+  `npm run check:design` selbst. **Kein Dokument darf behaupten, die Ratsche erfasse jeden
+  Inline-Style: die `inline`-Regel ist `/style=\{\{/g` und sieht `style={someObject}` nicht** — 76
+  solcher Stellen existieren, unsichtbar für diesen Zähler. Ergänzt um Playwright-Prüfungen
+  (`e2e/design-tokens.spec.ts`), die den Flächenabstand zwischen Grund und angehobener Fläche als
+  CIE-ΔL\* messen (statt WCAG-Kontrastverhältnis, das bei hoher Helligkeit komprimiert) und
+  sicherstellen, dass die „leeren" Schatten-Tokens (`0 0 #0000`) als Listenglied in `box-shadow`
+  gültig bleiben — als reines `none` verschwindet sonst die gesamte Deklaration.
 - **Vierte Ratschen-Kategorie `spacing`.** `npm run check:design` verwirft jetzt auch
   `p-`/`m-`/`gap-`/`space-`-Utilities außerhalb der Abstandsskala
   4 · 8 · 12 · 16 · 24 · 32 · 48 · 72 px (Ausnahme: der einzelne, extern per
   Playwright fixierte Token `[var(--gutter)]`, 3rem = 48px). Die Skala stand seit dem
   2026-08-21 im Designentwurf und wurde von nichts erzwungen — gemessen lagen 280
-  Utilities in 69 Dateien daneben, allein 115 davon auf 6 px. Die Baseline steigt
-  dadurch einmalig von 1934 auf 2214 Verstöße und fällt ab dort wieder nur.
+  Utilities in 69 Dateien daneben, allein 115 davon auf 6 px. Eine neue Kategorie hebt die
+  Baseline notwendigerweise an (gemessen: 2215 an dem Commit, der die Kategorie hinzufügte) —
+  ab dort fällt sie wieder nur. Siehe `npm run check:design` für den aktuellen Stand.
 - **Vier Playwright-Zähler für die Lichtkegel-Regeln** (`e2e/helpers/design-count.ts`,
   `e2e/design-rules.spec.ts`): Amber (dokumentweit, nicht nur `main`), Fraunces-Vorkommen,
   umrahmte/gefüllte Inhaltsflächen, und die Spaltenbreite gegen `--measure`. Der Amber-Zähler

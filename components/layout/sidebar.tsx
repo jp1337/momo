@@ -113,7 +113,7 @@ export function Sidebar() {
                   // Per the monochromatic-hierarchy rule, amber is reserved for
                   // the Daily Quest and primary CTAs; navigation is structural
                   // and shouldn't compete for attention.
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 no-underline"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 no-underline!"
                   style={{
                     fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
                     backgroundColor: isActive

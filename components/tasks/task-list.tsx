@@ -870,7 +870,7 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
               {topicSection.topicId ? (
                 <Link
                   href={`/topics/${topicSection.topicId}`}
-                  className="font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)] no-underline transition-opacity hover:opacity-70"
+                  className="font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)] no-underline! transition-opacity hover:opacity-70"
                 >
                   {topicSection.topicTitle}
                 </Link>

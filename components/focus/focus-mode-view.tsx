@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * FocusModeView — two-phase focus session.
+ * FocusModeView — three-phase focus session.
  *
  * Phase 1 (select): Pick 1–3 tasks to work on.
  * Phase 2 (work): One task at a time, full-screen, distraction-free.

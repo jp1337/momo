@@ -271,8 +271,16 @@ Messen für dieses Dokument hat ein Zähler, der nur `rgb()` kannte, vier
 Amber-Elemente auf `/tasks` als null gemeldet. Ein Test, der die Verstöße
 nicht sieht, ist schlimmer als keiner.
 
-`check:design` bekommt die vierte Kategorie `spacing`. Die Baseline von
-1934 darf nur fallen.
+`check:design` bekommt die vierte Kategorie `spacing`.
+
+**Korrektur (finale Fix-Welle):** "die Baseline von 1934 darf nur fallen" war
+hier falsch stehen geblieben, nachdem `docs/design-system.md` bereits
+korrigiert wurde und diesem Satz jetzt widerspricht. Eine neue Kategorie
+prüft Verstöße, die vorher niemand zählte — sie hebt die Baseline
+notwendigerweise an (gemessen: 2215 an dem Commit, der `spacing` hinzufügte),
+nicht "1934 darf nur fallen". Ab dem neuen Boden gilt die Ratschen-Regel
+wieder uneingeschränkt: nur fallen, nie steigen. Der aktuelle Stand kommt aus
+`npm run check:design`, nicht aus einer Zahl in diesem Dokument.
 
 ---
 

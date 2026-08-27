@@ -169,6 +169,7 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
               color={topic.color}
               taskCount={topic.taskCount}
               completedCount={topic.completedCount}
+              sequential={topic.sequential}
               onEdit={setEditingTopicId}
               onDelete={handleDelete}
               onArchive={handleArchive}

@@ -9,8 +9,8 @@ import {
 } from "./helpers/design-count";
 
 /**
- * Navigiert mit festem Theme und wartet zusätzlich, bis eine etwaige
- * Eintrittsanimation des Seiten-Lichts (`.lichtkegel`) abgeschlossen ist.
+ * Navigiert mit festem Theme und wartet zusätzlich, bis jede bekannte
+ * Eintrittsanimation auf der Seite abgeschlossen ist.
  *
  * `design-count.ts`s `countAmber`/`countDisplayFont` überspringen Elemente
  * mit `opacity: 0` (Inhalt, der wirklich nicht sichtbar ist, soll nicht
@@ -20,17 +20,26 @@ import {
  * eine Messung mitten in der Animation liest das eine erlaubte Licht als
  * "nicht da": beide Deckelungs-Regeln unten (`inside ≤ 2`, `outside ≤ …`)
  * werden von `0/0` genauso erfüllt wie von einer echten Messung, ohne dass
- * der Test das je bemerkt — genau der Fund der Task-3-Review. Ein
- * Die Eintrittsanimation ist weg (2026-08-22), also ist die Behauptung sofort
- * erfuellt; der Helper bleibt aber als Guard, falls eine Eintrittsanimation je
- * wiederkommt. Das `.lichtkegel`-Element selbst hat nie inline-opacity, und die
- * Atemanimation laeuft auf dem `::before` und erreicht nie 0.
+ * der Test das je bemerkt — genau der Fund der Task-3-Review.
+ *
+ * `.lichtkegel` selbst hat seit 2026-08-22 keine Eintrittsanimation mehr
+ * (die Atemanimation läuft auf `::before` und erreicht nie 0), aber
+ * `quick-wins-section.tsx`s `motion.section` (`data-testid="quick-wins-section"`)
+ * animiert seither GENAU denselben Weg (`opacity: 0` → `1`) — eine zweite
+ * Eintrittsanimation, die nach dieser Wartefunktion entstand und die sie
+ * deshalb ebenfalls abwarten muss, sonst kann Quick Wins als fehlend
+ * gemessen werden, während es nur noch nicht eingeblendet ist. Jede
+ * Animation bleibt ein eigenständiger, optionaler `expect` — eine Seite
+ * ohne das jeweilige Element (z. B. /focus ohne Quick Wins) überspringt
+ * die Wartung, statt zu scheitern.
  */
 async function gotoSettled(page: Page, theme: "dark" | "light", path: string) {
   await gotoWithTheme(page, theme, path);
-  const light = page.locator(".lichtkegel").first();
-  if ((await light.count()) > 0) {
-    await expect(light).toHaveCSS("opacity", "1");
+  for (const selector of [".lichtkegel", '[data-testid="quick-wins-section"]']) {
+    const el = page.locator(selector).first();
+    if ((await el.count()) > 0) {
+      await expect(el).toHaveCSS("opacity", "1");
+    }
   }
 }
 
@@ -60,6 +69,17 @@ const CHROMELESS = new Set(["/focus"]);
 for (const path of MIGRATED_PAGES) {
   for (const theme of ["dark", "light"] as const) {
     test.describe(`${path} (${theme})`, () => {
+      // `countAmber` liest bis zu acht `getComputedStyle`-Aufrufe pro Element
+      // über `document.querySelectorAll("*")` plus zwei Pseudoelement-Reads —
+      // unter voller Suite-Last (Full-Run, nicht isoliert) reichte das
+      // Standard-Timeout von 30s auf `/focus (dark)` › "trägt Amber höchstens
+      // einmal" nicht, weil `/focus`s Auswahlphase die volle Liste rendert.
+      // Isoliert lief derselbe Test grün — kein Bug in der Zählung, ein zu
+      // knappes Timeout unter Last. Betrifft nur diese fünf Design-Regel-
+      // Tests, nicht die Suite insgesamt.
+      test.beforeEach(() => {
+        test.setTimeout(60_000);
+      });
       test("trägt Amber höchstens einmal, dokumentweit", async ({ page }) => {
         await gotoSettled(page, theme, path);
         const hits = await countAmber(page);
@@ -96,6 +116,20 @@ for (const path of MIGRATED_PAGES) {
           expect(
             hits.some((h) => h.prop === "::before"),
             "der Lichtkegel-Wash wird nicht gesehen — der Zähler misst nichts, nicht 'kein Amber'",
+          ).toBe(true);
+        }
+        // C2 (final fix wave review): dieselbe Falle wie beim Wash oben, nur
+        // an der Handlung statt am Licht — ein unlayered `a { color: inherit }`
+        // schlaegt eine layered `text-[var(--amber)]`-Utility, und die reine
+        // Obergrenze unten (`inside.length <= 2`) wird von 0 Treffern genauso
+        // erfuellt wie von einer echten Messung. Bedingt auf tatsaechliches
+        // Vorhandensein des Action-Links (der Fixture-Quest kann completed
+        // sein, dann gibt es keinen), sonst waere die Probe selbst blind fuer
+        // genau den Fall, den sie faengt.
+        if (path === "/dashboard" && (await page.locator('[data-testid="quest-action"]').count()) > 0) {
+          expect(
+            hits.some((h) => h.testid === "quest-action" && h.prop === "color"),
+            "quest-action ist sichtbar, traegt aber kein --amber als Textfarbe",
           ).toBe(true);
         }
         // Innerhalb der einen Lichtquelle sind Wash und die Textfarbe der

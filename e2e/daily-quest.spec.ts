@@ -188,11 +188,38 @@ test.describe("Lichtkegel", () => {
     ).filter((n) => getComputedStyle(n).color === amber).length;
   }
 
+  // C2 (final fix wave review): `toBeLessThanOrEqual(1)` alone is satisfied
+  // by 0 exactly as well as by 1 — a cascade trap that silently strips the
+  // quest's one amber action (an unlayered `a { color: inherit }` beating a
+  // layered `text-[var(--amber)]` utility) made every test below pass while
+  // the page had NO amber action at all. This is the positive probe: when
+  // the quest is active, `[data-testid="quest-action"]` ("jetzt anfangen" /
+  // the no-quest hint link) must actually compute to `--amber`, not merely
+  // stay under a cap. Conditioned on presence, not asserted unconditionally,
+  // because the fixture quest can be in the completed state, where the page
+  // legitimately renders no action link at all.
+  async function expectQuestActionIsAmberIfPresent(page: Page) {
+    const action = page.getByTestId("quest-action");
+    if ((await action.count()) === 0) return;
+    const isAmber = await action.evaluate((n) => {
+      const probe = document.createElement("div");
+      probe.style.color = getComputedStyle(document.documentElement)
+        .getPropertyValue("--amber")
+        .trim();
+      document.body.appendChild(probe);
+      const amber = getComputedStyle(probe).color;
+      probe.remove();
+      return getComputedStyle(n).color === amber;
+    });
+    expect(isAmber, "quest-action ist sichtbar, traegt aber kein --amber").toBe(true);
+  }
+
   for (const theme of ["dark", "light"] as const) {
     test(`Amber kommt auf dem Dashboard genau einmal als Textfarbe vor (${theme})`, async ({ page }) => {
       await gotoWithTheme(page, theme, "/dashboard");
       const count = await page.evaluate(countAmberInPageAndDialogs);
       expect(count).toBeLessThanOrEqual(1);
+      await expectQuestActionIsAmberIfPresent(page);
     });
 
     // Fix round 1 (2026-08-21): the check above ran against whatever check-in
@@ -226,6 +253,7 @@ test.describe("Lichtkegel", () => {
       await expect(page.locator("button[aria-pressed]")).toHaveCount(3);
       const count = await page.evaluate(countAmberInPageAndDialogs);
       expect(count).toBeLessThanOrEqual(1);
+      await expectQuestActionIsAmberIfPresent(page);
     });
 
     // Fix round 2 (2026-08-21): the case the two tests above couldn't catch —
@@ -264,6 +292,7 @@ test.describe("Lichtkegel", () => {
 
         const count = await page.evaluate(countAmberInPageAndDialogs);
         expect(count).toBeLessThanOrEqual(1);
+        await expectQuestActionIsAmberIfPresent(page);
       } finally {
         await deleteTask(request, tempTask.id);
       }

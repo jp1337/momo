@@ -65,11 +65,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // stattdessen ueber die Haarlinie als Rahmenfarbe ab (siehe unten), statt
     // --ink-Text auf eine zu helle/dunkle Flaeche zu legen.
     // Text-color utilities carry a trailing `!` (Task B2 fix, 2026-08-22):
-    // globals.css has an unlayered `a { color: var(--accent-amber); }` link
-    // default (line ~599). Tailwind's own utilities live inside `@layer
-    // utilities`, and an unlayered rule beats every layered one regardless
-    // of selector specificity per the CSS Cascade Layers spec — so a plain
-    // `text-[var(--ink)]` class LOSES to that global rule whenever `asChild`
+    // globals.css has an unlayered `a { color: inherit; }` link default
+    // (see "Link defaults" in `app/globals.css`). Tailwind's own utilities
+    // live inside `@layer utilities`, and an unlayered rule beats every
+    // layered one regardless of selector specificity per the CSS Cascade
+    // Layers spec — so a plain `text-[var(--ink)]` class LOSES to that
+    // global rule (an unlayered `inherit` still wins) whenever `asChild`
     // renders Button as an `<a>` (e.g. wrapping a next/link `Link`), even
     // though the class is more specific by the ordinary specificity rules
     // everyone reasons about. Found by actually looking at the dashboard's

@@ -361,13 +361,16 @@ export function TaskRow(props: TaskRowProps) {
             className="w-full min-w-0 rounded-[var(--radius-sm)] border border-[var(--hairline)] bg-[var(--raised)] px-1 py-1 font-[family-name:var(--font-mono)] text-inherit text-[var(--ink)] outline-none"
           />
         ) : (
-          // `title=` gibt den vollen Text auf Hover zurück — auf Touch
-          // (375px, wo der Titel bei langem `trailing`-Text auf einen
-          // Buchstaben schrumpft) hilft das NICHT, dort gibt es kein Hover.
-          // Der eigentliche Grund liegt in `Row` selbst (Task 4): Titel und
-          // Trailing teilen sich eine Zeile. Das ist außerhalb dieses
-          // Umlaufs — dieser Kommentar hält nur fest, dass das Problem
-          // unbehoben bleibt, nicht gemildert.
+          // `title=` gibt den vollen Text auf Hover zurück — auf Touch gibt
+          // es kein Hover, deshalb bleibt `title=` hier nur ein Zusatz für
+          // Zeigegeräte. Der eigentliche Fehler, den dieser Kommentar bis
+          // Task-11-Review C3 (finale Fix-Welle) als unbehoben festhielt —
+          // der Titel schrumpfte bei 375px mit langem `trailing`-Text auf
+          // 0px, weil beide sich mit dem Aktionscluster eine Zeile teilten —
+          // ist behoben: `trailingWrapsBelowSm` auf der `Row` unten schiebt
+          // `trailing` unterhalb von `sm` auf die Eyebrow-Zeile, sodass der
+          // Titel dort der einzige Inhalt der ersten Zeile ist (siehe JSDoc
+          // in `components/ui/list.tsx`).
           <span
             data-testid="task-row-title"
             title={props.title}
@@ -379,6 +382,11 @@ export function TaskRow(props: TaskRowProps) {
         )
       }
       eyebrow={props.topicTitle ?? undefined}
+      // Task-11-Review C3 (finale Fix-Welle): unterhalb von 375px konkurrierte
+      // `trailing` mit dem Aktionscluster um dieselbe Zeile wie der Titel und
+      // liess den Titel auf 0px schrumpfen — siehe `trailingWrapsBelowSm`-JSDoc
+      // in `components/ui/list.tsx`.
+      trailingWrapsBelowSm
       trailing={
         due ? (
           <span className={due.overdue ? "text-[var(--danger)]" : undefined}>

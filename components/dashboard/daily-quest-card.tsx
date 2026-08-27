@@ -273,7 +273,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
             {t("quest_no_quest")}
           </h1>
           <p className="m-0 font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
-            <Link href="/tasks" className="font-medium text-[var(--amber)] no-underline">
+            <Link href="/tasks" data-testid="quest-action" className="font-medium text-[var(--amber)]! no-underline!">
               {t("quest_no_quest_hint")}
             </Link>
           </p>
@@ -390,7 +390,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
               action carries amber: the first one, "jetzt anfangen" — it is
               this page's one action, not a label. */}
           <div className="flex flex-wrap items-center gap-6 pt-2 font-[family-name:var(--font-ui)] text-sm">
-            <Link href="/focus" className="font-medium text-[var(--amber)] no-underline">
+            <Link href="/focus" data-testid="quest-action" className="font-medium text-[var(--amber)]! no-underline!">
               {t("quest_start")}
             </Link>
             <button

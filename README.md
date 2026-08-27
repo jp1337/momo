@@ -32,7 +32,7 @@ Momo is a task management app built for people who struggle with avoidance, proc
 
 | Dashboard | Topics |
 |:---------:|:------:|
-| ![Dashboard — Daily Quest lit as the page's one highlighted element, with a naked Quick Wins list below](public/screenshots/01-dashboard.png) | ![Topics — project cards with progress bars and archive hint](public/screenshots/02-topics.png) |
+| ![Dashboard — Daily Quest lit as the page's one highlighted element, with a naked Quick Wins list below](public/screenshots/01-dashboard.png) | ![Topics — a hairline-separated list of topic rows, no cards, progress and a sequential marker as plain mono text](public/screenshots/02-topics.png) |
 
 | Habits | Statistics |
 |:------:|:----------:|

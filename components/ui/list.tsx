@@ -167,6 +167,20 @@ interface RowOwnProps {
   /** Rechts, Mono: Fälligkeit, Minutenzahl, Summe — auf derselben Zeile wie der Titel, nicht über die ganze (ggf. zweizeilige) Zeile zentriert. */
   trailing?: React.ReactNode;
   /**
+   * `trailing` rückt unterhalb von `sm` (640px) auf die Eyebrow-Zeile um,
+   * statt auf der Titelzeile zu bleiben (Task-11-Review C3, finale
+   * Fix-Welle): `task-row.tsx`s Zeile hatte dort `lead` (18px) + `trailing`
+   * (bis 129px, z. B. "Nächste: 5d überfällig") + bis zu drei 32px-Aktions-
+   * Buttons auf derselben Zeile wie der Titel — bei 375px war der Titel der
+   * einzige Flex-Kandidat und schrumpfte auf 0px (drei von zwölf
+   * stichprobenartig gemessenen Zeilen zeigten NUR noch das Trailing, keinen
+   * Buchstaben Titel). Standard `false`: identisches Verhalten wie vorher.
+   * Nur `task-row.tsx` setzt `true` — Quick Wins, Topics und Habits haben
+   * weder das breite `trailing` noch den mehrgliedrigen Aktionscluster und
+   * behalten die einzeilige Anordnung.
+   */
+  trailingWrapsBelowSm?: boolean;
+  /**
    * Aktionen. Auf Geräten mit Zeigegerät erst bei Hover/Fokus sichtbar; wo
    * kein Zeigegerät existiert (Touch), immer sichtbar — sonst wären sie
    * dauerhaft unsichtbar, aber wegen Hit-Testing trotzdem antippbar
@@ -238,6 +252,7 @@ export function Row<T extends React.ElementType = "li">({
   title,
   eyebrow,
   trailing,
+  trailingWrapsBelowSm = false,
   actions,
   effort,
   dotColor,
@@ -310,14 +325,30 @@ export function Row<T extends React.ElementType = "li">({
             {title}
           </span>
           {trailing ? (
-            <span className="shrink-0 font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]">
+            <span
+              className={cn(
+                "shrink-0 font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]",
+                trailingWrapsBelowSm && "hidden sm:inline-block",
+              )}
+            >
               {trailing}
             </span>
           ) : null}
         </span>
-        {eyebrow ? (
-          <span className="font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)]">
-            {eyebrow}
+        {eyebrow || (trailing && trailingWrapsBelowSm) ? (
+          <span className="flex items-center gap-2 font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)]">
+            {eyebrow ? <span className="min-w-0 truncate">{eyebrow}</span> : null}
+            {trailing && trailingWrapsBelowSm ? (
+              <span
+                data-testid="row-trailing-wrapped"
+                className={cn(
+                  "shrink-0 normal-case tracking-normal text-[0.8125rem] tabular-nums sm:hidden",
+                  eyebrow && "ml-auto",
+                )}
+              >
+                {trailing}
+              </span>
+            ) : null}
           </span>
         ) : null}
       </span>

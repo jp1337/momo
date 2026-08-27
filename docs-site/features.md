@@ -127,12 +127,12 @@ The 5-minute page strips away everything except the tasks you can finish right n
 
 When you want to block out everything except what matters right now, switch to **Focus Mode**. Open it from the sidebar (bullseye icon), or from the **start now** link next to your Daily Quest on the dashboard.
 
-Focus Mode is designed as a visual sanctuary. When you enter it, the interface shifts to a full-screen, immersive view with ambient amber and forest-green lighting — a deliberate signal that you have left the regular app and entered a focused space. You select up to three tasks to work through, then tackle them one at a time on a centered card.
+Focus Mode is designed as a visual sanctuary. When you enter it, the interface shifts to a full-screen, quiet view with no navigation bar or sidebar — a deliberate signal that you have left the regular app and entered a focused space. You select up to three tasks to work through, then tackle them one at a time.
 
 **How it works:**
 
-1. **Select phase** — choose 1–3 tasks from your open task list. Tasks are sorted by priority then coin value.
-2. **Work phase** — one task at a time on a full-screen card with a large amber "Done" button and a skip option. Progress dots at the top track how far along you are.
+1. **Select phase** — choose 1–3 tasks from your open task list, shown as a plain list, not cards. Tasks are sorted by priority then coin value.
+2. **Work phase** — one task at a time, full-screen, with a "Done" link and a skip option. Progress dots at the top track how far along you are.
 3. **Done phase** — a celebration screen shows how many tasks you completed and how many coins you earned.
 
 All completion animations still work — confetti, coins, level-up, and achievements fire normally.
