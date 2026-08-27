@@ -33,6 +33,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **„Momo ist aktuell" konnte über eine veraltete Instanz stehen.** Der Update-Checker
+  hatte zwei Cache-Schichten übereinander (Modul-Cache 24 h über Next-Data-Cache 24 h).
+  Da die Prüfung nur beim Öffnen der Admin-Seite läuft, lieferte der Data-Cache nach
+  Ablauf per Stale-while-revalidate die vorherige Antwort — die dann mit frischem
+  Zeitstempel für weitere 24 h festgehalten wurde. Die Anzeige war damit dauerhaft einen
+  Besuch hinterher. Zusätzlich zeigte die Admin-Seite „du verwendest die neueste Version"
+  auch dann, wenn die neueste Version unbekannt war. Beides behoben: eine Cache-Schicht,
+  fünf unterscheidbare Zustände, und `GET /api/health` gibt die laufende Version aus, damit
+  ein stehengebliebener Rollout ohne Login sichtbar ist. Die Publish-Pipeline prüft den
+  Rollout jetzt gegen diesen Endpunkt, statt Watchtowers HTTP 200 als Erfolg zu lesen.
 - **Das Navbar-Schlupfloch der Amber-Regel.** Bisher zählte die Amber-Regel nur über `<main>` —
   Federlogo, Münzzähler und Level-Badge lagen außerhalb und trugen Amber auf jeder einzigen Seite,
   gleichzeitig mit der einen erlaubten Handlung im Inhalt. Die Feder ist jetzt ein Inline-SVG

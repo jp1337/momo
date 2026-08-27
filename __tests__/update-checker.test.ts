@@ -188,3 +188,50 @@ describe("checkForUpdates with DISABLE_UPDATE_CHECK", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
+
+describe("checkForUpdates: eine Cache-Schicht, kein zweiter Boden", () => {
+  // Module cache from the previous describe block (DISABLE_UPDATE_CHECK) would
+  // otherwise leak into these tests via Vitest's dynamic import() cache — the
+  // last test there imports the module with DISABLE_UPDATE_CHECK=true baked
+  // into its closure, and only resets process.env, not the module registry.
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("fragt GitHub ohne Next-Data-Cache — sonst ist die Antwort einen Besuch alt", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ tag_name: "v9.9.9", html_url: "https://example.test" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { checkForUpdates } = await import("@/lib/update-checker");
+    await checkForUpdates();
+    const init = fetchMock.mock.calls[0][1] as RequestInit & {
+      next?: { revalidate?: number };
+    };
+    // Der Fehler, den das verhindert: Modul-Cache (24 h) ÜBER
+    // Next-Data-Cache (24 h). Läuft der Modul-Cache ab, liefert der
+    // Data-Cache nach Stale-while-revalidate den ALTEN Wert, der dann mit
+    // frischem checkedAt für weitere 24 h festgehalten wird.
+    expect(init.next?.revalidate).toBeUndefined();
+    expect(init.cache).toBe("no-store");
+  });
+
+  it("checkedAt stammt aus dem erfolgreichen Abruf, nicht aus dem Aufruf", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ tag_name: "v9.9.9", html_url: "https://example.test" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { checkForUpdates } = await import("@/lib/update-checker");
+    const first = await checkForUpdates();
+    const second = await checkForUpdates(); // aus dem Cache
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Der zweite Aufruf zeigt den Zeitpunkt des Abrufs, nicht "jetzt".
+    expect(second.checkedAt?.getTime()).toBe(first.checkedAt?.getTime());
+  });
+});

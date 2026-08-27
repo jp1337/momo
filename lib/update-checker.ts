@@ -6,6 +6,11 @@
  * GitHub API is hit at most once per process lifetime per day — well within
  * the 60 req/h unauthenticated rate limit.
  *
+ * Genau EINE Cache-Schicht: der Modul-Cache unten. Der frühere zweite
+ * Boden (next.revalidate) hat die Antwort um einen Besuch verzögert und
+ * dabei "Momo ist aktuell" über eine drei Monate alte Instanz geschrieben
+ * — siehe den Kommentar am fetch().
+ *
  * Disable entirely by setting DISABLE_UPDATE_CHECK=true in the environment
  * (useful for air-gap / offline installations).
  */
@@ -106,8 +111,20 @@ export async function checkForUpdates(): Promise<UpdateCheckResult> {
           "User-Agent": `momo-update-checker/${CURRENT_VERSION}`,
           Accept: "application/vnd.github+json",
         },
-        // Next.js fetch cache: revalidate every 24h
-        next: { revalidate: 86400 },
+        // Bewusst KEIN next.revalidate (bis 2026-08-22: 86400).
+        //
+        // Zwei Cache-Schichten übereinander — Modul-Cache 24 h über
+        // Next-Data-Cache 24 h — machten die Antwort strukturell falsch,
+        // nicht nur alt: checkForUpdates() läuft nur, wenn jemand die
+        // Admin-Seite öffnet. Ist der Modul-Cache abgelaufen, liefert der
+        // Data-Cache bei abgelaufenem Eintrag nach
+        // Stale-while-revalidate den ALTEN Wert und erneuert erst im
+        // Hintergrund; dieser alte Wert wurde dann mit checkedAt = jetzt
+        // gestempelt und weitere 24 h festgehalten. Die Anzeige war damit
+        // dauerhaft einen Besuch hinterher und trug immer einen frischen
+        // Zeitstempel. Der Modul-Cache allein reicht: ein Abruf pro
+        // Prozess und Tag, weit innerhalb der 60 req/h ohne Token.
+        cache: "no-store",
       }
     );
 

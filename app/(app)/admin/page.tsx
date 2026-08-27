@@ -34,6 +34,7 @@ import {
   faCodeBranch,
 } from "@fortawesome/free-solid-svg-icons";
 import { checkForUpdates } from "@/lib/update-checker";
+import { updateStatus } from "@/lib/update-status";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -119,6 +120,7 @@ export default async function AdminPage() {
     getRecentCronRuns(),
     checkForUpdates(),
   ]);
+  const status = updateStatus(updateCheck);
   const totalUsers = stats.totalUsers;
 
   const cronHistory = cronStatus.rows;
@@ -207,7 +209,7 @@ export default async function AdminPage() {
           </div>
 
           {/* Update disabled */}
-          {updateCheck.disabled && (
+          {status === "disabled" && (
             <div
               className="flex items-center gap-2 rounded-lg px-4 py-3"
               style={{
@@ -242,7 +244,7 @@ export default async function AdminPage() {
           )}
 
           {/* Check failed */}
-          {!updateCheck.disabled && updateCheck.error && (
+          {status === "failed" && (
             <div
               className="flex items-center gap-2 rounded-lg px-4 py-3"
               style={{
@@ -268,10 +270,26 @@ export default async function AdminPage() {
             </div>
           )}
 
+          {/* Neueste Version unbekannt — nicht als "aktuell" ausgeben.
+              Das war der Defekt: latestVersion === null landete im
+              Up-to-date-Zweig und beruhigte über einen Zustand, den
+              niemand geprüft hatte. */}
+          {status === "unknown" && (
+            <div className="flex items-center gap-2 rounded-[var(--radius-md)] px-4 py-3">
+              <FontAwesomeIcon
+                icon={faCircleInfo}
+                className="h-4 w-4 shrink-0 text-[var(--ink-3)]"
+                aria-hidden="true"
+              />
+              <span className="text-sm text-[var(--ink-2)]">
+                Die neueste Version ist unbekannt — die Prüfung hat keine
+                Antwort geliefert.
+              </span>
+            </div>
+          )}
+
           {/* Up to date */}
-          {!updateCheck.disabled &&
-            !updateCheck.error &&
-            !updateCheck.updateAvailable && (
+          {status === "current" && (
               <div
                 className="flex items-center gap-2 rounded-lg px-4 py-3"
                 style={{
@@ -292,7 +310,7 @@ export default async function AdminPage() {
                     color: "var(--accent-green)",
                   }}
                 >
-                  Momo ist aktuell — du verwendest die neueste Version.
+                  Momo ist aktuell — v{updateCheck.latestVersion} ist die neueste Version.
                 </span>
                 {updateCheck.checkedAt && (
                   <span
@@ -313,7 +331,7 @@ export default async function AdminPage() {
             )}
 
           {/* Update available */}
-          {!updateCheck.disabled && updateCheck.updateAvailable && (
+          {status === "outdated" && (
             <div
               className="flex items-start gap-3 rounded-lg px-4 py-4"
               style={{

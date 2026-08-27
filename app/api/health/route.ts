@@ -3,16 +3,24 @@
  * Health check endpoint used by Docker, Kubernetes liveness/readiness probes,
  * and load balancers to determine if the application is running.
  * Requires: no authentication
- * Returns: { status: "ok", timestamp: string, cron: { lastRunAt: string|null, minutesSinceLastRun: number|null } }
+ * Returns: { status: "ok", version: string, timestamp: string, cron: { lastRunAt: string|null, minutesSinceLastRun: number|null } }
  *
  * The `cron` field is informational only — it never affects the HTTP status code.
  * Infrastructure probes must not rely on it.
+ *
+ * `version` ist die Version des laufenden Images (aus package.json). Sie
+ * steht hier, weil ein stehengebliebener Rollout sonst unsichtbar ist: die
+ * einzige Stelle, die eine Version zeigte, lag hinter Admin-Login, und
+ * genau dort stand am 2026-08-22 "Momo ist aktuell" über einer Instanz,
+ * die drei Monate alt war. Eine Version ist kein Geheimnis — sie steht in
+ * jedem veröffentlichten Image-Tag.
  */
 
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { cronRuns } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { CURRENT_VERSION } from "@/lib/update-checker";
 
 /**
  * GET /api/health
@@ -49,6 +57,7 @@ export async function GET() {
 
     return Response.json({
       status: "ok",
+      version: CURRENT_VERSION,
       timestamp: new Date().toISOString(),
       cron: cronInfo,
     });

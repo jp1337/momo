@@ -23,6 +23,7 @@ vi.mock("@/lib/auth", () => ({
 import { GET as GETHealth } from "@/app/api/health/route";
 import { POST as POSTLocale } from "@/app/api/locale/route";
 import { POST as POSTCron } from "@/app/api/cron/route";
+import pkg from "../package.json";
 
 function req(method: string, url: string, body?: unknown, extraHeaders?: Record<string, string>): Request {
   return new Request(`http://localhost${url}`, {
@@ -38,15 +39,24 @@ function req(method: string, url: string, body?: unknown, extraHeaders?: Record<
 // ─── GET /api/health ──────────────────────────────────────────────────────────
 
 describe("GET /api/health", () => {
-  it("returns 200 with { status: ok, timestamp, cron } — no auth required", async () => {
+  it("returns 200 with { status: ok, version, timestamp, cron } — no auth required", async () => {
     const res = await GETHealth();
     expect(res.status).toBe(200);
     const body = await res.json() as {
       status: string;
+      version: string;
       timestamp: string;
       cron: { lastRunAt: string | null; minutesSinceLastRun: number | null };
     };
     expect(body.status).toBe("ok");
+    // A stalled rollout is invisible unless the running version is checkable
+    // without admin login — this is the field a CI gate reads (see
+    // .github/workflows/build-and-publish.yml "Verify the rollout actually
+    // happened"). Untested, it is exactly the kind of field that let the
+    // 2026-08-22 defect live for months.
+    expect(typeof body.version).toBe("string");
+    expect(body.version.length).toBeGreaterThan(0);
+    expect(body.version).toBe(pkg.version);
     expect(typeof body.timestamp).toBe("string");
     expect("cron" in body).toBe(true);
     expect("lastRunAt" in body.cron).toBe(true);

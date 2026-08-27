@@ -318,3 +318,41 @@ jobs:
           curl -sf -X POST \
             -H "Authorization: Bearer ${{ secrets.WATCHTOWER_API_TOKEN }}" \
             "http://watchtower:8085/v1/update?image=ghcr.io/jp1337/momo"
+
+      # Watchtower antwortet mit 200, sobald es die Anfrage angenommen hat —
+      # nicht, wenn der Container tatsaechlich getauscht ist. Am 2026-08-22
+      # war jeder Lauf gruen, waehrend live seit drei Monaten dasselbe Image
+      # lief. Ohne diesen Schritt ist "deploy: success" eine Aussage ueber
+      # einen HTTP-Status, nicht ueber den Rollout.
+      #
+      # Dieser Job laeuft auf dem self-hosted Intranet-Runner (siehe oben) —
+      # ob der die oeffentliche URL erreicht, ist nicht garantiert. Deshalb
+      # zuerst ROLLOUT_HEALTH_URL (Repository-Variable), dann
+      # NEXT_PUBLIC_APP_URL, erst dann der oeffentliche Fallback. Ist der
+      # Intranet-Runner vom Zugriff auf momotask.app abgeschnitten, setze
+      # ROLLOUT_HEALTH_URL auf die intern erreichbare Adresse derselben
+      # Instanz (z. B. http://momo:3000 oder eine interne DNS-Adresse) —
+      # unter "Settings" -> "Secrets and variables" -> "Actions" ->
+      # "Variables". Der Schritt bleibt blockierend: ein Verifikationsschritt,
+      # der bei Netzwerkproblemen durchfaellt, ist kein Verifikationsschritt
+      # mehr, wenn man ihn deshalb ignoriert.
+      - name: Verify the rollout actually happened
+        env:
+          APP_URL: ${{ vars.ROLLOUT_HEALTH_URL || vars.NEXT_PUBLIC_APP_URL || 'https://momotask.app' }}
+          EXPECTED: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          want="$(curl -sf "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/package.json" | jq -r .version)"
+          echo "erwartete Version: $want"
+          for attempt in $(seq 1 30); do
+            got="$(curl -sf "$APP_URL/api/health" | jq -r .version || echo '?')"
+            if [ "$got" = "$want" ]; then
+              echo "Rollout bestaetigt nach ${attempt} Versuch(en): $got"
+              exit 0
+            fi
+            echo "Versuch $attempt: laeuft $got, erwartet $want"
+            sleep 20
+          done
+          echo "Rollout nicht bestaetigt: /api/health meldet weiter eine andere Version."
+          echo "Watchtower hat die Anfrage angenommen, den Container aber nicht getauscht."
+          exit 1
