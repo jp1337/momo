@@ -255,7 +255,12 @@ describe("checkForUpdates: Cache-TTL-Grenzen", () => {
 
   it("fragt nach 24 h erneut ab, statt den Cache weiter zu bedienen", async () => {
     vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
-    fetchSpy.mockResolvedValue(ghResponse("v9.9.9"));
+    // mockImplementation, nicht mockResolvedValue: Letzteres wertet
+    // ghResponse() einmal aus, sodass beide Aufrufe dasselbe Response-
+    // Objekt bekommen — dessen Body ist nach dem ersten .json() bereits
+    // gelesen, der zweite Aufruf würfe beim Parsen und der Refetch würde
+    // still zu einem Fehlerresultat, obwohl er "erfolgte".
+    fetchSpy.mockImplementation(async () => ghResponse("v9.9.9"));
     const { checkForUpdates } = await import("@/lib/update-checker");
 
     await checkForUpdates();
@@ -263,9 +268,14 @@ describe("checkForUpdates: Cache-TTL-Grenzen", () => {
 
     // Genau an der 24h-Grenze: cache.cachedAt liegt jetzt exakt CACHE_TTL_MS
     // zurück, `< CACHE_TTL_MS` ist falsch, der Cache gilt als abgelaufen.
-    vi.setSystemTime(new Date("2026-01-02T00:00:01.000Z"));
-    await checkForUpdates();
+    vi.setSystemTime(new Date("2026-01-02T00:00:00.000Z"));
+    const second = await checkForUpdates();
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+    // Beweist, dass der Refetch tatsächlich funktioniert hat, nicht nur
+    // stattfand: ein Fehler beim zweiten .json() wäre hier still als
+    // error-Resultat durchgerutscht.
+    expect(second.error).toBeUndefined();
+    expect(second.latestVersion).toBe("9.9.9");
   });
 
   it("wiederholt nach einem Fehler innerhalb von ~5 Minuten, nicht erst nach 24 h", async () => {

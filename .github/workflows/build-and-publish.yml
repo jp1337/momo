@@ -313,6 +313,14 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: [self-hosted, intranet]
     permissions: {}
+    # Job-scoped only — never at workflow level: cancelling `build` or
+    # `merge` mid-manifest-push would be worse than a stale rollout gate.
+    # Two close pushes to main would otherwise leave the older run polling
+    # for a commit the instance has already moved past, burning its full
+    # ten minutes and failing on a rollout that in fact worked.
+    concurrency:
+      group: deploy-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Trigger Watchtower update
         run: |
@@ -357,9 +365,19 @@ jobs:
           # ROLLOUT_HEALTH_URL set with one produces "…//api/health".
           url="${APP_URL%/}"
           for attempt in $(seq 1 30); do
+            # No `-f`: this gate asks "was the container swapped?", not "is
+            # the app healthy?" — a 503 whose body carries a matching commit
+            # means the swap happened; a DB outage is a different watchdog's
+            # alarm. `-f` would make curl print nothing and exit 22 on that
+            # 503, so the commit never reaches sed and the loop misreads a
+            # healthy rollout as a stuck one. Without `-f`, the `sed` match
+            # itself is the validity check: a proxy error page (e.g. HTML
+            # 502) yields no match, `got` stays empty, and the loop retries.
+            # --max-time 10 bounds a hung connection so one bad attempt
+            # cannot stall the whole gate.
             # The `|| echo '?'` neutralises `set -e` for this one command:
             # a transient curl failure must retry, not abort the job.
-            got="$(curl -sf "$url/api/health" | sed -n 's/.*"commit":"\([^"]*\)".*/\1/p' || echo '?')"
+            got="$(curl -s --max-time 10 "$url/api/health" | sed -n 's/.*"commit":"\([^"]*\)".*/\1/p' || echo '?')"
             if [ "$got" = "$EXPECTED" ]; then
               echo "Rollout bestaetigt nach ${attempt} Versuch(en): $got"
               exit 0

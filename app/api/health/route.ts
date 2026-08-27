@@ -26,10 +26,14 @@
  * ist `commit` `null` — das ist ehrlich, kein Fehler.
  *
  * Beide Felder stehen auch in der 503-Antwort: eine kaputte Datenbank
- * braucht keins von beiden, und ohne sie liest die Rollout-Prüfung bei
- * einem DB-Ausfall 30 Versuche lang "?" und meldet danach fälschlich
- * "Watchtower hat den Container nicht getauscht", obwohl der neue
- * Container läuft und nur die Datenbank down ist.
+ * braucht keins von beiden, und ohne sie könnte die Rollout-Prüfung einen
+ * DB-Ausfall nicht von einem stehengebliebenen Rollout unterscheiden.
+ * Damit sie den Wert auch tatsächlich sieht, ruft
+ * `.github/workflows/build-and-publish.yml` `curl` dort OHNE `-f` auf —
+ * mit `-f` gibt curl bei HTTP 503 nichts aus und bricht mit Exitcode 22
+ * ab, bevor der Body `sed` erreicht. Ohne `-f` liest die Prüfung `commit`
+ * auch aus der 503-Antwort: stimmt er, hat der Rollout stattgefunden,
+ * auch wenn die Datenbank gerade down ist — das ist ein anderer Alarm.
  */
 
 import { db } from "@/lib/db";

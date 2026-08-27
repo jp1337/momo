@@ -90,7 +90,7 @@ app:
 Datenbank.
 
 Die Publish-Pipeline (`.github/workflows/build-and-publish.yml`, Job `deploy`) fragt
-dieses Feld nach jedem Push auf `main` ab, um zu bestätigen, dass Watchtower den
+das Feld `commit` nach jedem Push auf `main` ab, um zu bestätigen, dass Watchtower den
 Container tatsächlich getauscht hat — Watchtowers HTTP 200 sagt nur, dass die
 Anfrage angenommen wurde, nicht dass der neue Container läuft. Verglichen wird
 `commit` gegen `github.sha`, nicht `version`: kein Workflow bumpt die Version
