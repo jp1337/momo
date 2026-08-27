@@ -223,8 +223,8 @@ Abfrage `estimatedMinutes <= 15` filtert.
 
 `npm run check:design` ist eine Datei-für-Datei-Ratsche über hartkodierte
 Farbe, Radius außerhalb der Skala, `style={{ … }}` und (seit Phase 1)
-Abstands-Utilities außerhalb der Achterskala in `.tsx`. Aktuell 1938
-Verstöße über den Rest der App (Task 2: 2219) — die Zahl darf nur fallen,
+Abstands-Utilities außerhalb der Achterskala in `.tsx`. Der aktuelle Stand
+kommt aus `npm run check:design` — die Zahl darf nur fallen,
 neue Verstöße lassen CI fehlschlagen. Eine Regel legitim zu erweitern hebt
 die Baseline an; der dafür vorgesehene Weg ist, `scripts/design-baseline.json`
 zu löschen und neu zu erzeugen — nicht `--update` gegen die alte Baseline,

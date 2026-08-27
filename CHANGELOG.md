@@ -123,6 +123,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
      Breite-Ideal — akzeptierter Tausch gegen einen wirklich unsichtbaren Rand statt eines
      unbemerkten Kompromisses; volle Breite auf jeder Breite bräuchte einen Scroll-Container, der
      nicht `main` selbst ist (Empfehlung im Task-12-Bericht, nicht hier umgesetzt).
+- **Navigationslisten waren dauerhaft unterstrichen.** Jedes Link-Element (Wordmark in der Navbar, Sidebar-Links, Mobile-Bottom-Nav-Labels und Topic-Zurück-Link) trug eine unlayered `a { text-decoration: underline }` aus `globals.css`, die jede layered Tailwind-Utility schlug — auch dort, wo unterline nicht vorgesehen war. Behoben mit `no-underline!` auf allen sechs Stellen (`navbar.tsx`, `mobile-nav.tsx`, `sidebar.tsx`, `user-menu.tsx`, `topic-detail-view.tsx`, `task-list.tsx`).
+- **Das Dashboard-Quest-Element war farblos.** Die einzige Amber-Handlung pro Seite (Links auf quest-action) war von derselben Cascade-Falle betroffen — unlayered `a { color: inherit }` schlug die farbgebende Utility, sodass der Quest-Link als plain text lesbar war. Behoben mit `text-[var(--amber)]!` auf beiden Quest-Action-Links.
+- **Task-Titel unter 375 px auf `/tasks` kollabiert auf 0 px Breite.** Bei langen Trailing-Werten (`28 days`/`5 Overdue`) brauchte die Eyebrow-Zeile plötzlich zwei Zeilen — Title, Action-Cluster und Trailing konkurrierten um die gleiche Linie und der Title schrumpfte auf unsichtbar. Behoben mit `trailingWrapsBelowSm`-Prop in Row, das Trailing unter 640 px auf die Eyebrow-Zeile verschiebt und den Title von der Konkurrenz befreit.
+- **Sequential-Marker auf `/topics` verschwunden.** Bei der Row-Migration wurde die Eyebrow-Marke nicht neu implementiert, obwohl sie funktional ist (bestimmt, welche Task der Quest auswählen kann). Wiederhergestellt als Mono-Eyebrow (reusing `topics.sequential_badge` i18n key) ohne neues Styling.
 
 ### Changed
 
@@ -193,8 +197,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   Unterstreichung. `--danger` trägt inzwischen drei statt zwei Rollen — Zerstörung, Überfälligkeit
   **und** Fehlermeldungen (Präzedenz in `task-breakdown-modal.tsx`); die Alternative wäre eine
   Fehlermeldung in Ink, nicht als Fehler lesbar.
-- **Design-Ratsche bei 1938 Verstößen** (Task 2: 2219, nach Task 11: 1938; Task 12 senkt sie nicht
-  weiter, der erreichte Stand ist bereits der Boden). Die Ratsche hat einen blinden Fleck: ihre
+- **Design-Ratsche bei 1938 Verstößen.** Der aktuelle Stand kommt aus `npm run check:design`, nicht aus diesem Dokument — er veraltet sofort, sobald sich etwas ändert. Die Ratsche hat einen blinden Fleck: ihre
   `inline`-Regel ist wörtlich `/style=\{\{/g` und sieht `style={objektName}` — ein benanntes Objekt
   statt eines Literals — nicht. Gemessen: **76** solcher Stellen in `app/` und `components/`
   (Formulare wie `task-form.tsx`/`webhooks.tsx` bilden den größten Teil). Kein Dokument hier
