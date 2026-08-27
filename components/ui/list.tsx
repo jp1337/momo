@@ -61,7 +61,17 @@ export const EFFORT_TEXT: Record<EffortStep, string> = {
 /**
  * Die Liste: keine Aufzählungspunkte, kein Rahmen, kein Abstand außen.
  *
- * @param props.children - die `Row`- (oder `GroupHeading`-) Kinder
+ * **Eine `List` pro Gruppe.** Eine `GroupHeading` gehört DANEBEN (als
+ * Geschwister davor), nicht HINEIN (Task-4-Review R15): `GroupHeading`
+ * rendert ein `<p>`, `List` ein `<ul>` — ein `<p>` als Kind eines `<ul>`
+ * ist ungültiges DOM. Es bricht außerdem die eigene Haarlinien-Regel: die
+ * erste `Row` nach einer eingebetteten Überschrift wäre nicht mehr
+ * `:first-child`, `first:border-t-0` griffe nicht mehr, und unter der
+ * Überschrift erschiene eine Haarlinie. Eine Seite mit mehreren
+ * Prioritätsgruppen (z. B. `/tasks`) rendert entsprechend mehrere `<ul>`s,
+ * je mit einer `GroupHeading` davor.
+ *
+ * @param props.children - `Row`-Kinder
  * @param props.className - zusätzliche Klassen
  * @returns Ein `<ul>` ohne Standard-Listenstil
  */
@@ -76,7 +86,8 @@ export function List({
 }
 
 /**
- * Gruppenüberschrift innerhalb einer Liste — ein Mono-Eyebrow.
+ * Gruppenüberschrift — ein Mono-Eyebrow. Steht als Geschwister VOR einer
+ * eigenen `List`, nie als deren Kind (siehe `List`-JSDoc).
  *
  * Priorität als Gruppierung statt als Abzeichen ist Struktur statt
  * Dekoration: "HOCH · 2" kodiert etwas Wahres über den Inhalt, ein
@@ -93,58 +104,104 @@ export function GroupHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-export interface RowProps {
-  /** Links: Abhak-Kreis, Auswahlkästchen, Griff. */
+/** Props, die `Row` selbst konsumiert — unabhängig davon, als welches Element sie rendert. */
+interface RowOwnProps {
+  /** Links: Abhak-Kreis, Auswahlkästchen, Griff. Auf derselben Zeile wie Titel/Trailing zentriert. */
   lead?: React.ReactNode;
   /** Der Titel. Trägt die Aufwandsgröße. */
   title: React.ReactNode;
   /** Mono-Eyebrow unter dem Titel — das Thema, `--ink-3`. */
   eyebrow?: React.ReactNode;
-  /** Rechts, Mono: Fälligkeit, Minutenzahl, Summe. */
+  /** Rechts, Mono: Fälligkeit, Minutenzahl, Summe — auf derselben Zeile wie der Titel, nicht über die ganze (ggf. zweizeilige) Zeile zentriert. */
   trailing?: React.ReactNode;
-  /** Aktionen, sichtbar bei Hover und Fokus. */
+  /**
+   * Aktionen. Auf Geräten mit Zeigegerät erst bei Hover/Fokus sichtbar; wo
+   * kein Zeigegerät existiert (Touch), immer sichtbar — sonst wären sie
+   * dauerhaft unsichtbar, aber wegen Hit-Testing trotzdem antippbar
+   * (Task-4-Review, Important 5).
+   */
   actions?: React.ReactNode;
-  /** Aufwandsstufe; bestimmt die Titelgröße. Standard: medium. */
+  /**
+   * Aufwandsstufe; bestimmt die Titelgröße. Ohne Wert wird optisch
+   * "medium" verwendet, aber `data-effort` bleibt weg (Task-4-Review R16):
+   * eine Zeile ohne Dauer (Thema, Habit) soll keinen Aufwand behaupten,
+   * den sie nicht hat.
+   */
   effort?: EffortStep;
   /** Die frei gewählte Themenfarbe des Nutzers, als 6-px-Punkt. */
   dotColor?: string | null;
-  /** Erledigt: gedämpft und durchgestrichen. */
+  /** Erledigt: gedämpft und durchgestrichen. Unabhängig von `tone`. */
   dimmed?: boolean;
+  /**
+   * Titelfarbe, wenn nicht `dimmed` (Task-4-Review R14): `"primary"`
+   * (`--ink`, Standard) für eine Zeile, die selbst der Inhalt der Seite
+   * ist (`/tasks`); `"secondary"` (`--ink-2`) für eine Zeile, die neben
+   * einem wichtigeren Element auf derselben Seite steht (Quick Wins unter
+   * der Daily Quest). Orthogonal zu `dimmed` — "erledigt" bleibt
+   * ausschließlich `dimmed`s Bedeutung, `--ink-3`+Durchstreichung für eine
+   * offene Aufgabe wäre eine Lüge über ihren Status.
+   */
+  tone?: "primary" | "secondary";
   className?: string;
   testId?: string;
 }
 
 /**
+ * `RowProps`, parametrisiert über das Element/die Komponente, als die
+ * `Row` rendert (`as`, Standard `"li"`) — Task-4-Review R13. Erlaubt z. B.
+ * `as={motion.li}` mit `initial`/`animate`/`exit`/`transition` als
+ * zusätzliche Props, ohne `any`: die erlaubten Zusatz-Props sind exakt
+ * die, die die Ziel-Komponente `T` selbst deklariert
+ * (`React.ComponentPropsWithoutRef<T>`).
+ */
+export type RowProps<T extends React.ElementType = "li"> = RowOwnProps & {
+  /** Render-Ziel; Standard `"li"`. Für die Austritts-Animation: `motion.li`. */
+  as?: T;
+} & Omit<React.ComponentPropsWithoutRef<T>, keyof RowOwnProps | "as">;
+
+/**
  * Eine Zeile. Haarlinie oben, außer bei der ersten.
  *
+ * `Row` besitzt das Zielelement vollständig (Standard `<li>`) und reicht
+ * jede unbekannte Prop direkt daran durch — das ist, wie eine
+ * Austritts-Animation überhaupt möglich ist (Task-4-Review R13): ein
+ * `motion.div` INNERHALB der Zeile kann `AnimatePresence` nicht bedienen,
+ * weil `AnimatePresence` genau das Element beobachten muss, das aus dem
+ * DOM verschwindet — hier `as={motion.li}` statt eines internen Wrappers.
+ *
  * @param props - siehe RowProps
- * @returns Ein `<li>` ohne Fläche und ohne Rahmen
+ * @returns Ein Element ohne Fläche und ohne Rahmen
  */
-export function Row({
+export function Row<T extends React.ElementType = "li">({
+  as,
   lead,
   title,
   eyebrow,
   trailing,
   actions,
-  effort = "medium",
+  effort,
   dotColor,
   dimmed = false,
+  tone = "primary",
   className,
   testId = "row",
-}: RowProps) {
+  ...rest
+}: RowProps<T>) {
+  const Comp = (as ?? "li") as React.ElementType;
+  const visualEffort = effort ?? "medium";
   return (
-    <li
+    <Comp
       data-testid={testId}
-      data-effort={effort}
+      {...(effort ? { "data-effort": effort } : {})}
       className={cn(
         "group flex items-start gap-3 border-t border-t-[var(--hairline)] bg-transparent py-3 first:border-t-0",
         className,
       )}
+      {...rest}
     >
-      {lead ? <span className="mt-1 shrink-0">{lead}</span> : null}
-
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex min-w-0 items-center gap-2">
+          {lead ? <span className="shrink-0">{lead}</span> : null}
           {dotColor ? (
             <span
               data-testid="row-dot"
@@ -162,12 +219,21 @@ export function Row({
             data-row-title
             className={cn(
               "min-w-0 flex-1 truncate font-[family-name:var(--font-mono)]",
-              EFFORT_TEXT[effort],
-              dimmed ? "text-[var(--ink-3)] line-through" : "text-[var(--ink)]",
+              EFFORT_TEXT[visualEffort],
+              dimmed
+                ? "text-[var(--ink-3)] line-through"
+                : tone === "secondary"
+                  ? "text-[var(--ink-2)]"
+                  : "text-[var(--ink)]",
             )}
           >
             {title}
           </span>
+          {trailing ? (
+            <span className="shrink-0 font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]">
+              {trailing}
+            </span>
+          ) : null}
         </span>
         {eyebrow ? (
           <span className="font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)]">
@@ -176,17 +242,28 @@ export function Row({
         ) : null}
       </span>
 
-      {trailing ? (
-        <span className="shrink-0 self-center font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]">
-          {trailing}
-        </span>
-      ) : null}
-
       {actions ? (
-        <span className="shrink-0 self-center opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+        <span
+          className={cn(
+            "pointer-events-auto shrink-0 self-center opacity-100 transition-opacity",
+            // Nur wo ein Zeigegerät existiert, ist "unsichtbar bis
+            // Hover/Fokus" bedienbar (Task-4-Review, Important 5): auf
+            // Touch gibt es keinen Hover, also wären die Aktionen
+            // dauerhaft unsichtbar, aber ohne pointer-events-none trotzdem
+            // per Hit-Testing antippbar — Fehltipps ohne einen Weg, sie
+            // absichtlich zu treffen. Deshalb ist "erst bei Hover/Fokus
+            // sichtbar" auf @media (hover: hover) beschränkt; ohne
+            // Zeigegerät bleiben die Aktionen einfach immer sichtbar. Das
+            // weicht bewusst vom Plan ("sichtbar bei Hover und Fokus") ab,
+            // weil der Plan Touch nicht bedacht hatte.
+            "[@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0",
+            "[@media(hover:hover)]:focus-within:pointer-events-auto [@media(hover:hover)]:focus-within:opacity-100",
+            "[@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100",
+          )}
+        >
           {actions}
         </span>
       ) : null}
-    </li>
+    </Comp>
   );
 }

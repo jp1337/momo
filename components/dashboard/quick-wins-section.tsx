@@ -10,9 +10,11 @@
  * distinct items" is information; a box around all of them was not.
  *
  * The row's font size carries the effort: see `effortStep()` in
- * `components/ui/list.tsx`. This keeps the list unmistakably secondary to
- * the Daily Quest above it — no colour, no surface, nothing amber or green
- * competing for attention.
+ * `components/ui/list.tsx`. `tone="secondary"` (`--ink-2`, not `--ink`) is
+ * what actually keeps the list secondary to the Daily Quest above it now
+ * (Task-4-Review R14 — `className` lands on the `<li>`, not the title
+ * span, so a call site cannot dim the title any other way) — no colour, no
+ * surface, nothing amber or green competing for attention.
  *
  * Tasks can be marked complete directly here (the circle button on the
  * left). On completion: confetti, coins, level-up overlay and achievement
@@ -22,7 +24,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { List, Row, effortStep } from "@/components/ui/list";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
@@ -113,8 +115,14 @@ export function QuickWinsSection({ tasks: initialTasks }: QuickWinsSectionProps)
           {tasks.map((task) => (
             <Row
               key={task.id}
+              as={motion.li}
               testId="quick-win-row"
               effort={effortStep(task.estimatedMinutes)}
+              tone="secondary"
+              className="overflow-hidden"
+              initial={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0, paddingTop: 0, paddingBottom: 0 }}
+              transition={{ duration: 0.2 }}
               lead={
                 <button
                   type="button"

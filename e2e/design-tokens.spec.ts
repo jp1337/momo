@@ -356,7 +356,7 @@ test.describe("List und Row", () => {
     });
     const second = await rows.nth(1).evaluate((n) => {
       const c = getComputedStyle(n);
-      return { top: c.borderTopWidth, bg: c.backgroundColor };
+      return { top: c.borderTopWidth, bg: c.backgroundColor, color: c.borderTopColor };
     });
     // Erste Zeile ohne Linie oben, jede folgende mit genau einer.
     expect(first.top).toBe("0px");
@@ -365,6 +365,20 @@ test.describe("List und Row", () => {
     // Kein Kasten: keine Fläche unter der Zeile.
     expect(first.bg).toBe("rgba(0, 0, 0, 0)");
     expect(second.bg).toBe("rgba(0, 0, 0, 0)");
+    // Die Linie ist --hairline, nicht irgendeine Randfarbe (Task-4-Review
+    // R16): "border-t" allein ohne "border-t-[var(--hairline)]" waere eine
+    // sichtbare currentColor-Linie, und die Zeile oben bliebe gruen.
+    const hairlineRgb = await page.evaluate(() => {
+      const probe = document.createElement("div");
+      probe.style.borderTopStyle = "solid";
+      probe.style.borderTopWidth = "1px";
+      probe.style.borderTopColor = "var(--hairline)";
+      document.body.appendChild(probe);
+      const rgb = getComputedStyle(probe).borderTopColor;
+      probe.remove();
+      return rgb;
+    });
+    expect(second.color).toBe(hairlineRgb);
   });
 
   test("die Dauer steckt in der Schriftgröße des Titels", async ({ page }) => {
@@ -386,12 +400,30 @@ test.describe("List und Row", () => {
     const dot = page.getByTestId("row-dot").first();
     const s = await dot.evaluate((n) => {
       const c = getComputedStyle(n);
-      return { w: c.width, h: c.height, radius: c.borderTopLeftRadius, border: c.borderTopWidth };
+      return {
+        w: c.width,
+        h: c.height,
+        radius: c.borderTopLeftRadius,
+        border: c.borderTopWidth,
+        bg: c.backgroundColor,
+      };
     });
     expect(s.w).toBe("6px");
     expect(s.h).toBe("6px");
     expect(s.border).toBe("0px");
     expect(parseFloat(s.radius)).toBeGreaterThanOrEqual(3);
+    // Die Punktfläche ist tatsaechlich die uebergebene dotColor (Task-4-
+    // Review R16) — ohne diese Zeile bliebe der Test gruen, selbst wenn
+    // style={{ backgroundColor: dotColor }} entfernt wuerde.
+    const doneRgb = await page.evaluate(() => {
+      const probe = document.createElement("div");
+      probe.style.backgroundColor = "var(--done)";
+      document.body.appendChild(probe);
+      const rgb = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return rgb;
+    });
+    expect(s.bg).toBe(doneRgb);
   });
 
   test("der leere Zustand ist eine Zeile und eine Handlung, kein Kasten", async ({ page }) => {
@@ -399,10 +431,14 @@ test.describe("List und Row", () => {
     const empty = page.getByTestId("demo-empty");
     const s = await empty.evaluate((n) => {
       const c = getComputedStyle(n);
-      return { border: c.borderTopWidth, style: c.borderTopStyle, bg: c.backgroundColor };
+      return { border: c.borderTopWidth, bg: c.backgroundColor };
     });
+    // Kein separater "border-style !== dashed"-Check (Task-4-Review R16):
+    // computed border-top-style ist "none" IMMER dann, wenn width "0px"
+    // ist (CSS-Spec-Regel, nicht Zufall) — die Aussage war neben der
+    // Breitenpruefung inhaltsleer, solange EmptyState ueberhaupt keine
+    // border-Klasse setzt.
     expect(s.border).toBe("0px");
-    expect(s.style).not.toBe("dashed");
     expect(s.bg).toBe("rgba(0, 0, 0, 0)");
   });
 });
