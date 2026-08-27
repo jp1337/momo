@@ -64,11 +64,13 @@ export const EFFORT_TEXT: Record<EffortStep, string> = {
  * Ohne Farbe: der Aufrufer hängt sie an (aktiv `--ink`, erledigt
  * `--ink-3` + Durchstreichung) — dieselbe Trennung von Größe und Farbe wie
  * bei `Row`s `tone`-Prop. `font-display-stage` (in `globals.css`) trägt die
- * Variable-Font-Achsen (`fontVariationSettings`), die keine
- * CSS-Custom-Property tragen kann; vorher war das ein Inline-Style-Objekt
- * in zwei byte-identischen Kopien (`daily-quest-card.tsx`,
- * `focus-mode-view.tsx`), die vom Ratschen-Regex `/style=\{\{/g` nicht
- * gesehen wurden — hier zusammengeführt (Task-9-Review F2/F4).
+ * Variable-Font-Achsen (`fontVariationSettings`): Tailwinds
+ * Arbitrary-Value-Syntax kommt mit den Anführungszeichen und Kommas der
+ * Achsenliste nicht klar, nur eine benannte Klasse im Stylesheet trägt den
+ * Wert; vorher war das ein Inline-Style-Objekt in zwei byte-identischen
+ * Kopien (`daily-quest-card.tsx`, `focus-mode-view.tsx`), die vom
+ * Ratschen-Regex `/style=\{\{/g` nicht gesehen wurden — hier
+ * zusammengeführt (Task-9-Review F2/F4).
  */
 export const stageTitleClassName =
   "m-0 max-w-[26ch] font-[family-name:var(--font-display)] font-display-stage font-normal " +

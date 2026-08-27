@@ -184,7 +184,7 @@ function SelectionPhase({
                 // diesen neuen Zeilen-Klick mitsperrt — ein `disabled` nur am
                 // Kästchen hätte das nicht getan, Klicks auf Titel/Eyebrow
                 // wären trotzdem durchgekommen.
-                className={cn(isDisabled && "pointer-events-none opacity-40")}
+                className={cn("cursor-pointer", isDisabled && "pointer-events-none opacity-40")}
                 onClick={() => toggle(task)}
                 lead={
                   <button

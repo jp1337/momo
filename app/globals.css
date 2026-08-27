@@ -456,9 +456,12 @@ h6 {
 
 /* The one Fraunces headline's own axis recipe (dashboard quest, /focus
    stage) — SOFT 50/WONK 1/opsz 130, distinct from the two demo axes above.
-   A CSS custom property cannot carry font-variation-settings, but a class
-   can: this is that class, so `daily-quest-card.tsx` and
-   `focus-mode-view.tsx` don't need a `style={}` object each for it
+   Tailwind's arbitrary-value class syntax can't carry this: the axis list's
+   quotes and commas don't survive a class name, so a named class in the
+   stylesheet is the only place it reads naturally. That also keeps it out
+   of an inline style object, so `daily-quest-card.tsx` and
+   `focus-mode-view.tsx` don't need one each — and the ratchet's
+   `/style=\{\{/g` check can actually see what inline styles remain
    (Task-9-Review F2). */
 .font-display-stage {
   font-variation-settings: "SOFT" 50, "WONK" 1, "opsz" 130;
