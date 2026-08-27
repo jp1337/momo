@@ -21,9 +21,10 @@ import {
  * "nicht da": beide Deckelungs-Regeln unten (`inside ≤ 2`, `outside ≤ …`)
  * werden von `0/0` genauso erfüllt wie von einer echten Messung, ohne dass
  * der Test das je bemerkt — genau der Fund der Task-3-Review. Ein
- * kommendes Task entfernt diese Animation ganz ("Die Ankunft umkehren");
- * bis dahin wartet dieser Helper auf das reale Ende, statt zu raten, wie
- * lange 0.35s plus Jitter brauchen.
+ * Die Eintrittsanimation ist weg (2026-08-22), also ist die Behauptung sofort
+ * erfuellt; der Helper bleibt aber als Guard, falls eine Eintrittsanimation je
+ * wiederkommt. Das `.lichtkegel`-Element selbst hat nie inline-opacity, und die
+ * Atemanimation laeuft auf dem `::before` und erreicht nie 0.
  */
 async function gotoSettled(page: Page, theme: "dark" | "light", path: string) {
   await gotoWithTheme(page, theme, path);

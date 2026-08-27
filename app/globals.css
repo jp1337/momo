@@ -317,9 +317,10 @@ body {
  * Container-Mitte als Anker bleibt sie bei Container-Mitte, egal wie breit
  * die Box ist.
  *
- * Die Opazitaet atmet leicht (6s, 0.85 → 1) statt zu pulsieren — das Licht
- * soll wirken, als stuende es einfach da, nicht als bluepe es. Unter
- * prefers-reduced-motion bleibt das Licht selbst stehen, nur die Animation
+ * Die Opazitaet atmet leicht (6s, 1 → 0.85 in der Mitte) statt zu pulsieren —
+ * das Licht steht bei Ankunft auf voller Staerke, nicht zuletzt (auf einer Seite,
+ * deren These "ein Lichtkegel" ist, muss das Licht schon beim Laden wirken).
+ * Unter prefers-reduced-motion bleibt das Licht selbst stehen, nur die Animation
  * faellt weg: der Kegel ist Inhalt (Beleuchtung), keine Bewegung.
  */
 .lichtkegel {

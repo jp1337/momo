@@ -29,7 +29,7 @@
  * - Empty state and celebration (completed) state — both still render the
  *   page's h1, in the empty state as the "no quest" text, in the completed
  *   state as the struck-through, dimmed title
- * - Motion entrance animation (fade + slide up)
+ * - At full strength on arrival; only the surrounding sections settle in after
  *
  * Receives all data as props — no direct data fetching.
  */
