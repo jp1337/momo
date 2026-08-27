@@ -58,10 +58,15 @@ export default async function TopicsPage() {
   ];
 
   // Offene Aufgaben nur über die AKTIVEN Themen — ein archiviertes Thema
-  // trägt keine offene Arbeit mehr im Sinn des Rands (Spec §6: eine Null
-  // als Tatsache ist ein täglicher kleiner Vorwurf, aber "offen" über
-  // bereits archivierte Themen mitzuzählen wäre keine Null, sondern eine
-  // falsche Tatsache).
+  // trägt keine offene Arbeit mehr im Sinn des Rands ("offen" über bereits
+  // archivierte Themen mitzuzählen wäre keine Null, sondern eine falsche
+  // Tatsache). Der Zähler wird bei 0 ausgeblendet — anders als /tasks'
+  // `rail_open` (der IMMER steht, auch bei 0; nur `rail_overdue` ist dort
+  // gated, siehe `tasks-rail.tsx`). Kein Präzedenzfall, eine eigene
+  // Entscheidung: "0 offene Aufgaben über alle Themen" ist der Normalfall,
+  // sobald man mit allen Themen durch ist, keine Ausnahme, die den Rand
+  // wert wäre (Task-10-Review, Minor: der vorherige Kommentar berief sich
+  // fälschlich auf `rail_overdue` als Präzedenz).
   const openTasks = topics.reduce(
     (sum, topic) => sum + (topic.taskCount - topic.completedCount),
     0,

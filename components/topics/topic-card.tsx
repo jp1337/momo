@@ -26,16 +26,22 @@
  * Link" statt Amber (siehe `globals.css` dort) — genau richtig für einen
  * Titel, der zugleich navigiert.
  *
- * **Der Wortumbruch-Fehler, der hier behoben wird:** die vorherige Karte
+ * **Der Wortumbruch-Fehler, der hier behoben wird — und warum die erste
+ * Erklärung dafür falsch war (Task-10-Review C1):** die vorherige Karte
  * setzte auf dem `<h3>`-Titel `overflowWrap: "break-word"` UND
- * `wordBreak: "break-word"` gleichzeitig. `word-break: break-word` ist der
- * veraltete Alias von `overflow-wrap: anywhere` — er bricht auch innerhalb
- * eines Wortes, das auf die nächste Zeile gepasst hätte ("Steuererklärun
- * g 2025"). `overflow-wrap: break-word` allein bricht nur ein Wort, das für
- * sich allein nicht in die Zeile passt. `Row`s `wrapTitle`-Prop setzt jetzt
- * ausschließlich Tailwinds `break-words` (= `overflow-wrap: break-word`,
- * ohne `word-break`) plus `hyphens-auto` — dieselbe Bugfix-Logik gilt für
- * jede Zeile mit `wrapTitle`, nicht nur für Themen.
+ * `wordBreak: "break-word"` gleichzeitig und brach mitten im Wort
+ * ("Steuererklärun g 2025"). Die erste Fassung dieses Kommentars behauptete,
+ * das Entfernen von `word-break: break-word` sei der Fix. Gemessen in
+ * Chromium im echten Layout ist das falsch: `Row`s Titel-Span trägt
+ * `min-width: 0`, und das neutralisiert den einzigen Unterschied zwischen
+ * `break-word` und seinem veralteten Alias `anywhere` — `overflow-wrap:
+ * break-word` allein reproduziert den gemeldeten Fehler zeichengenau, mit
+ * oder ohne `word-break` daneben (Messtabelle in `components/ui/list.tsx`
+ * bei `wrapTitle`). Der tatsächliche Fix ist `hyphens-auto`: es bricht an
+ * einer echten Silbengrenze statt mitten im Wort, weil `app/layout.tsx`
+ * `<html lang={locale}>` setzt. `Row`s `wrapTitle`-Prop setzt beides,
+ * `break-words hyphens-auto` — dieselbe Logik gilt für jede Zeile mit
+ * `wrapTitle`, nicht nur für Themen.
  */
 
 import Link from "next/link";
@@ -43,7 +49,7 @@ import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBoxArchive, faPen, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { ConfirmButton } from "@/components/ui/confirm-button";
-import { Row } from "@/components/ui/list";
+import { ACTION_BTN, Row } from "@/components/ui/list";
 
 interface TopicCardProps {
   id: string;
@@ -55,10 +61,6 @@ interface TopicCardProps {
   onDelete: (id: string) => void;
   onArchive: (id: string) => void;
 }
-
-/** Eine Zeilenaktion ohne Fläche — derselbe Stil wie `TaskRowActions`' `ACTION_BTN`; von `topics-grid.tsx`s `ArchivedTopicCard` mitverwendet. */
-export const ACTION_BTN =
-  "flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-2 text-[var(--ink-3)] transition-colors hover:bg-[var(--raised)]";
 
 /**
  * Eine Themenzeile mit Bearbeiten-, Archivieren- und Löschen-Aktionen.
@@ -83,7 +85,14 @@ export function TopicCard({
       testId="topic-row"
       wrapTitle
       title={<Link href={`/topics/${id}`}>{title}</Link>}
-      trailing={`${completedCount}/${taskCount}`}
+      // Sichtbar bleibt das kompakte "3/7" (Mono, Brief-Vorgabe) — die
+      // aria-label trägt den vollen Satz, sonst hört ein Screenreader nur
+      // zwei nackte Ziffern ohne Nomen (Task-10-Review I5).
+      trailing={
+        <span aria-label={t("task_progress", { completed: completedCount, total: taskCount })}>
+          {`${completedCount}/${taskCount}`}
+        </span>
+      }
       dotColor={color ?? null}
       actions={
         <span className="flex items-center gap-1">
@@ -110,6 +119,7 @@ export function TopicCard({
             confirmPrompt={t("confirm_delete")}
             className={ACTION_BTN}
             aria-label={t("aria_delete")}
+            title={t("aria_delete")}
           >
             <FontAwesomeIcon icon={faXmark} className="h-3.5 w-3.5" aria-hidden="true" />
           </ConfirmButton>

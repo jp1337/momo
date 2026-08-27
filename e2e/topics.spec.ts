@@ -76,18 +76,76 @@ test.describe("Topics Page", () => {
   });
 
   test("ein langer Themenname bricht nicht mitten im Wort", async ({ page, request }) => {
+    // `hyphens: auto` hyphenates nach dem Wörterbuch von `<html lang>`
+    // (`app/layout.tsx`) — ohne dieses Cookie fällt next-intl auf die
+    // Accept-Language der Test-Umgebung zurück (hier: Englisch), und
+    // Chromium hyphenierte den deutschen Titel dann NICHT (fiel auf reinen
+    // Zeichenumbruch zurück, exakt der alte Fehler) — gefunden beim
+    // Schreiben dieses Tests (Task-10-Review C2).
+    await page.context().addCookies([{ name: "locale", value: "de", domain: "localhost", path: "/" }]);
     const topic = await createTopic(request, "Steuererklärung 2025");
     await page.goto("/topics");
-    const title = page.getByTestId("topic-row").filter({ hasText: "Steuererkl" }).first();
-    const style = await title.evaluate((n) => {
-      const c = getComputedStyle(n.querySelector("[data-row-title]") ?? n);
-      return { wordBreak: c.wordBreak, overflowWrap: c.overflowWrap };
+    const row = page.getByTestId("topic-row").filter({ hasText: "Steuererkl" }).first();
+    const titleEl = row.locator("[data-row-title]");
+
+    const style = await titleEl.evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { wordBreak: c.wordBreak, overflowWrap: c.overflowWrap, hyphens: c.hyphens };
     });
     // word-break: break-word (der veraltete Alias) bricht innerhalb von
     // Wörtern, die auf die nächste Zeile gepasst hätten. overflow-wrap
     // break-word bricht nur, wenn ein Wort allein nicht in die Zeile passt.
+    // Keins von beiden ist der Fix — hyphens: auto ist es (Task-10-Review
+    // C1/C2). Nur die Style-Assertions zu prüfen reicht nicht: sie blieben
+    // grün, selbst wenn `hyphens-auto` gelöscht würde, solange `wordBreak`
+    // weiterhin nicht "break-word" ist — deshalb unten zusätzlich der
+    // gerenderte Beweis.
     expect(style.wordBreak).not.toBe("break-word");
     expect(style.overflowWrap).toBe("break-word");
+    expect(style.hyphens).toBe("auto");
+
+    // Gerenderter Beweis, nicht nur Deklaration (Task-10-Review C2): bei
+    // exakt 140px erzwungener Spaltenbreite — derselbe Wert, mit dem der
+    // Review den Fehler in Chromium vermessen hat (`components/ui/list.tsx`
+    // bei `wrapTitle`) — bricht "Steuererklärung" mit `hyphens-auto` an
+    // einer echten Silbengrenze ("Steuererklä" / "rung 2025", Duden-Trennung
+    // "Steu-er-er-klä-rung"). Ohne `hyphens-auto` bricht derselbe Text an
+    // derselben Breite mitten im Wort ("Steuererklärun" / "g 2025",
+    // gemessen bei der RED-Aufnahme dieses Tests unten) — mit `wordBreak`
+    // weiterhin korrekt auf "break-word" (nicht dem alten Bug-Wert), also
+    // für die Style-Assertion oben unsichtbar. (Exakter Bruchpunkt ist
+    // fontabhängig — 140px war der Wert des Reviews, nicht der exakte
+    // Zeichenindex; hier gegen den tatsächlich gemessenen, gültigen
+    // Trennpunkt geprüft statt gegen eine vermutete Zahl.)
+    const lines = await titleEl.evaluate((el) => {
+      // `flex: 1 1 0%` (Tailwinds `flex-1`) ignoriert ein einfaches
+      // `style.width` im Flex-Layout — nur das `flex`-Shorthand selbst
+      // gewinnt zuverlässig gegen die Klasse (Inline-Style schlägt jede
+      // Klassen-Regel unabhängig von Spezifität).
+      (el as HTMLElement).style.flex = "0 0 140px";
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const textNode = walker.nextNode();
+      if (!textNode) return [];
+      const text = textNode.textContent ?? "";
+      const range = document.createRange();
+      let lastTop: number | null = null;
+      let breakAt = text.length;
+      for (let i = 1; i <= text.length; i++) {
+        range.setStart(textNode, 0);
+        range.setEnd(textNode, i);
+        const rects = range.getClientRects();
+        const top = rects[rects.length - 1].top;
+        if (lastTop === null) {
+          lastTop = top;
+        } else if (top !== lastTop) {
+          breakAt = i - 1;
+          break;
+        }
+      }
+      return [text.slice(0, breakAt).trim(), text.slice(breakAt).trim()];
+    });
+    expect(lines).toEqual(["Steuererklä", "rung 2025"]);
+
     await deleteTopic(request, topic.id);
   });
 });

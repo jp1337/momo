@@ -21,13 +21,14 @@ import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronRight, faBoxArchive, faRotateLeft, faXmark } from "@fortawesome/free-solid-svg-icons";
-import { TopicCard, ACTION_BTN } from "./topic-card";
+import { TopicCard } from "./topic-card";
 import { TopicForm } from "./topic-form";
 import { TemplatePicker } from "./template-picker";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { Button } from "@/components/ui/button";
-import { List, Row } from "@/components/ui/list";
+import { ACTION_BTN, List, Row } from "@/components/ui/list";
 import { EmptyState } from "@/components/ui/empty-state";
+import { cn } from "@/lib/utils";
 
 interface Topic {
   id: string;
@@ -181,11 +182,12 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
         <div>
           <button
             onClick={() => setArchivedExpanded((v) => !v)}
+            aria-expanded={archivedExpanded}
             className="mb-3 flex items-center gap-2 border-0 bg-transparent p-0 font-[family-name:var(--font-mono)] text-[0.6875rem] font-normal uppercase tracking-[0.16em] text-[var(--ink-3)]"
           >
             <FontAwesomeIcon
               icon={archivedExpanded ? faChevronDown : faChevronRight}
-              className="h-2.5 w-2.5"
+              className="h-3 w-3"
               aria-hidden="true"
             />
             <FontAwesomeIcon icon={faBoxArchive} className="h-3 w-3" aria-hidden="true" />
@@ -290,24 +292,39 @@ function ArchivedTopicCard({
       testId="topic-row"
       tone="secondary"
       title={title}
-      trailing={`${completedCount}/${taskCount}`}
+      // Sichtbar bleibt das kompakte "3/7" (Prozentzahl bewusst nicht
+      // wiederhergestellt) — die aria-label trägt trotzdem den vollen Satz,
+      // genau wie bei der aktiven Zeile (Task-10-Review I5).
+      trailing={
+        <span aria-label={t("task_progress", { completed: completedCount, total: taskCount })}>
+          {`${completedCount}/${taskCount}`}
+        </span>
+      }
       dotColor={color ?? null}
       actions={
         <span className="flex items-center gap-1">
+          {/* Task-10-Review I6: sichtbar beschriftet statt nur Icon+Hover —
+              "Archivierung aufheben" ist selten genug (Archiv-Ansicht) und
+              genug ein Rückschritt (aktiv → archiviert war eine bewusste
+              Handlung), dass sie Text statt bloß eines Symbols verdient.
+              title/aria-label tragen jetzt denselben Text; vorher trugen
+              sie zwei verschiedene ("Wiederherstellen" vs. "Archivierung
+              aufheben"). */}
           <button
             type="button"
             onClick={() => onUnarchive(id)}
-            className={ACTION_BTN}
+            className={cn(ACTION_BTN, "w-auto gap-2 px-3")}
             aria-label={t("aria_unarchive")}
-            title={t("unarchive_btn")}
           >
             <FontAwesomeIcon icon={faRotateLeft} className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="text-[0.75rem]">{t("aria_unarchive")}</span>
           </button>
           <ConfirmButton
             onConfirm={() => onDelete(id)}
             confirmPrompt={t("confirm_delete")}
             className={ACTION_BTN}
             aria-label={t("aria_delete")}
+            title={t("aria_delete")}
           >
             <FontAwesomeIcon icon={faXmark} className="h-3.5 w-3.5" aria-hidden="true" />
           </ConfirmButton>

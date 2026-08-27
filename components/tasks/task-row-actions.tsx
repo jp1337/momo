@@ -27,6 +27,7 @@ import { faLayerGroup, faClock } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
 import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { ACTION_BTN } from "@/components/ui/list";
 
 export interface TaskRowActionsProps {
   id: string;
@@ -52,9 +53,6 @@ function daysFromNow(days: number): string {
   d.setDate(d.getDate() + days);
   return d.toISOString().split("T")[0];
 }
-
-const ACTION_BTN =
-  "flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-2 text-[var(--ink-3)] transition-colors hover:bg-[var(--raised)]";
 
 /**
  * Der Aktionscluster einer Zeile: Verschieben/Zum-Thema, Aufteilen,
