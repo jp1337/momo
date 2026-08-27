@@ -178,6 +178,9 @@ export async function HabitsList({
   const labels = {
     recurrenceEveryDay: t("recurrence_every_day"),
     recurrenceEveryNDays: t("recurrence_every_n_days"),
+    recurrenceWeekly: t("recurrence_weekly"),
+    recurrenceMonthly: t("recurrence_monthly"),
+    recurrenceYearly: t("recurrence_yearly"),
     pausedUntilLabel: t("habit_paused_until"),
     gridLabels: {
       // t.raw(), nicht t(): contribution-grid.tsx setzt {count}/{year} selbst

@@ -35,6 +35,9 @@ interface HabitCardProps {
   labels: {
     recurrenceEveryDay: string;
     recurrenceEveryNDays: string; // "alle %n% Tage"
+    recurrenceWeekly: string; // WEEKDAY habits — "wöchentlich"
+    recurrenceMonthly: string; // MONTHLY habits — "monatlich"
+    recurrenceYearly: string; // YEARLY habits — "jährlich"
     pausedUntilLabel: string; // "Pausiert bis %date%"
     gridLabels: {
       gridAriaLabel: string;
@@ -51,7 +54,11 @@ interface HabitCardProps {
 }
 
 /**
- * Pretty-prints the recurrence interval, e.g. "täglich" or "alle 3 Tage".
+ * Pretty-prints a habit's recurrence, e.g. "täglich", "alle 3 Tage",
+ * "wöchentlich", "monatlich" or "jährlich" — keyed off `recurrenceType`,
+ * not just `recurrenceInterval` (which is `null` for every type except
+ * INTERVAL, and previously made every WEEKDAY/MONTHLY/YEARLY habit fall
+ * through to "täglich" — see F1 in `carried-findings-report.md`).
  *
  * The `%n%` placeholder (not next-intl's `{n}` ICU syntax) is intentional:
  * `recurrenceEveryNDays` is translated ONCE per page render (see
@@ -65,17 +72,31 @@ interface HabitCardProps {
  */
 function formatRecurrence(
   interval: number | null,
+  recurrenceType: HabitWithHistory["recurrenceType"],
   labels: HabitCardProps["labels"]
 ): string {
-  const n = interval ?? 1;
-  if (n <= 1) return labels.recurrenceEveryDay;
-  return labels.recurrenceEveryNDays.replace("%n%", String(n));
+  switch (recurrenceType) {
+    case "WEEKDAY":
+      return labels.recurrenceWeekly;
+    case "MONTHLY":
+      return labels.recurrenceMonthly;
+    case "YEARLY":
+      return labels.recurrenceYearly;
+    case "INTERVAL":
+    default: {
+      const n = interval ?? 1;
+      if (n <= 1) return labels.recurrenceEveryDay;
+      return labels.recurrenceEveryNDays.replace("%n%", String(n));
+    }
+  }
 }
 
 export function HabitCard({ habit, year, labels, streakTrailing }: HabitCardProps) {
   const eyebrowParts: string[] = [];
   if (habit.topicTitle) eyebrowParts.push(habit.topicTitle);
-  eyebrowParts.push(formatRecurrence(habit.recurrenceInterval, labels));
+  eyebrowParts.push(
+    formatRecurrence(habit.recurrenceInterval, habit.recurrenceType, labels)
+  );
   if (habit.paused) {
     eyebrowParts.push(
       habit.pausedUntil

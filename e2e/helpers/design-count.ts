@@ -407,9 +407,21 @@ export async function measureColumns(
         if (rect.width === 0 || rect.height === 0) continue;
         if (!overflows(rect, colRect)) continue;
         const parent = el.parentElement;
-        if (parent && overflows(parent.getBoundingClientRect(), colRect)) {
+        if (
+          parent &&
+          !parent.matches(AFFORDANCE) &&
+          overflows(parent.getBoundingClientRect(), colRect)
+        ) {
           // Nicht der Einstiegspunkt — der Elternteil hat den Überlauf
           // schon gemeldet (oder wird es gleich, als eigenes Element).
+          // Gilt NICHT, wenn der Elternteil selbst eine Affordanz ist:
+          // die wird nie gemeldet (`el.matches(AFFORDANCE)` oben), ihr
+          // eigener Überlauf ist also kein Beleg, dass irgendjemand ihn
+          // schon erfasst hat — ein Inhalts-Kind, das WEITER überschreitet
+          // als die Affordanz selbst, braucht einen eigenen Eintrag. Ohne
+          // diese Ausnahme meldete ein synthetischer Button mit 11px
+          // Überlauf und einem `<span>`-Kind mit 33px weiterem Überlauf
+          // `breakoutsFound: []` — der Kasten-review-Fund hinter F3.
           continue;
         }
         const named = el.closest("[data-breakout]");
