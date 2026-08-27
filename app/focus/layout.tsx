@@ -17,15 +17,8 @@ export default async function FocusLayout({
   if (!session?.user) redirect("/login");
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "var(--bg-primary)",
-        overflow: "hidden auto",
-      }}
-    >
+    <main className="fixed inset-0 overflow-x-hidden overflow-y-auto bg-[var(--ground)] text-[var(--ink)]">
       {children}
-    </div>
+    </main>
   );
 }

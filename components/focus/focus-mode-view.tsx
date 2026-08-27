@@ -8,6 +8,20 @@
  * Phase 3 (done): Celebration with summary.
  *
  * Runs outside the app shell — no Navbar or Sidebar present.
+ *
+ * Task 9 ("Lichtkegel"): `/focus` has no rail — one stage, one thing
+ * matters. The eight bordered, filled task bars and the dual amber/green
+ * "Temple Halo" ambient glow are gone; rows are `List`/`Row` (a hairline
+ * between them, no fill, no border), and the page carries exactly one
+ * Fraunces element (the headline in whichever phase is showing — the
+ * select/empty/done title, or the chosen task itself in the work phase)
+ * and exactly one amber element (the "start"/"done"/"back" primary action,
+ * as `Button variant="primary"`'s text colour — never a fill).
+ *
+ * Priority colour-coding and the per-row coin badge are dropped: `Row` has
+ * no slot for either (dotColor is the user's topic colour, not priority),
+ * and a `--coin-gold` badge is a second amber source on every row — the
+ * same reasoning that moved coin totals off `TaskRow` (see there).
  */
 
 import { useState, useCallback } from "react";
@@ -15,7 +29,12 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faCheck, faForward, faFire } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faForward } from "@fortawesome/free-solid-svg-icons";
+import { cn } from "@/lib/utils";
+import { PageFrame } from "@/components/ui/page-frame";
+import { List, Row, effortStep } from "@/components/ui/list";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
 import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
@@ -49,59 +68,23 @@ interface FocusModeViewProps {
 
 const MAX_SELECTION = 3;
 
-const PRIORITY_COLOR: Record<string, string> = {
-  HIGH: "var(--priority-high, #ef4444)",
-  NORMAL: "var(--accent-amber)",
-  SOMEDAY: "var(--text-muted)",
-};
-
-// ─── Temple Halos ─────────────────────────────────────────────────────────────
+// ─── Stage headline ─────────────────────────────────────────────────────────
 
 /**
- * Dual ambient radial halos that create the "Focus Temple" atmosphere.
- * `intense` prop doubles the opacity for the work phase.
+ * The page's one Fraunces element, whichever phase is showing. Kept as a
+ * single named style object (rather than an inline object literal on each
+ * heading) so the ratchet counts zero inline styles for it —
+ * `fontVariationSettings` is the one value a CSS custom property cannot
+ * carry (same reasoning as `dashboard/daily-quest-card.tsx`'s
+ * `questTitleStyle`).
  */
-function TempleHalos({ intense = false }: { intense?: boolean }) {
-  const amberAlpha = intense ? "20%" : "12%";
-  const greenAlpha = intense ? "10%" : "6%";
+const stageTitleStyle: React.CSSProperties = {
+  fontVariationSettings: '"SOFT" 50, "WONK" 1, "opsz" 130',
+};
 
-  return (
-    <>
-      {/* Primary amber halo — center */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          top: "38%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "700px",
-          height: "500px",
-          borderRadius: "50%",
-          background: `radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-amber) ${amberAlpha}, transparent) 0%, transparent 68%)`,
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
-      {/* Secondary forest-green halo — bottom */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          bottom: "-10%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "600px",
-          height: "420px",
-          borderRadius: "50%",
-          background: `radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-green) ${greenAlpha}, transparent) 0%, transparent 65%)`,
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
-    </>
-  );
-}
+const stageTitleClass =
+  "m-0 max-w-[26ch] font-[family-name:var(--font-display)] font-normal " +
+  "text-[clamp(1.75rem,4.1vw,2.85rem)] leading-[1.08] tracking-[-0.022em] text-balance text-[var(--ink)]";
 
 // ─── Selection Phase ─────────────────────────────────────────────────────────
 
@@ -136,57 +119,23 @@ function SelectionPhase({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        style={{
-          minHeight: "100dvh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "32px 20px",
-          textAlign: "center",
-          gap: "16px",
-          position: "relative",
-          overflow: "hidden",
-        }}
+        className="flex min-h-dvh flex-col justify-center px-6 py-12 sm:px-8"
       >
-        {/* Temple halos */}
-        <TempleHalos />
-        <span style={{ fontSize: "3rem", position: "relative", zIndex: 1 }}>☀️</span>
-        <h1
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(1.4rem, 4vw, 2rem)",
-            fontWeight: 700,
-            fontStyle: "italic",
-            color: "var(--text-primary)",
-            margin: 0,
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {t("empty_title")}
-        </h1>
-        <p style={{ fontFamily: "var(--font-ui)", color: "var(--text-muted)", margin: 0, position: "relative", zIndex: 1 }}>
-          {t("empty_subtitle")}
-        </p>
-        <button
-          onClick={onExit}
-          style={{
-            marginTop: "8px",
-            fontFamily: "var(--font-ui)",
-            fontSize: "0.9rem",
-            fontWeight: 600,
-            color: "var(--accent-amber)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            textDecoration: "underline",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {t("empty_back")}
-        </button>
+        <PageFrame>
+          <div className="flex flex-col gap-4">
+            <h1 data-testid="focus-title" className={stageTitleClass} style={stageTitleStyle}>
+              {t("empty_title")}
+            </h1>
+            <EmptyState
+              line={t("empty_subtitle")}
+              action={
+                <Button variant="quiet" onClick={onExit}>
+                  {t("empty_back")}
+                </Button>
+              }
+            />
+          </div>
+        </PageFrame>
       </motion.div>
     );
   }
@@ -196,283 +145,84 @@ function SelectionPhase({
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor: "var(--bg-primary)",
-        position: "relative",
-        overflow: "hidden",
-      }}
+      className="flex flex-col px-6 py-8 sm:px-8"
     >
-      {/* Temple halos — immersive ambient lighting */}
-      <TempleHalos />
-
-      {/* Header */}
-      <div
-        style={{
-          padding: "20px 24px 0",
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "16px",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <div>
-          <p
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "0.65rem",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "var(--accent-amber)",
-              margin: "0 0 6px",
-            }}
-          >
-            Fokus
-          </p>
-          <h1
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "clamp(1.6rem, 4vw, 2.4rem)",
-              fontWeight: 700,
-              fontStyle: "italic",
-              color: "var(--text-primary)",
-              margin: "0 0 6px",
-              lineHeight: 1.15,
-            }}
-          >
-            {t("select_title")}
-          </h1>
-          <p
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "0.9rem",
-              color: "var(--text-muted)",
-              margin: 0,
-            }}
-          >
-            {t("select_subtitle")}
-          </p>
+      <PageFrame>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <p className="m-0 font-[family-name:var(--font-mono)] text-[0.6875rem] font-normal uppercase tracking-[0.16em] text-[var(--ink-3)]">
+              {t("page_title")}
+            </p>
+            <h1 data-testid="focus-title" className={stageTitleClass} style={stageTitleStyle}>
+              {t("select_title")}
+            </h1>
+            <p className="m-0 font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
+              {t("select_subtitle")}
+            </p>
+          </div>
+          <Button variant="quiet" size="icon" onClick={onExit} aria-label={t("work_exit")}>
+            <FontAwesomeIcon icon={faXmark} />
+          </Button>
         </div>
-        <button
-          onClick={onExit}
-          aria-label={t("work_exit")}
-          style={{
-            flexShrink: 0,
-            width: "36px",
-            height: "36px",
-            borderRadius: "50%",
-            border: "1px solid var(--border)",
-            backgroundColor: "var(--bg-elevated)",
-            color: "var(--text-muted)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "0.9rem",
-            marginTop: "4px",
-          }}
-        >
-          <FontAwesomeIcon icon={faXmark} />
-        </button>
-      </div>
 
-      {/* Task list — scrollable */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "20px 24px 120px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        {tasks.map((task) => {
-          const isSelected = selected.some((s) => s.id === task.id);
-          const isDisabled = !isSelected && selected.length >= MAX_SELECTION;
-          const topic = task.topicId ? topicMap.get(task.topicId) : null;
+        <List>
+          {tasks.map((task) => {
+            const isSelected = selected.some((s) => s.id === task.id);
+            const isDisabled = !isSelected && selected.length >= MAX_SELECTION;
+            const topic = task.topicId ? topicMap.get(task.topicId) : null;
 
-          return (
-            <motion.button
-              key={task.id}
-              onClick={() => !isDisabled && toggle(task)}
-              whileTap={isDisabled ? undefined : { scale: 0.98 }}
-              style={{
-                textAlign: "left",
-                width: "100%",
-                padding: "14px 16px",
-                borderRadius: "12px",
-                border: isSelected
-                  ? "1.5px solid var(--accent-amber)"
-                  : "1px solid var(--border)",
-                backgroundColor: isSelected ? "color-mix(in srgb, var(--accent-amber) 6%, var(--bg-elevated))" : "var(--bg-surface)",
-                cursor: isDisabled ? "not-allowed" : "pointer",
-                opacity: isDisabled ? 0.4 : 1,
-                transition: "border-color 0.15s, background-color 0.15s, opacity 0.15s",
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                boxShadow: isSelected
-                  ? "0 0 0 1px color-mix(in srgb, var(--accent-amber) 20%, transparent)"
-                  : "none",
-              }}
-            >
-              {/* Checkbox */}
-              <div
-                style={{
-                  width: "22px",
-                  height: "22px",
-                  borderRadius: "6px",
-                  border: isSelected ? "none" : "1.5px solid var(--border)",
-                  backgroundColor: isSelected ? "var(--accent-amber)" : "transparent",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  transition: "background-color 0.15s",
-                }}
-              >
-                {isSelected && (
-                  <FontAwesomeIcon
-                    icon={faCheck}
-                    style={{ fontSize: "0.7rem", color: "#000" }}
-                  />
-                )}
-              </div>
-
-              {/* Content */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    fontSize: "0.92rem",
-                    fontWeight: 500,
-                    color: "var(--text-primary)",
-                    lineHeight: 1.35,
-                    marginBottom: "4px",
-                  }}
-                >
-                  {task.title}
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  {topic && (
-                    <span
-                      style={{
-                        fontFamily: "var(--font-ui)",
-                        fontSize: "0.68rem",
-                        color: topic.color ?? "var(--text-muted)",
-                        border: `1px solid ${topic.color ?? "var(--border)"}`,
-                        borderRadius: "4px",
-                        padding: "1px 5px",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {topic.title}
-                    </span>
-                  )}
-                  {task.estimatedMinutes && (
-                    <span
-                      style={{
-                        fontFamily: "var(--font-ui)",
-                        fontSize: "0.68rem",
-                        color: "var(--text-muted)",
-                      }}
-                    >
-                      ⏱ {t("minutes_abbr", { minutes: task.estimatedMinutes })}
-                    </span>
-                  )}
-                  <span
-                    style={{
-                      fontFamily: "var(--font-ui)",
-                      fontSize: "0.68rem",
-                      color: "var(--coin-gold, #f59e0b)",
-                    }}
+            return (
+              <Row
+                key={task.id}
+                testId="focus-row"
+                effort={effortStep(task.estimatedMinutes)}
+                title={task.title}
+                eyebrow={topic?.title}
+                dotColor={topic?.color ?? null}
+                trailing={task.estimatedMinutes ? `${task.estimatedMinutes} min` : undefined}
+                className={cn(isDisabled && "pointer-events-none opacity-40")}
+                lead={
+                  <button
+                    type="button"
+                    onClick={() => toggle(task)}
+                    disabled={isDisabled}
+                    aria-label={
+                      isSelected
+                        ? t("deselect_task_aria", { title: task.title })
+                        : t("select_task_aria", { title: task.title })
+                    }
+                    className={cn(
+                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border-2 bg-transparent p-0 transition-colors disabled:cursor-not-allowed",
+                      isSelected ? "border-[var(--ink)] bg-[var(--ink)]" : "border-[var(--ink-3)]",
+                    )}
                   >
-                    🪙 {task.coinValue}
-                  </span>
-                </div>
-              </div>
-
-              {/* Priority dot */}
-              <div
-                style={{
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  backgroundColor: PRIORITY_COLOR[task.priority] ?? "var(--text-muted)",
-                  flexShrink: 0,
-                }}
+                    {isSelected && (
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none" className="text-[var(--ground)]">
+                        <path
+                          d="M1 4L3.5 6.5L9 1"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                }
               />
-            </motion.button>
-          );
-        })}
-      </div>
+            );
+          })}
+        </List>
 
-      {/* Sticky bottom CTA */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: "16px 24px",
-          backgroundColor: "var(--bg-primary)",
-          borderTop: "1px solid var(--border)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          zIndex: 2,
-          gap: "12px",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "0.85rem",
-            color: selected.length > 0 ? "var(--accent-amber)" : "var(--text-muted)",
-            fontWeight: selected.length > 0 ? 600 : 400,
-            transition: "color 0.2s",
-          }}
-        >
-          {t("select_selected", { selected: selected.length, max: MAX_SELECTION })}
-        </span>
-        <motion.button
-          onClick={() => selected.length > 0 && onStart(selected)}
-          whileTap={selected.length > 0 ? { scale: 0.97 } : undefined}
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "0.95rem",
-            fontWeight: 700,
-            color: selected.length > 0 ? "#000" : "var(--text-muted)",
-            backgroundColor: selected.length > 0 ? "var(--accent-amber)" : "var(--bg-elevated)",
-            border: "none",
-            borderRadius: "10px",
-            padding: "12px 24px",
-            cursor: selected.length > 0 ? "pointer" : "not-allowed",
-            transition: "background-color 0.2s, color 0.2s",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          {t("select_start")}
-          <FontAwesomeIcon icon={faFire} style={{ fontSize: "0.85rem" }} />
-        </motion.button>
-      </div>
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-t-[var(--hairline)] pt-6">
+          <span className="font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
+            {t("select_selected", { selected: selected.length, max: MAX_SELECTION })}
+          </span>
+          <Button variant="primary" size="lg" disabled={selected.length === 0} onClick={() => onStart(selected)}>
+            {t("select_start")}
+          </Button>
+        </div>
+      </PageFrame>
     </motion.div>
   );
 }
@@ -505,249 +255,94 @@ function WorkPhase({
   const total = tasks.length;
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      {/* Intensified temple halos for work phase */}
-      <TempleHalos intense />
-
-      {/* Top bar: progress dots + exit */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "20px 24px",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        {/* Progress dots */}
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          {tasks.map((_, i) => (
-            <div
-              key={i}
-              style={{
-                width: i === currentIndex ? "24px" : "8px",
-                height: "8px",
-                borderRadius: "4px",
-                backgroundColor:
-                  i < currentIndex
-                    ? "var(--accent-amber)"
-                    : i === currentIndex
-                    ? "var(--accent-amber)"
-                    : "var(--border)",
-                opacity: i < currentIndex ? 0.4 : 1,
-                transition: "width 0.3s ease, background-color 0.3s",
-              }}
-            />
-          ))}
-          <span
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "0.72rem",
-              color: "var(--text-muted)",
-              marginLeft: "4px",
-            }}
-          >
-            {currentIndex + 1} / {total}
-          </span>
+    <div className="flex min-h-dvh flex-col justify-center px-6 py-12 sm:px-8">
+      <PageFrame>
+        {/* Top bar: progress dots + exit. Contained to the reading column,
+            not full-bleed — this is a stage, not a toolbar. */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            {tasks.map((_, i) => (
+              <span
+                key={i}
+                aria-hidden="true"
+                className={cn(
+                  "h-2 rounded-[var(--radius-pill)] transition-[width,background-color]",
+                  i === currentIndex ? "w-6 bg-[var(--ink)]" : "w-2 bg-[var(--hairline)]",
+                )}
+              />
+            ))}
+            <span className="font-[family-name:var(--font-mono)] text-[0.75rem] text-[var(--ink-3)]">
+              {currentIndex + 1} / {total}
+            </span>
+          </div>
+          <Button variant="quiet" size="sm" onClick={onExit} aria-label={t("work_exit")}>
+            <FontAwesomeIcon icon={faXmark} />
+            {t("work_exit")}
+          </Button>
         </div>
 
-        <button
-          onClick={onExit}
-          aria-label={t("work_exit")}
-          style={{
-            fontFamily: "var(--font-ui)",
-            fontSize: "0.8rem",
-            color: "var(--text-muted)",
-            background: "none",
-            border: "1px solid var(--border)",
-            borderRadius: "8px",
-            padding: "6px 12px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-          }}
-        >
-          <FontAwesomeIcon icon={faXmark} />
-          {t("work_exit")}
-        </button>
-      </div>
-
-      {/* Main content — centered task card */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "24px",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
+        {/* The stage: the one task that matters, directly on --ground — no
+            card, no border, no shadow. */}
         <AnimatePresence mode="wait">
           <motion.div
             key={task.id}
-            initial={{ opacity: 0, x: 40, scale: 0.96 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -40, scale: 0.96 }}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -40 }}
             transition={{ type: "spring", stiffness: 340, damping: 28 }}
-            style={{
-              width: "100%",
-              maxWidth: "560px",
-              backgroundColor: "var(--bg-elevated)",
-              border: "1px solid color-mix(in srgb, var(--accent-amber) 22%, var(--border))",
-              borderRadius: "20px",
-              padding: "36px 32px",
-              boxShadow: "0 8px 48px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1), 0 0 0 1px color-mix(in srgb, var(--accent-amber) 10%, transparent)",
-            }}
+            className="flex flex-col items-center gap-2 py-12 text-center"
           >
-            {/* Topic + meta row */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                marginBottom: "20px",
-                flexWrap: "wrap",
-              }}
-            >
-              {topic && (
+            {topic && (
+              <span className="flex items-center gap-2">
                 <span
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "0.72rem",
-                    fontWeight: 600,
-                    color: topic.color ?? "var(--text-muted)",
-                    border: `1px solid ${topic.color ?? "var(--border)"}`,
-                    borderRadius: "5px",
-                    padding: "2px 7px",
-                  }}
-                >
+                  aria-hidden="true"
+                  className="h-[6px] w-[6px] shrink-0 rounded-[var(--radius-pill)]"
+                  // Die einzige verbleibende Öffnung für die frei gewählte
+                  // Nutzerfarbe (Spec §5) — als 6-px-Punkt, wie `Row`s
+                  // eigener `dotColor`. Kein Token kann einen aus der
+                  // Datenbank kommenden Hex-Wert abbilden.
+                  style={{ backgroundColor: topic.color ?? undefined }}
+                />
+                <span className="font-[family-name:var(--font-mono)] text-[0.75rem] uppercase tracking-[0.16em] text-[var(--ink-3)]">
                   {topic.title}
                 </span>
-              )}
-              {task.estimatedMinutes && (
-                <span
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "0.72rem",
-                    color: "var(--text-muted)",
-                    backgroundColor: "var(--bg-surface)",
-                    borderRadius: "5px",
-                    padding: "2px 7px",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  ⏱ {task.estimatedMinutes} Min
-                </span>
-              )}
-              <span
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "0.72rem",
-                  color: "var(--coin-gold, #f59e0b)",
-                  backgroundColor: "var(--bg-surface)",
-                  borderRadius: "5px",
-                  padding: "2px 7px",
-                  border: "1px solid var(--border)",
-                  marginLeft: "auto",
-                }}
-              >
-                🪙 +{task.coinValue}
               </span>
-            </div>
+            )}
 
-            {/* Task title */}
-            <h2
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: "clamp(1.4rem, 4vw, 2.2rem)",
-                fontWeight: 700,
-                fontStyle: "italic",
-                color: "var(--text-primary)",
-                lineHeight: 1.25,
-                margin: "0 0 32px",
-              }}
-            >
+            <h2 data-testid="focus-title" className={stageTitleClass} style={stageTitleStyle}>
               {task.title}
             </h2>
 
-            {/* Actions */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              <motion.button
-                onClick={onComplete}
-                disabled={isCompleting}
-                whileTap={{ scale: 0.97 }}
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "1rem",
-                  fontWeight: 700,
-                  color: "#000",
-                  backgroundColor: isCompleting ? "var(--bg-surface)" : "var(--accent-amber)",
-                  border: "none",
-                  borderRadius: "12px",
-                  padding: "16px",
-                  cursor: isCompleting ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "10px",
-                  transition: "background-color 0.15s",
-                }}
-              >
-                <FontAwesomeIcon icon={faCheck} />
+            {task.estimatedMinutes ? (
+              <span className="font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--ink-3)]">
+                {task.estimatedMinutes} min
+              </span>
+            ) : null}
+
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <Button variant="primary" size="lg" onClick={onComplete} disabled={isCompleting}>
                 {t("work_done_btn")}
-              </motion.button>
+              </Button>
 
               <button
+                type="button"
                 onClick={onSkip}
                 disabled={isCompleting}
-                style={{
-                  fontFamily: "var(--font-ui)",
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "6px",
-                  opacity: 0.7,
-                }}
+                className="cursor-pointer border-0 bg-transparent p-2 font-[family-name:var(--font-ui)] text-[0.85rem] text-[var(--ink-2)] transition-colors hover:text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <FontAwesomeIcon icon={faForward} style={{ fontSize: "0.75rem" }} />
+                <FontAwesomeIcon icon={faForward} className="mr-2 text-[0.75rem]" />
                 {t("work_skip")}
               </button>
 
               {completionError && (
-                <p
-                  style={{
-                    fontFamily: "var(--font-ui)",
-                    fontSize: "0.75rem",
-                    color: "var(--accent-red)",
-                    marginTop: "8px",
-                    textAlign: "center",
-                  }}
-                >
+                <p className="m-0 font-[family-name:var(--font-ui)] text-[0.75rem] text-[var(--danger)]">
                   {t("work_completion_error")}
                 </p>
               )}
             </div>
           </motion.div>
         </AnimatePresence>
-      </div>
+      </PageFrame>
     </div>
   );
 }
@@ -769,113 +364,48 @@ function DonePhase({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 24px",
-        textAlign: "center",
-        position: "relative",
-        overflow: "hidden",
-      }}
+      className="flex min-h-dvh flex-col justify-center px-6 py-12 sm:px-8"
     >
-      {/* Celebration halos */}
-      <TempleHalos intense />
-
-      <motion.div
-        initial={{ scale: 0, rotate: -10 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: "spring", stiffness: 400, damping: 18, delay: 0.1 }}
-        style={{ fontSize: "4rem", marginBottom: "24px", lineHeight: 1 }}
-      >
-        🎯
-      </motion.div>
-
-      <motion.h1
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: "clamp(1.8rem, 5vw, 2.8rem)",
-          fontWeight: 700,
-          fontStyle: "italic",
-          color: "var(--text-primary)",
-          margin: "0 0 12px",
-        }}
-      >
-        {t("done_title")}
-      </motion.h1>
-
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35 }}
-        style={{
-          display: "flex",
-          gap: "12px",
-          alignItems: "center",
-          justifyContent: "center",
-          flexWrap: "wrap",
-          marginBottom: "40px",
-        }}
-      >
-        {completedCount > 0 && (
-          <span
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "1rem",
-              fontWeight: 600,
-              color: "var(--accent-amber)",
-              backgroundColor: "color-mix(in srgb, var(--accent-amber) 12%, var(--bg-elevated))",
-              border: "1px solid color-mix(in srgb, var(--accent-amber) 30%, var(--border))",
-              borderRadius: "8px",
-              padding: "6px 14px",
-            }}
+      <PageFrame>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <motion.span
+            initial={{ scale: 0, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 18, delay: 0.1 }}
+            aria-hidden="true"
+            className="text-[4rem] leading-none"
           >
-            ✓ {t("done_tasks", { count: completedCount })}
-          </span>
-        )}
-        {totalCoins > 0 && (
-          <span
-            style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "1rem",
-              fontWeight: 600,
-              color: "var(--coin-gold, #f59e0b)",
-              backgroundColor: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
-              borderRadius: "8px",
-              padding: "6px 14px",
-            }}
-          >
-            🪙 {t("done_coins", { coins: totalCoins })}
-          </span>
-        )}
-      </motion.div>
+            🎯
+          </motion.span>
 
-      <motion.button
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.45 }}
-        onClick={onExit}
-        whileTap={{ scale: 0.97 }}
-        style={{
-          fontFamily: "var(--font-ui)",
-          fontSize: "0.95rem",
-          fontWeight: 700,
-          color: "#000",
-          backgroundColor: "var(--accent-amber)",
-          border: "none",
-          borderRadius: "12px",
-          padding: "14px 32px",
-          cursor: "pointer",
-        }}
-      >
-        {t("done_back")}
-      </motion.button>
+          <motion.h1
+            data-testid="focus-title"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className={stageTitleClass}
+            style={stageTitleStyle}
+          >
+            {t("done_title")}
+          </motion.h1>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="flex flex-wrap items-center justify-center gap-4 font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]"
+          >
+            {completedCount > 0 && <span>{t("done_tasks", { count: completedCount })}</span>}
+            {totalCoins > 0 && <span>{t("done_coins", { coins: totalCoins })}</span>}
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+            <Button variant="primary" size="lg" onClick={onExit}>
+              {t("done_back")}
+            </Button>
+          </motion.div>
+        </div>
+      </PageFrame>
     </motion.div>
   );
 }

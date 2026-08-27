@@ -805,7 +805,9 @@
     "empty_subtitle": "无事可做 — 享受这一刻吧!",
     "empty_back": "回到仪表盘",
     "minutes_abbr": "{minutes} 分钟",
-    "work_completion_error": "保存失败 — 请重试。"
+    "work_completion_error": "保存失败 — 请重试。",
+    "select_task_aria": "选择\"{title}\"",
+    "deselect_task_aria": "取消选择\"{title}\""
   },
   "landing": {
     "hero_heading": "夺回你的时间。",

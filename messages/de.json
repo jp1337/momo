@@ -805,7 +805,9 @@
     "empty_subtitle": "Nichts zu tun – genieß die Pause!",
     "empty_back": "Zum Dashboard",
     "minutes_abbr": "{minutes} Min",
-    "work_completion_error": "Speichern fehlgeschlagen — bitte erneut versuchen."
+    "work_completion_error": "Speichern fehlgeschlagen — bitte erneut versuchen.",
+    "select_task_aria": "„{title}“ auswählen",
+    "deselect_task_aria": "„{title}“ abwählen"
   },
   "landing": {
     "hero_heading": "Steal your time back.",

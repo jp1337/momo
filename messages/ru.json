@@ -805,7 +805,9 @@
     "empty_subtitle": "Делать нечего — наслаждайтесь моментом!",
     "empty_back": "На главную",
     "minutes_abbr": "{minutes} мин",
-    "work_completion_error": "Не удалось сохранить — повторите попытку."
+    "work_completion_error": "Не удалось сохранить — повторите попытку.",
+    "select_task_aria": "Выбрать «{title}»",
+    "deselect_task_aria": "Отменить выбор «{title}»"
   },
   "landing": {
     "hero_heading": "Верни своё время.",

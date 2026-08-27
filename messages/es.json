@@ -805,7 +805,9 @@
     "empty_subtitle": "Nada que hacer – ¡disfruta del momento!",
     "empty_back": "Ir al panel",
     "minutes_abbr": "{minutes} min",
-    "work_completion_error": "Error al guardar — por favor inténtelo de nuevo."
+    "work_completion_error": "Error al guardar — por favor inténtelo de nuevo.",
+    "select_task_aria": "Seleccionar «{title}»",
+    "deselect_task_aria": "Deseleccionar «{title}»"
   },
   "landing": {
     "hero_heading": "Recupera el control de tu tiempo.",

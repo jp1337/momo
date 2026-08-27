@@ -143,12 +143,6 @@
     "inline": 1,
     "spacing": 0
   },
-  "app/focus/layout.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 1,
-    "spacing": 0
-  },
   "app/layout.tsx": {
     "color": 3,
     "radius": 0,
@@ -258,9 +252,9 @@
     "spacing": 1
   },
   "components/focus/focus-mode-view.tsx": {
-    "color": 10,
+    "color": 0,
     "radius": 0,
-    "inline": 53,
+    "inline": 1,
     "spacing": 0
   },
   "components/habits/contribution-grid.tsx": {

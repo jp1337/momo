@@ -805,7 +805,9 @@
     "empty_subtitle": "Nothing to do – enjoy the moment!",
     "empty_back": "Go to dashboard",
     "minutes_abbr": "{minutes} min",
-    "work_completion_error": "Failed to save — please try again."
+    "work_completion_error": "Failed to save — please try again.",
+    "select_task_aria": "Select \"{title}\"",
+    "deselect_task_aria": "Deselect \"{title}\""
   },
   "landing": {
     "hero_heading": "Steal your time back.",

@@ -108,8 +108,20 @@ for (const path of MIGRATED_PAGES) {
         // oder nicht). Sidebar und Mobile-Nav haben ebenfalls einen Link auf
         // /dashboard, liegen aber in <aside>/<nav>, nicht <header> — die
         // Kombination trifft eindeutig nur die Wortmarke.
-        const inlineFeather = await page.locator('header a[href="/dashboard"] svg').count();
-        expect(inlineFeather, "die Feder ist kein Inline-SVG mehr").toBeGreaterThan(0);
+        //
+        // Bedingt auf `hasHeader` (Task 9): `/focus` liegt bewusst außerhalb
+        // der App-Hülle (eigenes `layout.tsx`, kein `(app)`-Route-Group) und
+        // hat deshalb GAR KEIN `<header>` — die Bühne hat keinen Rand, auch
+        // keinen oberen. Die Wortmarken-Probe behauptet dort nichts über
+        // "Bild statt Inline-SVG" (das Bild existiert so wenig wie die
+        // Inline-Variante); sie wäre auf einer chromelosen Seite ein
+        // Test-Artefakt, kein echter Regressionsfang. Derselbe bedingte
+        // Musterstil wie `hasLight` oben in dieser Datei.
+        const hasHeader = (await page.locator("header").count()) > 0;
+        if (hasHeader) {
+          const inlineFeather = await page.locator('header a[href="/dashboard"] svg').count();
+          expect(inlineFeather, "die Feder ist kein Inline-SVG mehr").toBeGreaterThan(0);
+        }
       });
 
       test("trägt Fraunces genau einmal", async ({ page }) => {

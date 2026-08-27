@@ -805,7 +805,9 @@
     "empty_subtitle": "Niets te doen – geniet van het moment!",
     "empty_back": "Naar dashboard",
     "minutes_abbr": "{minutes} min",
-    "work_completion_error": "Opslaan mislukt — probeer het opnieuw."
+    "work_completion_error": "Opslaan mislukt — probeer het opnieuw.",
+    "select_task_aria": "„{title}” selecteren",
+    "deselect_task_aria": "„{title}” deselecteren"
   },
   "landing": {
     "hero_heading": "Neem je tijd terug.",

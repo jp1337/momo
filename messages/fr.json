@@ -805,7 +805,9 @@
     "empty_subtitle": "Rien à faire – profite du moment !",
     "empty_back": "Aller au tableau de bord",
     "minutes_abbr": "{minutes} min",
-    "work_completion_error": "Échec de la sauvegarde — veuillez réessayer."
+    "work_completion_error": "Échec de la sauvegarde — veuillez réessayer.",
+    "select_task_aria": "Sélectionner « {title} »",
+    "deselect_task_aria": "Désélectionner « {title} »"
   },
   "landing": {
     "hero_heading": "Reprenez votre temps.",
