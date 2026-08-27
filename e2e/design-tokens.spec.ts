@@ -431,14 +431,22 @@ test.describe("List und Row", () => {
     const empty = page.getByTestId("demo-empty");
     const s = await empty.evaluate((n) => {
       const c = getComputedStyle(n);
-      return { border: c.borderTopWidth, bg: c.backgroundColor };
+      return {
+        borderTop: c.borderTopWidth,
+        borderRight: c.borderRightWidth,
+        borderBottom: c.borderBottomWidth,
+        borderLeft: c.borderLeftWidth,
+        bg: c.backgroundColor,
+      };
     });
-    // Kein separater "border-style !== dashed"-Check (Task-4-Review R16):
-    // computed border-top-style ist "none" IMMER dann, wenn width "0px"
-    // ist (CSS-Spec-Regel, nicht Zufall) — die Aussage war neben der
-    // Breitenpruefung inhaltsleer, solange EmptyState ueberhaupt keine
-    // border-Klasse setzt.
-    expect(s.border).toBe("0px");
+    // Alle vier Rahmenbreiten pruefbar; border-style nicht pruefbar, da
+    // Tailwind-Preflight border: 0 solid auf alle Elemente setzt, also die
+    // berechnete Style ist immer "solid" — ein Test darueber prueft nur
+    // Tailwind, nicht unseren Code.
+    expect(s.borderTop).toBe("0px");
+    expect(s.borderRight).toBe("0px");
+    expect(s.borderBottom).toBe("0px");
+    expect(s.borderLeft).toBe("0px");
     expect(s.bg).toBe("rgba(0, 0, 0, 0)");
   });
 });
