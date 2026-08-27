@@ -175,9 +175,20 @@ for (const path of MIGRATED_PAGES) {
       test("hält jede Inhaltsspalte auf dem Maß", async ({ page }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
         await gotoSettled(page, theme, path);
-        const { measurePx, widths } = await measureColumns(page);
+        const { measurePx, widths, breakouts } = await measureColumns(page);
         expect(widths.length, "keine [data-column] gefunden").toBeGreaterThan(0);
         for (const w of widths) expect(w).toBeLessThanOrEqual(measurePx + 1);
+        // Ein Überlauf über die Spalte hinaus ist erlaubt, aber nur benannt
+        // (Task-11-Review I1): ein Diagramm trägt `data-breakout`, alles
+        // andere, das die Spalte überschreitet, ist ein unentdeckter Fund,
+        // kein Feature — genau die Lücke, die diese Regel vorher hatte.
+        const unlabeled = breakouts.filter((b) => b.reason === null);
+        expect(
+          unlabeled.length,
+          unlabeled
+            .map((b) => `${b.tag}[${b.testid ?? "-"}] +${Math.round(b.overflowPx)}px, unbenannt`)
+            .join("\n"),
+        ).toBe(0);
       });
     });
   }

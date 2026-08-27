@@ -275,6 +275,20 @@ export async function countBoxes(page: Page): Promise<Hit[]> {
       'button, input, textarea, select, a, label, summary, [role="button"], [role="tab"], [role="switch"], [role="menuitem"], [contenteditable="true"], [data-affordance]';
     const PROGRESS = 'progress, meter, [role="progressbar"]';
     const FLOATING = '[role="dialog"], [role="menu"], [role="tooltip"], [data-radix-popper-content-wrapper]';
+    /**
+     * Diagramm-Zellen (Task-11-Review I1): `role="gridcell"` markiert die
+     * Tage eines `ContributionGrid`-Jahresrasters — momentan der einzige
+     * Ort im Code, der diese Rolle vergibt. Wie bei `PROGRESS` ist die
+     * Regel für sie unerfüllbar, nicht unwichtig: eine Zelle IST eine
+     * gefüllte Fläche, per Definition (ihre Füllung kodiert die
+     * Abschlusszahl des Tages), nicht ein Kasten, der eine Handlung
+     * behauptet. Vor der Task-11-Korrektur (I1) blieben die Zellen unter
+     * dem 12px-Punkt-Schwellenwert und brauchten diese Ausnahme nicht;
+     * seit der Kasten-Regel-Breakout (siehe `contribution-grid.tsx`) dürfen
+     * sie wachsen, also braucht es jetzt eine eigene, benannte Ausnahme
+     * statt eines Zufallstreffers auf die Punkt-Schwelle.
+     */
+    const CHART = '[role="gridcell"]';
     /** Punkt-Schwelle in px — siehe JSDoc oben. */
     const DOT_MAX_PX = 12;
 
@@ -292,6 +306,7 @@ export async function countBoxes(page: Page): Promise<Hit[]> {
       if (box.width <= DOT_MAX_PX && box.height <= DOT_MAX_PX) continue;
       if (el.closest(PROGRESS) !== null) continue;
       if (el.closest(FLOATING) !== null) continue;
+      if (el.closest(CHART) !== null) continue;
       // Die Affordanz selbst, oder ihr unmittelbares Text-/Icon-Kind — NICHT
       // jeder Nachfahre. Ein Container-Kind (hat selbst Element-Kinder) zählt
       // weiter mit, sonst würde genau die abgeschaffte Card unsichtbar, wenn
@@ -320,14 +335,42 @@ export async function countBoxes(page: Page): Promise<Hit[]> {
   }, CONTENT_ROOT);
 }
 
+/** Ein Kind eines `[data-column]`, das dessen Breite überschreitet. */
+export interface Breakout {
+  tag: string;
+  testid: string | null;
+  /** Wert von `data-breakout` am überschreitenden Element oder einem Vorfahren, oder null, wenn unbenannt. */
+  reason: string | null;
+  overflowPx: number;
+}
+
 /**
- * Misst jede Inhaltsspalte gegen `--measure`.
+ * Misst jede Inhaltsspalte gegen `--measure` UND stellt fest, ob etwas
+ * darin die Spalte überschreitet — vorher unsichtbar für diese Funktion,
+ * weil nur `[data-column]`s EIGENE Breite gemessen wurde, nie die ihrer
+ * Kinder (Task-11-Review I1: genau deshalb bestand die Heatmap-Spalten-
+ * Regel trotz eines 84px-724px-Überlaufs bei 1440px).
  *
- * @returns Das Maß in px und die Breiten aller `[data-column]` in `main`
+ * Ein Überlauf ist kein Fehler an sich — ein Diagramm darf bewusst aus der
+ * Lesespalte ausbrechen (`contribution-grid.tsx`s `data-breakout="chart"`).
+ * Er muss nur BENANNT sein: jeder Überlauf ohne ein `data-breakout` an sich
+ * selbst oder einem Vorfahren ist unbenannt und damit ein Fund, den der
+ * Aufrufer rot machen soll — sonst wäre aus der stillen Lücke von vorher
+ * bloß eine neue stille Lücke geworden, die diesmal wenigstens ein Attribut
+ * kennt.
+ *
+ * Gemeldet wird nur der EINSTIEGSPUNKT eines Überlaufs (das Element, dessen
+ * Elternteil die Spalte noch nicht überschreitet, das Element selbst aber
+ * schon) — sonst würde jedes Kind eines überschreitenden Elements erneut
+ * denselben Überlauf melden (bei der Heatmap: jede einzelne Tageszelle).
+ *
+ * @returns Das Maß in px, die Breiten aller `[data-column]` in `main`, und
+ *   jeder gefundene Überlauf-Einstiegspunkt mit seiner (ggf. fehlenden)
+ *   Begründung
  */
 export async function measureColumns(
   page: Page,
-): Promise<{ measurePx: number; widths: number[] }> {
+): Promise<{ measurePx: number; widths: number[]; breakouts: Breakout[] }> {
   return page.evaluate((rootSel: string) => {
     const probe = document.createElement("div");
     probe.style.width = "var(--measure)";
@@ -335,9 +378,50 @@ export async function measureColumns(
     const measurePx = probe.getBoundingClientRect().width;
     probe.remove();
     const root = document.querySelector(rootSel) ?? document.body;
-    const widths = Array.from(root.querySelectorAll("[data-column]")).map(
-      (el) => el.getBoundingClientRect().width,
-    );
-    return { measurePx, widths };
+    const columns = Array.from(root.querySelectorAll("[data-column]"));
+    const widths = columns.map((el) => el.getBoundingClientRect().width);
+
+    const overflows = (rect: DOMRect, colRect: DOMRect) =>
+      rect.right - colRect.right > 1 || colRect.left - rect.left > 1;
+
+    // Dieselbe Affordanz-Liste wie in `countBoxes` (dort nicht wiederverwendbar
+    // — jeder `page.evaluate`-Callback läuft als eigener, serialisierter
+    // Funktionskörper im Browser, keine geteilte Modul-Closure). Ein
+    // vergrößerter Tipp-/Klickbereich per negativem Margin (z. B. die
+    // `-m-2`-Checkbox-Buttons auf `/tasks`, `p-2` Innenabstand kompensiert
+    // dieselben 8px wieder nach innen) verschiebt die Layout-Box der
+    // Affordanz messbar über die Spalte hinaus, OHNE dass optisch irgendetwas
+    // die Spalte verlässt — die erste Messung dieser Regel hat das als 94
+    // "Überläufe" auf /tasks gemeldet, die keine sind. Eine Affordanz ist
+    // eine Handlung, kein Lesetext; dieselbe Unterscheidung, aus demselben
+    // Grund, den `countBoxes` schon trifft.
+    const AFFORDANCE =
+      'button, input, textarea, select, a, label, summary, [role="button"], [role="tab"], [role="switch"], [role="menuitem"], [contenteditable="true"], [data-affordance]';
+
+    const breakouts: Breakout[] = [];
+    for (const col of columns) {
+      const colRect = col.getBoundingClientRect();
+      for (const el of Array.from(col.querySelectorAll("*"))) {
+        if (el.matches(AFFORDANCE)) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) continue;
+        if (!overflows(rect, colRect)) continue;
+        const parent = el.parentElement;
+        if (parent && overflows(parent.getBoundingClientRect(), colRect)) {
+          // Nicht der Einstiegspunkt — der Elternteil hat den Überlauf
+          // schon gemeldet (oder wird es gleich, als eigenes Element).
+          continue;
+        }
+        const named = el.closest("[data-breakout]");
+        breakouts.push({
+          tag: el.tagName.toLowerCase(),
+          testid: el.getAttribute("data-testid"),
+          reason: named ? named.getAttribute("data-breakout") : null,
+          overflowPx: Math.max(rect.right - colRect.right, colRect.left - rect.left),
+        });
+      }
+    }
+
+    return { measurePx, widths, breakouts };
   }, CONTENT_ROOT);
 }

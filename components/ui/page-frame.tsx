@@ -20,7 +20,24 @@ import { cn } from "@/lib/utils";
 export interface PageFrameProps {
   /** Die Lesespalte — der Inhalt, mit dem der Nutzer arbeitet. */
   children: React.ReactNode;
-  /** Die Randnotiz. Weglassen heißt: diese Seite hat keinen Rand. */
+  /**
+   * Die Randnotiz. Weglassen heißt: diese Seite hat keinen Rand.
+   *
+   * **Achtung, Falle** (Task-11-Review, minor): `PageFrame` prüft `rail`
+   * nur auf Wahrheitswert, nicht darauf, ob es tatsächlich etwas rendert.
+   * Ein `<>{cond && <p>…</p>}</>`-Fragment, dessen Bedingung gerade `false`
+   * ist, IST als React-Knoten trotzdem wahr — `PageFrame` reserviert dann
+   * die volle Randspalte (208px + 48px Gutter) und zentriert die Lesespalte
+   * daneben, obwohl der Rand optisch leer bleibt. `/progress` hatte genau
+   * diesen Fund (Task 11): ein frisches Habit ohne Abschlüsse ergab ein
+   * wahres, aber leeres Fragment. Der Aufrufer muss selbst prüfen, ob
+   * IRGENDEINE Zeile im Rand tatsächlich rendert, und `undefined` statt
+   * eines leeren Fragments übergeben, wenn nicht (siehe `hasRailContent` in
+   * `app/(app)/progress/page.tsx`) — diese Prop selbst kann das nicht
+   * erzwingen, ohne jeden Aufrufer zu zwingen, seine Randzeilen als Daten
+   * statt als JSX zu übergeben, was den meisten Aufrufern (`tasks-rail.tsx`
+   * etc.) keinen Vorteil brächte.
+   */
   rail?: React.ReactNode;
   className?: string;
 }

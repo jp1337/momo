@@ -251,12 +251,6 @@
     "inline": 8,
     "spacing": 0
   },
-  "components/habits/year-selector.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 0,
-    "spacing": 2
-  },
   "components/layout/coin-counter.tsx": {
     "color": 0,
     "radius": 0,

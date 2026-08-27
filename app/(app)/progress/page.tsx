@@ -127,13 +127,24 @@ export default async function ProgressPage({
   // year/30d/7d completion counts land here added together, not as a pill
   // on every row. "Streak" isn't additive across habits the way a
   // completion count is, so it becomes the single longest CURRENTLY
-  // running streak among them, formatted with that habit's own period
-  // unit (days/weeks/months — see `formatStreakLine` below).
+  // running streak among them — where "longest" means the most elapsed
+  // TIME, not the most periods. `HabitStreak.current` (`lib/habits.ts`) is
+  // a count of periods of `periodDays` length, so a daily habit at
+  // `current: 10` (10 days) and a monthly habit at `current: 6` (≈180
+  // days) are not comparable by `current` alone — the comparison has to
+  // weight by `periodDays` (`current * periodDays` ≈ days elapsed).
+  // Task-11-review I3: the previous comparator picked the highest raw
+  // `current`, which made the daily habit "win" over the monthly one
+  // despite covering an eighteenth of the time.
   const totalYear = habits.reduce((sum, h) => sum + h.totalYear, 0);
   const totalLast30 = habits.reduce((sum, h) => sum + h.totalLast30, 0);
   const totalLast7 = habits.reduce((sum, h) => sum + h.totalLast7, 0);
   const bestStreakHabit = habits.reduce<(typeof habits)[number] | null>(
-    (best, h) => (h.streak.current > (best?.streak.current ?? 0) ? h : best),
+    (best, h) => {
+      const elapsed = h.streak.current * h.streak.periodDays;
+      const bestElapsed = best ? best.streak.current * best.streak.periodDays : 0;
+      return elapsed > bestElapsed ? h : best;
+    },
     null,
   );
   // Inlined rather than a standalone helper taking a translator param:
@@ -180,30 +191,44 @@ export default async function ProgressPage({
   // rail column: a habit page with real habits but zero completions would
   // otherwise show a blank gutter and a narrower content column for
   // nothing (found by looking at the page, not by a test — none of the
-  // four design-rule assertions can see an empty rail column, since it
-  // carries no boxed surface and no text to miscount).
+  // FIVE design-rule assertions per page can see an empty rail column,
+  // since it carries no boxed surface and no text to miscount).
   const hasRailContent = totalYear > 0 || totalLast30 > 0 || totalLast7 > 0 || bestStreakText !== null;
+  // One `[number, label]` pair per sum line instead of three copies of the
+  // same three-line `<p>` (Task-11-review, minor): the streak line stays
+  // separate below — it has no plain number, and its label+value is one
+  // ICU message (`rail_streak`), not a JS-side concatenation.
+  const sumLines: Array<[number, string]> = [
+    [totalYear, t2("stat_total_year")],
+    [totalLast30, t2("stat_last_30")],
+    [totalLast7, t2("stat_last_7")],
+  ];
   const rail =
     !hasRailContent ? undefined : (
       <>
-        {totalYear > 0 && (
-          <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]">
-            {totalYear} {t2("stat_total_year")}
-          </p>
-        )}
-        {totalLast30 > 0 && (
-          <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]">
-            {totalLast30} {t2("stat_last_30")}
-          </p>
-        )}
-        {totalLast7 > 0 && (
-          <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]">
-            {totalLast7} {t2("stat_last_7")}
-          </p>
+        {sumLines.map(
+          ([value, label]) =>
+            value > 0 && (
+              <p
+                key={label}
+                className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]"
+              >
+                {value} {label}
+              </p>
+            ),
         )}
         {bestStreakText && (
           <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]">
-            {t2("stat_streak")}: {bestStreakText}
+            {
+              // Ein volles ICU-Fragment statt Label + hartkodiertem ": " +
+              // Wert (Task-11-Review, minor): Sprachen setzen ihre
+              // Interpunktion anders (Französisch " : ", Deutsch/Englisch/
+              // Russisch/Chinesisch ohne Leerzeichen davor) — genau wie die
+              // Geschwisterzeilen der Rand-Summen in /tasks und /topics
+              // schon volle ICU-Nachrichten übergeben statt JS-seitig zu
+              // verketten.
+              t2("rail_streak", { streak: bestStreakText })
+            }
           </p>
         )}
       </>

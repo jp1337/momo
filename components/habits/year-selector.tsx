@@ -53,7 +53,12 @@ export function YearSelector({ currentYear, years, label, baseHref, yearParam = 
       <span className="font-[family-name:var(--font-ui)] text-xs uppercase tracking-wider text-[var(--ink-3)]">
         {label}
       </span>
-      <div className="flex flex-wrap gap-1.5">
+      {/* Chip gap 8px, chip vertical padding 4px (Task-11-review, minor):
+          both used to be 6px, the one pair off the mandated
+          4·8·12·16·24·32·48·72 scale in an otherwise fully tokenised file.
+          Matches the pill padding `search-filter-bar.tsx`'s `FilterPills`
+          already uses. */}
+      <div className="flex flex-wrap gap-2">
         {years.map((y) => {
           const active = y === currentYear;
           return (
@@ -63,7 +68,7 @@ export function YearSelector({ currentYear, years, label, baseHref, yearParam = 
               onClick={() => selectYear(y)}
               disabled={isPending}
               className={cn(
-                "rounded-[var(--radius-pill)] border px-3 py-1.5 font-[family-name:var(--font-ui)] text-sm font-medium transition-colors disabled:cursor-wait",
+                "rounded-[var(--radius-pill)] border px-3 py-1 font-[family-name:var(--font-ui)] text-sm font-medium transition-colors disabled:cursor-wait",
                 active
                   ? "border-transparent bg-[var(--raised)] text-[var(--ink)]"
                   : "border-[var(--hairline)] bg-transparent text-[var(--ink-3)] disabled:opacity-60",

@@ -162,7 +162,30 @@ export function ContributionGrid({ year, completions, labels }: ContributionGrid
 
   return (
     <div
-      className="w-full overflow-x-auto"
+      // Task-11 review (I1): the grid's intrinsic width (53 weeks × 10px
+      // minimum + gaps + weekday column, ≈724px) is wider than
+      // `--measure` (640px) — it used to fit only because the page sat in
+      // the old `max-w-4xl` (848px) layout. Under `PageFrame` it no longer
+      // does, and `overflow-x-auto` alone hid whole weeks behind a scroll
+      // bar nobody could see was there. A chart's marks are data, not a
+      // text column, so it gets a deliberate, named breakout instead of a
+      // silent one: from the `rail:` breakpoint (1100px, the same one
+      // `PageFrame` itself uses to place the rail beside the column) the
+      // grid is allowed to grow into the gutter+rail width that
+      // `PageFrame` already reserves next to the reading column — 640 +
+      // 48 + 208 = 896px, comfortably over the measured 724px, so the
+      // whole year renders without any scrollbar. Below that breakpoint
+      // there is no spare width to bleed into, so the grid keeps its own
+      // local `overflow-x-auto` — an honest, contained scrollbar instead
+      // of page-level horizontal scroll.
+      //
+      // `data-breakout="chart"` is the named exception `measureColumns`
+      // (e2e/helpers/design-count.ts) checks for: without it, any element
+      // that outgrows `[data-column]` fails the "hält jede Inhaltsspalte
+      // auf dem Maß" rule instead of silently passing because nobody
+      // measured the child.
+      data-breakout="chart"
+      className="w-full overflow-x-auto rail:w-[calc(100%_+_var(--gutter)_+_var(--rail))]"
       style={{ scrollbarWidth: "thin" }}
     >
       <div
