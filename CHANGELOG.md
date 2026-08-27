@@ -75,6 +75,49 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   underline }`-Regel unterstrich jeden als `<a>` gerenderten Button dauerhaft; `variant="primary"`s
   Hover-Unterstreichung änderte dadurch nur noch die Farbe, nicht mehr das Vorhandensein. Behoben
   mit `no-underline!`/`hover:underline!` auf Basis- bzw. Primary-Ebene.
+- **Heatmap-Tooltips auf `/progress?tab=habits` warfen bei jedem Aufruf `FORMATTING_ERROR`.** Die
+  drei Tooltip-Nachrichten wurden formatiert übergeben (`t(...)`), obwohl `contribution-grid.tsx`
+  `{date}`/`{count}` selbst pro Zelle einsetzt — der Empfänger braucht die rohe ICU-Nachricht
+  (`t.raw(...)`). Das Datum fehlte deshalb in jedem Tooltip.
+- **Der Theme-Umschalter und der Münzzähler sprachen Englisch** („System theme — click to switch"),
+  auch auf deutscher Oberfläche. Beide Texte liegen jetzt in allen sieben Locales.
+- **Ein langer Themenname brach mitten im Wort** („Steuererklärun g 2025"). Die vorherige Erklärung
+  dafür — `word-break: break-word` neben `overflow-wrap: break-word` sei die Ursache — war falsch
+  und stand so auch in der Spec (§10) und im Rollout-Plan; gemessen in Chromium ändert das
+  Entfernen von `word-break` nichts, weil `min-width: 0` auf dem Titel-Span den einzigen
+  Unterschied zwischen `break-word` und seinem modernen Äquivalent `anywhere` neutralisiert. Der
+  tatsächliche Fix ist `hyphens: auto` — es bricht an einer echten Silbengrenze statt mitten im
+  Wort. Kanonische Erklärung: `components/ui/list.tsx` bei `wrapTitle`; das Bruchverhalten selbst
+  ist über eine Zeilenboxen-Assertion in `e2e/topics.spec.ts` gepinnt, nicht über abgeschriebene
+  Beispielwerte — zwei frühere Versionen davon waren falsch.
+- **Jedes wiederkehrende Habit ohne festes Intervall zeigte „täglich" in der Eyebrow**, auch
+  wöchentliche, monatliche und jährliche. `formatRecurrence()` unterschied nur nach
+  `recurrenceInterval` (null bei WEEKDAY/MONTHLY/YEARLY); schaltet jetzt über `recurrenceType`, mit
+  echten Übersetzungen (nicht kopierten) in allen sieben Sprachen.
+- **Der amberfarbene Wash hinter der Tagesaufgabe hatte auf `/dashboard` (dark) eine harte Kante am
+  linken Rand statt eines weichen Auslaufs.** Drei Zustände, in dieser Reihenfolge gemessen:
+  1. **Ursprünglich:** die Wash-Box überragte ihren Container um 190% (Rest eines Werts aus der
+     896-px-Ära, bevor `/dashboard` auf die 640-px-Lesespalte umzog). `main` setzt
+     `overflow-y: auto`, wodurch `overflow-x` gemäß Spezifikation ebenfalls zu `auto` statt
+     `visible` wird — bei 1440×900 dark schnitt das die Wash-Box (192…1216px) 32px vor `main`s
+     linker Kante (224…1440px) unsichtbar ab; bei 375px war der Überhang beidseitig größer als der
+     verfügbare Rand (~16px).
+  2. **Erster Fix, verschlimmbessert:** `width: 100%` (kein Überhang mehr) machte den Schnitt
+     **sichtbarer**, nicht weg — ein Hintergrundverlauf malt nie außerhalb seiner eigenen Box,
+     unabhängig von jedem `overflow`; ohne Überhang wurde die Box-Kante selbst zur harten Grenze,
+     und die lag (bei 30% Anker) näher am Fokuspunkt als `main`s alte Klip-Linie.
+  3. **Verifizierter Endzustand:** der Überhang bleibt bestehen, ist aber an den tatsächlich
+     verfügbaren Platz gekoppelt — unter 1100px (`--rail`-Umbruch, danach garantiert kein Rand
+     mehr neben der Spalte) 14px/Seite, ab 1100px 140px/Seite (unter dem bei 1440px gemessenen
+     160px-Budget). Verlaufsradius und -stopps sind für beide Fälle so verkleinert, dass der
+     Verlauf vor der jeweiligen Boxkante auf Grundfarbe ausklingt. Verifiziert per Pixelvergleich
+     (nicht per Arithmetik): bei 1440px UND 375px, dark UND light, liegt an jeder Kante 0 messbarer
+     Farbunterschied zum Grund (`14,16,15` dark bzw. `236,238,229` light, flach bis an main's
+     Klip-Linie heran). `e2e/dashboard.spec.ts` und `e2e/design-rules.spec.ts` bleiben grün
+     (63/63). Unterhalb von 1100px liest die Keule dadurch enger als das ursprüngliche
+     Breite-Ideal — akzeptierter Tausch gegen einen wirklich unsichtbaren Rand statt eines
+     unbemerkten Kompromisses; volle Breite auf jeder Breite bräuchte einen Scroll-Container, der
+     nicht `main` selbst ist (Empfehlung im Task-12-Bericht, nicht hier umgesetzt).
 
 ### Changed
 
@@ -115,6 +158,43 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   Umgestaltung: die Münzvorschau pro Aufgabe und die Prioritäts-Farbcodierung — beide hatten in der
   neuen Zeile keinen Platz mehr (dieselbe Begründung wie beim Münz-Abzeichen, das schon von
   `TaskRow` verschwand).
+- **Lichtkegel Phase 1: `/tasks`, `/topics` und `/progress` liegen auf dem Token-System.** Neu ist
+  ein Spaltenmaß, das auf jeder Seite gilt (640 px Lesespalte, 208 px Randnotiz, 48 px dazwischen,
+  als Block zentriert, Umbruch unter 1100 px) — vorher hatte jede Seite ihr eigenes, von randlos bis
+  1024 px. Aus fünf getrennten Zeilen-Implementierungen (`task-item.tsx`, `task-list.tsx`,
+  `focus-mode-view.tsx`, `wishlist-card.tsx`, `topic-card.tsx`) ist eine geworden — `List`/`Row`
+  (`components/ui/list.tsx`): Haarlinie statt Kasten, und die Metadaten einer Aufgabe brauchen keine
+  Flächen mehr. Die Dauer steckt in der Schriftgröße des Titels (die Minutenzahl steht als Text
+  daneben, damit die Größe nicht die einzige Kodierung ist), die Priorität ist eine
+  Gruppenüberschrift statt eines Abzeichens an jeder Zeile, und die frei gewählte Themenfarbe
+  erscheint als 6-px-Punkt statt als Füllung mit Rahmen. **`task-item.tsx` (803 Zeilen) bleibt
+  bestehen** — anders als der ursprüngliche Plan vorsah: `/quick` (`five-minute-view.tsx`) und
+  `/topics/[id]` (`sortable-task-item.tsx`) sind noch nicht migriert und importieren es weiter;
+  gelöscht wird es erst mit ihrer eigenen Phase. `/topics`' Zeilen verlieren dabei gegenüber der
+  alten Karte fünf Dinge, die auf einer Index-Seite keinen Platz mehr haben — Themen-Icon,
+  Prioritäts-Badge, Beschreibung, „alles erledigt"-Banner **und den „sequenziell"-Marker** —, alle
+  fünf bleiben im Bearbeiten-Formular einstellbar. Der Marker ist der einzige der fünf, der nicht
+  nur Dekoration ist (er ändert, welche Aufgabe als Tagesquest wählbar ist); Task 12 hat ihn in der
+  Zeile weiterhin **nicht** gefunden trotz einer gegenteiligen Annahme, unter der diese Phase
+  angetreten ist — offen für eine bewusste Entscheidung, nicht stillschweigend nachgetragen. Das
+  `/progress`-Jahresraster bricht dafür bewusst aus der
+  Lesespalte aus (`data-breakout="chart"`): die Maß-Regel schützt Lauftext, kein dichtes Datenraster
+  — bei 1440 px ist das volle Jahr sichtbar (54/54 Wochenspalten), bei 375 px rund 44 % mit lokalem
+  Scrollen, als Physik hingenommen statt als Fehler behandelt.
+- **Amber gilt jetzt über das ganze Dokument, nicht nur über den Inhalt.** Federlogo, Münzzähler und
+  Level-Badge trugen Amber außerhalb von `main` — gleichzeitig mit dem einen erlaubten Amber im
+  Inhalt waren damit auf jeder Seite drei Amber-Dinge sichtbar. Die Navigation ist jetzt
+  ausschließlich Ink, und die globale Linkfarbe ist keine Lichtfarbe mehr, sondern eine
+  Unterstreichung. `--danger` trägt inzwischen drei statt zwei Rollen — Zerstörung, Überfälligkeit
+  **und** Fehlermeldungen (Präzedenz in `task-breakdown-modal.tsx`); die Alternative wäre eine
+  Fehlermeldung in Ink, nicht als Fehler lesbar.
+- **Design-Ratsche bei 1938 Verstößen** (Task 2: 2219, nach Task 11: 1938; Task 12 senkt sie nicht
+  weiter, der erreichte Stand ist bereits der Boden). Die Ratsche hat einen blinden Fleck: ihre
+  `inline`-Regel ist wörtlich `/style=\{\{/g` und sieht `style={objektName}` — ein benanntes Objekt
+  statt eines Literals — nicht. Gemessen: **76** solcher Stellen in `app/` und `components/`
+  (Formulare wie `task-form.tsx`/`webhooks.tsx` bilden den größten Teil). Kein Dokument hier
+  behauptet, die Ratsche erfasse jeden Inline-Style — sie tut es nicht, und die Zahl steht bewusst
+  offen, statt die Regex zu erweitern und die Baseline neu zu fluten.
 
 - **Node.js 22 → 24 in App und CI**, und **Node.js 20 → 24 im Alexa-Lambda**. Node 20 ist seit
   2026-04-30 EOL, Node 24 läuft bis 2028-04-30 (Quelle: `nodejs/Release`). Betrifft

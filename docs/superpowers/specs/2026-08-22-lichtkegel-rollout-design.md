@@ -311,6 +311,20 @@ zu beheben:
 | Theme-Tooltip englisch („System theme — click to switch") auf deutscher UI | Theme-Umschalter in der Navbar |
 | Kartentitel bricht mitten im Wort („Steuererklärun g 2025") | `/topics` |
 
+**Korrektur (Task 12):** die ursprüngliche Diagnose für den Wortumbruch-Fund —
+`word-break: break-word` sei die Ursache, weil es gemeinsam mit
+`overflow-wrap: break-word` gesetzt war — war falsch und hat sich über den
+Rollout-Plan (Task-10-Passage) fortgepflanzt. Gemessen in Chromium: das
+Entfernen von `word-break` ändert an der Darstellung **nichts** — `min-width: 0`
+auf dem Titel-Span neutralisiert den einzigen Unterschied zwischen
+`break-word` und seinem modernen Äquivalent `anywhere`. Der tatsächliche Fix
+ist `hyphens: auto`, das an einer echten Silbengrenze statt mitten im Wort
+bricht. Die kanonische Erklärung des Mechanismus steht bei `wrapTitle` in
+`components/ui/list.tsx`; das tatsächliche Bruchverhalten wird durch eine
+Zeilenboxen-Assertion in `e2e/topics.spec.ts` erzwungen, nicht durch
+abgeschriebene Beispielwerte hier — zwei frühere Versionen dieser Erklärung
+waren falsch, ein ausführbarer Test kann das nicht sein.
+
 ---
 
 ## 11. Nicht Teil dieser Arbeit

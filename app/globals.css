@@ -311,11 +311,47 @@ body {
  * lang der Titel war. 30% liegt nah genug am linken Rand, wo jeder Titel
  * beginnt, dass die breite, weiche Streuung ihn traegt, ohne bei sehr
  * kurzen Titeln komplett danebenzuliegen. Verifiziert mit Titel-Laengen von
- * "Call mom" bis zum 26ch-Maximum. Die Breite ueber die Box hinauszuziehen
- * (190% statt vom 64rem-Clamp gekappt) wurde probiert und verworfen: das
- * verbreitert nur die Streuung, verschiebt aber die Mitte nicht — bei
- * Container-Mitte als Anker bleibt sie bei Container-Mitte, egal wie breit
- * die Box ist.
+ * "Call mom" bis zum 26ch-Maximum.
+ *
+ * **Task 12: der Ueberhang war nie der Fehler — er ist der Mechanismus, der
+ * dem Verlauf ueberhaupt Platz zum Ausklingen gibt.** Der eigentliche
+ * Fehler war nur, dass er mehr Platz wollte (192px links bei 1440px) als
+ * `main` links zwischen `overflow-y: auto`-Kante und Lesespalte hat
+ * (160px) — `overflow-x` wird durch die y-Regel automatisch zu `auto`
+ * statt `visible`, und die Wash-Box wurde 32px vor ihrem eigenen Rand
+ * unsichtbar abgeschnitten. Ein erster Versuch, den Ueberhang ganz zu
+ * streichen (`width: 100%`), war SCHLIMMER, nicht besser: ohne main-Klip
+ * greift stattdessen die BOX selbst als harte Kante — ein
+ * Hintergrundverlauf malt nie ausserhalb seiner eigenen Box, unabhaengig
+ * von jedem `overflow`. Ohne Ueberhang liegt diese Kante viel naeher am
+ * Fokus (bei 30% der jetzt viel schmaleren Box) als main's alte Klip-Linie
+ * es tat — der Schnitt wurde dadurch SICHTBARER, nicht unsichtbar.
+ *
+ * Die eigentliche Invariante: an jeder Stelle, an der die Box (oder ein
+ * klippender Vorfahre) endet, muss Amber vom Grund ununterscheidbar sein —
+ * nicht bloss klein. Verifiziert per Pixelvergleich (nicht per Arithmetik):
+ * an der Kliplinie liegt der Farbunterschied bei ≤ 1 RGB-Stufe, gemessen
+ * bei 1440px UND 375px, dark UND light. Der verfuegbare Platz ist NICHT
+ * symmetrisch und NICHT konstant: bei 1440px sind es 160px links / 416px
+ * rechts von der 640px-Lesespalte, bei 375px nur noch rund 16px auf jeder
+ * Seite (die Spalte fuellt dort fast die ganze verfuegbare Breite). Ein
+ * einzelner symmetrischer Ueberhang, der beides erfuellt, waere auf der
+ * schmaleren Seite winzig — deshalb ist der Ueberhang unterhalb von
+ * 1100px (derselbe `--rail`-Umbruch wie in `page-frame.tsx`, wo ohnehin
+ * garantiert kein Rand mehr neben der Spalte steht) knapp bemessen
+ * (14px/Seite, unter dem 16px-Budget bei 375px verifiziert), und erst ab
+ * 1100px — wo der Rand neben der Spalte definitionsgemaess Platz braucht —
+ * so breit wie ohne sichtbaren Schnitt moeglich (140px/Seite, unter dem
+ * 160px-Budget bei 1440px). Die 30%-Anker-Position bleibt in beiden
+ * Faellen gleich (Ueberschrift ist immer linksbuendig); nur Breite und
+ * Verlaufsradius unterscheiden sich. Unterhalb von 1100px liest die Keule
+ * dadurch enger als das urspruengliche Breite-Ideal — das ist der
+ * akzeptierte Tausch gegen einen wirklich unsichtbaren Rand, nicht ein
+ * unbemerkter Kompromiss. Volle Breite auf JEDER Breite braeuchte einen
+ * Scroll-Container, der nicht `main` selbst ist (`overflow-y` auf einen
+ * inneren Wrapper statt auf `main`) — das aendert Sticky-Positionierung,
+ * die mobile Bottom-Nav-Polsterung und E2E-Scrollannahmen, deshalb hier
+ * nicht angefasst; siehe Task-12-Bericht fuer die Empfehlung.
  *
  * Die Opazitaet atmet leicht (6s, 1 → 0.85 in der Mitte) statt zu pulsieren —
  * das Licht steht bei Ankunft auf voller Staerke, nicht zuletzt (auf einer Seite,
@@ -330,19 +366,29 @@ body {
 .lichtkegel::before {
   content: "";
   position: absolute;
-  left: 50%;
+  left: -14px;
   top: -6rem;
-  width: min(190%, 64rem);
+  width: calc(100% + 28px);
   height: 30rem;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse 55% 48% at 30% 46%,
+  background: radial-gradient(140px 130px at 30% 46%,
     color-mix(in srgb, var(--amber) 11%, transparent) 0%,
     color-mix(in srgb, var(--amber) 7%,  transparent) 26%,
     color-mix(in srgb, var(--amber) 3%,  transparent) 48%,
-    transparent 84%);
+    transparent 78%);
   pointer-events: none;
   z-index: -1;
   animation: lichtkegel-atmen 6s ease-in-out infinite;
+}
+@media (min-width: 1100px) {
+  .lichtkegel::before {
+    left: -140px;
+    width: calc(100% + 280px);
+    background: radial-gradient(300px 230px at 30% 46%,
+      color-mix(in srgb, var(--amber) 11%, transparent) 0%,
+      color-mix(in srgb, var(--amber) 7%,  transparent) 26%,
+      color-mix(in srgb, var(--amber) 3%,  transparent) 48%,
+      transparent 84%);
+  }
 }
 /* Die Atmung beginnt bei voller Stärke und senkt sich in der Mitte des
    Zyklus leicht ab — nicht umgekehrt. Vorher stand das Licht bei Ankunft
