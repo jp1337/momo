@@ -37,7 +37,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoins } from "@fortawesome/free-solid-svg-icons";
@@ -269,10 +268,14 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
       />
     )}
 
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
+    {/*
+     * Keine Eintrittsanimation (2026-08-22, Spec §7). Vorher fuhr die
+     * Quest aus opacity 0 / y 16 hoch und war dabei dunkler als die Liste
+     * unter ihr. Umkehrung: die Quest steht bei Ankunft sofort auf voller
+     * Stärke; nur die Peripherie beruhigt sich danach (siehe
+     * quick-wins-section.tsx).
+     */}
+    <div
       data-testid="quest-light"
       className="lichtkegel flex flex-col gap-4"
     >
@@ -436,7 +439,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
           </div>
         </>
       )}
-    </motion.div>
+    </div>
     </>
   );
 }

@@ -343,9 +343,13 @@ body {
   z-index: -1;
   animation: lichtkegel-atmen 6s ease-in-out infinite;
 }
+/* Die Atmung beginnt bei voller Stärke und senkt sich in der Mitte des
+   Zyklus leicht ab — nicht umgekehrt. Vorher stand das Licht bei Ankunft
+   auf 0.85 und erreichte seine Stärke erst nach ~3 s: auf der Seite, deren
+   These "eine Lichtquelle" ist, kam das Licht zuletzt. */
 @keyframes lichtkegel-atmen {
-  0%, 100% { opacity: 0.85; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lichtkegel::before {

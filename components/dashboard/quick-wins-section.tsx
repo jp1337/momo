@@ -24,7 +24,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { List, Row, effortStep } from "@/components/ui/list";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
@@ -52,6 +52,7 @@ interface QuickWinsSectionProps {
 
 export function QuickWinsSection({ tasks: initialTasks }: QuickWinsSectionProps) {
   const t = useTranslations("dashboard");
+  const reduceMotion = useReducedMotion();
   const [tasks, setTasks] = useState<QuickWinTask[]>(initialTasks);
   const [completing, setCompleting] = useState<Set<string>>(new Set());
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
@@ -91,7 +92,11 @@ export function QuickWinsSection({ tasks: initialTasks }: QuickWinsSectionProps)
   if (tasks.length === 0) return null;
 
   return (
-    <section>
+    <motion.section
+      initial={reduceMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+    >
       {levelUp && (
         <LevelUpOverlay
           level={levelUp.level}
@@ -148,6 +153,6 @@ export function QuickWinsSection({ tasks: initialTasks }: QuickWinsSectionProps)
           ))}
         </AnimatePresence>
       </List>
-    </section>
+    </motion.section>
   );
 }

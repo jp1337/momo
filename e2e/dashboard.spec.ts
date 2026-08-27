@@ -171,3 +171,45 @@ test.describe("Aufwandsstufen", () => {
     expect(s.radius).toBe("0px");
   });
 });
+
+test.describe("Die Ankunft", () => {
+  test("das Licht steht bei Ankunft auf voller Stärke", async ({ page }) => {
+    await page.goto("/dashboard");
+    // Gelesen wird die Keyframe-Regel selbst, nicht ein Zeitpunkt: das ist
+    // die Behauptung ("bei 0% volle Stärke") ohne Zeitfenster-Flake.
+    const startOpacity = await page.evaluate(() => {
+      for (const sheet of Array.from(document.styleSheets)) {
+        let rules: CSSRuleList;
+        try {
+          rules = sheet.cssRules;
+        } catch {
+          continue; // fremde Herkunft
+        }
+        for (const rule of Array.from(rules)) {
+          if (
+            rule instanceof CSSKeyframesRule &&
+            rule.name === "lichtkegel-atmen"
+          ) {
+            const first = Array.from(rule.cssRules).find(
+              (r) => (r as CSSKeyframeRule).keyText.includes("0%"),
+            ) as CSSKeyframeRule | undefined;
+            return first?.style.opacity ?? null;
+          }
+        }
+      }
+      return null;
+    });
+    expect(startOpacity).toBe("1");
+  });
+
+  test("die Quest fährt nicht ein", async ({ page }) => {
+    await page.goto("/dashboard");
+    await page.getByTestId("quest-title").waitFor();
+    // Motion schreibt seine Animation als Inline-Style. Kein opacity und
+    // kein transform im style-Attribut heißt: es gibt keine
+    // Eintrittsanimation auf der Quest.
+    const style = await page.getByTestId("quest-light").getAttribute("style");
+    expect(style ?? "").not.toContain("opacity");
+    expect(style ?? "").not.toContain("translate");
+  });
+});
