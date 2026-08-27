@@ -32,7 +32,7 @@
  * `wordBreak: "break-word"` gleichzeitig und brach mitten im Wort
  * ("Steuererklärun g 2025"). `Row`s Titel-Span trägt `min-width: 0`, und
  * das neutralisiert den einzigen Unterschied zwischen `break-word` und
- * seinem veralteten Alias `anywhere` — `overflow-wrap: break-word` allein
+ * `anywhere` — `overflow-wrap: break-word` allein
  * reproduziert den gemeldeten Fehler zeichengenau, mit oder ohne
  * `word-break` daneben. Der tatsächliche Fix ist `hyphens-auto`: es bricht
  * an einer echten Silbengrenze statt mitten im Wort, weil `app/layout.tsx`
