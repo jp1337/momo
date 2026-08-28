@@ -90,7 +90,7 @@ Kategorie wie `/topics/[id]`, nur ohne eigene Route.
 
 ## Die Funde
 
-Zwölf. Die Kurzfassung scannt; die sechs, die einen Satz brauchen, stehen
+Zwölf. Die Kurzfassung scannt; was einen Satz braucht, steht als Fußnote
 darunter.
 
 | # | Fund | Datei | Regel | Zuordnung | behoben? |
@@ -103,7 +103,7 @@ darunter.
 | 6 | Themenformular: Amber als Button-Fläche | `components/topics/topic-form.tsx:502, 345-350, 391-396` | Amber | keine | nein |
 | 7 | Vorlagenwähler: Badge „In order" amber getönt, 11 Treffer | `components/topics/template-picker.tsx:149-150, 214` | Amber als Fläche | keine | nein |
 | 8 | Massenaktionsleiste: umrahmter Kasten in `main` | `components/tasks/bulk-action-bar.tsx:85, 93` | Kästen | keine | nein |
-| 9 | `/focus` Fortschritts-Pip zählt als gefüllte Fläche ⁴ | `components/focus/focus-mode-view.tsx:274-283` | Kästen | Phase-1-Rest | nein |
+| 9 | `/focus` Fortschritts-Pip zählt als gefüllte Fläche ⁴ | `components/focus/focus-mode-view.tsx:274-283` | Kästen | keine ⁷ | nein |
 | 10 | `/topics/[id]` verletzt alle vier Regeln, steht in keiner Liste ⁵ | `components/topics/topic-detail-view.tsx:228, 344, 398-399`, `task-item.tsx` | alle vier | Phase-1-Rest / keine | nein |
 | 11 | `Row`s `actions` sind `opacity-0` bis Hover/Fokus ⁶ | `components/ui/list.tsx:374-393` | Messlücke | Phase 2 | nein, geprüft und leer |
 | 12 | `border-radius: 4px` — außerhalb der vier Radius-Stufen | `app/globals.css:544` (Stufen: `:58-61`) | Radius | keine | nein |
@@ -135,6 +135,12 @@ keiner `MIGRATED_PAGES`-Liste und rendert über `topic-detail-view.tsx` das alte
 ⁶ Nur unter `@media (hover: hover)`. Betrifft jede Zeilenaktion auf `/tasks`,
 `/topics`, `/focus`, `/quick`, `/wishlist`, `/progress`; der `opacity: 0`-Guard
 der Zähler überspringt sie zusätzlich.
+
+⁷ Diese Zelle sagte bis Fix-Runde 2 „Phase-1-Rest" — eine Zuschreibung per
+Assoziation, weil `/focus` eine Phase-1-Seite ist. §7 der Spec **zählt** die
+Phase-1-Reste aber auf: `task-item.tsx` und geteilte Animationen, sonst nichts.
+`focus-mode-view.tsx` steht dort nicht und gehört damit in dieselbe unbetreute
+Menge wie die anderen acht.
 
 ## Was behoben wurde
 
@@ -168,13 +174,24 @@ Datei. Die zwei Berührungspunkte, die es gibt, sind keine Verstöße:
 
 ## Was benannt und stehen gelassen wurde
 
-Alle 12 Funde. §7 der Spec ordnet Phase-1-Reste (`task-item.tsx`), Phase 3
-(`components/settings`, `/admin`, `api-keys`) und Phase 4 (Legal, Login,
-Onboarding, `app/page.tsx`) zu — **acht der zwölf Funde (1, 3–8, 12) stehen in
+Alle 12 Funde. §7 der Spec zählt auf, was nicht Teil dieser Arbeit ist:
+Phase-1-Reste (`task-item.tsx`, geteilte Animationen), Phase 3
+(`components/settings`, `/admin`, `api-keys`), Phase 4 (Legal, Login,
+Onboarding, `app/page.tsx`). **Neun der zwölf Funde — 1, 3–9 und 12 — stehen in
 keiner dieser Listen**, dazu die `topic-detail-view.tsx`-Hälfte von Fund 10.
-Es sind acht Dateien: `app/globals.css`, `components/ui/input.tsx`, `task-form.tsx`,
-`topic-form.tsx`, `template-picker.tsx`, `bulk-action-bar.tsx`,
-`topic-detail-view.tsx`, `focus-mode-view.tsx`.
+
+Das sind acht Dateien, weil `globals.css` drei Funde trägt:
+
+| Datei | Funde |
+|---|---|
+| `app/globals.css` | 1, 3, 12 |
+| `components/ui/input.tsx` | 4 |
+| `components/tasks/task-form.tsx` | 5 |
+| `components/topics/topic-form.tsx` | 6 |
+| `components/topics/template-picker.tsx` | 7 |
+| `components/tasks/bulk-action-bar.tsx` | 8 |
+| `components/focus/focus-mode-view.tsx` | 9 |
+| `components/topics/topic-detail-view.tsx` | 10 (Hälfte) |
 
 Das ist der Fund hinter dem Fund: die Phasenaufteilung ist nach **Seiten**
 geschnitten, die Verstöße sitzen aber in **Formularen, Menüs, Leisten und einem
