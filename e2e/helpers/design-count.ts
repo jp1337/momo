@@ -26,8 +26,23 @@ export interface Hit {
   inLight: boolean;
 }
 
-/** Seiten, die auf das Token-System migriert sind. Jede Phase verlängert die Liste. */
-export const MIGRATED_PAGES: string[] = ["/dashboard", "/tasks", "/focus", "/topics", "/progress"];
+/**
+ * Seiten **und Zustände**, die auf das Token-System migriert sind.
+ *
+ * Bis Phase 2 war das eine Liste von Routen — und `/progress` stand darin,
+ * obwohl `ProgressTabs` nur den AKTIVEN Tab rendert: die vier Zähler sahen
+ * einen von drei Tabs, die anderen zwei waren nicht unmigriert, sondern
+ * unmessbar (Spec Phase 2, §1). Ein Query-String erfordert hier keine
+ * Änderung — die Zähler navigieren mit `page.goto(path)`.
+ */
+export const MIGRATED_PAGES: string[] = [
+  "/dashboard",
+  "/tasks",
+  "/focus",
+  "/topics",
+  "/progress", // = ?tab=habits, der Default
+  "/progress?tab=review",
+];
 
 /**
  * Zählt Amber über das GESAMTE Dokument — Navbar, Sidebar, Dialoge
