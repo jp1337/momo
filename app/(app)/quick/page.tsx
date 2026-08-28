@@ -17,6 +17,7 @@ import { tasks, users } from "@/lib/db/schema";
 import { eq, isNull, and, or, lte } from "drizzle-orm";
 import { getUserTopics } from "@/lib/topics";
 import { FiveMinuteView } from "@/components/quick/five-minute-view";
+import { PageFrame } from "@/components/ui/page-frame";
 import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
@@ -100,53 +101,16 @@ export default async function QuickPage() {
   }));
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* ── Header with atmospheric glow ─────────────────────────────── */}
-      <div className="relative mb-8">
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            top: "-2rem",
-            left: "-3rem",
-            width: "280px",
-            height: "160px",
-            background:
-              "radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-amber) 10%, transparent) 0%, transparent 70%)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <h1
-            className="text-3xl font-semibold"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              fontStyle: "italic",
-              color: "var(--text-primary)",
-              lineHeight: 1.2,
-            }}
-          >
-            {t("page_title")}
-          </h1>
-          <p
-            className="mt-1.5 text-sm"
-            style={{
-              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-              color: "var(--text-muted)",
-              letterSpacing: "0.01em",
-            }}
-          >
-            {t("page_subtitle", { count: serializedTasks.length })}
-          </p>
-        </div>
+    <PageFrame>
+      <div className="flex flex-col gap-2">
+        <h1 className="m-0 font-[family-name:var(--font-display)] text-[1.75rem] font-normal text-[var(--ink)]">
+          {t("page_title")}
+        </h1>
+        <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--ink-3)]">
+          {t("page_subtitle", { count: serializedTasks.length })}
+        </p>
       </div>
-
-      {/* ── Interactive task view ─────────────────────────────────────── */}
-      <FiveMinuteView
-        initialTasks={serializedTasks}
-        topics={serializedTopics}
-      />
-    </div>
+      <FiveMinuteView initialTasks={serializedTasks} topics={serializedTopics} />
+    </PageFrame>
   );
 }

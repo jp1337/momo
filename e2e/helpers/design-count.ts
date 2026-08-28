@@ -45,6 +45,7 @@ export const MIGRATED_PAGES: string[] = [
   "/progress?tab=review",
   "/progress?tab=stats",
   "/wishlist",
+  "/quick",
 ];
 
 /**
