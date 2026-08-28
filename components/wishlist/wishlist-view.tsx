@@ -323,11 +323,16 @@ export function WishlistView({
     <PageFrame rail={rail}>
       {header}
 
-      {/* Add item — a toolbar affordance once there's a list to add to; on
-          an empty wishlist the EmptyState below is the sole call to action
-          (Task 6 review Important: this used to render unconditionally,
-          duplicating the EmptyState's own button on every empty page). */}
-      {items.length > 0 && (
+      {/* Add item — a toolbar affordance whenever the "no open wishes"
+          EmptyState below is NOT rendering its own `view_add` action, so
+          the two can never appear together (Task 6 review round 2: gating
+          this on `items.length > 0` alone still let both show at once for
+          an account with only bought/discarded items and zero open ones —
+          `items.length > 0` was true (history exists) AND
+          `openItems.length === 0 && !isFiltering` was ALSO true (the
+          EmptyState's own gate), so both buttons rendered. This condition
+          is the exact negation of that EmptyState's gate. */}
+      {(openItems.length > 0 || isFiltering) && (
         <div className="flex justify-end">
           <Button
             type="button"
