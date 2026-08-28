@@ -13,11 +13,12 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { useTranslations } from "next-intl";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBolt, faCheck } from "@fortawesome/free-solid-svg-icons";
-import { TaskItem } from "@/components/tasks/task-item";
+import { List } from "@/components/ui/list";
+import { TaskRow } from "@/components/tasks/task-row";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
 import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
@@ -208,18 +209,13 @@ export function FiveMinuteView({ initialTasks, topics }: FiveMinuteViewProps) {
       )}
 
       {/* Task list */}
-      <AnimatePresence mode="popLayout">
-        {sortedTasks.map((task) => {
-          const topic = task.topicId ? topicMap.get(task.topicId) : null;
-          return (
-            <motion.div
-              key={task.id}
-              layout
-              initial={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: 40, transition: { duration: 0.25 } }}
-              className="mb-2"
-            >
-              <TaskItem
+      <List>
+        <AnimatePresence initial={false}>
+          {sortedTasks.map((task) => {
+            const topic = task.topicId ? topicMap.get(task.topicId) : null;
+            return (
+              <TaskRow
+                key={task.id}
                 id={task.id}
                 title={task.title}
                 type={task.type}
@@ -230,115 +226,44 @@ export function FiveMinuteView({ initialTasks, topics }: FiveMinuteViewProps) {
                 topicTitle={topic?.title}
                 topicColor={topic?.color}
                 topicId={task.topicId}
-                coinValue={task.coinValue}
-                postponeCount={task.postponeCount}
                 estimatedMinutes={task.estimatedMinutes}
-                energyLevel={task.energyLevel}
+                snoozedUntil={task.snoozedUntil}
                 onComplete={handleComplete}
                 onUncomplete={handleUncomplete}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onInlineEdit={handleInlineEdit}
                 onGoToTopic={handleGoToTopic}
+                exitAnimation
               />
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
+            );
+          })}
+        </AnimatePresence>
+      </List>
 
       {/* "All done" celebration */}
       {allDone && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="rounded-2xl p-12 text-center"
-          style={{
-            backgroundColor: "var(--bg-surface)",
-            border: "1px solid color-mix(in srgb, var(--accent-green) 30%, var(--border))",
-          }}
-        >
-          <div
-            className="mx-auto mb-5 flex items-center justify-center"
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: "50%",
-              backgroundColor: "color-mix(in srgb, var(--accent-green) 14%, transparent)",
-            }}
-            role="img"
-            aria-label={t("completed_all")}
-          >
-            <FontAwesomeIcon icon={faCheck} style={{ fontSize: 28, color: "var(--accent-green)" }} />
-          </div>
-          <p
-            className="text-base font-medium mb-1"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              fontStyle: "italic",
-              color: "var(--text-primary)",
-            }}
-          >
-            {t("completed_all")}
-          </p>
-          <Link
-            href="/tasks"
-            className="inline-block mt-4 text-sm font-medium transition-opacity hover:opacity-80"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--accent-amber)",
-              textDecoration: "none",
-            }}
-          >
-            {tTasks("page_title")} →
-          </Link>
-        </motion.div>
+        <EmptyState
+          testId="quick-all-done"
+          line={t("completed_all")}
+          action={
+            <Button asChild variant="quiet" size="md">
+              <Link href="/tasks">{tTasks("page_title")}</Link>
+            </Button>
+          }
+        />
       )}
 
       {/* Empty state — no 5-min tasks at all */}
       {initialTasks.length === 0 && (
-        <div
-          className="rounded-2xl p-12 text-center"
-          style={{
-            backgroundColor: "var(--bg-surface)",
-            border: "1px dashed var(--border)",
-          }}
-        >
-          <FontAwesomeIcon
-            icon={faBolt}
-            className="text-2xl mb-3"
-            style={{ color: "var(--accent-amber)", opacity: 0.6 }}
-          />
-          <p
-            className="text-base font-medium mb-1"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              fontStyle: "italic",
-              color: "var(--text-primary)",
-            }}
-          >
-            {t("empty_title")}
-          </p>
-          <p
-            className="text-sm mb-4"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {t("empty_subtitle")}
-          </p>
-          <Link
-            href="/tasks"
-            className="text-sm font-medium transition-opacity hover:opacity-80"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--accent-amber)",
-              textDecoration: "none",
-            }}
-          >
-            {t("empty_link")}
-          </Link>
-        </div>
+        <EmptyState
+          line={t("empty_subtitle")}
+          action={
+            <Button asChild variant="quiet" size="md">
+              <Link href="/tasks">{t("empty_link")}</Link>
+            </Button>
+          }
+        />
       )}
     </div>
   );

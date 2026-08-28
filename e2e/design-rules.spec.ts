@@ -55,6 +55,13 @@ async function gotoSettled(page: Page, theme: "dark" | "light", path: string) {
  * werden. Mit einer benannten Menge bricht stattdessen ein `expect` auf der
  * betroffenen Seite, weil die tatsächliche Zahl nicht mehr zur erklärten
  * Erwartung passt.
+ *
+ * Beide Mengen sind POSITIVMENGEN: alles, was nicht darin steht, erwartet
+ * "kein Lichtkegel, aber ein <header>". Die fünf Zustände, die Phase 2
+ * ergänzt (`?tab=review|achievements|stats`, `/wishlist`, `/quick`), liegen
+ * in der (app)-Route-Group und tragen keinen Lichtkegel — sie erfüllen die
+ * Default-Erwartung, ohne eingetragen zu werden. Nachgemessen 2026-08-28,
+ * damit der nächste Leser es nicht wieder tut.
  */
 const WITH_LIGHT = new Set(["/dashboard"]);
 const CHROMELESS = new Set(["/focus"]);

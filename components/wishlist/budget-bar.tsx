@@ -1,25 +1,30 @@
 "use client";
 
 /**
- * BudgetBar component — animated progress bar showing monthly budget usage.
+ * BudgetBar — der monatliche Budgetstand, als Rand-Inhalt.
  *
- * Features:
- * - Animated progress bar (Framer Motion width animation on mount)
- * - Color changes: green < 80%, amber 80–100%, red > 100%
- * - Shows budget used / total in human-readable format
- * - "Edit budget" inline button that opens a small input to update the budget
- * - Calls PATCH /api/settings/budget to save changes
+ * Lebt seit Phase 2 im Rand von `/wishlist` (`wishlist-view.tsx`), nicht
+ * mehr in einem eigenen Kasten in der Lesespalte. Der Rumpf ist eine Folge
+ * von `RAIL_LINE`-Zeilen plus ein echter `role="progressbar"` — kein Grün/
+ * Amber/Rot mehr (`getBarColor` ist weg): der Rand trägt nie Amber, `--done`
+ * bedeutet ausschließlich "erledigt" und `--danger` ausschließlich
+ * Zerstörung und Überfälligkeit. Der Balken ist deshalb immer `--ink-2`;
+ * dass das Budget voll ist, sagt der Balken selbst (100 % gefüllt), und
+ * "über Budget" steht als neutraler Text daneben.
  */
 
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useTranslations, useLocale } from "next-intl";
+import { RAIL_LINE } from "@/components/ui/list";
+import { Button } from "@/components/ui/button";
 
-interface BudgetBarProps {
+export interface BudgetBarProps {
   monthlyBudget: number | null;
   spentThisMonth: number;
   remaining: number | null;
-  /** Called when budget is successfully updated, with the new value */
+  /** Summe aller je gekauften Wünsche, über alle Monate. Neu in Phase 2. */
+  totalSpent: number;
   onBudgetUpdate: (newBudget: number | null) => void;
 }
 
@@ -33,22 +38,18 @@ function formatCurrency(amount: number, locale: string): string {
   });
 }
 
-/**
- * Returns the fill color based on percent spent.
- */
-function getBarColor(percent: number): string {
-  if (percent >= 100) return "var(--accent-red)";
-  if (percent >= 80) return "var(--accent-amber)";
-  return "var(--accent-green)";
-}
+const inputClassName =
+  "w-full rounded-[var(--radius-sm)] border border-[var(--hairline)] bg-[var(--raised)] px-3 py-2 font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--ink)] outline-none";
 
 /**
- * Animated budget progress bar with inline edit capability.
+ * Budgetstand des Rands: Ausgaben diesen Monat, ein Fortschrittsbalken,
+ * Rest bzw. "über Budget", die Gesamtausgaben, ein Bearbeiten-Knopf.
  */
 export function BudgetBar({
   monthlyBudget,
   spentThisMonth,
   remaining,
+  totalSpent,
   onBudgetUpdate,
 }: BudgetBarProps) {
   const t = useTranslations("wishlist");
@@ -65,10 +66,6 @@ export function BudgetBar({
     monthlyBudget !== null && monthlyBudget > 0
       ? Math.min((spentThisMonth / monthlyBudget) * 100, 100)
       : 0;
-
-  const barColor = getBarColor(
-    monthlyBudget !== null ? (spentThisMonth / (monthlyBudget || 1)) * 100 : 0
-  );
 
   const handleSaveBudget = async () => {
     setSaveError(null);
@@ -103,159 +100,73 @@ export function BudgetBar({
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    padding: "4px 10px",
-    borderRadius: "6px",
-    border: "1px solid var(--border)",
-    backgroundColor: "var(--bg-elevated)",
-    color: "var(--text-primary)",
-    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-    fontSize: "14px",
-    outline: "none",
-    width: "120px",
-  };
-
-  // No budget configured yet
-  if (monthlyBudget === null && !isEditing) {
-    return (
-      <div
-        className="rounded-xl p-4 flex items-center justify-between gap-4"
-        style={{
-          backgroundColor: "var(--bg-surface)",
-          border: "1px solid var(--border)",
-        }}
-      >
-        <div>
-          <p
-            className="text-sm font-medium"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {t("budget_no_budget")}
-          </p>
-          <p
-            className="text-xs mt-0.5"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {t("budget_no_budget_hint")}
-          </p>
-        </div>
-        <button
-          onClick={() => setIsEditing(true)}
-          className="text-sm px-3 py-1.5 rounded-lg font-medium flex-shrink-0"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            backgroundColor: "var(--accent-amber)",
-            color: "var(--bg-primary)",
-          }}
-        >
-          {t("budget_set")}
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div
-      className="rounded-xl p-4 flex flex-col gap-3"
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        border: "1px solid var(--border)",
-      }}
-    >
-      {/* Header row */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span
-            className="text-sm font-medium"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {t("budget_this_month")}
-          </span>
-          <span
-            className="font-semibold"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-primary)",
-              fontSize: "1.1rem",
-            }}
-          >
-            €{formatCurrency(spentThisMonth, locale)}
-            {monthlyBudget !== null && (
-              <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
-                {" "}
-                / €{formatCurrency(monthlyBudget, locale)}
-              </span>
-            )}
-          </span>
-          {remaining !== null && (
-            <span
-              className="text-sm"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color:
-                  remaining < 0 ? "var(--accent-red)" : "var(--text-muted)",
-              }}
-            >
-              ({remaining < 0
-                ? t("budget_over")
-                : t("budget_left", { amount: `€${formatCurrency(remaining, locale)}` })})
-            </span>
-          )}
-        </div>
+    <div className="flex flex-col gap-2">
+      <p className={RAIL_LINE}>
+        {t("budget_this_month")} €{formatCurrency(spentThisMonth, locale)}
+        {monthlyBudget !== null && <> / €{formatCurrency(monthlyBudget, locale)}</>}
+      </p>
 
-        {!isEditing && (
-          <button
-            onClick={() => {
-              setBudgetInput(monthlyBudget !== null ? String(monthlyBudget) : "");
-              setIsEditing(true);
-            }}
-            className="text-xs flex-shrink-0"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {t("budget_edit")}
-          </button>
-        )}
-      </div>
-
-      {/* Progress bar */}
-      {monthlyBudget !== null && (
+      {monthlyBudget !== null && monthlyBudget > 0 && (
+        // `role="progressbar"` ist die benannte Ausnahme, die `countBoxes`
+        // prüft — ein Fortschrittsbalken IST eine gefüllte Fläche, per
+        // Definition. Ohne die Rolle zählen Spur UND Füllung als zwei Kästen.
+        // Die aria-Werte sind kein Beiwerk: eine Rolle ohne sie ist ein leeres
+        // Versprechen an den Screenreader.
+        //
+        // Guarded on `monthlyBudget > 0`, matching `percent`'s own guard
+        // (Task 6 review Minor): at exactly 0, `aria-valuemax` would equal
+        // `aria-valuemin`, a degenerate progressbar for a screen reader, and
+        // the track could never visually fill regardless of spend.
         <div
-          className="relative h-2.5 rounded-full overflow-hidden"
-          style={{ backgroundColor: "var(--bg-elevated)" }}
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={monthlyBudget}
+          aria-valuenow={Math.min(spentThisMonth, monthlyBudget)}
+          aria-label={t("budget_this_month")}
+          className="h-[6px] w-full overflow-hidden rounded-[var(--radius-pill)] bg-[var(--raised)]"
         >
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${percent}%` }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="absolute inset-y-0 left-0 rounded-full"
-            style={{ backgroundColor: barColor }}
+            className="h-full rounded-[var(--radius-pill)] bg-[var(--ink-2)]"
           />
         </div>
       )}
 
-      {/* Inline edit form */}
+      {remaining !== null && (
+        <p className={RAIL_LINE}>
+          {remaining < 0 ? t("budget_over") : t("budget_left", { amount: `€${formatCurrency(remaining, locale)}` })}
+        </p>
+      )}
+
+      {totalSpent > 0 && (
+        <p className={RAIL_LINE}>
+          {t("budget_total_spent", { amount: `€${formatCurrency(totalSpent, locale)}` })}
+        </p>
+      )}
+
+      {monthlyBudget === null && !isEditing && (
+        <p className={RAIL_LINE}>{t("budget_no_budget_hint")}</p>
+      )}
+
+      {!isEditing && (
+        <Button
+          variant="quiet"
+          size="sm"
+          onClick={() => {
+            setBudgetInput(monthlyBudget !== null ? String(monthlyBudget) : "");
+            setIsEditing(true);
+          }}
+        >
+          {monthlyBudget === null ? t("budget_set") : t("budget_edit")}
+        </Button>
+      )}
+
       {isEditing && (
-        <div className="flex items-center gap-2 flex-wrap pt-1">
-          <label
-            htmlFor="budget-input"
-            className="text-xs"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
+        <div className="flex flex-col gap-2">
+          <label htmlFor="budget-input" className={RAIL_LINE}>
             {t("budget_label")}
           </label>
           <input
@@ -266,45 +177,23 @@ export function BudgetBar({
             placeholder={t("budget_placeholder")}
             min={0}
             step="0.01"
-            style={inputStyle}
+            className={inputClassName}
             autoFocus
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSaveBudget();
               if (e.key === "Escape") setIsEditing(false);
             }}
           />
-          <button
-            onClick={handleSaveBudget}
-            disabled={isSaving}
-            className="text-xs px-3 py-1.5 rounded-lg font-medium"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              backgroundColor: "var(--accent-amber)",
-              color: "var(--bg-primary)",
-              opacity: isSaving ? 0.7 : 1,
-              cursor: isSaving ? "not-allowed" : "pointer",
-            }}
-          >
-            {isSaving ? tc("saving") : tc("save")}
-          </button>
-          <button
-            onClick={() => setIsEditing(false)}
-            className="text-xs px-2 py-1.5 rounded-lg"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {tc("cancel")}
-          </button>
+          <div className="flex gap-2">
+            <Button variant="quiet" size="sm" onClick={handleSaveBudget} disabled={isSaving}>
+              {isSaving ? tc("saving") : tc("save")}
+            </Button>
+            <Button variant="quiet" size="sm" onClick={() => setIsEditing(false)}>
+              {tc("cancel")}
+            </Button>
+          </div>
           {saveError && (
-            <p
-              className="w-full text-xs mt-1"
-              style={{
-                color: "var(--accent-red)",
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              }}
-            >
+            <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--danger)]">
               {saveError}
             </p>
           )}

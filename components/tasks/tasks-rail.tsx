@@ -7,13 +7,15 @@
  * die App über seinen Tag sagt." Die Coins der einzelnen Zeilen landen
  * hier als Summe statt an jeder Zeile — und der Rand trägt nie Amber.
  *
- * Der Plan rief hier `SearchFilterBar` mit Props auf, die es nicht gibt
- * (`filterGroups`/`onFilterChange`/`onClearAll` statt der echten
- * Schnittstelle, siehe `components/shared/search-filter-bar.tsx`), und
- * `SearchFilterBar` bündelt ohnehin ein Sucheingabefeld UND die
- * Filter-Pillen — für einen 208-px-Rand zu viel. Dieser Rand verwendet
- * deshalb nur `FilterPills` (Suchen bleibt in der Lesespalte, siehe
- * `task-list.tsx`).
+ * Der Plan rief hier eine `SearchFilterBar`-Komponente mit Props auf, die
+ * es nicht gab (`filterGroups`/`onFilterChange`/`onClearAll` statt der
+ * echten Schnittstelle von `components/shared/search-filter-bar.tsx`). Die
+ * dort komponierte `SearchFilterBar` bündelte ohnehin ein Sucheingabefeld
+ * UND die Filter-Pillen — für einen 208-px-Rand zu viel. Dieser Rand
+ * verwendet deshalb nur `FilterPills` (Suchen bleibt in der Lesespalte,
+ * siehe `task-list.tsx`); `SearchFilterBar` selbst hatte zuletzt keinen
+ * Aufrufer mehr und wurde im Phase-2-Abschluss aus `search-filter-bar.tsx`
+ * entfernt.
  */
 import { useTranslations } from "next-intl";
 import { FilterPills } from "@/components/shared/search-filter-bar";

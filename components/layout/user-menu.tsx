@@ -148,10 +148,10 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
           </DropdownMenu.Label>
 
           <div className="py-1">
-            <MenuLinkItem href="/stats" icon={faChartBar}>
+            <MenuLinkItem href="/progress?tab=stats" icon={faChartBar}>
               Statistiken
             </MenuLinkItem>
-            <MenuLinkItem href="/review" icon={faCalendarWeek}>
+            <MenuLinkItem href="/progress?tab=review" icon={faCalendarWeek}>
               Wochenrückblick
             </MenuLinkItem>
             <MenuLinkItem href="/settings" icon={faGear}>

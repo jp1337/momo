@@ -7,10 +7,11 @@
  * `/tasks` (Task 8) braucht beides an verschiedenen Stellen: Suchen ist
  * etwas, das der Nutzer *tut* (Lesespalte); die Filter sagen etwas *über*
  * die Liste (Rand). `SearchInput` und `FilterPills` sind deshalb jetzt
- * eigene, exportierte Komponenten — `SearchFilterBar` bleibt als dünne
- * Komposition beider bestehen, mit unveränderten Props/Verhalten, damit
- * `wishlist-view.tsx` (Phase 2, noch nicht migriert) unangetastet
- * weiterläuft.
+ * eigene, exportierte Komponenten. Die zusammengesetzte `SearchFilterBar`
+ * blieb zunächst als dünne Komposition beider bestehen, für
+ * `wishlist-view.tsx` — seit dessen Migration in Phase 2 Task 6 ruft auch
+ * diese Seite `SearchInput`/`FilterPills` direkt auf, `SearchFilterBar`
+ * hatte damit keinen Aufrufer mehr und wurde im Phase-2-Abschluss entfernt.
  *
  * Amber ist hier raus (Task 8, Schritt 9): die aktive "Alle"/Filter-Pille
  * trug Amber als Fläche UND Rahmen gleichzeitig. Der ausgewählte Zustand
@@ -166,55 +167,6 @@ export function FilterPills({
           </button>
         </div>
       )}
-    </div>
-  );
-}
-
-interface SearchFilterBarProps {
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
-  placeholder: string;
-  filters: FilterGroup[];
-  activeFilters: Record<string, string | null>;
-  onFilterChange: (key: string, value: string | null) => void;
-  resultCount: number;
-  totalCount: number;
-  onClearAll: () => void;
-}
-
-/**
- * Renders a search input and optional filter chip rows.
- * When any filter is active, a result-count hint and "clear all" link appear.
- *
- * Dünne Komposition aus `SearchInput` + `FilterPills` — unverändertes
- * Verhalten für bestehende Aufrufer (`wishlist-view.tsx`).
- */
-export function SearchFilterBar({
-  searchQuery,
-  onSearchChange,
-  placeholder,
-  filters,
-  activeFilters,
-  onFilterChange,
-  resultCount,
-  totalCount,
-  onClearAll,
-}: SearchFilterBarProps) {
-  const isFiltering =
-    searchQuery.length > 0 || Object.values(activeFilters).some((v) => v !== null);
-
-  return (
-    <div className="mb-6 flex flex-col gap-3">
-      <SearchInput searchQuery={searchQuery} onSearchChange={onSearchChange} placeholder={placeholder} />
-      <FilterPills
-        filters={filters}
-        activeFilters={activeFilters}
-        onFilterChange={onFilterChange}
-        resultCount={resultCount}
-        totalCount={totalCount}
-        onClearAll={onClearAll}
-        isFiltering={isFiltering}
-      />
     </div>
   );
 }

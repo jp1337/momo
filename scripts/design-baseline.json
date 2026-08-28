@@ -23,12 +23,6 @@
     "inline": 2,
     "spacing": 2
   },
-  "app/(app)/quick/page.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 4,
-    "spacing": 1
-  },
   "app/(app)/settings/data/page.tsx": {
     "color": 0,
     "radius": 1,
@@ -53,12 +47,6 @@
     "inline": 5,
     "spacing": 0
   },
-  "app/(app)/stats/page.tsx": {
-    "color": 1,
-    "radius": 7,
-    "inline": 55,
-    "spacing": 5
-  },
   "app/(app)/tasks/loading.tsx": {
     "color": 0,
     "radius": 4,
@@ -76,18 +64,6 @@
     "radius": 4,
     "inline": 7,
     "spacing": 1
-  },
-  "app/(app)/wishlist/loading.tsx": {
-    "color": 0,
-    "radius": 5,
-    "inline": 12,
-    "spacing": 2
-  },
-  "app/(app)/wishlist/page.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 2,
-    "spacing": 0
   },
   "app/(auth)/layout.tsx": {
     "color": 0,
@@ -165,12 +141,6 @@
     "color": 0,
     "radius": 1,
     "inline": 4,
-    "spacing": 0
-  },
-  "components/achievements/achievement-card.tsx": {
-    "color": 2,
-    "radius": 0,
-    "inline": 15,
     "spacing": 0
   },
   "components/animations/achievement-toast.tsx": {
@@ -335,18 +305,6 @@
     "inline": 7,
     "spacing": 1
   },
-  "components/progress/progress-tabs.tsx": {
-    "color": 0,
-    "radius": 8,
-    "inline": 80,
-    "spacing": 6
-  },
-  "components/quick/five-minute-view.tsx": {
-    "color": 0,
-    "radius": 2,
-    "inline": 10,
-    "spacing": 1
-  },
   "components/settings/active-sessions.tsx": {
     "color": 5,
     "radius": 0,
@@ -491,22 +449,10 @@
     "inline": 1,
     "spacing": 0
   },
-  "components/stats/energy-week-block.tsx": {
-    "color": 1,
-    "radius": 3,
-    "inline": 20,
-    "spacing": 4
-  },
-  "components/stats/streak-sparkline.tsx": {
-    "color": 0,
-    "radius": 1,
-    "inline": 4,
-    "spacing": 1
-  },
   "components/stats/weekday-chart.tsx": {
     "color": 0,
-    "radius": 1,
-    "inline": 8,
+    "radius": 0,
+    "inline": 1,
     "spacing": 0
   },
   "components/tasks/bulk-action-bar.tsx": {
@@ -639,30 +585,6 @@
     "color": 0,
     "radius": 1,
     "inline": 2,
-    "spacing": 2
-  },
-  "components/wishlist/budget-bar.tsx": {
-    "color": 0,
-    "radius": 5,
-    "inline": 16,
-    "spacing": 4
-  },
-  "components/wishlist/wishlist-card.tsx": {
-    "color": 0,
-    "radius": 8,
-    "inline": 37,
-    "spacing": 14
-  },
-  "components/wishlist/wishlist-form.tsx": {
-    "color": 2,
-    "radius": 3,
-    "inline": 10,
-    "spacing": 3
-  },
-  "components/wishlist/wishlist-view.tsx": {
-    "color": 0,
-    "radius": 4,
-    "inline": 23,
     "spacing": 2
   }
 }

@@ -406,6 +406,7 @@
     "budget_this_month": "Presupuesto este mes:",
     "budget_over": "por encima del presupuesto",
     "budget_left": "{amount} restante",
+    "budget_total_spent": "{amount} gastado en total",
     "budget_edit": "Editar presupuesto",
     "budget_label": "Presupuesto mensual (€):",
     "budget_placeholder": "ej. 500",
@@ -1047,11 +1048,6 @@
     "no_achievements": "No se encontraron logros.",
     "achievement_locked": "Bloqueado",
     "achievement_earned_at": "Obtenido el {date}",
-    "section_wishlist": "Lista de deseos",
-    "wishlist_bought": "Comprado",
-    "wishlist_spent": "Gastado",
-    "wishlist_open": "Pendiente",
-    "wishlist_discarded": "Descartado",
     "energy_level_high": "Alta",
     "energy_level_medium": "Media",
     "energy_level_low": "Baja",
@@ -1165,7 +1161,8 @@
     "page_title": "Progreso",
     "tab_habits": "Hábitos",
     "tab_achievements": "Logros",
-    "tab_review": "Revisión semanal"
+    "tab_review": "Revisión semanal",
+    "tab_stats": "Estadísticas"
   },
   "api_keys": {
     "new_key_created": "¡Nueva clave API creada — solo visible una vez!",

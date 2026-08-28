@@ -406,6 +406,7 @@
     "budget_this_month": "本月预算:",
     "budget_over": "超出预算",
     "budget_left": "剩 {amount}",
+    "budget_total_spent": "累计支出 {amount}",
     "budget_edit": "编辑预算",
     "budget_label": "月度预算 (€):",
     "budget_placeholder": "例如 500",
@@ -1047,11 +1048,6 @@
     "no_achievements": "未找到成就。",
     "achievement_locked": "已锁定",
     "achievement_earned_at": "于 {date} 获得",
-    "section_wishlist": "心愿单",
-    "wishlist_bought": "已购买",
-    "wishlist_spent": "已花费",
-    "wishlist_open": "未购买",
-    "wishlist_discarded": "已丢弃",
     "energy_level_high": "高",
     "energy_level_medium": "中",
     "energy_level_low": "低",
@@ -1165,7 +1161,8 @@
     "page_title": "进度",
     "tab_habits": "习惯",
     "tab_achievements": "成就",
-    "tab_review": "周回顾"
+    "tab_review": "周回顾",
+    "tab_stats": "统计"
   },
   "api_keys": {
     "new_key_created": "新 API 密钥已创建 — 仅显示一次!",

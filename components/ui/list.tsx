@@ -156,6 +156,24 @@ export function GroupHeading({ children }: { children: React.ReactNode }) {
 export const ACTION_BTN =
   "flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-2 text-[var(--ink-3)] transition-colors hover:bg-[var(--raised)]";
 
+/**
+ * Eine Zeile im Rand: Mono, tabellarische Ziffern, `--ink-3`.
+ *
+ * Vorher an fünf Stellen ausgeschrieben: `tasks-rail.tsx` dreimal (steht
+ * dort weiterhin so) und zweimal im Habits-Rand, der seit Phase 2 in
+ * `components/progress/tabs/habits-tab.tsx` liegt. Phase 2 fügt fünf
+ * weitere Aufrufer hinzu.
+ *
+ * Hier statt in einem Tab-Modul, weil `budget-bar.tsx` eine
+ * Client-Komponente ist: ein Import aus einem Server-Tab zöge `db` und
+ * `drizzle` ins Client-Bundle.
+ *
+ * Der Rand trägt nie Amber — deshalb ist die Farbe Teil der Konstante und
+ * kein Aufrufer-Parameter.
+ */
+export const RAIL_LINE =
+  "m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]";
+
 /** Props, die `Row` selbst konsumiert — unabhängig davon, als welches Element sie rendert. */
 interface RowOwnProps {
   /** Links: Abhak-Kreis, Auswahlkästchen, Griff. Auf derselben Zeile wie Titel/Trailing zentriert. */

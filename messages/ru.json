@@ -406,6 +406,7 @@
     "budget_this_month": "Бюджет на месяц:",
     "budget_over": "превышение бюджета",
     "budget_left": "осталось {amount}",
+    "budget_total_spent": "всего потрачено {amount}",
     "budget_edit": "Изменить бюджет",
     "budget_label": "Месячный бюджет (€):",
     "budget_placeholder": "напр. 500",
@@ -1047,11 +1048,6 @@
     "no_achievements": "Достижения не найдены.",
     "achievement_locked": "Заблокировано",
     "achievement_earned_at": "Получено {date}",
-    "section_wishlist": "Список желаний",
-    "wishlist_bought": "Куплено",
-    "wishlist_spent": "Потрачено",
-    "wishlist_open": "Открыто",
-    "wishlist_discarded": "Отброшено",
     "energy_level_high": "Высокий",
     "energy_level_medium": "Средний",
     "energy_level_low": "Низкий",
@@ -1165,7 +1161,8 @@
     "page_title": "Прогресс",
     "tab_habits": "Привычки",
     "tab_achievements": "Достижения",
-    "tab_review": "Недельные итоги"
+    "tab_review": "Недельные итоги",
+    "tab_stats": "Статистика"
   },
   "api_keys": {
     "new_key_created": "Новый API ключ создан — виден только один раз!",

@@ -7,8 +7,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **`/stats` ist jetzt der vierte Tab von `/progress`.** Die Route bleibt als
+  Weiterleitung bestehen; alle Lesezeichen funktionieren weiter. Es gibt damit
+  eine Zahlen-Destination statt zwei, und die verbliebene steht in der
+  Navigation statt in einem Menü.
+- **Wunschliste, Errungenschaften und Wochenrückblick sind Listen statt
+  Kacheln.** Der Preis steht rechts in Mono statt groß in Amber, der
+  Münz-Fortschrittsring ist ein Bruch (`34 / 50`) — er zeigt beide Zahlen, wo
+  der Ring nur den Anteil zeigte.
+- **Die Gesamtausgaben der Wunschliste (alle Zeiten) stehen jetzt in der
+  Budgetleiste.** Vorher nur auf `/stats`, und dort neben drei Zählwerten, die
+  auf `/wishlist` ohnehin abzählbar sind.
+
 ### Fixed
 
+- **Zwei von drei Tabs auf `/progress` wurden von keiner Designregel geprüft.**
+  Die Zähler kannten Routen, `ProgressTabs` rendert aber nur den aktiven Tab —
+  der Rückblick-Tab trug drei Amber, wo die Regel eins erlaubt, und kein Test
+  war rot. Die Messeinheit sind jetzt Zustände: zehn statt sechs.
+- **Das Datum auf der Statistikseite war auf `"de-DE"` hartkodiert** — bei
+  sieben unterstützten Sprachen.
+- **Das Benutzermenü verlinkte auf `/review` statt `/progress?tab=review`** —
+  ein Weiterleitungs-Sprung bei jedem Aufruf.
 - **Der Rollout auf die Live-Instanz greift wieder — er hat nie gegriffen.** Der `deploy`-Job
   POSTet seit dem Bau der Pipeline nach jedem Push auf `main` an Watchtowers HTTP-API. Das war
   die ganze Zeit ein **No-op mit HTTP 200**: Watchtower auf diesem Host ist label-scoped, und der

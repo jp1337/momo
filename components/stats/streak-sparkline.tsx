@@ -31,7 +31,16 @@ export function StreakSparkline({ data, todayLabel, peakLabel }: StreakSparkline
   const chartH = height - padTop - padBottom;
 
   const max = Math.max(...data, 1);
-  const stepX = width / (data.length - 1 || 1);
+  // Rechts bleibt Platz für den Punkt am Ende der Linie (Task 4): sein
+  // Mittelpunkt lag vorher exakt auf `width`, also hing seine halbe Fläche
+  // über der Lesespalte — bei `preserveAspectRatio="none"` und 640px Maß
+  // gemessene 5px. Das ist kein gewollter Ausbruch (der trüge
+  // `data-breakout`), sondern ein Rand, der fehlte; sichtbar wurde er erst,
+  // als /progress?tab=stats in `MIGRATED_PAGES` kam. `padRight` ist größer
+  // als `r`, damit der Punkt auch nach der horizontalen Streckung innen
+  // bleibt.
+  const padRight = 4;
+  const stepX = (width - padRight) / (data.length - 1 || 1);
 
   const points = data.map((v, i) => ({
     x: i * stepX,
@@ -42,18 +51,11 @@ export function StreakSparkline({ data, todayLabel, peakLabel }: StreakSparkline
   const areaPath = `${linePath} L${points[points.length - 1].x},${height} L0,${height} Z`;
 
   return (
-    <div
-      className="rounded-xl p-5 flex flex-col gap-3"
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        border: "1px solid var(--border)",
-      }}
-    >
+    <div className="flex flex-col gap-3">
       {/* SVG Sparkline */}
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full"
-        style={{ height: "52px" }}
+        className="w-full h-[52px]"
         role="img"
         aria-label="Streak history sparkline"
         preserveAspectRatio="none"
@@ -61,13 +63,13 @@ export function StreakSparkline({ data, todayLabel, peakLabel }: StreakSparkline
         {/* Filled area */}
         <path
           d={areaPath}
-          fill="color-mix(in srgb, var(--accent-amber) 15%, transparent)"
+          fill="color-mix(in srgb, var(--ink-3) 18%, transparent)"
         />
         {/* Line */}
         <path
           d={linePath}
           fill="none"
-          stroke="var(--accent-amber)"
+          stroke="var(--ink-2)"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -78,31 +80,15 @@ export function StreakSparkline({ data, todayLabel, peakLabel }: StreakSparkline
           cx={points[points.length - 1].x}
           cy={points[points.length - 1].y}
           r="3"
-          fill="var(--accent-amber)"
+          fill="var(--ink-2)"
           vectorEffect="non-scaling-stroke"
         />
       </svg>
 
       {/* Labels */}
-      <div className="flex justify-between">
-        <span
-          className="text-xs font-medium"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--accent-amber)",
-          }}
-        >
-          {todayLabel}
-        </span>
-        <span
-          className="text-xs font-medium"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {peakLabel}
-        </span>
+      <div className="flex justify-between font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] tabular-nums">
+        <span className="text-[var(--amber)]">{todayLabel}</span>
+        <span className="text-[var(--ink-3)]">{peakLabel}</span>
       </div>
     </div>
   );

@@ -1114,7 +1114,7 @@ export async function sendWeeklyReviewNotifications(): Promise<{
       title: "Dein Wochenrückblick",
       body: `Diese Woche: ${summary.completed} erledigt, ${summary.postponed} verschoben, Streak ${summary.streak}`,
       icon: "/icon-192.png",
-      url: "/review",
+      url: "/progress?tab=review",
       tag: "weekly-review",
     };
   }

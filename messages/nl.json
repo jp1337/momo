@@ -406,6 +406,7 @@
     "budget_this_month": "Budget deze maand:",
     "budget_over": "boven budget",
     "budget_left": "{amount} over",
+    "budget_total_spent": "{amount} in totaal uitgegeven",
     "budget_edit": "Budget bewerken",
     "budget_label": "Maandbudget (€):",
     "budget_placeholder": "bijv. 500",
@@ -1047,11 +1048,6 @@
     "no_achievements": "Geen prestaties gevonden.",
     "achievement_locked": "Vergrendeld",
     "achievement_earned_at": "Verdiend op {date}",
-    "section_wishlist": "Verlanglijst",
-    "wishlist_bought": "Gekocht",
-    "wishlist_spent": "Uitgegeven",
-    "wishlist_open": "Open",
-    "wishlist_discarded": "Weggegooid",
     "energy_level_high": "Hoog",
     "energy_level_medium": "Gemiddeld",
     "energy_level_low": "Laag",
@@ -1165,7 +1161,8 @@
     "page_title": "Voortgang",
     "tab_habits": "Gewoonten",
     "tab_achievements": "Prestaties",
-    "tab_review": "Weekoverzicht"
+    "tab_review": "Weekoverzicht",
+    "tab_stats": "Statistieken"
   },
   "api_keys": {
     "new_key_created": "Nieuwe API-sleutel aangemaakt — slechts eenmalig zichtbaar!",

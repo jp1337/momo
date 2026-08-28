@@ -18,6 +18,8 @@ import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface WishlistFormData {
   title: string;
@@ -162,62 +164,22 @@ export function WishlistForm({
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "10px 12px",
-    borderRadius: "8px",
-    border: "1px solid var(--border)",
-    backgroundColor: "var(--bg-elevated)",
-    color: "var(--text-primary)",
-    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-    fontSize: "14px",
-    outline: "none",
-  };
+  const inputClassName =
+    "w-full rounded-[var(--radius-sm)] border border-[var(--hairline)] bg-[var(--raised)] px-3 py-2 font-[family-name:var(--font-ui)] text-sm text-[var(--ink)] outline-none";
 
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "12px",
-    fontWeight: 600,
-    marginBottom: "6px",
-    color: "var(--text-muted)",
-    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-    textTransform: "uppercase",
-    letterSpacing: "0.04em",
-  };
+  const labelClassName =
+    "mb-2 block font-[family-name:var(--font-ui)] text-xs font-semibold uppercase tracking-[0.04em] text-[var(--ink-3)]";
 
-  const chipStyle = (isSelected: boolean): React.CSSProperties => ({
-    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-    fontSize: "13px",
-    fontWeight: 500,
-    padding: "8px 14px",
-    borderRadius: "8px",
-    border: isSelected
-      ? "1px solid var(--accent-amber)"
-      : "1px solid var(--border)",
-    backgroundColor: isSelected
-      ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-elevated))"
-      : "var(--bg-elevated)",
-    color: isSelected ? "var(--accent-amber)" : "var(--text-muted)",
-    cursor: "pointer",
-    outline: "none",
-  });
+  const chipClassName = (isSelected: boolean) =>
+    cn(
+      "rounded-[var(--radius-sm)] border px-3 py-2 font-[family-name:var(--font-ui)] text-[0.8125rem] font-medium outline-none",
+      isSelected
+        ? "border-[var(--ink-2)] bg-[var(--raised)] text-[var(--ink)]"
+        : "border-[var(--hairline)] bg-transparent text-[var(--ink-3)]",
+    );
 
-  const disclosureRowStyle: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    width: "100%",
-    padding: "12px 14px",
-    borderRadius: "10px",
-    border: "1px solid var(--border)",
-    backgroundColor: "var(--bg-elevated)",
-    color: "var(--text-primary)",
-    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-    fontSize: "14px",
-    fontWeight: 500,
-    cursor: "pointer",
-    outline: "none",
-  };
+  const disclosureRowClassName =
+    "flex w-full items-center gap-2 rounded-[var(--radius-md)] border border-[var(--hairline)] bg-[var(--raised)] px-3 py-3 font-[family-name:var(--font-ui)] text-sm font-medium text-[var(--ink)] outline-none";
 
   return (
     <Dialog open={true} onOpenChange={(open) => { if (!open) onCancel(); }}>
@@ -225,22 +187,17 @@ export function WishlistForm({
         title={isEditing ? t("form_title_edit") : t("form_title_new")}
         size="md"
       >
-        {/* Error */}
+        {/* Error — stays --danger: a failed submit, not a status badge. */}
         {error && (
-          <div
-            className="mb-4 px-4 py-3 rounded-lg text-sm"
-            style={{
-              backgroundColor: "rgba(184,84,80,0.12)",
-              color: "var(--accent-red)",
-              border: "1px solid rgba(184,84,80,0.3)",
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            }}
+          <p
+            role="alert"
+            className="m-0 mb-4 rounded-[var(--radius-sm)] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] px-4 py-3 font-[family-name:var(--font-ui)] text-sm text-[var(--danger)]"
           >
             {error}
-          </div>
+          </p>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Title — large, autofocus, the only essential field */}
           <input
             id="wishlist-title"
@@ -251,18 +208,7 @@ export function WishlistForm({
             placeholder={t("form_placeholder_title")}
             autoFocus
             maxLength={200}
-            style={{
-              width: "100%",
-              padding: "14px 16px",
-              borderRadius: "10px",
-              border: "1px solid var(--border)",
-              backgroundColor: "var(--bg-elevated)",
-              color: "var(--text-primary)",
-              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-              fontSize: "17px",
-              fontWeight: 500,
-              outline: "none",
-            }}
+            className="w-full rounded-[var(--radius-md)] border border-[var(--hairline)] bg-[var(--raised)] px-4 py-3 font-[family-name:var(--font-mono)] text-[1.0625rem] font-medium text-[var(--ink)] outline-none"
           />
 
           {/* More options disclosure */}
@@ -270,20 +216,18 @@ export function WishlistForm({
             <button
               type="button"
               onClick={() => setShowMore((v) => !v)}
-              style={disclosureRowStyle}
+              className={disclosureRowClassName}
               aria-expanded={showMore}
             >
-              <span className="flex-1 text-left" style={{ color: "var(--text-muted)" }}>
+              <span className="flex-1 text-left text-[var(--ink-3)]">
                 {t("form_toggle_more")}
               </span>
               <FontAwesomeIcon
                 icon={faChevronDown}
-                className="w-3.5 h-3.5"
-                style={{
-                  transform: showMore ? "rotate(180deg)" : "rotate(0deg)",
-                  transition: "transform 0.15s ease",
-                  color: "var(--text-muted)",
-                }}
+                className={cn(
+                  "h-3.5 w-3.5 text-[var(--ink-3)] transition-transform duration-150",
+                  showMore ? "rotate-180" : "rotate-0",
+                )}
               />
             </button>
 
@@ -294,12 +238,12 @@ export function WishlistForm({
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.18, ease: "easeOut" }}
-                  style={{ overflow: "hidden" }}
+                  className="overflow-hidden"
                 >
-                  <div className="flex flex-col gap-4 pt-4 px-1">
+                  <div className="flex flex-col gap-4 px-1 pt-4">
                     {/* Price */}
                     <div>
-                      <label htmlFor="wishlist-price" style={labelStyle}>
+                      <label htmlFor="wishlist-price" className={labelClassName}>
                         {t("form_label_price")}
                       </label>
                       <input
@@ -312,13 +256,13 @@ export function WishlistForm({
                         min={0}
                         max={999999}
                         step="0.01"
-                        style={{ ...inputStyle, maxWidth: "180px" }}
+                        className={cn(inputClassName, "max-w-[180px]")}
                       />
                     </div>
 
                     {/* Priority chips */}
                     <div>
-                      <label style={labelStyle}>{t("form_label_priority")}</label>
+                      <label className={labelClassName}>{t("form_label_priority")}</label>
                       <ToggleGroup.Root
                         type="single"
                         value={formData.priority}
@@ -326,13 +270,13 @@ export function WishlistForm({
                           v && setFormData((prev) => ({ ...prev, priority: v as WishlistFormData["priority"] }))
                         }
                         aria-label={t("form_label_priority")}
-                        className="flex gap-2 flex-wrap"
+                        className="flex flex-wrap gap-2"
                       >
                         {(["WANT", "NICE_TO_HAVE", "SOMEDAY"] as const).map((p) => (
                           <ToggleGroup.Item
                             key={p}
                             value={p}
-                            style={chipStyle(formData.priority === p)}
+                            className={chipClassName(formData.priority === p)}
                           >
                             {p === "WANT" && t("priority_want")}
                             {p === "NICE_TO_HAVE" && t("priority_nice")}
@@ -344,7 +288,7 @@ export function WishlistForm({
 
                     {/* URL */}
                     <div>
-                      <label htmlFor="wishlist-url" style={labelStyle}>
+                      <label htmlFor="wishlist-url" className={labelClassName}>
                         {t("form_label_url")}
                       </label>
                       <input
@@ -354,13 +298,13 @@ export function WishlistForm({
                         value={formData.url}
                         onChange={handleChange}
                         placeholder={t("form_placeholder_url")}
-                        style={inputStyle}
+                        className={inputClassName}
                       />
                     </div>
 
                     {/* Coin unlock threshold */}
                     <div>
-                      <label htmlFor="wishlist-coins" style={labelStyle}>
+                      <label htmlFor="wishlist-coins" className={labelClassName}>
                         {t("form_label_coins")}
                       </label>
                       <input
@@ -372,15 +316,9 @@ export function WishlistForm({
                         placeholder={t("form_placeholder_coins")}
                         min={0}
                         step={1}
-                        style={{ ...inputStyle, maxWidth: "180px" }}
+                        className={cn(inputClassName, "max-w-[180px]")}
                       />
-                      <p
-                        className="mt-1 text-xs"
-                        style={{
-                          color: "var(--text-muted)",
-                          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                        }}
-                      >
+                      <p className="mt-1 font-[family-name:var(--font-ui)] text-xs text-[var(--ink-3)]">
                         {t("form_help_coins")}
                       </p>
                     </div>
@@ -393,38 +331,17 @@ export function WishlistForm({
           {/* Footer buttons */}
           <div className="flex gap-3 pt-2">
             <DialogClose asChild>
-              <button
-                type="button"
-                disabled={isSubmitting}
-                className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: "var(--text-muted)",
-                  border: "1px solid var(--border)",
-                  backgroundColor: "transparent",
-                }}
-              >
+              <Button type="button" variant="quiet" size="md" disabled={isSubmitting} className="flex-1">
                 {tc("cancel")}
-              </button>
+              </Button>
             </DialogClose>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                backgroundColor: "var(--accent-amber)",
-                color: "var(--bg-primary)",
-                opacity: isSubmitting ? 0.7 : 1,
-                cursor: isSubmitting ? "not-allowed" : "pointer",
-              }}
-            >
+            <Button type="submit" variant="quiet" size="md" disabled={isSubmitting} className="flex-1">
               {isSubmitting
                 ? t("form_saving")
                 : isEditing
                 ? t("form_save")
                 : t("form_create")}
-            </button>
+            </Button>
           </div>
         </form>
       </DialogContent>
