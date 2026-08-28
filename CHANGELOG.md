@@ -7,6 +7,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+_Nichts bisher._
+
+---
+
+## [0.7.0] - 2026-08-28
+
 ### Added
 
 - **`npm run check:design`** — ein Ratschen-Test gegen vier Regex-Kategorien: hartkodierte Farben,
