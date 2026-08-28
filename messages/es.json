@@ -406,6 +406,7 @@
     "budget_this_month": "Presupuesto este mes:",
     "budget_over": "por encima del presupuesto",
     "budget_left": "{amount} restante",
+    "budget_total_spent": "{amount} gastado en total",
     "budget_edit": "Editar presupuesto",
     "budget_label": "Presupuesto mensual (€):",
     "budget_placeholder": "ej. 500",

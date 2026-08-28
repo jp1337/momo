@@ -58,36 +58,23 @@ export default async function WishlistPage() {
     createdAt: item.createdAt.toISOString(),
   }));
 
-  return (
-    <div className="max-w-5xl mx-auto">
-      {/* Page header */}
-      <div className="mb-8">
-        <h1
-          className="text-3xl font-semibold mb-2"
-          style={{
-            fontFamily: "var(--font-display, 'Lora', serif)",
-            color: "var(--text-primary)",
-          }}
-        >
-          {t("page_title")}
-        </h1>
-        <p
-          className="text-base"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {t("page_subtitle")}
-        </p>
-      </div>
-
-      {/* Interactive wishlist view */}
-      <WishlistView
-        initialItems={serializedItems}
-        initialBudget={budget}
-        userCoins={userCoins}
-      />
+  const header = (
+    <div className="flex flex-col gap-2">
+      <h1 className="m-0 font-[family-name:var(--font-display)] text-[1.75rem] font-normal text-[var(--ink)]">
+        {t("page_title")}
+      </h1>
+      <p className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--ink-2)]">
+        {t("page_subtitle")}
+      </p>
     </div>
+  );
+
+  return (
+    <WishlistView
+      header={header}
+      initialItems={serializedItems}
+      initialBudget={budget}
+      userCoins={userCoins}
+    />
   );
 }

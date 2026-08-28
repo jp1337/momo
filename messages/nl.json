@@ -406,6 +406,7 @@
     "budget_this_month": "Budget deze maand:",
     "budget_over": "boven budget",
     "budget_left": "{amount} over",
+    "budget_total_spent": "{amount} in totaal uitgegeven",
     "budget_edit": "Budget bewerken",
     "budget_label": "Maandbudget (€):",
     "budget_placeholder": "bijv. 500",

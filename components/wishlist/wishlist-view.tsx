@@ -6,25 +6,27 @@
  * Manages all client-side state for wishlist items and budget.
  * Handles CRUD operations via API calls and triggers re-renders.
  *
- * Layout:
- * - BudgetBar at the top
- * - Open items as a `List`/`WishlistRow` (Lichtkegel design system, Phase 2
- *   Task 5 — replaced the previous card grid)
- * - History section (bought + discarded, collapsed by default)
+ * Layout (Lichtkegel, Phase 2 Task 6): `PageFrame` with the budget bar and
+ * filter pills in the rail, the passed-in page header plus search, item
+ * list and history in the reading column.
  */
 
 import { useState, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faChevronRight, faGift } from "@fortawesome/free-solid-svg-icons";
+import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { BudgetBar } from "@/components/wishlist/budget-bar";
 import { WishlistRow } from "@/components/wishlist/wishlist-row";
 import { WishlistForm } from "@/components/wishlist/wishlist-form";
 import { List, GroupHeading } from "@/components/ui/list";
-import { SearchFilterBar } from "@/components/shared/search-filter-bar";
+import { PageFrame } from "@/components/ui/page-frame";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
+import { SearchInput, FilterPills } from "@/components/shared/search-filter-bar";
 import type { FilterGroup } from "@/components/shared/search-filter-bar";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
 import { dispatchCoinsEarned } from "@/lib/client/coin-events";
+import { cn } from "@/lib/utils";
 
 /** Serialised wishlist item shape passed from the server page */
 export interface SerializedWishlistItem {
@@ -46,6 +48,8 @@ export interface SerializedBudgetSummary {
 }
 
 interface WishlistViewProps {
+  /** Die Kopfzeile der Seite (h1 + Untertitel), von `app/(app)/wishlist/page.tsx` gereicht. */
+  header: React.ReactNode;
   initialItems: SerializedWishlistItem[];
   initialBudget: SerializedBudgetSummary;
   userCoins: number;
@@ -56,6 +60,7 @@ interface WishlistViewProps {
  * Owns all local state for items, budget, and modal visibility.
  */
 export function WishlistView({
+  header,
   initialItems,
   initialBudget,
   userCoins,
@@ -122,6 +127,18 @@ export function WishlistView({
   );
   const boughtItems = historyItems.filter((i) => i.status === "BOUGHT");
   const discardedItems = historyItems.filter((i) => i.status === "DISCARDED");
+
+  // Alle Zeiten, nicht nur der laufende Monat — aus den Einträgen abgeleitet,
+  // die die Seite ohnehin hält, statt aus einer zweiten Abfrage. Nebenwirkung
+  // und Absicht zugleich: die Zahl aktualisiert sich sofort mit, wenn ein
+  // Wunsch gekauft oder ein Kauf zurückgenommen wird, weil sie aus `items`
+  // fällt und nicht aus einer Server-Momentaufnahme. Bewusst über `items`
+  // statt `filteredItems`: eine Gesamtsumme darf nicht auf einen Suchbegriff
+  // reagieren.
+  const totalSpent = items.reduce(
+    (sum, i) => (i.status === "BOUGHT" && i.price ? sum + Number(i.price) : sum),
+    0,
+  );
 
   /** Reload all items + budget from the API */
   const refresh = async () => {
@@ -265,13 +282,13 @@ export function WishlistView({
       }
     : undefined;
 
-  return (
-    <div className="flex flex-col gap-8">
-      {/* Budget bar */}
+  const rail = (
+    <>
       <BudgetBar
         monthlyBudget={budget.monthlyBudget}
         spentThisMonth={budget.spentThisMonth}
         remaining={budget.remaining}
+        totalSpent={totalSpent}
         onBudgetUpdate={async (newBudget) => {
           setBudget((prev) => ({
             ...prev,
@@ -285,175 +302,87 @@ export function WishlistView({
           await refresh();
         }}
       />
-
-      {/* Add item button */}
-      <div className="flex items-center justify-between">
-        <h2
-          className="text-xl font-semibold"
-          style={{
-            fontFamily: "var(--font-display, 'Lora', serif)",
-            color: "var(--text-primary)",
-          }}
-        >
-          {t("page_title")}
-          {openItems.length > 0 && (
-            <span
-              className="ml-2 text-sm font-normal"
-              style={{ color: "var(--text-muted)" }}
-            >
-              ({openItems.length})
-            </span>
-          )}
-        </h2>
-        <button
-          onClick={() => {
-            setEditingItemId(null);
-            setShowForm(true);
-          }}
-          className="px-4 py-2 rounded-lg text-sm font-medium"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            backgroundColor: "var(--accent-amber)",
-            color: "var(--bg-primary)",
-          }}
-        >
-          {t("view_add")}
-        </button>
-      </div>
-
-      {/* Search & Filter bar — only shown when there are items */}
       {items.length > 0 && (
-        <SearchFilterBar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          placeholder={tSearch("placeholder_wishlist")}
+        <FilterPills
           filters={filterGroups}
           activeFilters={{ priority: priorityFilter }}
           onFilterChange={handleFilterChange}
           resultCount={filteredItems.length}
           totalCount={items.length}
           onClearAll={clearAllFilters}
+          isFiltering={isFiltering}
+        />
+      )}
+    </>
+  );
+
+  return (
+    <PageFrame rail={rail}>
+      {header}
+
+      {/* Add item — always available, not just from the empty state's own action. */}
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="quiet"
+          size="sm"
+          onClick={() => {
+            setEditingItemId(null);
+            setShowForm(true);
+          }}
+        >
+          {t("view_add")}
+        </Button>
+      </div>
+
+      {/* Search — only shown when there are items; filters live in the rail. */}
+      {items.length > 0 && (
+        <SearchInput
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          placeholder={tSearch("placeholder_wishlist")}
         />
       )}
 
       {/* No results from search/filter */}
       {items.length > 0 && filteredItems.length === 0 && isFiltering && (
-        <div
-          className="rounded-2xl p-12 text-center"
-          style={{
-            backgroundColor: "var(--bg-surface)",
-            border: "1px dashed var(--border)",
-          }}
-        >
-          <FontAwesomeIcon
-            icon={faMagnifyingGlass}
-            className="text-2xl mb-3"
-            style={{ color: "var(--text-muted)" }}
-          />
-          <p
-            className="text-base font-medium mb-1"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              color: "var(--text-primary)",
-            }}
-          >
-            {tSearch("no_results_wishlist")}
-          </p>
-          <p
-            className="text-sm mb-4"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {tSearch("no_results_hint")}
-          </p>
-          <button
-            onClick={clearAllFilters}
-            className="text-sm font-medium underline transition-opacity hover:opacity-80"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--accent-amber)",
-            }}
-          >
-            {tSearch("clear_filters")}
-          </button>
-        </div>
+        <EmptyState
+          line={tSearch("no_results_hint")}
+          action={
+            <Button variant="quiet" size="sm" onClick={clearAllFilters}>
+              {tSearch("clear_filters")}
+            </Button>
+          }
+        />
       )}
 
-      {/* Insufficient coins error banner */}
+      {/* Insufficient coins error banner — the phase's one named --danger
+          exception outside destruction/overdue: an invisible error message
+          is an accessibility defect, and this is a failed action, not a
+          status badge. */}
       {coinError && (
-        <div
-          className="rounded-lg px-4 py-3 text-sm font-medium"
-          style={{
-            fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-            backgroundColor: "color-mix(in srgb, var(--accent-red) 12%, transparent)",
-            color: "var(--accent-red)",
-            border: "1px solid color-mix(in srgb, var(--accent-red) 25%, transparent)",
-          }}
-        >
+        <p role="alert" className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] text-[var(--danger)]">
           {coinError}
-        </div>
+        </p>
       )}
 
-      {/* Open items grid */}
+      {/* No open wishes (whether or not any bought/discarded items exist) */}
       {openItems.length === 0 && !isFiltering ? (
-        <div
-          className="relative rounded-2xl p-12 sm:p-16 text-center overflow-hidden"
-          style={{
-            backgroundColor: "var(--bg-surface)",
-            border: "1px dashed var(--border)",
-          }}
-        >
-          {/* Soft amber halo behind the icon — same atmospheric pattern as the tasks empty state */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              top: "20%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "240px",
-              height: "240px",
-              borderRadius: "50%",
-              background: "radial-gradient(circle, color-mix(in srgb, var(--accent-amber) 12%, transparent) 0%, transparent 70%)",
-              pointerEvents: "none",
-            }}
-          />
-          <div
-            className="relative mx-auto mb-5 flex items-center justify-center"
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: "50%",
-              backgroundColor: "color-mix(in srgb, var(--accent-amber) 14%, transparent)",
-            }}
-            role="img"
-            aria-label="Gift"
-          >
-            <FontAwesomeIcon icon={faGift} style={{ fontSize: 28, color: "var(--accent-amber)" }} />
-          </div>
-          <p
-            className="relative text-xl font-semibold mb-2"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              fontStyle: "italic",
-              color: "var(--text-primary)",
-            }}
-          >
-            {t("view_empty")}
-          </p>
-          <p
-            className="relative text-sm max-w-sm mx-auto"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-              lineHeight: 1.6,
-            }}
-          >
-            {t("view_empty_sub")}
-          </p>
-        </div>
+        <EmptyState
+          line={t("view_empty_sub")}
+          action={
+            <Button
+              variant="quiet"
+              size="md"
+              onClick={() => {
+                setEditingItemId(null);
+                setShowForm(true);
+              }}
+            >
+              {t("view_add")}
+            </Button>
+          }
+        />
       ) : openItems.length > 0 ? (
         <List>
           {openItems.map((item) => (
@@ -469,37 +398,28 @@ export function WishlistView({
       {(boughtItems.length > 0 || discardedItems.length > 0) && (
         <div className="flex flex-col gap-4">
           <button
+            type="button"
             onClick={() => setShowHistory((prev) => !prev)}
-            className="flex items-center gap-2 text-sm font-medium"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              textAlign: "left",
-            }}
+            className="m-0 flex w-fit items-center gap-2 border-0 bg-transparent p-0 text-left font-[family-name:var(--font-ui)] text-sm font-medium text-[var(--ink-2)]"
           >
             <span
-              style={{
-                display: "inline-block",
-                transform: showHistory ? "rotate(90deg)" : "rotate(0deg)",
-                transition: "transform 0.15s ease",
-              }}
+              className={cn(
+                "inline-block transition-transform duration-150",
+                showHistory ? "rotate-90" : "rotate-0",
+              )}
             >
-              <FontAwesomeIcon icon={faChevronRight} style={{ fontSize: 9 }} />
+              <FontAwesomeIcon icon={faChevronRight} className="text-[9px]" />
             </span>
             {boughtItems.length > 0 ? (
               <span>
                 {t("view_history")}{" "}
-                <span style={{ color: "var(--accent-green)", fontWeight: 600 }}>
+                <span className="font-semibold text-[var(--done)]">
                   ({boughtItems.length})
                 </span>
               </span>
             ) : (
               <span>
-                {t("view_discarded")} ({discardedItems.length})
+                {t("card_discarded")} ({discardedItems.length})
               </span>
             )}
           </button>
@@ -515,14 +435,25 @@ export function WishlistView({
                 </List>
               )}
 
-              {/* Discarded items — own `List`, `GroupHeading` as a sibling
-                  before it, never as its child (see wishlist-row.tsx step 4
-                  of the task brief / list.tsx's own JSDoc on this trap). */}
+              {/* Discarded items — own `List`; a `GroupHeading` only appears
+                  as a sibling before it when a bought group precedes it in
+                  the same disclosure, where it earns its keep as a
+                  separator between two groups. When there is no bought
+                  group, the toggle button above already names this section
+                  ("Verworfen (N)") — a heading repeating the same word right
+                  below it would name the section twice (Task 5 review
+                  finding 1). Also standardised on `card_discarded`
+                  ("Verworfen") here and in the toggle label above, instead
+                  of the now-unused `view_discarded` ("Abgelegt") — the same
+                  status word `wishlist-row.tsx`'s eyebrow already uses per
+                  row (Task 5 review finding 2). */}
               {discardedItems.length > 0 && (
                 <section>
-                  <GroupHeading>
-                    {t("view_discarded")} ({discardedItems.length})
-                  </GroupHeading>
+                  {boughtItems.length > 0 && (
+                    <GroupHeading>
+                      {t("card_discarded")} ({discardedItems.length})
+                    </GroupHeading>
+                  )}
                   <List>
                     {discardedItems.map((item) => (
                       <WishlistRow key={item.id} {...rowProps(item)} />
@@ -546,6 +477,6 @@ export function WishlistView({
           }}
         />
       )}
-    </div>
+    </PageFrame>
   );
 }

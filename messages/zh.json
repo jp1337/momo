@@ -406,6 +406,7 @@
     "budget_this_month": "本月预算:",
     "budget_over": "超出预算",
     "budget_left": "剩 {amount}",
+    "budget_total_spent": "累计支出 {amount}",
     "budget_edit": "编辑预算",
     "budget_label": "月度预算 (€):",
     "budget_placeholder": "例如 500",

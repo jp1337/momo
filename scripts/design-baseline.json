@@ -71,18 +71,6 @@
     "inline": 7,
     "spacing": 1
   },
-  "app/(app)/wishlist/loading.tsx": {
-    "color": 0,
-    "radius": 5,
-    "inline": 12,
-    "spacing": 2
-  },
-  "app/(app)/wishlist/page.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 2,
-    "spacing": 0
-  },
   "app/(auth)/layout.tsx": {
     "color": 0,
     "radius": 0,
@@ -609,24 +597,6 @@
     "color": 0,
     "radius": 1,
     "inline": 2,
-    "spacing": 2
-  },
-  "components/wishlist/budget-bar.tsx": {
-    "color": 0,
-    "radius": 5,
-    "inline": 16,
-    "spacing": 4
-  },
-  "components/wishlist/wishlist-form.tsx": {
-    "color": 2,
-    "radius": 3,
-    "inline": 10,
-    "spacing": 3
-  },
-  "components/wishlist/wishlist-view.tsx": {
-    "color": 0,
-    "radius": 4,
-    "inline": 19,
     "spacing": 2
   }
 }

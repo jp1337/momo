@@ -406,6 +406,7 @@
     "budget_this_month": "Бюджет на месяц:",
     "budget_over": "превышение бюджета",
     "budget_left": "осталось {amount}",
+    "budget_total_spent": "всего потрачено {amount}",
     "budget_edit": "Изменить бюджет",
     "budget_label": "Месячный бюджет (€):",
     "budget_placeholder": "напр. 500",

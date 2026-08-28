@@ -44,6 +44,7 @@ export const MIGRATED_PAGES: string[] = [
   "/progress?tab=achievements",
   "/progress?tab=review",
   "/progress?tab=stats",
+  "/wishlist",
 ];
 
 /**
