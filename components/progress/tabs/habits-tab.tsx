@@ -28,72 +28,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 
 /**
- * Formats one habit's own streak as a `trailing`-slot string, e.g.
- * "2 Tage in Folge · Neuer Rekord" or "3 Wochen in Folge · Rekord: 12".
- *
- * Task-11-review I3: the four per-habit stat pills (Task 11's first pass)
- * moved to the page rail as SUMS, but a streak isn't additive — it's the
- * one number a habit tracker exists to show, and dropping it from every
- * row (leaving it only as a single page-wide "best of all habits" line)
- * lost real information for every OTHER habit. This restores it to the
- * row itself, in `Row`'s existing `trailing` slot — no new `Row` prop, no
- * pill, no chip.
- *
- * `null` when the habit has neither a running nor a past streak (current
- * and best both 0) — missing metric means show nothing (spec §6), not a
- * "Noch keiner" placeholder (that key, `stat_streak_empty`, stays for the
- * rail's own all-habits line, which the brief explicitly keeps at "line
- * omitted", not "line replaced with placeholder text").
- *
- * Duplicates the `periodDays` switch in `HabitsTab` below rather than
- * sharing it as an imported helper — for the same reason that function's
- * own comment gives: `scripts/check-i18n.mjs` matches a translator
- * variable to its namespace via a per-file textual regex on
- * `const t = getTranslations(...)`, not real scope analysis. A shared
- * helper taking `t` as a parameter would call `t(...)` in a file with no
- * such binding, and those calls would silently drop out of the i18n
- * completeness check instead of failing loudly on a missing translation.
- *
- * @param t - this file's own `getTranslations("habits")` binding
- * @param streak - the habit's own current/best/periodDays
- * @returns The formatted trailing text, or `null` if there is nothing to show
- */
-function formatHabitStreakTrailing(
-  t: Awaited<ReturnType<typeof getTranslations>>,
-  streak: HabitStreak,
-): string | null {
-  const { current, best, periodDays } = streak;
-  if (current === 0 && best === 0) return null;
-
-  const parts: string[] = [];
-  if (current > 0) {
-    switch (periodDays) {
-      case 1:
-        parts.push(t("streak_unit_days", { n: current }));
-        break;
-      case 7:
-        parts.push(t("streak_unit_weeks", { n: current }));
-        break;
-      case 14:
-        parts.push(t("streak_unit_biweeks", { n: current }));
-        break;
-      case 30:
-      case 31:
-        parts.push(t("streak_unit_months", { n: current }));
-        break;
-      default:
-        parts.push(t("streak_unit_generic", { n: current, d: periodDays }));
-    }
-  }
-  if (best > 0) {
-    // `best` is always ≥ `current` (computeHabitStreak keeps it that way):
-    // equal means the currently running streak IS the all-time record.
-    parts.push(current === best ? t("stat_streak_best_current") : t("stat_streak_best", { n: best }));
-  }
-  return parts.join(" · ");
-}
-
-/**
  * The habits tab's content column: a mono `GroupHeading` + subtitle, the
  * year selector (only when there's more than one year to pick from and at
  * least one habit), then one `List`+`Row` (via `HabitCard`) plus its
@@ -192,6 +126,84 @@ async function HabitsList({
 }
 
 /**
+ * Eine laufende Serie in der Einheit ihrer Periode — "3 Tage in Folge",
+ * "2 Wochen in Folge".
+ *
+ * Steht bewusst UNTERHALB der `getTranslations("habits")`-Bindung von
+ * `HabitsList`: `scripts/check-i18n.mjs` ordnet eine Übersetzer-Variable
+ * ihrem Namensraum per Textregex zu, nicht per Scope-Analyse, und nimmt
+ * dafür die LETZTE Bindung des Namens auf oder vor der Aufrufzeile. Über
+ * der Bindung definiert, wären diese fünf Keys aus der
+ * Vollständigkeitsprüfung stillschweigend herausgefallen — genau das war
+ * der Zustand, solange die beiden Kopien dieses Switches in zwei Dateien
+ * lagen und ein geteilter Helfer `t(...)` in einer Datei ohne Bindung
+ * aufgerufen hätte.
+ *
+ * @param t - eine `getTranslations("habits")`-Bindung dieser Datei
+ * @param n - Länge der Serie, gezählt in Perioden
+ * @param periodDays - Länge einer Periode in Tagen
+ * @returns Der lokalisierte Serientext
+ */
+function streakUnitText(
+  t: Awaited<ReturnType<typeof getTranslations>>,
+  n: number,
+  periodDays: number,
+): string {
+  switch (periodDays) {
+    case 1:
+      return t("streak_unit_days", { n });
+    case 7:
+      return t("streak_unit_weeks", { n });
+    case 14:
+      return t("streak_unit_biweeks", { n });
+    case 30:
+    case 31:
+      return t("streak_unit_months", { n });
+    default:
+      return t("streak_unit_generic", { n, d: periodDays });
+  }
+}
+
+/**
+ * Formats one habit's own streak as a `trailing`-slot string, e.g.
+ * "2 Tage in Folge · Neuer Rekord" or "3 Wochen in Folge · Rekord: 12".
+ *
+ * Task-11-review I3: the four per-habit stat pills (Task 11's first pass)
+ * moved to the page rail as SUMS, but a streak isn't additive — it's the
+ * one number a habit tracker exists to show, and dropping it from every
+ * row (leaving it only as a single page-wide "best of all habits" line)
+ * lost real information for every OTHER habit. This restores it to the
+ * row itself, in `Row`'s existing `trailing` slot — no new `Row` prop, no
+ * pill, no chip.
+ *
+ * `null` when the habit has neither a running nor a past streak (current
+ * and best both 0) — missing metric means show nothing (spec §6), not a
+ * "Noch keiner" placeholder (that key, `stat_streak_empty`, stays for the
+ * rail's own all-habits line, which the brief explicitly keeps at "line
+ * omitted", not "line replaced with placeholder text").
+ *
+ * @param t - this file's own `getTranslations("habits")` binding
+ * @param streak - the habit's own current/best/periodDays
+ * @returns The formatted trailing text, or `null` if there is nothing to show
+ */
+function formatHabitStreakTrailing(
+  t: Awaited<ReturnType<typeof getTranslations>>,
+  streak: HabitStreak,
+): string | null {
+  const { current, best, periodDays } = streak;
+  if (current === 0 && best === 0) return null;
+
+  const parts: string[] = [];
+  if (current > 0) parts.push(streakUnitText(t, current, periodDays));
+  if (best > 0) {
+    // `best` is always ≥ `current` (computeHabitStreak keeps it that way):
+    // equal means the currently running streak IS the all-time record.
+    parts.push(current === best ? t("stat_streak_best_current") : t("stat_streak_best", { n: best }));
+  }
+  return parts.join(" · ");
+}
+
+/**
  * Holt die Gewohnheiten des Nutzers einmal und beliefert damit beides:
  * die Randsummen und die Lesespalte (`HabitsList`).
  *
@@ -254,37 +266,14 @@ export async function HabitsTab({
     },
     null,
   );
-  // Inlined rather than a standalone helper taking a translator param:
-  // `scripts/check-i18n.mjs` maps a variable name to a namespace via a
-  // plain textual regex, not real scope analysis, and only recognizes
-  // names bound by `const X = getTranslations(...)` — a function parameter
-  // of the same name doesn't register, so a separate `t`-typed helper
-  // either collides with this file's outer `t` (misfiling these keys under
-  // "progress", which the check then reports as missing — they aren't) or,
-  // renamed, becomes invisible to the check entirely. Calling `t2` here
-  // directly, in the scope where it really is `getTranslations("habits")`,
-  // keeps both the binding and the checker's textual match honest.
-  let bestStreakText: string | null = null;
-  if (bestStreakHabit && bestStreakHabit.streak.current > 0) {
-    const { current, periodDays } = bestStreakHabit.streak;
-    switch (periodDays) {
-      case 1:
-        bestStreakText = t2("streak_unit_days", { n: current });
-        break;
-      case 7:
-        bestStreakText = t2("streak_unit_weeks", { n: current });
-        break;
-      case 14:
-        bestStreakText = t2("streak_unit_biweeks", { n: current });
-        break;
-      case 30:
-      case 31:
-        bestStreakText = t2("streak_unit_months", { n: current });
-        break;
-      default:
-        bestStreakText = t2("streak_unit_generic", { n: current, d: periodDays });
-    }
-  }
+  const bestStreakText =
+    bestStreakHabit && bestStreakHabit.streak.current > 0
+      ? streakUnitText(
+          t2,
+          bestStreakHabit.streak.current,
+          bestStreakHabit.streak.periodDays,
+        )
+      : null;
 
   // Missing metric means show nothing (spec §6): a 0 here is not a status
   // worth stating, so each line — including the rail itself — is omitted

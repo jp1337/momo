@@ -159,8 +159,11 @@ export const ACTION_BTN =
 /**
  * Eine Zeile im Rand: Mono, tabellarische Ziffern, `--ink-3`.
  *
- * Vorher an vier Stellen ausgeschrieben (`tasks-rail.tsx`,
- * `app/(app)/progress/page.tsx` zweimal); Phase 2 fügt fünf weitere hinzu.
+ * Vorher an fünf Stellen ausgeschrieben: `tasks-rail.tsx` dreimal (steht
+ * dort weiterhin so) und zweimal im Habits-Rand, der seit Phase 2 in
+ * `components/progress/tabs/habits-tab.tsx` liegt. Phase 2 fügt fünf
+ * weitere Aufrufer hinzu.
+ *
  * Hier statt in einem Tab-Modul, weil `budget-bar.tsx` eine
  * Client-Komponente ist: ein Import aus einem Server-Tab zöge `db` und
  * `drizzle` ins Client-Bundle.

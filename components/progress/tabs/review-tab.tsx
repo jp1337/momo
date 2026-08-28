@@ -20,7 +20,7 @@ import { GroupHeading, List, RAIL_LINE, Row } from "@/components/ui/list";
 import { EmptyState } from "@/components/ui/empty-state";
 
 /**
- * "5. Mär" — lokalisiert statt der alten `"de-DE"`-Hartkodierung.
+ * "5. Mär" — Tag und Kurzmonat in der Locale des Nutzers.
  *
  * @param dateStr - Datum als `YYYY-MM-DD`
  * @param locale - die aktive Locale des Nutzers
