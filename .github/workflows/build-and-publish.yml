@@ -295,8 +295,19 @@ jobs:
           exit $CODE
 
   # After the multi-arch manifest is published, trigger an immediate Watchtower update
-  # on the intranet server so the new :latest image is rolled out without waiting for
-  # the nightly schedule. Runs only on main-branch pushes (where :latest is updated).
+  # on the intranet server so the new image is rolled out.
+  #
+  # Runs on RELEASE TAGS only, not on main-branch pushes. The instance tracks the
+  # minor series tag (ghcr.io/jp1337/momo:0.7, set as docker_momo_version in the
+  # wdk-ansible repo), which the metadata step below publishes from a v* tag —
+  # a plain push to main moves :latest and :sha-… and nothing the instance follows.
+  # Firing this job there would poll for a swap that was never going to happen.
+  #
+  # Until 2026-08-28 the job ran on main and the POST was a no-op with HTTP 200:
+  # Watchtower on that host is label-scoped and the momo container carried no
+  # com.centurylinklabs.watchtower.enable label, so every request was accepted and
+  # nothing was swapped. The label now exists (wdk-ansible#64) — which is what makes
+  # this job meaningful rather than decorative.
   #
   # ⚠️ SECURITY: this repo is public and this job runs on a self-hosted runner.
   # The whole workflow only triggers on push:main/tags (direct push only — merges
@@ -310,14 +321,14 @@ jobs:
   # in test.yml ("PR Gate"), on a hosted runner. Add the check there, not here.
   deploy:
     needs: [merge]
-    if: github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: [self-hosted, intranet]
     permissions: {}
     # Job-scoped only — never at workflow level: cancelling `build` or
     # `merge` mid-manifest-push would be worse than a stale rollout gate.
-    # Two close pushes to main would otherwise leave the older run polling
-    # for a commit the instance has already moved past, burning its full
-    # ten minutes and failing on a rollout that in fact worked.
+    # Two releases cut in quick succession would otherwise leave the older
+    # run polling for a commit the instance has already moved past, burning
+    # its full ten minutes and failing on a rollout that in fact worked.
     concurrency:
       group: deploy-${{ github.ref }}
       cancel-in-progress: true
@@ -329,20 +340,18 @@ jobs:
             "http://watchtower:8085/v1/update?image=ghcr.io/jp1337/momo"
 
       # Watchtower antwortet mit 200, sobald es die Anfrage angenommen hat —
-      # nicht, wenn der Container tatsaechlich getauscht ist. Am 2026-08-22
-      # war jeder Lauf gruen, waehrend live seit drei Monaten dasselbe Image
-      # lief. Ohne diesen Schritt ist "deploy: success" eine Aussage ueber
-      # einen HTTP-Status, nicht ueber den Rollout.
+      # nicht, wenn der Container tatsaechlich getauscht ist. Ohne diesen
+      # Schritt ist "deploy: success" eine Aussage ueber einen HTTP-Status,
+      # nicht ueber den Rollout. Genau so lief es bis zum 2026-08-28: jeder
+      # POST wurde angenommen, und live stand weiter 0.6.0.
       #
-      # Verglichen wird der COMMIT, nicht die package.json-Version: kein
-      # Workflow bumpt die Version automatisch (0.5.0 -> 0.6.0 war ein
-      # manueller Schritt, drei Monate auseinander), also ist die erwartete
-      # Version bei einem gewoehnlichen Push auf main fast immer bereits die
-      # laufende — der Vergleich waere beim ersten Versuch gruen, egal ob
-      # Watchtower den Container getauscht hat. github.sha aendert sich bei
-      # jedem Commit und wird als MOMO_COMMIT ins Image gebacken (siehe
-      # Dockerfile, runner-Stufe) und vom laufenden Prozess ueber
-      # /api/health.commit ausgegeben.
+      # Verglichen wird der COMMIT, nicht die package.json-Version. Seit der
+      # Job auf Release-Tags laeuft, wuerde `version` zwar unterscheiden —
+      # `commit` ist trotzdem schaerfer: es erkennt auch ein neu gebautes
+      # Image unter derselben Version (Tag geloescht und neu gesetzt), wo ein
+      # Versionsvergleich sofort gruen waere. github.sha wird als MOMO_COMMIT
+      # ins Image gebacken (siehe Dockerfile, runner-Stufe) und vom laufenden
+      # Prozess ueber /api/health.commit ausgegeben.
       #
       # Dieser Job laeuft auf dem self-hosted Intranet-Runner (siehe oben) —
       # ob der die oeffentliche URL erreicht, ist nicht garantiert. Deshalb
@@ -352,7 +361,14 @@ jobs:
       # ROLLOUT_HEALTH_URL auf die intern erreichbare Adresse derselben
       # Instanz (z. B. http://momo:3000 oder eine interne DNS-Adresse) —
       # unter "Settings" -> "Secrets and variables" -> "Actions" ->
-      # "Variables". Der Schritt bleibt blockierend: ein Verifikationsschritt,
+      # "Variables".
+      #
+      # WICHTIG: Der Wert MUSS das Schema tragen. Stand die Variable auf
+      # "momotask.app", faellt curl auf http zurueck, nginx antwortet mit
+      # einer 301-HTML-Seite, `sed` findet kein commit — und der Schritt
+      # laeuft in seine vollen zehn Minuten, egal wie sauber der Rollout war.
+      #
+      # Der Schritt bleibt blockierend: ein Verifikationsschritt,
       # der bei Netzwerkproblemen durchfaellt, ist kein Verifikationsschritt
       # mehr, wenn man ihn deshalb ignoriert.
       - name: Verify the rollout actually happened

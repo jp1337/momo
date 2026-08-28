@@ -7,7 +7,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-_Nichts bisher._
+### Fixed
+
+- **Der Rollout auf die Live-Instanz greift wieder — er hat nie gegriffen.** Der `deploy`-Job
+  POSTet seit dem Bau der Pipeline nach jedem Push auf `main` an Watchtowers HTTP-API. Das war
+  die ganze Zeit ein **No-op mit HTTP 200**: Watchtower auf diesem Host ist label-scoped, und der
+  momo-Container trug kein `com.centurylinklabs.watchtower.enable`-Label. Jede Anfrage wurde
+  angenommen, nichts wurde getauscht; live lief weiter das Image von v0.6.0. Der Container trägt
+  das Label jetzt und folgt dem **Minor-Serien-Tag** `ghcr.io/jp1337/momo:0.7` statt einer exakten
+  Version — ein Patch-Release rollt damit von selbst, ein Minor-Sprung bleibt eine bewusste
+  Handlung (beides in der Host-Konfiguration, `jp1337/wdk-ansible#64`).
+- **Der `deploy`-Job läuft auf Release-Tags `v*` statt auf Pushes nach `main`.** Die Instanz folgt
+  dem Serien-Tag; ein gewöhnlicher Push bewegt nur `:latest` und `:sha-…` und damit nichts, dem
+  die Instanz folgt. Auf `main` konnte die Rollout-Prüfung deshalb **nie** grün werden — sie war
+  bei #102 und #103 rot, und zwar nicht wegen eines hängenden Rollouts, sondern weil sie die
+  falsche Einheit gegen den falschen Mechanismus maß.
+- **`ROLLOUT_HEALTH_URL` trägt jetzt ein Schema** (`https://momotask.app` statt `momotask.app`).
+  Ohne Schema fällt curl auf `http` zurück, der Reverse Proxy antwortet mit einer 301-HTML-Seite,
+  `sed` findet kein `commit` — und der Verifikationsschritt läuft in seine vollen zehn Minuten,
+  egal wie sauber der Rollout war. Dritter unabhängiger Defekt derselben Kette; jeder einzelne
+  hätte allein genügt, den Rollout unbemerkt scheitern zu lassen.
 
 ---
 
