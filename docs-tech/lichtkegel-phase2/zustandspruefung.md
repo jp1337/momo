@@ -55,19 +55,25 @@ keine breiter als `--measure`, kein unbenannter Überlauf.
 | `/tasks` · Auswahlmodus, 1 Zeile gewählt | nein | 1 | 1 | **1** | 1 | **Kasten** |
 | `/tasks` · Suche ohne Treffer (Feld fokussiert) | nein | **2** | 1 | 0 | 1 | **Amber** |
 | `/tasks` · 8× Tab (Tastaturfokus) | nein | **2** | 1 | 0 | 1 | **Amber** |
-| `/tasks` · Snooze-Menü offen | nein | **2** | 1 | 0 | 1 | **Amber** |
+| `/tasks` · Snooze-Menü offen ᴴ | nein | **2** | 1 | 0 | 1 | **Amber** |
 | `/tasks` · Formular „Neue Aufgabe" offen | nein | **5** | **2** | **2** | 1 | **Amber, Fraunces, Kästen** |
 | `/topics` · Standard | ja | 1 | 1 | 0 | 1 | ok |
 | `/topics` · Karte mit Zeiger überfahren | nein | 1 | 1 | 0 | 1 | ok |
 | `/topics` · Vorlagenwähler offen | nein | **11** | 1 | 0 | 1 | **Amber** |
-| `/topics` · Themenformular (Bearbeiten) | nein | **4** / 3 | 1 | 0 | 1 | **Amber** |
+| `/topics` · Themenformular (Bearbeiten) ᴴ | nein | **4** / 3 | 1 | 0 | 1 | **Amber** |
 | `/topics/[id]` · Detailseite | Route steht in keiner Liste | **6** | **2** | **5** | **0** | **alle vier** |
 | `/focus` · Auswahlphase | ja | 1 | 1 | 0 | 1 | ok |
 | `/focus` · Arbeitsphase | nein | 1 | 1 | **1** | 1 | **Kasten** |
 | `/focus` · Schlussphase | nein | 1 | 1 | 0 | 1 | ok |
 
+ᴴ **Nur mit erzwungenem `hover()` erreichbar.** Ohne Hover bleibt der
+Auslöser `opacity-0` + `pointer-events-none` (Fund 11) und der Klick läuft in
+einen Timeout: der Snooze-Auslöser meldete dann 1 Amber statt 2, das
+Themenformular 1 statt 4/3. Diese zwei Zeilen sind also nur zu haben, indem man
+die Gatterung besiegt, die selbst ein Fund ist.
+
 Vier Zustände sind per `goto` erreichbar und grün — genau die, die schon
-gemessen wurden. **Von 19 Zuständen dahinter sind 9 rot.**
+gemessen wurden. **Von 19 Zuständen dahinter sind 10 rot.**
 
 ## Zustände, die auch die Sonde nicht herstellen konnte
 
@@ -84,19 +90,51 @@ Kategorie wie `/topics/[id]`, nur ohne eigene Route.
 
 ## Die Funde
 
+Zwölf. Die Kurzfassung scannt; die sechs, die einen Satz brauchen, stehen
+darunter.
+
 | # | Fund | Datei | Regel | Zuordnung | behoben? |
 |---|---|---|---|---|---|
-| 1 | Der Fokusindikator ist amber: `outline` **und** ein 6-px-`box-shadow`-Halo. Sobald irgendetwas Fokus hat, trägt jede Seite ein Amber mehr — auch ein Radix-Menü, das sich beim Öffnen selbst fokussiert. | `app/globals.css:541-547` | Amber | keiner Phase zugeordnet | nein |
-| 2 | `countAmber` liest `color`, `background*`, `box-shadow`, `fill`, `stroke`, `border-*`, `::before/::after` — **nicht `outline-color`**. Fund 1 wird nur über sein Halo sichtbar; ohne den `box-shadow` wäre er unsichtbar. | `e2e/helpers/design-count.ts` | — (Zählerlücke) | Phase 2, aber s. u. | nein |
-| 3 | `::selection { background-color: var(--accent-amber) }` — Amber als Fläche, und für keinen Zähler sichtbar (`countAmber` kennt nur `::before`/`::after`). | `app/globals.css:555-558` | Amber als Fläche | keiner Phase zugeordnet | nein |
-| 4 | Eingabefeld-Fokusring `focus-visible:ring-[var(--accent-amber)]`. | `components/ui/input.tsx:18` | Amber | keiner Phase zugeordnet | nein |
-| 5 | Aufgabenformular: Panel mit `border` + Backdrop-Fläche in `main` (kein `role="dialog"`, also greift die Overlay-Ausnahme nicht), zweites Fraunces (`h2` „New Task"), Amber als Button-**Fläche** und als Segment-Rahmen. | `components/tasks/task-form.tsx:325, 890, 279-285, 469-471` | Amber, Fraunces, Kästen | keiner Phase zugeordnet | nein |
-| 6 | Themenformular: Amber als Button-Fläche („Save changes"), Amber-Rahmen/-Füllung an Auswahlfeldern. | `components/topics/topic-form.tsx:502, 345-350, 391-396` | Amber | keiner Phase zugeordnet | nein |
-| 7 | Vorlagenwähler: 11 Amber-Treffer — Badge „In order" als amber getönte **Fläche**, dazu Icons. | `components/topics/template-picker.tsx:149-150, 214` | Amber als Fläche | keiner Phase zugeordnet | nein |
-| 8 | Massenaktionsleiste: umrahmter Kasten in `main`, Amber als Textfarbe des Zählers. | `components/tasks/bulk-action-bar.tsx:85, 93` | Kästen | keiner Phase zugeordnet | nein |
-| 9 | `/focus` Arbeitsphase: der aktive Fortschritts-Pip ist `h-2 w-6` mit `bg-[var(--ink)]` — 24 px breit, also über der 12-px-Punkt-Schwelle, und ohne `role="progressbar"`, also ohne die Fortschritts-Ausnahme. Zählt als gefüllte Inhaltsfläche. | `components/focus/focus-mode-view.tsx:274-283` | Kästen | Phase-1-Rest | nein |
-| 10 | `/topics/[id]`: 6 Amber, 2 Fraunces, 5 Kästen, **0 `[data-column]`** — die Seite steht in keiner `MIGRATED_PAGES`-Liste und rendert über `topic-detail-view.tsx` das alte `TaskItem`. Weder migriert noch als unmigriert vermerkt. | `components/topics/topic-detail-view.tsx:228, 344, 398-399`, `components/tasks/task-item.tsx` | alle vier | Phase-1-Rest / keiner Phase zugeordnet | nein |
-| 11 | `Row`s `actions`-Slot ist `opacity-0` + `pointer-events-none` bis Hover/Fokus (`@media (hover: hover)`). Jede Zeilenaktion auf `/tasks`, `/topics`, `/focus`, `/quick`, `/wishlist`, `/progress` ist damit für die Zähler unsichtbar — der `opacity: 0`-Guard überspringt sie zusätzlich. | `components/ui/list.tsx:374-393` | — (Messlücke) | Phase 2 | **nein, geprüft und leer** |
+| 1 | amber Fokusindikator (`outline` + Halo) ¹ | `app/globals.css:541-547` | Amber | keine | nein |
+| 2 | `countAmber` liest kein `outline-color` ² | `e2e/helpers/design-count.ts` | Zählerlücke | Phase 2 | nein, s. u. |
+| 3 | `::selection` mit amber Fläche | `app/globals.css:555-558` | Amber als Fläche | keine | nein |
+| 4 | Eingabefeld-Fokusring amber | `components/ui/input.tsx:18` | Amber | keine | nein |
+| 5 | Aufgabenformular: Panel, Backdrop, 2. Fraunces, Amber-Fläche ³ | `components/tasks/task-form.tsx:325, 890, 279-285, 469-471` | Amber, Fraunces, Kästen | keine | nein |
+| 6 | Themenformular: Amber als Button-Fläche | `components/topics/topic-form.tsx:502, 345-350, 391-396` | Amber | keine | nein |
+| 7 | Vorlagenwähler: Badge „In order" amber getönt, 11 Treffer | `components/topics/template-picker.tsx:149-150, 214` | Amber als Fläche | keine | nein |
+| 8 | Massenaktionsleiste: umrahmter Kasten in `main` | `components/tasks/bulk-action-bar.tsx:85, 93` | Kästen | keine | nein |
+| 9 | `/focus` Fortschritts-Pip zählt als gefüllte Fläche ⁴ | `components/focus/focus-mode-view.tsx:274-283` | Kästen | Phase-1-Rest | nein |
+| 10 | `/topics/[id]` verletzt alle vier Regeln, steht in keiner Liste ⁵ | `components/topics/topic-detail-view.tsx:228, 344, 398-399`, `task-item.tsx` | alle vier | Phase-1-Rest / keine | nein |
+| 11 | `Row`s `actions` sind `opacity-0` bis Hover/Fokus ⁶ | `components/ui/list.tsx:374-393` | Messlücke | Phase 2 | nein, geprüft und leer |
+| 12 | `border-radius: 4px` — außerhalb der vier Radius-Stufen | `app/globals.css:544` (Stufen: `:58-61`) | Radius | keine | nein |
+
+„keine" = in keiner Phasenliste der Spec §7. Siehe den übernächsten Abschnitt.
+
+¹ `outline: 2px solid var(--accent-amber)` plus ein 6-px-`box-shadow`-Halo.
+Sobald irgendetwas Fokus hat, trägt jede Seite ein Amber mehr — auch ein
+Radix-Menü, das sich beim Öffnen selbst fokussiert. Funde 1 und 12 sind
+derselbe `:focus-visible`-Block, zwei verschiedene Regeln.
+
+² Gelesen werden `color`, `background*`, `box-shadow`, `fill`, `stroke`,
+`border-*`, `::before/::after`. Fund 1 wird deshalb **nur über sein Halo**
+sichtbar; ohne den `box-shadow` wäre er es gar nicht.
+
+³ Kein `role="dialog"` am Panel, also greift die Overlay-Ausnahme von
+`countBoxes` nicht: Panel-Rahmen und Backdrop-Fläche zählen beide in `main`.
+Dazu ein zweites Fraunces (`h2` „New Task") und Amber als Button-**Fläche**
+(`backgroundColor: var(--accent-amber)`), was die Spec ausdrücklich verbietet.
+
+⁴ Der aktive Pip ist `h-2 w-6` mit `bg-[var(--ink)]` — 24 px breit, also über
+der 12-px-Punkt-Schwelle, und ohne `role="progressbar"`, also ohne die
+Fortschritts-Ausnahme.
+
+⁵ 6 Amber, 2 Fraunces, 5 Kästen, **0 `[data-column]`**. Die Route steht in
+keiner `MIGRATED_PAGES`-Liste und rendert über `topic-detail-view.tsx` das alte
+`TaskItem` — weder migriert noch als unmigriert vermerkt.
+
+⁶ Nur unter `@media (hover: hover)`. Betrifft jede Zeilenaktion auf `/tasks`,
+`/topics`, `/focus`, `/quick`, `/wishlist`, `/progress`; der `opacity: 0`-Guard
+der Zähler überspringt sie zusätzlich.
 
 ## Was behoben wurde
 
@@ -121,12 +159,20 @@ Datei. Die zwei Berührungspunkte, die es gibt, sind keine Verstöße:
   Zähler zu schärfen, dessen Fund man nicht beheben darf, macht die Suite rot
   ohne Gegenwert. Benannt, nicht gebaut.
 
+  **Wichtig für den, der das später aufgreift:** dieses Argument hält nur,
+  solange man weiß, dass hinter `globals.css` **kein zweites Gatter** steht.
+  Die Ratsche liest die Datei nicht (s. u.) — Funde 1, 3 und 12 sitzen also
+  nicht bloß in einer Datei, die keiner Phase gehört, sondern in einer, die
+  überhaupt kein Mechanismus beobachtet. Wer den Zähler schärft, muss im
+  selben Zug entscheiden, was `globals.css` bewacht.
+
 ## Was benannt und stehen gelassen wurde
 
-Alle 11 Funde. §7 der Spec ordnet Phase-1-Reste (`task-item.tsx`), Phase 3
+Alle 12 Funde. §7 der Spec ordnet Phase-1-Reste (`task-item.tsx`), Phase 3
 (`components/settings`, `/admin`, `api-keys`) und Phase 4 (Legal, Login,
-Onboarding, `app/page.tsx`) zu — **acht der elf Funde stehen in keiner dieser
-Listen**: `app/globals.css`, `components/ui/input.tsx`, `task-form.tsx`,
+Onboarding, `app/page.tsx`) zu — **acht der zwölf Funde (1, 3–8, 12) stehen in
+keiner dieser Listen**, dazu die `topic-detail-view.tsx`-Hälfte von Fund 10.
+Es sind acht Dateien: `app/globals.css`, `components/ui/input.tsx`, `task-form.tsx`,
 `topic-form.tsx`, `template-picker.tsx`, `bulk-action-bar.tsx`,
 `topic-detail-view.tsx`, `focus-mode-view.tsx`.
 
@@ -143,6 +189,7 @@ Ruhezustand messen, fällt das nicht auf.
 | Grün beweist wenig | Task 6s erster `/wishlist`-Lauf lief gegen eine leere Seite: Kopf, Knopf, Empty-State, vierzeiliger Rand. Er war grün und hat nichts gemessen. |
 | Bildquellen | `getComputedStyle` liest keine Farbe aus `<img>`, `background-image: url(...)` oder `<use href>` — siehe die JSDoc in `design-count.ts`. |
 | `outline`, `::selection`, `::marker` | von keinem der vier Zähler gelesen (Funde 2 und 3). |
+| Die Ratsche liest **kein CSS** | `scripts/check-design-tokens.mjs:141` sammelt nur `.tsx`, `scripts/design-baseline.json` enthält **null** `.css`-Einträge. `app/globals.css` — die Datei, die jedes Token definiert — liegt damit außerhalb des Mechanismus, dessen ganze Aufgabe „keine neuen Verstöße" ist. Funde 1, 3 und 12 leben dort. „1547 Verstöße, keiner neu" ist keine Aussage über eine Datei, die die Ratsche nie geöffnet hat. |
 | Touch-Gesten | die Wisch-Vorschau in `task-row.tsx` ist nur während einer aktiven Geste sichtbar. |
 
 ## Nicht zu verwechseln mit einem Kanarienvogel
