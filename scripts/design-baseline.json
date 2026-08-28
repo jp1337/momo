@@ -23,12 +23,6 @@
     "inline": 2,
     "spacing": 2
   },
-  "app/(app)/quick/page.tsx": {
-    "color": 0,
-    "radius": 0,
-    "inline": 4,
-    "spacing": 1
-  },
   "app/(app)/settings/data/page.tsx": {
     "color": 0,
     "radius": 1,
@@ -309,12 +303,6 @@
     "color": 0,
     "radius": 2,
     "inline": 7,
-    "spacing": 1
-  },
-  "components/quick/five-minute-view.tsx": {
-    "color": 0,
-    "radius": 2,
-    "inline": 10,
     "spacing": 1
   },
   "components/settings/active-sessions.tsx": {

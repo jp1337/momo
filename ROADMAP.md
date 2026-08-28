@@ -323,8 +323,6 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
 
 **Kleinigkeiten**
 
-- `components/layout/user-menu.tsx:157` verlinkt direkt auf `/review` statt auf
-  `/progress?tab=review` — ein unnötiger Redirect-Hop.
 - `lib/openapi.ts` (3715 LOC) und `components/tasks/task-list.tsx` (1467 LOC) sind die
   beiden Dateien, bei denen Aufteilen sich am ehesten lohnt.
 
@@ -388,6 +386,67 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
   Config bedeutungslos. Fix ist eine eigene `alexa-skill/eslint.config.mjs` mit
   `typescript-eslint` — dann werden die beiden Pakete echt und das Skript prüft, was es zu prüfen
   behauptet.
+
+**Aus der Lichtkegel-Phase 2 (2026-08-28) — gefunden, bewusst nicht behoben**
+
+Elf Funde, jeder außerhalb jedes Task-Zuschnitts der Phase. Der Phasenbericht steht in
+`docs-tech/lichtkegel-phase2/abschluss.md`, die Messung dahinter in
+`docs-tech/lichtkegel-phase2/zustandspruefung.md`.
+
+*Die Testinfrastruktur beißt sich selbst*
+
+`e2e/wishlist.spec.ts:81-91` legt eine Fixture mit `coinUnlockThreshold: 500` an und löscht sie
+**inline**; die Datei hat kein `afterEach`. Schlägt irgendeine Assertion davor fehl, bleibt die
+Zeile dauerhaft in der Datenbank — und ab da scheitern zehn Assertions in zwei *anderen*
+Spec-Dateien für immer. Während dieser Phase zweimal passiert.
+
+Ein `afterEach` behebt aber nur die Hälfte: die Assertions sind ganzkörperliche
+`not.toContainText(/500/i)`-Prüfungen und kollidieren mit **Produktdaten** —
+`lib/gamification.ts:277` (`coins_500`, „500 Coins gesammelt"), `:334` (`tasks_500`,
+„500 Aufgaben erledigt") und `:75` (`minCoins: 500`). Jede Seite, die die Errungenschaftsliste
+rendert, ist damit für jedes Konto dauerhaft rot. Die Assertion muss eng gezogen oder abgeschafft
+werden.
+
+*Die Messung selbst hat drei Löcher* (Belege in `zustandspruefung.md`)
+
+| Lücke | Folge |
+|---|---|
+| Die Suite interagiert nie | `e2e/design-rules.spec.ts` und `e2e/helpers/design-count.ts` enthalten kein `click`, `hover`, `press`, `focus`, `fill`. Jeder eingeklappte Abschnitt, jedes geschlossene Menü, jedes Modal ist unmessbar — **10 von 19 dahinterliegenden Zuständen sind rot.** |
+| Die Ratsche liest kein CSS | `scripts/check-design-tokens.mjs:141` sammelt nur `.tsx`, `scripts/design-baseline.json` hat null `.css`-Einträge. `app/globals.css` definiert jedes Token und wurde von der Ratsche nie geöffnet. |
+| Phasen sind nach Seiten geschnitten, die Verstöße sitzen in Bauteilen | Neun der zwölf Funde der Zustandsprüfung gehören **keiner** Phasenliste: Formulare, Menüs, Leisten, ein globaler Fokusstil. Sie zuzuordnen ist eine Planungsentscheidung, keine Aufräumarbeit. |
+
+Der amber Fokusring (`app/globals.css:541-547`: `outline: 2px solid var(--accent-amber)` plus
+6-px-Halo, dazu `border-radius: 4px` außerhalb der vier Stufen) liegt im blinden Fleck aller drei
+gleichzeitig: die Ratsche liest die Datei nicht, `countAmber` liest kein `outline-color`, die Suite
+fokussiert nie. **Gebaut wurde er als AAA-Kontrastmaßnahme** — ihn zu entfernen verlangt einen
+ebenso sichtbaren Ersatz und ist damit eine Spec-Entscheidung.
+
+*i18n — `check:i18n` prüft nur eine Richtung*
+
+Das Skript verifiziert *referenziert ⇒ vorhanden*, nie umgekehrt. Beide Gegenrichtungen fehlen:
+
+- **Verwaiste Keys.** In der Phase wurden 18 Keys ohne jede Code-Referenz gezählt, in allen sieben
+  Locale-Dateien vorhanden. Ein grober Nachscan listet 132 Kandidaten — die meisten davon aber per
+  Template-Literal konstruiert (`closure.quote_${n}`, `templates.<x>.task_N`,
+  `progress.tab_${id}`). Die echte Zahl braucht einen Scan, der Template-Literale versteht, und
+  **keine Löschung auf Verdacht**: eine falsche Löschung ist genau das, was `check:i18n` nicht
+  bemerkt.
+- **Hartkodiertes Deutsch.** `components/layout/user-menu.tsx` liefert fünf deutsche Labels in
+  einer Sieben-Sprachen-App: `Statistiken` (:152), `Wochenrückblick` (:155), `Einstellungen`
+  (:158), `Admin` (:170), `Abmelden` (:192). Die Datei importiert `useTranslations("nav")` und ruft
+  `t(` genau dreimal. Jede nicht-deutsche Nutzerin liest heute ein deutsches Menü. `check:i18n` ist
+  blind dafür, weil diese Strings nie durch `t()` gehen. Kosten: fünf Keys × sieben Locales.
+  Dasselbe eine Ebene tiefer im **Errungenschaftskatalog**: `lib/gamification.ts` hält Titel und
+  Beschreibung jeder Errungenschaft als deutsche Literale, sodass `/progress?tab=achievements`
+  bei Locale `en` „Erstes Wunschlisten-Item gekauft" anzeigt (im Chrome-Review der Phase gesehen).
+
+*Drei Kleinigkeiten, jede in einer fremden Datei*
+
+| Ort | Befund |
+|---|---|
+| `components/wishlist/wishlist-view.tsx:426-436` | Der Verlaufs-Umschalter zählt nur die gekauften Wünsche (`Verlauf (1)`), klappt aber gekaufte **und** verworfene auf. Vorbestehend, identisch bei `84c4871`. |
+| `components/stats/weekday-chart.tsx:43` | Das `aria-label` ist nicht auf `hasData` gegattert, anders als jeder andere „bester Tag"-Verbraucher derselben Datei. In einer Nullwoche liest ein Screenreader „Bester Tag: Mo — 0 Abschlüsse" vor — einen besten Tag, den die sichtbare Oberfläche absichtlich unterdrückt. Fix: ``aria-label={hasData ? `${bestDayLabel}: ${labels[bestIdx]} — ${bestDayCount}` : bestDayLabel}``. |
+| `app/(app)/wishlist/loading.tsx` | Zentrierte `max-w-[var(--measure)]`-Spalte, während die Seite dahinter ein `PageFrame` mit Rand ist — über 1100 px springt die Überschrift nach links, sobald der Inhalt da ist. `/tasks`' Skeleton ist ebenfalls unmigriert, ein Hausmuster gibt es also noch nicht. |
 
 **Erledigt** ✅ — Automerge-Gate (`lint`, `build`, `test` sind seit 2026-08-21 required status checks auf `main`, und die beiden neuen Jobs laufen im PR-Gate-Workflow — vorher berichteten Lint und Build erst *nach* dem Merge, bei `required_status_checks: null`) · Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
 0.4.0) · E2E-Tests (Playwright, 13 Specs, seit 0.4.0) · Dependency-Stau aufgelöst

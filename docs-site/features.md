@@ -316,7 +316,7 @@ To make the most of this feature, **tag your tasks with an energy level** when c
 
 **Energy-aware Quick Wins and 5-Min Mode.** Once you've checked in, the Quick Wins on your dashboard *and* the 5-Minute Mode list both sort matching tasks first, untagged tasks next, and mismatches last. It's a sort, not a hard filter — everything is still visible, just in an order that respects how you feel.
 
-**Energy patterns.** Visit `/stats` to see the new *Energy this week* block: three counters (HIGH / MEDIUM / LOW days in the last 7 days) plus a 14-day mini-chart so you can spot patterns ("most LOW days are Mondays"). All check-ins are stored permanently — even if you check in twice on the same day, both entries are kept for time-of-day analyses.
+**Energy patterns.** Open **Progress → Statistics** to see the *Energy this week* block: three counters (HIGH / MEDIUM / LOW days in the last 7 days) plus a 14-day mini-chart so you can spot patterns ("most LOW days are Mondays"). All check-ins are stored permanently — even if you check in twice on the same day, both entries are kept for time-of-day analyses.
 
 > **Note on push notifications:** The 08:00 daily quest reminder is sent before you check in, so it always names a specific task. After you open the app and tell Momo your energy, that task may be replaced — the push was a starting point, not a contract.
 
@@ -440,7 +440,7 @@ Both actions are reversible. Click **Undo** to revert a bought or discarded item
 
 ### Monthly budget
 
-Set a monthly spending limit directly on the **Wishlist page** — click the budget display in the header to enter your limit. The wishlist header shows how much of the budget remains this month. This is purely informational — Momo will not block purchases if you exceed it.
+Set a monthly spending limit directly on the **Wishlist page** — click the budget display in the page margin to enter your limit. It shows how much of the budget remains this month, plus what you have spent in total across all time. This is purely informational — Momo will not block purchases if you exceed it.
 
 ### Swipe gestures on mobile
 
@@ -978,20 +978,18 @@ If push notifications are enabled, Momo sends a summary notification every **Sun
 
 ### Personal stats
 
-Visit **/stats** from the navigation to see your personal numbers:
+Open **Progress → Statistics** to see your personal numbers. Flat counters — tasks created, completions, current and best streak, coin balance, completions in the last 7 and 30 days, open tasks — sit in the page margin. The reading column carries everything with structure:
 
-- **Overview** — total tasks created, total completions, current streak, best streak
+- **Progress** — your current level and title, coins as a fraction towards the next level (`340 / 500`), total coins earned, member since
 - **Streak history** — a 90-day sparkline showing how your streak developed over time, with today's value and the peak highlighted
-- **Progress** — your current level, coin balance, total coins earned, and a level progress bar
-- **Activity** — completions in the last 7 and 30 days, open tasks
 - **Best weekdays** — a bar chart showing which days of the week you complete the most tasks, with the best day highlighted
 - **Energy this week** — energy check-in summary (HIGH / MEDIUM / LOW counts) plus a 14-day mini-chart
-- **Tasks by type and priority** — progress bars breaking down your tasks
-- **Topics** — per-topic completion rate, sorted with the least-completed topics first so you can spot which topics you tend to avoid. Topics below 25% completion are highlighted in red, above 75% in green. Each topic also shows completions in the last 30 days
-- **Achievements** — all achievements with earned/locked status and unlock dates
-- **Wishlist** — bought, spent, open, and discarded counts
+- **Tasks by type and priority** — each row shows its count and share (`12 · 40%`)
+- **Topics** — per-topic completion rate, sorted with the least-completed topics first so you can spot which topics you tend to avoid, with the completed/total count on the right and completions in the last 30 days underneath
 
-Stats are fully localized — they follow your chosen language (German, English, French, Spanish, or Dutch).
+Achievements have their own tab next to it. The older **/stats** address still works and redirects here.
+
+Stats are fully localized — they follow your chosen language (German, English, French, Spanish, Dutch, Russian, or Chinese).
 
 ### Habit Tracker
 

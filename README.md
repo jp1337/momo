@@ -36,11 +36,11 @@ Momo is a task management app built for people who struggle with avoidance, proc
 
 | Habits | Statistics |
 |:------:|:----------:|
-| ![Habits — GitHub-style year heatmap with streak stats](public/screenshots/03-habits.png) | ![Statistics — overview, streak sparkline, and energy heatmap](public/screenshots/04-stats.png) |
+| ![Habits — GitHub-style year heatmap with streak stats](public/screenshots/03-habits.png) | ![Statistics — the fourth Progress tab: flat counters in the rail, level as a fraction, streak sparkline, and best weekdays](public/screenshots/04-stats.png) |
 
 | Wishlist |
 |:--------:|
-| ![Wishlist — items with coin prices, budget tracker, and priority filter](public/screenshots/05-wishlist.png) |
+| ![Wishlist — hairline-separated rows with prices in mono, budget and filters in the rail](public/screenshots/05-wishlist.png) |
 
 ---
 
@@ -280,6 +280,7 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 | Phase 10 – Statistics & Admin | ✅ Done | Personal stats page, Admin panel, Mobile bottom navigation |
 | Phase 11 – UX & Anti-Procrastination | ✅ Done | Procrastination counter, postpone limit, bonus coins, task breakdown, time estimates, Quick Wins, public landing page, dashboard redesign, FA icon picker |
 | Phase 11 – Bugfixes (2026-04-05) | ✅ Done | Timezone-aware daily quest selection, immutable statistics counter, task breakdown stat increment, mobile task form z-index fix |
+| Lichtkegel Phase 2 (2026-08-28) | ✅ Done | Zahlen-Seiten: /stats als Progress-Tab, Wunschliste als Zeilen, Errungenschaften als Liste; Messeinheit sind jetzt Zustände statt Routen (10 statt 6) |
 
 ---
 
