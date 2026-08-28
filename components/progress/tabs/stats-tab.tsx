@@ -2,7 +2,11 @@
  * Der Statistiken-Tab von /progress.
  *
  * Umzug aus `app/(app)/stats/page.tsx` (834 Zeilen, 68 Ratschen-Verstöße,
- * sieben Fraunces-Vorkommen). `/stats` war von genau einer Stelle
+ * 16 Fraunces-Vorkommen). Sechzehn ist gemessen, nicht geschätzt — der
+ * Titel, vier Übersichtskacheln, der Level-Titel, das Level-Abzeichen, zwei
+ * Münz-Zahlen, drei Aktivitätskacheln, vier Wunschlistenkacheln.
+ *
+ * `/stats` war von genau einer Stelle
  * erreichbar — dem Benutzermenü — und beanspruchte dieselbe Rolle wie
  * /progress: Zahlen über dich. Nach dem Umzug gibt es eine
  * Zahlen-Destination statt zwei, und die neue steht in der Navigation
@@ -110,6 +114,16 @@ export async function StatsTab({
       <p className={RAIL_LINE}>
         {stats.totalCompletions} {t("completions_total")}
       </p>
+      {/* Der Münzstand steht BEDINGUNGSLOS hier, nicht nur im Bruch unten
+          (Task-4-Review, Important 1): `getNextLevel` liefert auf Stufe 10
+          `null` (`lib/gamification.ts`), der Bruch `{coins} / {minCoins}`
+          entfällt dann komplett — und damit verschwände `stats.coins` von
+          der ganzen Seite, ausgerechnet für die Nutzerin, die am ehesten
+          nachsieht. Die alte Seite zeigte den Stand zweimal und immer.
+          `coins_label` ist eine vollständige ICU-Nachricht (`{count} Coins`),
+          also der Aufruf mit `count` statt der `{value} {label}`-Verkettung
+          der Nachbarzeilen — sonst stünde die Zahl doppelt. */}
+      <p className={RAIL_LINE}>{t("coins_label", { count: stats.coins })}</p>
       {stats.streakCurrent > 0 && (
         <p className={RAIL_LINE}>
           {stats.streakCurrent}d {t("current_streak")}
