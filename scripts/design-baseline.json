@@ -167,12 +167,6 @@
     "inline": 4,
     "spacing": 0
   },
-  "components/achievements/achievement-card.tsx": {
-    "color": 2,
-    "radius": 0,
-    "inline": 15,
-    "spacing": 0
-  },
   "components/animations/achievement-toast.tsx": {
     "color": 2,
     "radius": 0,
@@ -334,12 +328,6 @@
     "radius": 2,
     "inline": 7,
     "spacing": 1
-  },
-  "components/progress/progress-tabs.tsx": {
-    "color": 0,
-    "radius": 8,
-    "inline": 80,
-    "spacing": 6
   },
   "components/quick/five-minute-view.tsx": {
     "color": 0,

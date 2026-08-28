@@ -62,7 +62,7 @@ export function AchievementRow({
     <Row
       testId="achievement-row"
       wrapTitle
-      dimmed={!earned}
+      tone={earned ? "primary" : "secondary"}
       lead={
         isSecret ? (
           <FontAwesomeIcon

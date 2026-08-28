@@ -21,11 +21,22 @@ import {
 } from "@/lib/gamification";
 import { PageFrame } from "@/components/ui/page-frame";
 import { GroupHeading, List, RAIL_LINE } from "@/components/ui/list";
-import { EmptyState } from "@/components/ui/empty-state";
 import { AchievementRow } from "@/components/achievements/achievement-row";
 
 const RARITY_ORDER = ["legendary", "epic", "rare", "common"] as const;
 
+/**
+ * Der Errungenschaften-Tab: Level/Freischaltstand/Münzen im Rand, die
+ * Seltenheit als `GroupHeading`, jede Errungenschaft als `AchievementRow`.
+ * `all` ist der volle Katalog (`getAchievementsWithProgress`) — der ist in
+ * der Praxis nie leer, also gibt es hier keinen Empty-State: eine neue
+ * Nutzerin sieht sofort den vollen, größtenteils gesperrten Katalog statt
+ * eines Hinweistexts, der dasselbe noch einmal in Worten sagt.
+ *
+ * @param props.userId - der angemeldete Nutzer
+ * @param props.header - die gemeinsame Kopfzeile der Seite, als erstes Kind der Lesespalte
+ * @returns Der Errungenschaften-Tab in seinem eigenen `PageFrame`
+ */
 export async function AchievementsTab({
   userId,
   header,
@@ -94,49 +105,43 @@ export async function AchievementsTab({
     <PageFrame rail={rail}>
       {header}
 
-      {all.length === 0 ? (
-        <EmptyState line={t("no_achievements")} />
-      ) : (
-        <>
-          {recentlyEarned.length > 0 && (
-            <section>
-              <GroupHeading>{t("recently_unlocked")}</GroupHeading>
-              <List>
-                {recentlyEarned.map((a) => (
-                  <AchievementRow key={`recent-${a.key}`} achievement={a} />
-                ))}
-              </List>
-            </section>
-          )}
-
-          {RARITY_ORDER.map((rarity) => {
-            const tier = all.filter((a) => a.rarity === rarity);
-            if (tier.length === 0) return null;
-            const earnedInTier = tier.filter((a) => a.earnedAt != null).length;
-            return (
-              <section key={rarity}>
-                {/* "LEGENDÄR · 2 / 5" — die Seltenheit als Struktur, nicht
-                    als farbiges Abzeichen an jeder Zeile. */}
-                <GroupHeading>
-                  {RARITY_LABEL[rarity]} ·{" "}
-                  {t("progress", { current: earnedInTier, total: tier.length })}
-                </GroupHeading>
-                <List>
-                  {[
-                    ...tier.filter((a) => a.earnedAt != null),
-                    ...tier.filter((a) => a.earnedAt == null),
-                  ].map((achievement) => (
-                    <AchievementRow
-                      key={achievement.key}
-                      achievement={achievement}
-                    />
-                  ))}
-                </List>
-              </section>
-            );
-          })}
-        </>
+      {recentlyEarned.length > 0 && (
+        <section>
+          <GroupHeading>{t("recently_unlocked")}</GroupHeading>
+          <List>
+            {recentlyEarned.map((a) => (
+              <AchievementRow key={`recent-${a.key}`} achievement={a} />
+            ))}
+          </List>
+        </section>
       )}
+
+      {RARITY_ORDER.map((rarity) => {
+        const tier = all.filter((a) => a.rarity === rarity);
+        if (tier.length === 0) return null;
+        const earnedInTier = tier.filter((a) => a.earnedAt != null).length;
+        return (
+          <section key={rarity}>
+            {/* "LEGENDÄR · 2 / 5" — die Seltenheit als Struktur, nicht
+                als farbiges Abzeichen an jeder Zeile. */}
+            <GroupHeading>
+              {RARITY_LABEL[rarity]} ·{" "}
+              {t("progress", { current: earnedInTier, total: tier.length })}
+            </GroupHeading>
+            <List>
+              {[
+                ...tier.filter((a) => a.earnedAt != null),
+                ...tier.filter((a) => a.earnedAt == null),
+              ].map((achievement) => (
+                <AchievementRow
+                  key={achievement.key}
+                  achievement={achievement}
+                />
+              ))}
+            </List>
+          </section>
+        );
+      })}
     </PageFrame>
   );
 }
