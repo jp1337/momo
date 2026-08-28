@@ -8,7 +8,8 @@
  *
  * Layout:
  * - BudgetBar at the top
- * - Open items grid (2-3 cols on desktop, 1 on mobile)
+ * - Open items as a `List`/`WishlistRow` (Lichtkegel design system, Phase 2
+ *   Task 5 — replaced the previous card grid)
  * - History section (bought + discarded, collapsed by default)
  */
 
@@ -17,8 +18,9 @@ import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faChevronRight, faGift } from "@fortawesome/free-solid-svg-icons";
 import { BudgetBar } from "@/components/wishlist/budget-bar";
-import { WishlistCard } from "@/components/wishlist/wishlist-card";
+import { WishlistRow } from "@/components/wishlist/wishlist-row";
 import { WishlistForm } from "@/components/wishlist/wishlist-form";
+import { List, GroupHeading } from "@/components/ui/list";
 import { SearchFilterBar } from "@/components/shared/search-filter-bar";
 import type { FilterGroup } from "@/components/shared/search-filter-bar";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
@@ -118,6 +120,8 @@ export function WishlistView({
   const historyItems = filteredItems.filter(
     (i) => i.status === "BOUGHT" || i.status === "DISCARDED",
   );
+  const boughtItems = historyItems.filter((i) => i.status === "BOUGHT");
+  const discardedItems = historyItems.filter((i) => i.status === "DISCARDED");
 
   /** Reload all items + budget from the API */
   const refresh = async () => {
@@ -221,6 +225,26 @@ export function WishlistView({
     setEditingItemId(null);
     await refresh();
   };
+
+  /** Die sechzehn Props einer Zeile, an drei Stellen identisch. */
+  const rowProps = (item: SerializedWishlistItem) => ({
+    id: item.id,
+    title: item.title,
+    price: item.price,
+    url: item.url,
+    priority: item.priority,
+    status: item.status,
+    coinUnlockThreshold: item.coinUnlockThreshold,
+    userCoins: coins,
+    monthlyBudget: budget.monthlyBudget,
+    remainingBudget: budget.remaining,
+    onBuy: handleBuy,
+    onUnbuy: handleUnbuy,
+    onDiscard: handleDiscard,
+    onUndiscard: handleUndiscard,
+    onEdit: handleEdit,
+    onDelete: handleDelete,
+  });
 
   const editingItem = editingItemId
     ? items.find((i) => i.id === editingItemId)
@@ -431,33 +455,18 @@ export function WishlistView({
           </p>
         </div>
       ) : openItems.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <List>
           {openItems.map((item) => (
-            <WishlistCard
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              price={item.price}
-              url={item.url}
-              priority={item.priority}
-              status={item.status}
-              coinUnlockThreshold={item.coinUnlockThreshold}
-              userCoins={coins}
-              monthlyBudget={budget.monthlyBudget}
-              remainingBudget={budget.remaining}
-              onBuy={handleBuy}
-              onUnbuy={handleUnbuy}
-              onDiscard={handleDiscard}
-              onUndiscard={handleUndiscard}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+            <WishlistRow key={item.id} {...rowProps(item)} />
           ))}
-        </div>
+        </List>
       ) : null}
 
-      {/* Bought gallery — shown when there are purchased items */}
-      {historyItems.filter((i) => i.status === "BOUGHT").length > 0 && (
+      {/* History: bought + discarded, collapsed by default. One toggle for
+          both — the label names whichever group is actually present, since
+          the two groups are never both absent here (the section itself is
+          gated on that). */}
+      {(boughtItems.length > 0 || discardedItems.length > 0) && (
         <div className="flex flex-col gap-4">
           <button
             onClick={() => setShowHistory((prev) => !prev)}
@@ -481,130 +490,50 @@ export function WishlistView({
             >
               <FontAwesomeIcon icon={faChevronRight} style={{ fontSize: 9 }} />
             </span>
-            <span>
-              {t("view_history")}{" "}
-              <span style={{ color: "var(--accent-green)", fontWeight: 600 }}>
-                ({historyItems.filter((i) => i.status === "BOUGHT").length})
+            {boughtItems.length > 0 ? (
+              <span>
+                {t("view_history")}{" "}
+                <span style={{ color: "var(--accent-green)", fontWeight: 600 }}>
+                  ({boughtItems.length})
+                </span>
               </span>
-            </span>
+            ) : (
+              <span>
+                {t("view_discarded")} ({discardedItems.length})
+              </span>
+            )}
           </button>
 
           {showHistory && (
-            <div className="flex flex-col gap-3">
-              {/* Bought items — compact green-tinted row layout */}
-              {historyItems
-                .filter((i) => i.status === "BOUGHT")
-                .map((item) => (
-                  <WishlistCard
-                    key={item.id}
-                    id={item.id}
-                    title={item.title}
-                    price={item.price}
-                    url={item.url}
-                    priority={item.priority}
-                    status={item.status}
-                    coinUnlockThreshold={item.coinUnlockThreshold}
-                    userCoins={coins}
-                    monthlyBudget={budget.monthlyBudget}
-                    remainingBudget={budget.remaining}
-                    onBuy={handleBuy}
-                    onUnbuy={handleUnbuy}
-                    onDiscard={handleDiscard}
-                    onUndiscard={handleUndiscard}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                  />
-                ))}
+            <div className="flex flex-col gap-4">
+              {/* Bought items */}
+              {boughtItems.length > 0 && (
+                <List>
+                  {boughtItems.map((item) => (
+                    <WishlistRow key={item.id} {...rowProps(item)} />
+                  ))}
+                </List>
+              )}
 
-              {/* Discarded items — even more muted */}
-              {historyItems.filter((i) => i.status === "DISCARDED").length > 0 && (
-                <div className="flex flex-col gap-2 mt-2">
-                  <p
-                    className="text-xs uppercase tracking-widest"
-                    style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
-                  >
-                    {t("view_discarded")}
-                  </p>
-                  {historyItems
-                    .filter((i) => i.status === "DISCARDED")
-                    .map((item) => (
-                      <WishlistCard
-                        key={item.id}
-                        id={item.id}
-                        title={item.title}
-                        price={item.price}
-                        url={item.url}
-                        priority={item.priority}
-                        status={item.status}
-                        coinUnlockThreshold={item.coinUnlockThreshold}
-                        userCoins={coins}
-                        monthlyBudget={budget.monthlyBudget}
-                        remainingBudget={budget.remaining}
-                        onBuy={handleBuy}
-                        onUnbuy={handleUnbuy}
-                        onDiscard={handleDiscard}
-                        onUndiscard={handleUndiscard}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                      />
+              {/* Discarded items — own `List`, `GroupHeading` as a sibling
+                  before it, never as its child (see wishlist-row.tsx step 4
+                  of the task brief / list.tsx's own JSDoc on this trap). */}
+              {discardedItems.length > 0 && (
+                <section>
+                  <GroupHeading>
+                    {t("view_discarded")} ({discardedItems.length})
+                  </GroupHeading>
+                  <List>
+                    {discardedItems.map((item) => (
+                      <WishlistRow key={item.id} {...rowProps(item)} />
                     ))}
-                </div>
+                  </List>
+                </section>
               )}
             </div>
           )}
         </div>
       )}
-
-      {/* Discarded-only section when no bought items */}
-      {historyItems.filter((i) => i.status === "BOUGHT").length === 0 &&
-        historyItems.filter((i) => i.status === "DISCARDED").length > 0 && (
-          <div className="flex flex-col gap-4">
-            <button
-              onClick={() => setShowHistory((prev) => !prev)}
-              className="flex items-center gap-2 text-sm font-medium"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-              }}
-            >
-              <span style={{ display: "inline-block", transform: showHistory ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s ease" }}>
-                <FontAwesomeIcon icon={faChevronRight} style={{ fontSize: 9 }} />
-              </span>
-              {t("view_discarded")} ({historyItems.filter((i) => i.status === "DISCARDED").length})
-            </button>
-            {showHistory && (
-              <div className="flex flex-col gap-2">
-                {historyItems
-                  .filter((i) => i.status === "DISCARDED")
-                  .map((item) => (
-                    <WishlistCard
-                      key={item.id}
-                      id={item.id}
-                      title={item.title}
-                      price={item.price}
-                      url={item.url}
-                      priority={item.priority}
-                      status={item.status}
-                      coinUnlockThreshold={item.coinUnlockThreshold}
-                      userCoins={coins}
-                      monthlyBudget={budget.monthlyBudget}
-                      remainingBudget={budget.remaining}
-                      onBuy={handleBuy}
-                      onUnbuy={handleUnbuy}
-                      onDiscard={handleDiscard}
-                      onUndiscard={handleUndiscard}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-              </div>
-            )}
-          </div>
-        )}
 
       {/* Create/Edit form modal */}
       {showForm && (

@@ -23,6 +23,12 @@ const SWIPE_MAX = 110;
  *   drei Touch-Handler. `progress` statt der Schwelle selbst, damit
  *   `SWIPE_THRESHOLD` privat bleiben kann — die Wisch-Vorschau in
  *   `task-row.tsx` braucht den Fortschritt, nicht den Rohwert.
+ *
+ * Wird seit Phase 2 auch von `components/wishlist/wishlist-row.tsx`
+ * benutzt (rechts = kaufen, links = verwerfen). Der Hook weiß nichts über
+ * Aufgaben — `onComplete`/`onDelete` sind Richtungen, keine Domäne. Er
+ * bleibt hier statt in `components/ui/` zu wandern: ein Umzug wäre eine
+ * Umbenennung ohne Verhaltensänderung an einer Phase-1-Datei.
  */
 export function useTaskSwipe({
   onComplete,

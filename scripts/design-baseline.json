@@ -617,12 +617,6 @@
     "inline": 16,
     "spacing": 4
   },
-  "components/wishlist/wishlist-card.tsx": {
-    "color": 0,
-    "radius": 8,
-    "inline": 37,
-    "spacing": 14
-  },
   "components/wishlist/wishlist-form.tsx": {
     "color": 2,
     "radius": 3,
@@ -632,7 +626,7 @@
   "components/wishlist/wishlist-view.tsx": {
     "color": 0,
     "radius": 4,
-    "inline": 23,
+    "inline": 19,
     "spacing": 2
   }
 }
