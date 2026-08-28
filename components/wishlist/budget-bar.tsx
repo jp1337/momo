@@ -107,12 +107,17 @@ export function BudgetBar({
         {monthlyBudget !== null && <> / €{formatCurrency(monthlyBudget, locale)}</>}
       </p>
 
-      {monthlyBudget !== null && (
+      {monthlyBudget !== null && monthlyBudget > 0 && (
         // `role="progressbar"` ist die benannte Ausnahme, die `countBoxes`
         // prüft — ein Fortschrittsbalken IST eine gefüllte Fläche, per
         // Definition. Ohne die Rolle zählen Spur UND Füllung als zwei Kästen.
         // Die aria-Werte sind kein Beiwerk: eine Rolle ohne sie ist ein leeres
         // Versprechen an den Screenreader.
+        //
+        // Guarded on `monthlyBudget > 0`, matching `percent`'s own guard
+        // (Task 6 review Minor): at exactly 0, `aria-valuemax` would equal
+        // `aria-valuemin`, a degenerate progressbar for a screen reader, and
+        // the track could never visually fill regardless of spend.
         <div
           role="progressbar"
           aria-valuemin={0}

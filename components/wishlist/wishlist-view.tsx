@@ -224,7 +224,10 @@ export function WishlistView({
     try {
       const res = await fetch(`/api/wishlist/${id}`, { method: "DELETE" });
       if (!res.ok) return;
-      setItems((prev) => prev.filter((i) => i.id !== id));
+      // Full refresh, not a local filter (Task 6 review Minor): deleting a
+      // bought item must also pull `spentThisMonth` back down, or the rail's
+      // monthly figure and `totalSpent` right above it would visibly diverge.
+      await refresh();
     } catch {
       // no-op
     }
@@ -320,20 +323,25 @@ export function WishlistView({
     <PageFrame rail={rail}>
       {header}
 
-      {/* Add item — always available, not just from the empty state's own action. */}
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          variant="quiet"
-          size="sm"
-          onClick={() => {
-            setEditingItemId(null);
-            setShowForm(true);
-          }}
-        >
-          {t("view_add")}
-        </Button>
-      </div>
+      {/* Add item — a toolbar affordance once there's a list to add to; on
+          an empty wishlist the EmptyState below is the sole call to action
+          (Task 6 review Important: this used to render unconditionally,
+          duplicating the EmptyState's own button on every empty page). */}
+      {items.length > 0 && (
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="quiet"
+            size="sm"
+            onClick={() => {
+              setEditingItemId(null);
+              setShowForm(true);
+            }}
+          >
+            {t("view_add")}
+          </Button>
+        </div>
+      )}
 
       {/* Search — only shown when there are items; filters live in the rail. */}
       {items.length > 0 && (
