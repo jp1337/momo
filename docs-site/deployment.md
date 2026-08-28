@@ -90,16 +90,24 @@ app:
 Datenbank.
 
 Die Publish-Pipeline (`.github/workflows/build-and-publish.yml`, Job `deploy`) fragt
-das Feld `commit` nach jedem Push auf `main` ab, um zu bestätigen, dass Watchtower den
-Container tatsächlich getauscht hat — Watchtowers HTTP 200 sagt nur, dass die
-Anfrage angenommen wurde, nicht dass der neue Container läuft. Verglichen wird
-`commit` gegen `github.sha`, nicht `version`: kein Workflow bumpt die Version
-automatisch, ein Versionsvergleich wäre bei einem gewöhnlichen Push auf main sofort
-grün — unabhängig vom tatsächlichen Rollout. Der Schritt liest die zu prüfende URL
-aus der Repository-Variable `ROLLOUT_HEALTH_URL` (Fallback: `NEXT_PUBLIC_APP_URL`,
-dann `https://momotask.app`). Läuft der Runner in einem Intranet ohne Zugriff auf
-die öffentliche URL, setze `ROLLOUT_HEALTH_URL` auf eine intern erreichbare Adresse
-derselben Instanz.
+das Feld `commit` **nach jedem Release-Tag `v*`** ab, um zu bestätigen, dass Watchtower
+den Container tatsächlich getauscht hat — Watchtowers HTTP 200 sagt nur, dass die
+Anfrage angenommen wurde, nicht dass der neue Container läuft.
+
+Auf Release-Tags und nicht auf jedem Push nach `main`, weil die Instanz dem
+**Minor-Serien-Tag** folgt (`ghcr.io/jp1337/momo:0.7`) und nicht `:latest`: ein Patch-Release
+rollt damit von selbst, ein Minor-Sprung bleibt eine bewusste Handlung. Ein gewöhnlicher
+Push nach `main` bewegt nur `:latest` und `:sha-…`, also nichts, dem die Instanz folgt.
+
+Verglichen wird `commit` gegen `github.sha`, nicht `version`: `commit` erkennt auch ein
+neu gebautes Image unter derselben Version, wo ein Versionsvergleich sofort grün wäre.
+
+Der Schritt liest die zu prüfende URL aus der Repository-Variable `ROLLOUT_HEALTH_URL`
+(Fallback: `NEXT_PUBLIC_APP_URL`, dann `https://momotask.app`). Läuft der Runner in einem
+Intranet ohne Zugriff auf die öffentliche URL, setze `ROLLOUT_HEALTH_URL` auf eine intern
+erreichbare Adresse derselben Instanz — **immer mit Schema** (`https://…`, `http://…`).
+Ohne Schema landet curl auf einer 301-HTML-Seite des Reverse Proxy, findet kein `commit`
+und läuft in seine vollen zehn Minuten, egal wie sauber der Rollout war.
 
 ---
 
