@@ -8,16 +8,17 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMoon, faSun, faDesktop } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
-/** Maps theme values to display icons and labels */
+/** Icon und Nachfolge-Theme je Zustand. Die Labels kommen aus i18n. */
 const THEME_CONFIG = {
-  dark: { icon: faMoon as IconDefinition, label: "Dark mode", next: "light" },
-  light: { icon: faSun as IconDefinition, label: "Light mode", next: "system" },
-  system: { icon: faDesktop as IconDefinition, label: "System theme", next: "dark" },
+  dark: { icon: faMoon as IconDefinition, next: "light", key: "theme_dark" },
+  light: { icon: faSun as IconDefinition, next: "system", key: "theme_light" },
+  system: { icon: faDesktop as IconDefinition, next: "dark", key: "theme_system" },
 } as const;
 
 type ThemeKey = keyof typeof THEME_CONFIG;
@@ -31,6 +32,7 @@ type ThemeKey = keyof typeof THEME_CONFIG;
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations("nav");
 
   // Only render after mount to avoid hydration mismatch.
   useEffect(() => {
@@ -40,16 +42,13 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div
-        className="w-9 h-9 rounded-lg"
-        style={{ backgroundColor: "var(--bg-elevated)" }}
-        aria-hidden="true"
-      />
+      <div className="h-9 w-9 rounded-[var(--radius-sm)] bg-[var(--raised)]" aria-hidden="true" />
     );
   }
 
   const currentTheme = (theme as ThemeKey) ?? "system";
   const config = THEME_CONFIG[currentTheme] ?? THEME_CONFIG.system;
+  const label = t(config.key as "theme_dark" | "theme_light" | "theme_system");
 
   /**
    * Cycles to the next theme in the rotation: dark → light → system → dark
@@ -63,18 +62,13 @@ export function ThemeToggle() {
       <TooltipTrigger asChild>
         <button
           onClick={handleToggle}
-          aria-label={`Switch theme (currently ${config.label})`}
-          className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2"
-          style={{
-            backgroundColor: "var(--bg-elevated)",
-            border: "1px solid var(--border)",
-            color: "var(--text-primary)",
-          }}
+          aria-label={t("theme_aria", { theme: label })}
+          className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--hairline)] bg-[var(--raised)] text-[var(--ink)] transition-colors duration-150 hover:bg-[var(--ground)]"
         >
           <FontAwesomeIcon icon={config.icon} className="w-4 h-4" aria-hidden="true" />
         </button>
       </TooltipTrigger>
-      <TooltipContent>{`${config.label} — click to switch`}</TooltipContent>
+      <TooltipContent>{t("theme_switch", { theme: label })}</TooltipContent>
     </Tooltip>
   );
 }

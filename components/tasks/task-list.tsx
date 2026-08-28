@@ -1,31 +1,40 @@
 "use client";
 
 /**
- * TaskList component — grouped task list wrapper.
+ * TaskList — /tasks, im Lichtkegel-Layout.
  *
- * Groups tasks into sections:
- *  1. Today — tasks due today or overdue
- *  2. Upcoming — tasks with future due dates
- *  3. No date — tasks with no due date (excluding SOMEDAY priority)
- *  4. Someday — SOMEDAY priority tasks with no due date
- *  5. Snoozed — tasks snoozed into the future (collapsible)
- *  6. Completed — tasks with completedAt set (collapsible, collapsed by default)
+ * Ersetzt die frühere Datum-Sektionierung (Heute/Demnächst/Kein Datum/
+ * Irgendwann) durch Prioritätsgruppen (`groupByPriority` aus
+ * `task-groups.ts`): "HOCH · 2" ist eine Gruppenüberschrift, kein
+ * amberfarbenes Abzeichen an jeder Zeile. Fälligkeit steht jetzt an jeder
+ * Zeile selbst (`TaskRow`s `trailing`), Überfälligkeit als Summe im Rand
+ * (`TasksRail`).
  *
- * Also supports a "by topic" view that groups active tasks under their topic.
+ * Pausiert und Erledigt bleiben eigene, einklappbare Abschnitte (unverändert
+ * in ihrer Funktion) — "Nach Thema"-Gruppierung mit ihrer Sequenz-Blockade
+ * ebenfalls, nur mit `TaskRow` statt `TaskItem` und ohne Amber.
  */
 
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AnimatePresence } from "motion/react";
 import { useTranslations } from "next-intl";
+import { AnimatePresence } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faChevronDown, faChevronRight, faCheckDouble, faListOl, faLock, faMoon, faSun, faLeaf, faStar } from "@fortawesome/free-solid-svg-icons";
-import { TaskItem } from "./task-item";
+import { faChevronDown, faChevronRight, faCheckDouble, faListOl, faLock } from "@fortawesome/free-solid-svg-icons";
+import { cn } from "@/lib/utils";
+import { PageFrame } from "@/components/ui/page-frame";
+import { List, GroupHeading } from "@/components/ui/list";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
+import { SearchInput } from "@/components/shared/search-filter-bar";
+import type { FilterGroup } from "@/components/shared/search-filter-bar";
+import { TasksRail } from "@/components/tasks/tasks-rail";
+import { TaskRow } from "@/components/tasks/task-row";
+import type { TaskRowProps } from "@/components/tasks/task-row";
+import { groupByPriority } from "@/components/tasks/task-groups";
 import { TaskForm } from "./task-form";
 import { BulkActionBar } from "./bulk-action-bar";
-import { SearchFilterBar } from "@/components/shared/search-filter-bar";
-import type { FilterGroup } from "@/components/shared/search-filter-bar";
 import { triggerSmallConfetti } from "@/components/animations/confetti";
 import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
@@ -63,6 +72,8 @@ interface TopicOption {
 interface TaskListProps {
   initialTasks: Task[];
   topics: TopicOption[];
+  /** Die Seitenüberschrift (Fraunces, das eine Mal pro Seite) — kommt von der Server-Komponente. */
+  pageTitle: string;
 }
 
 interface GroupedTasks {
@@ -76,6 +87,9 @@ interface GroupedTasks {
 
 /**
  * Groups tasks into display sections based on due date, priority, and completion.
+ * Liefert außerdem die Basis für die aktiven (weder erledigten noch
+ * pausierten) Aufgaben, die `groupByPriority` weiterverarbeitet — bereits
+ * nach Fälligkeit sortiert (überfällig zuerst), unverändert gegenüber vorher.
  */
 function groupTasks(tasks: Task[]): GroupedTasks {
   const today = new Date();
@@ -144,161 +158,6 @@ function groupTasks(tasks: Task[]): GroupedTasks {
   };
 }
 
-/**
- * Section header for task groups.
- */
-function SectionHeader({
-  title,
-  count,
-}: {
-  title: string;
-  count: number;
-}) {
-  if (count === 0) return null;
-  return (
-    <div className="flex items-center gap-3 mb-3 mt-6 first:mt-0">
-      <h2
-        className="text-sm font-semibold uppercase tracking-wide"
-        style={{
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          color: "var(--text-muted)",
-        }}
-      >
-        {title}
-      </h2>
-      <span
-        className="text-xs px-1.5 py-0.5 rounded-full"
-        style={{
-          backgroundColor: "var(--bg-elevated)",
-          color: "var(--text-muted)",
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-        }}
-      >
-        {count}
-      </span>
-    </div>
-  );
-}
-
-/**
- * Time-aware empty state shown when there are no tasks.
- * Displays different motivating messages based on the current hour.
- */
-function EmptyState() {
-  const t = useTranslations("tasks");
-  const hour = new Date().getHours();
-
-  type EmptyConfig = {
-    icon: typeof faMoon;
-    iconColor: string;
-    haloColor: string;
-    headline: string;
-    sub: string;
-  };
-
-  let config: EmptyConfig;
-
-  if (hour < 5) {
-    config = { icon: faMoon, iconColor: "var(--text-secondary)", haloColor: "var(--text-muted)", headline: t("empty_night"), sub: t("empty_night_sub") };
-  } else if (hour < 12) {
-    config = { icon: faSun, iconColor: "var(--accent-amber)", haloColor: "var(--accent-amber)", headline: t("empty_morning"), sub: t("empty_morning_sub") };
-  } else if (hour < 17) {
-    config = { icon: faLeaf, iconColor: "var(--accent-green)", haloColor: "var(--accent-green)", headline: t("empty_afternoon"), sub: t("empty_afternoon_sub") };
-  } else if (hour < 22) {
-    config = { icon: faStar, iconColor: "var(--accent-amber)", haloColor: "var(--accent-amber)", headline: t("empty_evening"), sub: t("empty_evening_sub") };
-  } else {
-    config = { icon: faMoon, iconColor: "var(--text-secondary)", haloColor: "var(--text-muted)", headline: t("empty_latenight"), sub: t("empty_latenight_sub") };
-  }
-
-  const { icon, iconColor, haloColor, headline, sub } = config;
-
-  return (
-    <div
-      className="relative rounded-2xl p-12 sm:p-16 text-center overflow-hidden"
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        border: "1px dashed var(--border)",
-      }}
-    >
-      {/* Soft halo behind the icon */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          top: "20%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "240px",
-          height: "240px",
-          borderRadius: "50%",
-          background: `radial-gradient(circle, color-mix(in srgb, ${haloColor} 12%, transparent) 0%, transparent 70%)`,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* FA icon in a styled circle */}
-      <div
-        className="relative mx-auto mb-5 flex items-center justify-center"
-        style={{
-          width: 72,
-          height: 72,
-          borderRadius: "50%",
-          backgroundColor: `color-mix(in srgb, ${iconColor} 14%, transparent)`,
-        }}
-        role="img"
-        aria-label={headline}
-      >
-        <FontAwesomeIcon icon={icon} style={{ fontSize: 28, color: iconColor }} />
-      </div>
-      <p
-        className="relative text-xl font-semibold mb-2"
-        style={{
-          fontFamily: "var(--font-display, 'Lora', serif)",
-          fontStyle: "italic",
-          color: "var(--text-primary)",
-        }}
-      >
-        {headline}
-      </p>
-      <p
-        className="relative text-sm max-w-sm mx-auto"
-        style={{
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          color: "var(--text-muted)",
-          lineHeight: 1.6,
-        }}
-      >
-        {sub}
-      </p>
-
-      {/* Inline keyboard hint — encourages discovering the N shortcut */}
-      <p
-        className="relative text-xs mt-6"
-        style={{
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          color: "var(--text-muted)",
-          opacity: 0.7,
-        }}
-      >
-        {t("empty_kbd_hint")}{" "}
-        <kbd
-          style={{
-            padding: "2px 7px",
-            fontSize: "0.7rem",
-            borderRadius: "4px",
-            border: "1px solid var(--border)",
-            background: "var(--bg-elevated)",
-            color: "var(--text-primary)",
-            fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-          }}
-        >
-          N
-        </kbd>
-      </p>
-    </div>
-  );
-}
-
 /** Response shape from POST /api/tasks/:id/complete */
 interface CompleteApiResponse {
   coinsEarned?: number;
@@ -308,11 +167,57 @@ interface CompleteApiResponse {
 }
 
 /**
+ * Ein einklappbarer Abschnittskopf für Pausiert/Erledigt — dieselbe
+ * Mono-Eyebrow-Optik wie `GroupHeading`, aber als klickbare Affordanz
+ * (`role="button"`) mit Chevron, weil diese beiden Abschnitte weiterhin
+ * ein-/ausklappbar sind. Zahl steht als Text in der Überschrift ("Pausiert
+ * · 2"), nicht als separate gefüllte Pille — dieselbe Kodierung wie
+ * `GroupHeading`s "Hoch · 2".
+ *
+ * Trägt ein echtes `<h2>` innerhalb der klickbaren Hülle (Task 8 Review,
+ * "Also fix"): der `div[role="button"]` um einen bloßen `<span>` hatte die
+ * beiden Abschnitte aus der Überschriftengliederung der Seite entfernt.
+ * `!` auf Schriftart/Farbe aus demselben Grund wie bei `GroupHeading`
+ * (siehe dort): `globals.css`s ungelayerte `h1`–`h6`-Regel schlägt jede
+ * `@layer utilities`-Klasse unabhängig von Spezifität.
+ */
+function CollapsibleSectionHeading({
+  title,
+  count,
+  expanded,
+  onToggle,
+}: {
+  title: string;
+  count: number;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onToggle}
+      onKeyDown={(e) => e.key === "Enter" && onToggle()}
+      className="mt-8 flex cursor-pointer select-none items-center gap-2 border-0 bg-transparent p-0 text-[var(--ink-3)]"
+    >
+      <FontAwesomeIcon
+        icon={expanded ? faChevronDown : faChevronRight}
+        className="h-2.5 w-2.5"
+        aria-hidden="true"
+      />
+      <h2 className="m-0 font-[family-name:var(--font-mono)]! text-[0.6875rem] font-normal uppercase tracking-[0.16em] text-[var(--ink-3)]!">
+        {title} · {count}
+      </h2>
+    </div>
+  );
+}
+
+/**
  * Interactive task list with grouping, completion, and CRUD actions.
  * Manages its own task state after initial server-fetched data.
  * Triggers confetti, level-up overlay, and achievement toasts on task completion.
  */
-export function TaskList({ initialTasks, topics }: TaskListProps) {
+export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
   const router = useRouter();
   const t = useTranslations("tasks");
   const tSearch = useTranslations("search");
@@ -641,17 +546,90 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
     });
   }, [selectedIds, tasks]);
 
-  const topicMap = new Map(topics.map((t) => [t.id, t]));
+  const topicMap = useMemo(() => new Map(topics.map((t) => [t.id, t])), [topics]);
   const grouped = groupTasks(filteredTasks);
+  const activeTasks = [...grouped.today, ...grouped.upcoming, ...grouped.noDate, ...grouped.someday];
   const hasAnyTasks = tasks.length > 0;
   const hasFilteredTasks = filteredTasks.length > 0;
 
   const activeCount = filteredTasks.filter((task) => task.completedAt === null).length;
-  const completedCount = filteredTasks.filter((task) => task.completedAt !== null).length;
-  const subtitle =
-    tasks.length === 0
-      ? t("page_subtitle_empty")
-      : t("page_subtitle", { active: activeCount, completed: completedCount });
+
+  /** Aufgaben, deren Fälligkeit bereits verstrichen ist — die Rand-Kennzahl "überfällig". */
+  const overdueCount = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return filteredTasks.filter((task) => {
+      if (task.completedAt !== null) return false;
+      const effectiveDate = task.type === "RECURRING" ? task.nextDueDate : task.dueDate;
+      if (!effectiveDate) return false;
+      return new Date(effectiveDate + "T00:00:00") < today;
+    }).length;
+  }, [filteredTasks]);
+
+  /** Summe der Münzbelohnung offener Aufgaben — die Rand-Kennzahl "Münzen möglich". */
+  const coinSum = useMemo(
+    () =>
+      filteredTasks
+        .filter((task) => task.completedAt === null)
+        .reduce((sum, task) => sum + task.coinValue, 0),
+    [filteredTasks],
+  );
+
+  /**
+   * Baut die Props für eine `TaskRow` aus einer Aufgabe. Ein Ort statt sieben
+   * fast identischer JSX-Blöcke (vorher: eine `TaskItem`-Kopie je Abschnitt).
+   */
+  const rowProps = useCallback(
+    (
+      task: Task,
+      opts: { topicTitle?: string | null; topicColor?: string | null; isBlocked?: boolean } = {},
+    ): TaskRowProps => {
+      const topic = task.topicId ? topicMap.get(task.topicId) : null;
+      return {
+        id: task.id,
+        title: task.title,
+        type: task.type,
+        priority: task.priority,
+        completedAt: task.completedAt,
+        dueDate: task.dueDate,
+        nextDueDate: task.nextDueDate,
+        topicTitle: opts.topicTitle !== undefined ? opts.topicTitle : (topic?.title ?? null),
+        topicColor: opts.topicColor !== undefined ? opts.topicColor : (topic?.color ?? null),
+        topicId: task.topicId,
+        estimatedMinutes: task.estimatedMinutes,
+        snoozedUntil: task.snoozedUntil,
+        isBlocked: opts.isBlocked,
+        selectionMode,
+        isSelected: selectedIds.has(task.id),
+        onComplete: handleComplete,
+        onUncomplete: handleUncomplete,
+        onEdit: setEditingTaskId,
+        onDelete: handleDelete,
+        onInlineEdit: handleInlineEdit,
+        onPromote: handlePromote,
+        onGoToTopic: handleGoToTopic,
+        onBreakdown: handleBreakdown,
+        onSnooze: handleSnooze,
+        onUnsnooze: handleUnsnooze,
+        onToggleSelect: toggleSelect,
+      };
+    },
+    [
+      topicMap,
+      selectionMode,
+      selectedIds,
+      handleComplete,
+      handleUncomplete,
+      handleDelete,
+      handleInlineEdit,
+      handlePromote,
+      handleGoToTopic,
+      handleBreakdown,
+      handleSnooze,
+      handleUnsnooze,
+      toggleSelect,
+    ],
+  );
 
   /**
    * Computes the topic-grouped view data: active tasks grouped by topic, then by sequential group.
@@ -665,7 +643,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
 
     const topicLookup = new Map(topics.map((tp) => [tp.id, tp]));
 
-    const activeTasks = filteredTasks.filter((task) => {
+    const activeTopicTasks = filteredTasks.filter((task) => {
       if (task.completedAt !== null) return false;
       if (task.snoozedUntil) {
         const snoozeDate = new Date(task.snoozedUntil + "T00:00:00");
@@ -676,7 +654,7 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
 
     // Group by topicId
     const byTopic = new Map<string | null, Task[]>();
-    for (const task of activeTasks) {
+    for (const task of activeTopicTasks) {
       const key = task.topicId ?? null;
       if (!byTopic.has(key)) byTopic.set(key, []);
       byTopic.get(key)!.push(task);
@@ -704,9 +682,9 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
       }
 
       const taskGroups: Array<{ groupName: string | null; tasks: Task[] }> = [];
-      for (const [groupName, groupTasks] of byGroup) {
+      for (const [groupName, groupTasksInner] of byGroup) {
         // Sort by sortOrder so sequential order is preserved
-        const sorted = [...groupTasks].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        const sorted = [...groupTasksInner].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
         taskGroups.push({ groupName, tasks: sorted });
       }
 
@@ -754,666 +732,287 @@ export function TaskList({ initialTasks, topics }: TaskListProps) {
         />
       )}
 
-      {/* Live task count subtitle */}
-      <p
-        className="text-base mb-6"
-        style={{
-          fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-          color: "var(--text-muted)",
-        }}
+      <PageFrame
+        rail={
+          hasAnyTasks ? (
+            <TasksRail
+              open={activeCount}
+              overdue={overdueCount}
+              coins={coinSum}
+              filters={filterGroups}
+              activeFilters={{ priority: priorityFilter, topic: topicFilter }}
+              onFilterChange={handleFilterChange}
+              resultCount={filteredTasks.length}
+              totalCount={tasks.length}
+              isFiltering={isFiltering}
+              onClear={clearAllFilters}
+            />
+          ) : undefined
+        }
       >
-        {subtitle}
-      </p>
+        <h1 className="m-0 font-[family-name:var(--font-display)] text-[1.75rem] font-normal text-[var(--ink)]">
+          {pageTitle}
+        </h1>
 
-      {/* Toolbar: Group toggle + Select mode + New Task */}
-      <div className="flex justify-end gap-2 mb-6">
-        {hasAnyTasks && !selectionMode && topics.length > 0 && (
-          <button
-            onClick={() => setGroupByTopic((v) => !v)}
-            className="px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              backgroundColor: groupByTopic
-                ? "color-mix(in srgb, var(--accent-amber) 15%, var(--bg-surface))"
-                : "var(--bg-surface)",
-              color: groupByTopic ? "var(--accent-amber)" : "var(--text-muted)",
-              border: groupByTopic
-                ? "1px solid color-mix(in srgb, var(--accent-amber) 40%, var(--border))"
-                : "1px solid var(--border)",
-            }}
-          >
-            {groupByTopic ? t("view_by_date") : t("view_by_topic")}
-          </button>
-        )}
-        {hasAnyTasks && (
-          selectionMode ? (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={selectedIds.size > 0 ? () => setSelectedIds(new Set()) : selectAllVisible}
-                className="px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  backgroundColor: "var(--bg-surface)",
-                  color: "var(--text-muted)",
-                  border: "1px solid var(--border)",
-                }}
-              >
-                {selectedIds.size > 0 ? t("bulk_deselect_all") : t("bulk_select_all")}
-              </button>
-              <button
-                onClick={clearSelection}
-                className="px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  backgroundColor: "var(--bg-surface)",
-                  color: "var(--text-muted)",
-                  border: "1px solid var(--border)",
-                }}
-              >
-                {t("bulk_exit_select")}
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setSelectionMode(true)}
-              className="px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                backgroundColor: "var(--bg-surface)",
-                color: "var(--text-muted)",
-                border: "1px solid var(--border)",
-              }}
+        {/* Toolbar: Group toggle + Select mode + New Task */}
+        <div className="flex flex-wrap justify-end gap-2">
+          {hasAnyTasks && !selectionMode && topics.length > 0 && (
+            <Button
+              type="button"
+              variant="quiet"
+              size="sm"
+              aria-pressed={groupByTopic}
+              className={groupByTopic ? "border-[var(--ink-2)] text-[var(--ink)]" : undefined}
+              onClick={() => setGroupByTopic((v) => !v)}
             >
-              <FontAwesomeIcon icon={faCheckDouble} className="w-3.5 h-3.5" />
-              {t("bulk_select")}
-            </button>
-          )
-        )}
-        {!selectionMode && (
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              backgroundColor: "var(--accent-amber)",
-              color: "var(--bg-primary)",
-            }}
-          >
-            {t("new_task")}
-          </button>
-        )}
-      </div>
-
-      {/* Search & Filter bar — only shown when there are tasks */}
-      {hasAnyTasks && (
-        <SearchFilterBar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          placeholder={tSearch("placeholder_tasks")}
-          filters={filterGroups}
-          activeFilters={{ priority: priorityFilter, topic: topicFilter }}
-          onFilterChange={handleFilterChange}
-          resultCount={filteredTasks.length}
-          totalCount={tasks.length}
-          onClearAll={clearAllFilters}
-        />
-      )}
-
-      {/* Empty state — no tasks at all */}
-      {!hasAnyTasks && <EmptyState />}
-
-      {/* No results from search/filter */}
-      {hasAnyTasks && !hasFilteredTasks && isFiltering && (
-        <div
-          className="rounded-2xl p-12 text-center"
-          style={{
-            backgroundColor: "var(--bg-surface)",
-            border: "1px dashed var(--border)",
-          }}
-        >
-          <FontAwesomeIcon
-            icon={faMagnifyingGlass}
-            className="text-2xl mb-3"
-            style={{ color: "var(--text-muted)" }}
-          />
-          <p
-            className="text-base font-medium mb-1"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              color: "var(--text-primary)",
-            }}
-          >
-            {tSearch("no_results")}
-          </p>
-          <p
-            className="text-sm mb-4"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {tSearch("no_results_hint")}
-          </p>
-          <button
-            onClick={clearAllFilters}
-            className="text-sm font-medium underline transition-opacity hover:opacity-80"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--accent-amber)",
-            }}
-          >
-            {tSearch("clear_filters")}
-          </button>
-        </div>
-      )}
-
-      {/* ── Date-grouped view (default) ─────────────────────────────────────── */}
-      {!groupByTopic && (
-        <>
-          {/* Today */}
-          <SectionHeader title={t("section_today")} count={grouped.today.length} />
-          <AnimatePresence>
-            <div className="flex flex-col gap-2">
-              {grouped.today.map((task) => {
-                const topic = task.topicId ? topicMap.get(task.topicId) : null;
-                return (
-                  <TaskItem
-                    key={task.id}
-                    id={task.id}
-                    title={task.title}
-                    type={task.type}
-                    priority={task.priority}
-                    completedAt={task.completedAt}
-                    dueDate={task.dueDate}
-                    nextDueDate={task.nextDueDate}
-                    topicTitle={topic?.title}
-                    topicColor={topic?.color}
-                    topicId={task.topicId}
-                    coinValue={task.coinValue}
-                    onComplete={handleComplete}
-                    onUncomplete={handleUncomplete}
-                    onEdit={setEditingTaskId}
-                    onDelete={handleDelete}
-                    onInlineEdit={handleInlineEdit}
-                    onPromote={handlePromote}
-                    onGoToTopic={handleGoToTopic}
-                    postponeCount={task.postponeCount}
-                    estimatedMinutes={task.estimatedMinutes}
-                    energyLevel={task.energyLevel}
-                    onBreakdown={handleBreakdown}
-                    snoozedUntil={task.snoozedUntil}
-                    onSnooze={handleSnooze}
-                    onUnsnooze={handleUnsnooze}
-                    selectionMode={selectionMode}
-                    isSelected={selectedIds.has(task.id)}
-                    onToggleSelect={toggleSelect}
-                  />
-                );
-              })}
-            </div>
-          </AnimatePresence>
-
-          {/* Upcoming */}
-          <SectionHeader title={t("section_upcoming")} count={grouped.upcoming.length} />
-          <div className="flex flex-col gap-2">
-            {grouped.upcoming.map((task) => {
-              const topic = task.topicId ? topicMap.get(task.topicId) : null;
-              return (
-                <TaskItem
-                  key={task.id}
-                  id={task.id}
-                  title={task.title}
-                  type={task.type}
-                  priority={task.priority}
-                  completedAt={task.completedAt}
-                  dueDate={task.dueDate}
-                  nextDueDate={task.nextDueDate}
-                  topicTitle={topic?.title}
-                  topicColor={topic?.color}
-                  topicId={task.topicId}
-                  coinValue={task.coinValue}
-                  onComplete={handleComplete}
-                  onUncomplete={handleUncomplete}
-                  onEdit={setEditingTaskId}
-                  onDelete={handleDelete}
-                  onInlineEdit={handleInlineEdit}
-                  onPromote={handlePromote}
-                  onGoToTopic={handleGoToTopic}
-                  postponeCount={task.postponeCount}
-                  estimatedMinutes={task.estimatedMinutes}
-                  energyLevel={task.energyLevel}
-                  onBreakdown={handleBreakdown}
-                  snoozedUntil={task.snoozedUntil}
-                  onSnooze={handleSnooze}
-                  onUnsnooze={handleUnsnooze}
-                />
-              );
-            })}
-          </div>
-
-          {/* No date */}
-          <SectionHeader title={t("section_no_date")} count={grouped.noDate.length} />
-          <div className="flex flex-col gap-2">
-            {grouped.noDate.map((task) => {
-              const topic = task.topicId ? topicMap.get(task.topicId) : null;
-              return (
-                <TaskItem
-                  key={task.id}
-                  id={task.id}
-                  title={task.title}
-                  type={task.type}
-                  priority={task.priority}
-                  completedAt={task.completedAt}
-                  dueDate={task.dueDate}
-                  nextDueDate={task.nextDueDate}
-                  topicTitle={topic?.title}
-                  topicColor={topic?.color}
-                  topicId={task.topicId}
-                  coinValue={task.coinValue}
-                  onComplete={handleComplete}
-                  onUncomplete={handleUncomplete}
-                  onEdit={setEditingTaskId}
-                  onDelete={handleDelete}
-                  onInlineEdit={handleInlineEdit}
-                  onPromote={handlePromote}
-                  onGoToTopic={handleGoToTopic}
-                  postponeCount={task.postponeCount}
-                  estimatedMinutes={task.estimatedMinutes}
-                  energyLevel={task.energyLevel}
-                  onBreakdown={handleBreakdown}
-                  snoozedUntil={task.snoozedUntil}
-                  onSnooze={handleSnooze}
-                  onUnsnooze={handleUnsnooze}
-                />
-              );
-            })}
-          </div>
-
-          {/* Someday */}
-          <SectionHeader title={t("section_someday")} count={grouped.someday.length} />
-          <div className="flex flex-col gap-2">
-            {grouped.someday.map((task) => {
-              const topic = task.topicId ? topicMap.get(task.topicId) : null;
-              return (
-                <TaskItem
-                  key={task.id}
-                  id={task.id}
-                  title={task.title}
-                  type={task.type}
-                  priority={task.priority}
-                  completedAt={task.completedAt}
-                  dueDate={task.dueDate}
-                  nextDueDate={task.nextDueDate}
-                  topicTitle={topic?.title}
-                  topicColor={topic?.color}
-                  topicId={task.topicId}
-                  coinValue={task.coinValue}
-                  onComplete={handleComplete}
-                  onUncomplete={handleUncomplete}
-                  onEdit={setEditingTaskId}
-                  onDelete={handleDelete}
-                  onInlineEdit={handleInlineEdit}
-                  onPromote={handlePromote}
-                  onGoToTopic={handleGoToTopic}
-                  postponeCount={task.postponeCount}
-                  estimatedMinutes={task.estimatedMinutes}
-                  energyLevel={task.energyLevel}
-                  onBreakdown={handleBreakdown}
-                  snoozedUntil={task.snoozedUntil}
-                  onSnooze={handleSnooze}
-                  onUnsnooze={handleUnsnooze}
-                />
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {/* ── Topic-grouped view ───────────────────────────────────────────────── */}
-      {groupByTopic && topicGroupedData && topicGroupedData.length === 0 && !grouped.completed.length && !grouped.snoozed.length && (
-        <div className="mt-4" />
-      )}
-      {groupByTopic && topicGroupedData && topicGroupedData.map((topicSection) => (
-        <div key={topicSection.topicId ?? "no-topic"} className="mt-6 first:mt-0">
-          {/* Topic header */}
-          <div className="flex items-center gap-2 mb-3">
-            {topicSection.topicColor && (
-              <span
-                style={{
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  backgroundColor: topicSection.topicColor,
-                  flexShrink: 0,
-                }}
-              />
-            )}
-            {topicSection.topicId ? (
-              <Link
-                href={`/topics/${topicSection.topicId}`}
-                className="text-sm font-semibold uppercase tracking-wide transition-opacity hover:opacity-70"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: "var(--text-muted)",
-                  textDecoration: "none",
-                }}
-              >
-                {topicSection.topicTitle}
-              </Link>
-            ) : (
-              <span
-                className="text-sm font-semibold uppercase tracking-wide"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: "var(--text-muted)",
-                }}
-              >
-                {topicSection.topicTitle}
-              </span>
-            )}
-            <span
-              className="text-xs px-1.5 py-0.5 rounded-full"
-              style={{
-                backgroundColor: "var(--bg-elevated)",
-                color: "var(--text-muted)",
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              }}
-            >
-              {topicSection.taskGroups.reduce((sum, g) => sum + g.tasks.length, 0)}
-            </span>
-          </div>
-
-          {topicSection.taskGroups.map((group) => {
-            const isSequential = group.groupName !== null;
-            return (
-            <div key={group.groupName ?? "__ungrouped__"}>
-              {/* Sequential group header — explicit "step-by-step" visual */}
-              {group.groupName && (
-                <div
-                  className="flex items-center gap-2 mb-2 mt-3 px-1"
+              {groupByTopic ? t("view_by_date") : t("view_by_topic")}
+            </Button>
+          )}
+          {hasAnyTasks && (
+            selectionMode ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="quiet"
+                  size="sm"
+                  onClick={selectedIds.size > 0 ? () => setSelectedIds(new Set()) : selectAllVisible}
                 >
-                  <FontAwesomeIcon
-                    icon={faListOl}
-                    className="w-3 h-3"
-                    style={{ color: "var(--accent-amber)" }}
-                    aria-hidden="true"
-                  />
-                  <span
-                    className="text-sm font-semibold"
-                    style={{
-                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                      color: "var(--text-primary)",
-                    }}
-                  >
-                    {group.groupName}
-                  </span>
-                  <span
-                    className="text-[10px] uppercase tracking-[0.12em] font-semibold"
-                    style={{
-                      color: "var(--accent-amber)",
-                      fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                      opacity: 0.85,
-                    }}
-                  >
-                    {t("sequential_label")}
-                  </span>
-                  <span className="text-xs ml-auto" style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}>
-                    {t("sequential_progress", { current: 1, total: group.tasks.length })}
-                  </span>
-                </div>
-              )}
-
-              {/*
-                Sequential groups get a left "stepper" rail: a thin amber line
-                with circular index badges next to each task. Non-sequential
-                groups stay flat.
-              */}
-              <div
-                className={`flex flex-col gap-2 mb-2 ${isSequential ? "relative pl-8" : ""}`}
-                style={isSequential ? { borderLeft: "0px" } : undefined}
-              >
-                {/* Connecting rail line for sequential groups */}
-                {isSequential && (
-                  <div
-                    aria-hidden="true"
-                    style={{
-                      position: "absolute",
-                      left: "11px",
-                      top: "16px",
-                      bottom: "16px",
-                      width: "2px",
-                      backgroundColor: "color-mix(in srgb, var(--accent-amber) 25%, var(--border))",
-                      borderRadius: "1px",
-                    }}
-                  />
-                )}
-                {group.tasks.map((task, taskIndex) => {
-                  // In a named sequential group, only the first task is actionable
-                  const isBlocked = isSequential && taskIndex > 0;
-                  const isActiveStep = isSequential && taskIndex === 0;
-                  return (
-                    <div
-                      key={task.id}
-                      className="relative"
-                      style={{ opacity: isBlocked ? 0.55 : 1, pointerEvents: isBlocked ? "none" : undefined }}
-                    >
-                      {/* Step index badge for sequential groups */}
-                      {isSequential && (
-                        <div
-                          aria-hidden="true"
-                          style={{
-                            position: "absolute",
-                            left: "-32px",
-                            top: "14px",
-                            width: "24px",
-                            height: "24px",
-                            borderRadius: "50%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            backgroundColor: isActiveStep
-                              ? "var(--accent-amber)"
-                              : "var(--bg-surface)",
-                            color: isActiveStep ? "var(--bg-primary)" : "var(--text-muted)",
-                            border: `2px solid ${isActiveStep ? "var(--accent-amber)" : "var(--border)"}`,
-                            fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-                            fontSize: "11px",
-                            fontWeight: 700,
-                            zIndex: 1,
-                          }}
-                        >
-                          {isBlocked ? (
-                            <FontAwesomeIcon icon={faLock} style={{ fontSize: "9px" }} />
-                          ) : (
-                            taskIndex + 1
-                          )}
-                        </div>
-                      )}
-                      <TaskItem
-                        id={task.id}
-                        title={task.title}
-                        type={task.type}
-                        priority={task.priority}
-                        completedAt={task.completedAt}
-                        dueDate={task.dueDate}
-                        nextDueDate={task.nextDueDate}
-                        topicTitle={topicSection.topicTitle !== t("form_no_topic") ? topicSection.topicTitle : undefined}
-                        topicColor={topicSection.topicColor}
-                        topicId={task.topicId}
-                        coinValue={task.coinValue}
-                        onComplete={handleComplete}
-                        onUncomplete={handleUncomplete}
-                        onEdit={setEditingTaskId}
-                        onDelete={handleDelete}
-                        onInlineEdit={handleInlineEdit}
-                        onPromote={handlePromote}
-                        onGoToTopic={handleGoToTopic}
-                        postponeCount={task.postponeCount}
-                        estimatedMinutes={task.estimatedMinutes}
-                        energyLevel={task.energyLevel}
-                        onBreakdown={handleBreakdown}
-                        snoozedUntil={task.snoozedUntil}
-                        onSnooze={handleSnooze}
-                        onUnsnooze={handleUnsnooze}
-                        selectionMode={selectionMode}
-                        isSelected={selectedIds.has(task.id)}
-                        onToggleSelect={toggleSelect}
-                      />
-                    </div>
-                  );
-                })}
+                  {selectedIds.size > 0 ? t("bulk_deselect_all") : t("bulk_select_all")}
+                </Button>
+                <Button type="button" variant="quiet" size="sm" onClick={clearSelection}>
+                  {t("bulk_exit_select")}
+                </Button>
               </div>
-            </div>
-            );
-          })}
+            ) : (
+              <Button type="button" variant="quiet" size="sm" onClick={() => setSelectionMode(true)}>
+                <FontAwesomeIcon icon={faCheckDouble} className="h-3.5 w-3.5" aria-hidden="true" />
+                {t("bulk_select")}
+              </Button>
+            )
+          )}
+          {!selectionMode && (
+            <Button type="button" variant="primary" size="sm" onClick={() => setShowCreateForm(true)}>
+              {t("new_task")}
+            </Button>
+          )}
         </div>
-      ))}
 
-      {/* Snoozed — collapsible section */}
-      {grouped.snoozed.length > 0 && (
-        <>
-          <div
-            className="flex items-center gap-3 mb-3 mt-6 cursor-pointer select-none"
-            onClick={() => setSnoozedExpanded((v) => !v)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && setSnoozedExpanded((v) => !v)}
-          >
-            <FontAwesomeIcon
-              icon={snoozedExpanded ? faChevronDown : faChevronRight}
-              className="w-3 h-3"
-              style={{ color: "var(--text-muted)" }}
-            />
-            <h2
-              className="text-sm font-semibold uppercase tracking-wide"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-              }}
-            >
-              {t("section_snoozed")}
-            </h2>
-            <span
-              className="text-xs px-1.5 py-0.5 rounded-full"
-              style={{
-                backgroundColor: "var(--bg-elevated)",
-                color: "var(--text-muted)",
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              }}
-            >
-              {grouped.snoozed.length}
-            </span>
-          </div>
-          {snoozedExpanded && (
-            <div className="flex flex-col gap-2">
-              {grouped.snoozed.map((task) => {
-                const topic = task.topicId ? topicMap.get(task.topicId) : null;
-                return (
-                  <TaskItem
-                    key={task.id}
-                    id={task.id}
-                    title={task.title}
-                    type={task.type}
-                    priority={task.priority}
-                    completedAt={task.completedAt}
-                    dueDate={task.dueDate}
-                    nextDueDate={task.nextDueDate}
-                    topicTitle={topic?.title}
-                    topicColor={topic?.color}
-                    topicId={task.topicId}
-                    coinValue={task.coinValue}
-                    onComplete={handleComplete}
-                    onUncomplete={handleUncomplete}
-                    onEdit={setEditingTaskId}
-                    onDelete={handleDelete}
-                    onInlineEdit={handleInlineEdit}
-                    onPromote={handlePromote}
-                    onGoToTopic={handleGoToTopic}
-                    postponeCount={task.postponeCount}
-                    estimatedMinutes={task.estimatedMinutes}
-                    energyLevel={task.energyLevel}
-                    onBreakdown={handleBreakdown}
-                    snoozedUntil={task.snoozedUntil}
-                    onSnooze={handleSnooze}
-                    onUnsnooze={handleUnsnooze}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </>
-      )}
+        {/* Search — only shown when there are tasks; die Filter selbst stehen im Rand. */}
+        {hasAnyTasks && (
+          <SearchInput
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            placeholder={tSearch("placeholder_tasks")}
+          />
+        )}
 
-      {/* Completed — collapsible, collapsed by default */}
-      {grouped.completed.length > 0 && (
-        <>
-          <div
-            className="flex items-center gap-3 mb-3 mt-6 cursor-pointer select-none"
-            onClick={() => setCompletedExpanded((v) => !v)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && setCompletedExpanded((v) => !v)}
-          >
-            <FontAwesomeIcon
-              icon={completedExpanded ? faChevronDown : faChevronRight}
-              className="w-3 h-3"
-              style={{ color: "var(--text-muted)" }}
-            />
-            <h2
-              className="text-sm font-semibold uppercase tracking-wide"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-              }}
-            >
-              {t("section_completed")}
-            </h2>
-            <span
-              className="text-xs px-1.5 py-0.5 rounded-full"
-              style={{
-                backgroundColor: "var(--bg-elevated)",
-                color: "var(--text-muted)",
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              }}
-            >
-              {grouped.completed.length}
-            </span>
-          </div>
-          {completedExpanded && (
-            <div className="flex flex-col gap-2">
-              {grouped.completed.map((task) => {
-                const topic = task.topicId ? topicMap.get(task.topicId) : null;
-                return (
-                  <TaskItem
-                    key={task.id}
-                    id={task.id}
-                    title={task.title}
-                    type={task.type}
-                    priority={task.priority}
-                    completedAt={task.completedAt}
-                    dueDate={task.dueDate}
-                    nextDueDate={task.nextDueDate}
-                    topicTitle={topic?.title}
-                    topicColor={topic?.color}
-                    topicId={task.topicId}
-                    coinValue={task.coinValue}
-                    onComplete={handleComplete}
-                    onUncomplete={handleUncomplete}
-                    onEdit={setEditingTaskId}
-                    onDelete={handleDelete}
-                    onInlineEdit={handleInlineEdit}
-                    onPromote={handlePromote}
-                    onGoToTopic={handleGoToTopic}
-                    selectionMode={selectionMode}
-                    isSelected={selectedIds.has(task.id)}
-                    onToggleSelect={toggleSelect}
-                  />
-                );
-              })}
+        {/* Empty state — no tasks at all */}
+        {!hasAnyTasks && (
+          <EmptyState
+            line={t("empty_generic")}
+            action={
+              <Button type="button" variant="quiet" size="md" onClick={() => setShowCreateForm(true)}>
+                {t("empty_cta")}
+              </Button>
+            }
+          />
+        )}
+
+        {/* No results from search/filter */}
+        {hasAnyTasks && !hasFilteredTasks && isFiltering && (
+          <EmptyState
+            testId="no-results"
+            line={tSearch("no_results")}
+            action={
+              <Button type="button" variant="quiet" size="md" onClick={clearAllFilters}>
+                {tSearch("clear_filters")}
+              </Button>
+            }
+          />
+        )}
+
+        {/* ── Prioritätsgruppen (Standardansicht) ─────────────────────────────── */}
+        {!groupByTopic &&
+          groupByPriority(activeTasks).map((group) => (
+            <section key={group.key}>
+              <GroupHeading>
+                {t(`priority_${group.key.toLowerCase()}` as "priority_high" | "priority_normal" | "priority_someday")} ·{" "}
+                {group.items.length}
+              </GroupHeading>
+              {/* AnimatePresence: eine Zeile verschwindet hier, sobald ihre
+                  Aufgabe abgehakt oder gelöscht wird — die einzige Ansicht,
+                  in der das während der Sitzung wirklich passiert (Snoozed/
+                  Completed sind Archive, "Nach Thema" hat die Sequenz-
+                  Blockade). Ersetzt die Austritts-Animation, die die
+                  frühere "Heute"-Sektion hatte (Task 8 Review, "Also fix"). */}
+              <List>
+                <AnimatePresence initial={false}>
+                  {group.items.map((task) => (
+                    <TaskRow key={task.id} {...rowProps(task)} exitAnimation />
+                  ))}
+                </AnimatePresence>
+              </List>
+            </section>
+          ))}
+
+        {/* ── Nach-Thema-Ansicht ───────────────────────────────────────────────── */}
+        {groupByTopic && topicGroupedData && topicGroupedData.map((topicSection) => (
+          <section key={topicSection.topicId ?? "no-topic"}>
+            {/* Topic header */}
+            <div className="mt-8 flex items-center gap-2 first:mt-0">
+              {topicSection.topicColor && (
+                <span
+                  aria-hidden="true"
+                  className="h-[6px] w-[6px] shrink-0 rounded-[var(--radius-pill)]"
+                  style={{ backgroundColor: topicSection.topicColor }}
+                />
+              )}
+              {topicSection.topicId ? (
+                <Link
+                  href={`/topics/${topicSection.topicId}`}
+                  className="font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)] no-underline! transition-opacity hover:opacity-70"
+                >
+                  {topicSection.topicTitle}
+                </Link>
+              ) : (
+                <span className="font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)]">
+                  {topicSection.topicTitle}
+                </span>
+              )}
+              <span className="font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)]">
+                · {topicSection.taskGroups.reduce((sum, g) => sum + g.tasks.length, 0)}
+              </span>
             </div>
-          )}
-        </>
-      )}
+
+            {topicSection.taskGroups.map((group) => {
+              const isSequential = group.groupName !== null;
+              return (
+                <div key={group.groupName ?? "__ungrouped__"}>
+                  {/* Sequential group header */}
+                  {group.groupName && (
+                    <div className="mb-2 mt-3 flex items-center gap-2 px-1">
+                      <FontAwesomeIcon
+                        icon={faListOl}
+                        className="h-3 w-3 text-[var(--ink-2)]"
+                        aria-hidden="true"
+                      />
+                      <span className="font-[family-name:var(--font-ui)] text-sm font-semibold text-[var(--ink)]">
+                        {group.groupName}
+                      </span>
+                      <span className="font-[family-name:var(--font-ui)] text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-2)]">
+                        {t("sequential_label")}
+                      </span>
+                      <span className="ml-auto font-[family-name:var(--font-ui)] text-xs text-[var(--ink-3)]">
+                        {t("sequential_progress", { current: 1, total: group.tasks.length })}
+                      </span>
+                    </div>
+                  )}
+
+                  {/*
+                    Sequential groups get a left "stepper" rail: a thin line
+                    with circular index badges next to each task. Non-sequential
+                    groups stay flat.
+
+                    Eine `<List>` pro Gruppe (Task 8 Review, F1): vorher stand
+                    jede Zeile in ihrer EIGENEN `<List>`, wodurch jede Zeile
+                    `:first-child` ihres eigenen `<ul>` war und `Row`s
+                    `first:border-t-0` überall griff — keine Haarlinie
+                    irgendwo in dieser Ansicht. Der Stufen-Kreis wandert dafür
+                    von einem Wrapper-`<div>` pro Zeile (derselbe Fehler unter
+                    anderem Namen: ein `<div>` zwischen `<ul>` und `<li>`
+                    macht die `<li>` erneut zum alleinigen `:first-child`
+                    ihres Wrappers) in `TaskRow`s eigene `stepBadge`-Prop —
+                    positioniert innerhalb der Zeile selbst, die dafür
+                    `pl-8` bekommt (siehe `task-row.tsx`).
+                  */}
+                  {isSequential ? (
+                    <div className="relative mb-2">
+                      <div
+                        aria-hidden="true"
+                        className="absolute bottom-4 left-4 top-4 w-[2px] rounded-[1px] bg-[var(--hairline)]"
+                      />
+                      <List>
+                        {group.tasks.map((task, taskIndex) => {
+                          // In a named sequential group, only the first task is actionable
+                          const isBlocked = taskIndex > 0;
+                          const isActiveStep = taskIndex === 0;
+                          return (
+                            <TaskRow
+                              key={task.id}
+                              {...rowProps(task, { isBlocked })}
+                              stepBadge={
+                                <div
+                                  aria-hidden="true"
+                                  className={cn(
+                                    "absolute left-1 top-3.5 z-10 flex h-6 w-6 items-center justify-center rounded-[var(--radius-pill)] border-2 font-[family-name:var(--font-mono)] text-[11px] font-bold",
+                                    isActiveStep
+                                      ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--ground)]"
+                                      : "border-[var(--hairline)] bg-transparent text-[var(--ink-3)]",
+                                  )}
+                                >
+                                  {isBlocked ? (
+                                    <FontAwesomeIcon icon={faLock} className="text-[9px]" />
+                                  ) : (
+                                    taskIndex + 1
+                                  )}
+                                </div>
+                              }
+                            />
+                          );
+                        })}
+                      </List>
+                    </div>
+                  ) : (
+                    <List className="mb-2">
+                      {group.tasks.map((task) => (
+                        <TaskRow key={task.id} {...rowProps(task)} />
+                      ))}
+                    </List>
+                  )}
+                </div>
+              );
+            })}
+          </section>
+        ))}
+
+        {/* Snoozed — collapsible section */}
+        {grouped.snoozed.length > 0 && (
+          <>
+            <CollapsibleSectionHeading
+              title={t("section_snoozed")}
+              count={grouped.snoozed.length}
+              expanded={snoozedExpanded}
+              onToggle={() => setSnoozedExpanded((v) => !v)}
+            />
+            {snoozedExpanded && (
+              <List>
+                {grouped.snoozed.map((task) => (
+                  <TaskRow key={task.id} {...rowProps(task)} />
+                ))}
+              </List>
+            )}
+          </>
+        )}
+
+        {/* Completed — collapsible, collapsed by default */}
+        {grouped.completed.length > 0 && (
+          <>
+            <CollapsibleSectionHeading
+              title={t("section_completed")}
+              count={grouped.completed.length}
+              expanded={completedExpanded}
+              onToggle={() => setCompletedExpanded((v) => !v)}
+            />
+            {completedExpanded && (
+              <List>
+                {grouped.completed.map((task) => (
+                  <TaskRow key={task.id} {...rowProps(task)} />
+                ))}
+              </List>
+            )}
+          </>
+        )}
+      </PageFrame>
 
       {/* Task form modal */}
       {(showCreateForm || editingTaskId) && (

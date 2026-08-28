@@ -9,13 +9,124 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **`npm run check:design`** — ein Ratschen-Test gegen hartkodierte Farben, Radien außerhalb der
-  vier erlaubten Werte und neue Inline-Styles in `.tsx`. Läuft in CI (PR Gate); der Zähler darf nur
-  fallen, aktuell 1947 Verstöße über die noch nicht umgestellten Seiten. Ergänzt um
-  Playwright-Prüfungen (`e2e/design-tokens.spec.ts`), die den Flächenabstand zwischen Grund und
-  angehobener Fläche als CIE-ΔL\* messen (statt WCAG-Kontrastverhältnis, das bei hoher Helligkeit
-  komprimiert) und sicherstellen, dass die „leeren" Schatten-Tokens (`0 0 #0000`) als Listenglied
-  in `box-shadow` gültig bleiben — als reines `none` verschwindet sonst die gesamte Deklaration.
+- **`npm run check:design`** — ein Ratschen-Test gegen vier Regex-Kategorien: hartkodierte Farben,
+  Radien außerhalb der vier erlaubten Werte, `style={{ … }}` und (seit der vierten Kategorie,
+  siehe unten) Abstand außerhalb der Skala. Läuft in CI (PR Gate); der Zähler darf nur fallen. Die
+  aktuelle Zahl steht nicht hier — sie veraltet sofort, sobald sich etwas ändert — sondern kommt aus
+  `npm run check:design` selbst. **Kein Dokument darf behaupten, die Ratsche erfasse jeden
+  Inline-Style: die `inline`-Regel ist `/style=\{\{/g` und sieht `style={someObject}` nicht** — 76
+  solcher Stellen existieren, unsichtbar für diesen Zähler. Ergänzt um Playwright-Prüfungen
+  (`e2e/design-tokens.spec.ts`), die den Flächenabstand zwischen Grund und angehobener Fläche als
+  CIE-ΔL\* messen (statt WCAG-Kontrastverhältnis, das bei hoher Helligkeit komprimiert) und
+  sicherstellen, dass die „leeren" Schatten-Tokens (`0 0 #0000`) als Listenglied in `box-shadow`
+  gültig bleiben — als reines `none` verschwindet sonst die gesamte Deklaration.
+- **Vierte Ratschen-Kategorie `spacing`.** `npm run check:design` verwirft jetzt auch
+  `p-`/`m-`/`gap-`/`space-`-Utilities außerhalb der Abstandsskala
+  4 · 8 · 12 · 16 · 24 · 32 · 48 · 72 px (Ausnahme: der einzelne, extern per
+  Playwright fixierte Token `[var(--gutter)]`, 3rem = 48px). Die Skala stand seit dem
+  2026-08-21 im Designentwurf und wurde von nichts erzwungen — gemessen lagen 280
+  Utilities in 69 Dateien daneben, allein 115 davon auf 6 px. Eine neue Kategorie hebt die
+  Baseline notwendigerweise an (gemessen: 2215 an dem Commit, der die Kategorie hinzufügte) —
+  ab dort fällt sie wieder nur. Siehe `npm run check:design` für den aktuellen Stand.
+- **Vier Playwright-Zähler für die Lichtkegel-Regeln** (`e2e/helpers/design-count.ts`,
+  `e2e/design-rules.spec.ts`): Amber (dokumentweit, nicht nur `main`), Fraunces-Vorkommen,
+  umrahmte/gefüllte Inhaltsflächen, und die Spaltenbreite gegen `--measure`. Der Amber-Zähler
+  erkennt sowohl `rgb()` als auch `color(srgb … / α)` — die Serialisierungsform, die Chromium für
+  jede `color-mix(in srgb, …)`-Deklaration verwendet; ein Zähler, der nur `rgb()` kennt, meldete in
+  einer Vormessung vier echte Amber-Treffer als null. `MIGRATED_PAGES` beginnt mit `["/dashboard"]`
+  und wird von jeder folgenden Seiten-Migration verlängert.
+
+### Fixed
+
+- **„Momo ist aktuell" konnte über eine veraltete Instanz stehen.** Ursache war der
+  Update-Checker: zwei Cache-Schichten übereinander (Modul-Cache 24 h über
+  Next-Data-Cache 24 h). Da die Prüfung nur beim Öffnen der Admin-Seite läuft, lieferte
+  der Data-Cache nach Ablauf per Stale-while-revalidate die vorherige — nicht-null —
+  Antwort, die dann mit frischem Zeitstempel für weitere 24 h festgehalten wurde. Diese
+  veraltete, aber gültige `latestVersion` landete im „aktuell"-Zweig — das war der live
+  aufgetretene Defekt. Daneben lag ein zweiter, latenter Pfad: die Admin-Seite prüfte
+  `!disabled && !error && !updateAvailable` und hätte auch eine unbekannte neueste
+  Version (`latestVersion === null`) als „aktuell" ausgegeben. Dieser Fall trat live nie
+  ein — kein Erzeuger liefert `latestVersion: null` ohne zugleich `disabled` oder `error`
+  zu setzen —, aber die Prüfung deckte ihn nicht ab. Beide Pfade behoben: eine
+  Cache-Schicht statt zwei, und die Admin-Seite unterscheidet jetzt fünf Zustände, von
+  denen vier (`disabled`/`failed`/`current`/`outdated`) heute tatsächlich erreichbar
+  sind — der fünfte (`unknown`) ist Verteidigung in der Tiefe für einen künftigen
+  Erzeuger. `GET /api/health` gibt zusätzlich die laufende Version und den Build-Commit
+  aus, damit ein stehengebliebener Rollout ohne Login sichtbar ist. Die Publish-Pipeline
+  vergleicht den Rollout jetzt gegen `commit`, nicht gegen `version` — kein Workflow
+  bumpt die Version automatisch, ein Versionsvergleich wäre bei einem gewöhnlichen Push
+  auf main sofort grün gewesen, unabhängig davon, ob Watchtower den Container
+  tatsächlich getauscht hat.
+- **Das Navbar-Schlupfloch der Amber-Regel.** Bisher zählte die Amber-Regel nur über `<main>` —
+  Federlogo, Münzzähler und Level-Badge lagen außerhalb und trugen Amber auf jeder einzigen Seite,
+  gleichzeitig mit der einen erlaubten Handlung im Inhalt. Die Feder ist jetzt ein Inline-SVG
+  (`components/layout/feather-mark.tsx`) mit `currentColor` statt eines amberfarbenen `/icon.svg`
+  im `<img>`; Münzzähler und Level-Badge sind auf eine reine Ink-Leiter umgestellt (das Level-Badge
+  verlor dabei auch sein `--accent-green` ab Level 4, ein zweiter, unabhängiger Verstoß gegen
+  „`--done` heißt ausschließlich erledigt"). Die globale Link-Farbe (`a { color: var(--accent-amber) }`
+  in `globals.css`) wird durch eine Unterstreichung ersetzt — vorher war jeder Link im Fließtext
+  auf jeder Seite ein zusätzlicher, ungezählter Amber-Treffer.
+- **Der Amber-Zähler maß 0/0 statt "kein Amber" (Task-3-Review, C1).** `.lichtkegel`s
+  Eintrittsanimation (`opacity: 0 → 1`) rennt gegen `gotoWithTheme`s `page.goto`-Aufruf, und der
+  Zähler übersprang das eine erlaubte Licht, wann immer die Messung zu früh kam — eine reine
+  Obergrenze (`≤ 2`) unterscheidet 0 Treffer nicht von einer korrekten Messung. Behoben mit einer
+  Positivprobe (der Wash muss gesehen werden) statt eines geratenen `sleep`. Außerdem: `fill`/
+  `stroke` zählten pro Icon-Element statt pro Icon (ein `<svg stroke="…">` mit Kindern ohne
+  eigenen Wert zählte doppelt); `countBoxes`s `closest(AFFORDANCE)` exemptierte jeden Nachfahren
+  eines Links, nicht nur seine unmittelbaren Text-/Icon-Kinder — eine ganze in einen `<Link>`
+  gewrappte Karte wäre unsichtbar gewesen.
+- **`Button`s `hover:underline`-Signal war ein No-op.** Die globale `a { text-decoration:
+  underline }`-Regel unterstrich jeden als `<a>` gerenderten Button dauerhaft; `variant="primary"`s
+  Hover-Unterstreichung änderte dadurch nur noch die Farbe, nicht mehr das Vorhandensein. Behoben
+  mit `no-underline!`/`hover:underline!` auf Basis- bzw. Primary-Ebene.
+- **Heatmap-Tooltips auf `/progress?tab=habits` warfen bei jedem Aufruf `FORMATTING_ERROR`.** Die
+  drei Tooltip-Nachrichten wurden formatiert übergeben (`t(...)`), obwohl `contribution-grid.tsx`
+  `{date}`/`{count}` selbst pro Zelle einsetzt — der Empfänger braucht die rohe ICU-Nachricht
+  (`t.raw(...)`). Das Datum fehlte deshalb in jedem Tooltip.
+- **Der Theme-Umschalter und der Münzzähler sprachen Englisch** („System theme — click to switch"),
+  auch auf deutscher Oberfläche. Beide Texte liegen jetzt in allen sieben Locales.
+- **Ein langer Themenname brach mitten im Wort** („Steuererklärun g 2025"). Die vorherige Erklärung
+  dafür — `word-break: break-word` neben `overflow-wrap: break-word` sei die Ursache — war falsch
+  und stand so auch in der Spec (§10) und im Rollout-Plan; gemessen in Chromium ändert das
+  Entfernen von `word-break` nichts, weil `min-width: 0` auf dem Titel-Span den einzigen
+  Unterschied zwischen `break-word` und seinem modernen Äquivalent `anywhere` neutralisiert. Der
+  tatsächliche Fix ist `hyphens: auto` — es bricht an einer echten Silbengrenze statt mitten im
+  Wort. Kanonische Erklärung: `components/ui/list.tsx` bei `wrapTitle`; das Bruchverhalten selbst
+  ist über eine Zeilenboxen-Assertion in `e2e/topics.spec.ts` gepinnt, nicht über abgeschriebene
+  Beispielwerte — zwei frühere Versionen davon waren falsch.
+- **Jedes wiederkehrende Habit ohne festes Intervall zeigte „täglich" in der Eyebrow**, auch
+  wöchentliche, monatliche und jährliche. `formatRecurrence()` unterschied nur nach
+  `recurrenceInterval` (null bei WEEKDAY/MONTHLY/YEARLY); schaltet jetzt über `recurrenceType`, mit
+  echten Übersetzungen (nicht kopierten) in allen sieben Sprachen.
+- **Der amberfarbene Wash hinter der Tagesaufgabe hatte auf `/dashboard` (dark) eine harte Kante am
+  linken Rand statt eines weichen Auslaufs.** Drei Zustände, in dieser Reihenfolge gemessen:
+  1. **Ursprünglich:** die Wash-Box überragte ihren Container um 190% (Rest eines Werts aus der
+     896-px-Ära, bevor `/dashboard` auf die 640-px-Lesespalte umzog). `main` setzt
+     `overflow-y: auto`, wodurch `overflow-x` gemäß Spezifikation ebenfalls zu `auto` statt
+     `visible` wird — bei 1440×900 dark schnitt das die Wash-Box (192…1216px) 32px vor `main`s
+     linker Kante (224…1440px) unsichtbar ab; bei 375px war der Überhang beidseitig größer als der
+     verfügbare Rand (~16px).
+  2. **Erster Fix, verschlimmbessert:** `width: 100%` (kein Überhang mehr) machte den Schnitt
+     **sichtbarer**, nicht weg — ein Hintergrundverlauf malt nie außerhalb seiner eigenen Box,
+     unabhängig von jedem `overflow`; ohne Überhang wurde die Box-Kante selbst zur harten Grenze,
+     und die lag (bei 30% Anker) näher am Fokuspunkt als `main`s alte Klip-Linie.
+  3. **Verifizierter Endzustand:** der Überhang bleibt bestehen, ist aber an den tatsächlich
+     verfügbaren Platz gekoppelt — unter 1100px (`--rail`-Umbruch, danach garantiert kein Rand
+     mehr neben der Spalte) 14px/Seite, ab 1100px 140px/Seite (unter dem bei 1440px gemessenen
+     160px-Budget). Verlaufsradius und -stopps sind für beide Fälle so verkleinert, dass der
+     Verlauf vor der jeweiligen Boxkante auf Grundfarbe ausklingt. Verifiziert per Pixelvergleich
+     (nicht per Arithmetik): bei 1440px UND 375px, dark UND light, liegt an jeder Kante 0 messbarer
+     Farbunterschied zum Grund (`14,16,15` dark bzw. `236,238,229` light, flach bis an main's
+     Klip-Linie heran). `e2e/dashboard.spec.ts` und `e2e/design-rules.spec.ts` bleiben grün
+     (63/63). Unterhalb von 1100px liest die Keule dadurch enger als das ursprüngliche
+     Breite-Ideal — akzeptierter Tausch gegen einen wirklich unsichtbaren Rand statt eines
+     unbemerkten Kompromisses; volle Breite auf jeder Breite bräuchte einen Scroll-Container, der
+     nicht `main` selbst ist (Empfehlung im Task-12-Bericht, nicht hier umgesetzt).
+- **Navigationslisten waren dauerhaft unterstrichen.** Jedes Link-Element (Wordmark in der Navbar, Sidebar-Links, Mobile-Bottom-Nav-Labels und Topic-Zurück-Link) trug eine unlayered `a { text-decoration: underline }` aus `globals.css`, die jede layered Tailwind-Utility schlug — auch dort, wo unterline nicht vorgesehen war. Behoben mit `no-underline!` auf allen sechs Stellen (`navbar.tsx`, `mobile-nav.tsx`, `sidebar.tsx`, `user-menu.tsx`, `topic-detail-view.tsx`, `task-list.tsx`).
+- **Das Dashboard-Quest-Element war farblos.** Die einzige Amber-Handlung pro Seite (Links auf quest-action) war von derselben Cascade-Falle betroffen — unlayered `a { color: inherit }` schlug die farbgebende Utility, sodass der Quest-Link als plain text lesbar war. Behoben mit `text-[var(--amber)]!` auf beiden Quest-Action-Links.
+- **Task-Titel unter 375 px auf `/tasks` kollabiert auf 0 px Breite.** Bei langen Trailing-Werten (`28 days`/`5 Overdue`) brauchte die Eyebrow-Zeile plötzlich zwei Zeilen — Title, Action-Cluster und Trailing konkurrierten um die gleiche Linie und der Title schrumpfte auf unsichtbar. Behoben mit `trailingWrapsBelowSm`-Prop in Row, das Trailing unter 640 px auf die Eyebrow-Zeile verschiebt und den Title von der Konkurrenz befreit.
+- **Sequential-Marker auf `/topics` verschwunden.** Bei der Row-Migration wurde die Eyebrow-Marke nicht neu implementiert, obwohl sie funktional ist (bestimmt, welche Task der Quest auswählen kann). Wiederhergestellt als Mono-Eyebrow (reusing `topics.sequential_badge` i18n key) ohne neues Styling.
 
 ### Changed
 
@@ -48,6 +159,50 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Die Begrüßung auf dem Dashboard** setzt den Namen jetzt innerhalb des übersetzten Satzes ein,
   statt ihn mit einem festen „, " und "." aus dem Code anzuhängen. Das reparierte falsche
   Zeichensetzung in mehreren Sprachen (z. B. ein Komma nach einem Fragezeichen bei „Noch wach?").
+- **`/focus` als Bühne (Task 9, „Lichtkegel"): eine Liste statt acht gerahmter Balken, ein Licht.**
+  Wie beim Dashboard vorher: acht gleich gerahmte, gleich beschattete Aufgabenbalken werden eine
+  `List` von `Row`s, ohne Fläche und Rahmen; die Bühne trägt genau ein Fraunces-Element (die
+  Überschrift der jeweiligen Phase) und höchstens ein Amber (die Primäraktion „Fokus starten" /
+  „Erledigt" / „Zurück zum Dashboard"). Zwei Features fallen dabei weg, nicht nur eine
+  Umgestaltung: die Münzvorschau pro Aufgabe und die Prioritäts-Farbcodierung — beide hatten in der
+  neuen Zeile keinen Platz mehr (dieselbe Begründung wie beim Münz-Abzeichen, das schon von
+  `TaskRow` verschwand).
+- **Lichtkegel Phase 1: `/tasks`, `/topics` und `/progress` liegen auf dem Token-System.** Neu ist
+  ein Spaltenmaß, das auf jeder Seite gilt (640 px Lesespalte, 208 px Randnotiz, 48 px dazwischen,
+  als Block zentriert, Umbruch unter 1100 px) — vorher hatte jede Seite ihr eigenes, von randlos bis
+  1024 px. Aus fünf getrennten Zeilen-Implementierungen (`task-item.tsx`, `task-list.tsx`,
+  `focus-mode-view.tsx`, `wishlist-card.tsx`, `topic-card.tsx`) ist eine geworden — `List`/`Row`
+  (`components/ui/list.tsx`): Haarlinie statt Kasten, und die Metadaten einer Aufgabe brauchen keine
+  Flächen mehr. Die Dauer steckt in der Schriftgröße des Titels (die Minutenzahl steht als Text
+  daneben, damit die Größe nicht die einzige Kodierung ist), die Priorität ist eine
+  Gruppenüberschrift statt eines Abzeichens an jeder Zeile, und die frei gewählte Themenfarbe
+  erscheint als 6-px-Punkt statt als Füllung mit Rahmen. **`task-item.tsx` (803 Zeilen) bleibt
+  bestehen** — anders als der ursprüngliche Plan vorsah: `/quick` (`five-minute-view.tsx`) und
+  `/topics/[id]` (`sortable-task-item.tsx`) sind noch nicht migriert und importieren es weiter;
+  gelöscht wird es erst mit ihrer eigenen Phase. `/topics`' Zeilen verlieren dabei gegenüber der
+  alten Karte fünf Dinge, die auf einer Index-Seite keinen Platz mehr haben — Themen-Icon,
+  Prioritäts-Badge, Beschreibung, „alles erledigt"-Banner **und den „sequenziell"-Marker** —, alle
+  fünf bleiben im Bearbeiten-Formular einstellbar. Der Marker ist der einzige der fünf, der nicht
+  nur Dekoration ist (er ändert, welche Aufgabe als Tagesquest wählbar ist); Task 12 hat ihn in der
+  Zeile weiterhin **nicht** gefunden trotz einer gegenteiligen Annahme, unter der diese Phase
+  angetreten ist — offen für eine bewusste Entscheidung, nicht stillschweigend nachgetragen. Das
+  `/progress`-Jahresraster bricht dafür bewusst aus der
+  Lesespalte aus (`data-breakout="chart"`): die Maß-Regel schützt Lauftext, kein dichtes Datenraster
+  — bei 1440 px ist das volle Jahr sichtbar (54/54 Wochenspalten), bei 375 px rund 44 % mit lokalem
+  Scrollen, als Physik hingenommen statt als Fehler behandelt.
+- **Amber gilt jetzt über das ganze Dokument, nicht nur über den Inhalt.** Federlogo, Münzzähler und
+  Level-Badge trugen Amber außerhalb von `main` — gleichzeitig mit dem einen erlaubten Amber im
+  Inhalt waren damit auf jeder Seite drei Amber-Dinge sichtbar. Die Navigation ist jetzt
+  ausschließlich Ink, und die globale Linkfarbe ist keine Lichtfarbe mehr, sondern eine
+  Unterstreichung. `--danger` trägt inzwischen drei statt zwei Rollen — Zerstörung, Überfälligkeit
+  **und** Fehlermeldungen (Präzedenz in `task-breakdown-modal.tsx`); die Alternative wäre eine
+  Fehlermeldung in Ink, nicht als Fehler lesbar.
+- **Design-Ratsche bei 1938 Verstößen.** Der aktuelle Stand kommt aus `npm run check:design`, nicht aus diesem Dokument — er veraltet sofort, sobald sich etwas ändert. Die Ratsche hat einen blinden Fleck: ihre
+  `inline`-Regel ist wörtlich `/style=\{\{/g` und sieht `style={objektName}` — ein benanntes Objekt
+  statt eines Literals — nicht. Gemessen: **76** solcher Stellen in `app/` und `components/`
+  (Formulare wie `task-form.tsx`/`webhooks.tsx` bilden den größten Teil). Kein Dokument hier
+  behauptet, die Ratsche erfasse jeden Inline-Style — sie tut es nicht, und die Zahl steht bewusst
+  offen, statt die Regex zu erweitern und die Baseline neu zu fluten.
 
 - **Node.js 22 → 24 in App und CI**, und **Node.js 20 → 24 im Alexa-Lambda**. Node 20 ist seit
   2026-04-30 EOL, Node 24 läuft bis 2028-04-30 (Quelle: `nodejs/Release`). Betrifft

@@ -28,6 +28,8 @@ interface ConfirmButtonProps {
   disabled?: boolean;
   /** aria-label for the trigger button */
   "aria-label"?: string;
+  /** Native hover tooltip for the trigger button (idle state only). */
+  title?: string;
 }
 
 export function ConfirmButton({
@@ -40,6 +42,7 @@ export function ConfirmButton({
   style,
   disabled,
   "aria-label": ariaLabel,
+  title,
 }: ConfirmButtonProps) {
   const [confirming, setConfirming] = useState(false);
   const yesRef = useRef<HTMLButtonElement>(null);
@@ -78,6 +81,7 @@ export function ConfirmButton({
         style={style}
         disabled={disabled}
         aria-label={ariaLabel}
+        title={title}
         onClick={(e) => {
           e.stopPropagation();
           setConfirming(true);

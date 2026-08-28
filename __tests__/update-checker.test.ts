@@ -188,3 +188,114 @@ describe("checkForUpdates with DISABLE_UPDATE_CHECK", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
+
+describe("checkForUpdates: eine Cache-Schicht, kein zweiter Boden", () => {
+  // Module cache from the previous describe block (DISABLE_UPDATE_CHECK) would
+  // otherwise leak into these tests via Vitest's dynamic import() cache — the
+  // last test there imports the module with DISABLE_UPDATE_CHECK=true baked
+  // into its closure, and only resets process.env, not the module registry.
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("fragt GitHub ohne Next-Data-Cache — sonst ist die Antwort einen Besuch alt", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ tag_name: "v9.9.9", html_url: "https://example.test" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { checkForUpdates } = await import("@/lib/update-checker");
+    await checkForUpdates();
+    const init = fetchMock.mock.calls[0][1] as RequestInit & {
+      next?: { revalidate?: number };
+    };
+    // Der Fehler, den das verhindert: Modul-Cache (24 h) ÜBER
+    // Next-Data-Cache (24 h). Läuft der Modul-Cache ab, liefert der
+    // Data-Cache nach Stale-while-revalidate den ALTEN Wert, der dann mit
+    // frischem checkedAt für weitere 24 h festgehalten wird.
+    expect(init.next?.revalidate).toBeUndefined();
+    expect(init.cache).toBe("no-store");
+  });
+
+  it("checkedAt stammt aus dem erfolgreichen Abruf, nicht aus dem Aufruf", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ tag_name: "v9.9.9", html_url: "https://example.test" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { checkForUpdates } = await import("@/lib/update-checker");
+    const first = await checkForUpdates();
+    const second = await checkForUpdates(); // aus dem Cache
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Der zweite Aufruf zeigt den Zeitpunkt des Abrufs, nicht "jetzt".
+    expect(second.checkedAt?.getTime()).toBe(first.checkedAt?.getTime());
+  });
+});
+
+// ─── Cache-TTL — der Modul-Cache ist jetzt die einzige Schicht, also muss
+// seine Frist selbst getestet sein ────────────────────────────────────────
+
+describe("checkForUpdates: Cache-TTL-Grenzen", () => {
+  let fetchSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.resetModules();
+    fetchSpy = vi.spyOn(global, "fetch");
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    fetchSpy.mockRestore();
+  });
+
+  it("fragt nach 24 h erneut ab, statt den Cache weiter zu bedienen", async () => {
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    // mockImplementation, nicht mockResolvedValue: Letzteres wertet
+    // ghResponse() einmal aus, sodass beide Aufrufe dasselbe Response-
+    // Objekt bekommen — dessen Body ist nach dem ersten .json() bereits
+    // gelesen, der zweite Aufruf würfe beim Parsen und der Refetch würde
+    // still zu einem Fehlerresultat, obwohl er "erfolgte".
+    fetchSpy.mockImplementation(async () => ghResponse("v9.9.9"));
+    const { checkForUpdates } = await import("@/lib/update-checker");
+
+    await checkForUpdates();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // Genau an der 24h-Grenze: cache.cachedAt liegt jetzt exakt CACHE_TTL_MS
+    // zurück, `< CACHE_TTL_MS` ist falsch, der Cache gilt als abgelaufen.
+    vi.setSystemTime(new Date("2026-01-02T00:00:00.000Z"));
+    const second = await checkForUpdates();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    // Beweist, dass der Refetch tatsächlich funktioniert hat, nicht nur
+    // stattfand: ein Fehler beim zweiten .json() wäre hier still als
+    // error-Resultat durchgerutscht.
+    expect(second.error).toBeUndefined();
+    expect(second.latestVersion).toBe("9.9.9");
+  });
+
+  it("wiederholt nach einem Fehler innerhalb von ~5 Minuten, nicht erst nach 24 h", async () => {
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    fetchSpy.mockRejectedValueOnce(new Error("Network timeout"));
+    const { checkForUpdates } = await import("@/lib/update-checker");
+
+    const first = await checkForUpdates();
+    expect(first.error).toBeDefined();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // lib/update-checker.ts:177 backdatiert cachedAt beim Fehlerfall um
+    // (CACHE_TTL_MS - 5 min), sodass nur noch ~5 Minuten der 24h-Frist
+    // übrig bleiben. 6 Minuten später muss der erneute Versuch schon
+    // laufen — bei der vollen 24h-Frist würde er das nicht.
+    fetchSpy.mockResolvedValueOnce(ghResponse("v9.9.9"));
+    vi.setSystemTime(new Date("2026-01-01T00:06:00.000Z"));
+    const second = await checkForUpdates();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(second.error).toBeUndefined();
+    expect(second.latestVersion).toBe("9.9.9");
+  });
+});

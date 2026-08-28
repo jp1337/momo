@@ -29,7 +29,7 @@
  * - Empty state and celebration (completed) state — both still render the
  *   page's h1, in the empty state as the "no quest" text, in the completed
  *   state as the struck-through, dimmed title
- * - Motion entrance animation (fade + slide up)
+ * - At full strength on arrival; only the surrounding sections settle in after
  *
  * Receives all data as props — no direct data fetching.
  */
@@ -37,7 +37,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCoins } from "@fortawesome/free-solid-svg-icons";
@@ -48,8 +47,8 @@ import { AchievementToast } from "@/components/animations/achievement-toast";
 import type { AchievementItem } from "@/components/animations/achievement-toast";
 import { dispatchCoinsEarned } from "@/lib/client/coin-events";
 import { EmotionalClosure } from "@/components/animations/emotional-closure";
-import { Badge } from "@/components/ui/badge";
 import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
+import { stageTitleClassName } from "@/components/ui/list";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -86,21 +85,6 @@ interface DailyQuestCardProps {
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
-
-/**
- * Shared style for the quest headline in all three states. Kept as a single
- * named object (rather than a literal on each `<h1>`) so the file has one
- * `style={{…}}` occurrence, not three — `fontVariationSettings` is the one
- * value a CSS custom property cannot carry, which is why it stays inline at
- * all (see docs/superpowers/specs/2026-08-21-lichtkegel-design.md §3).
- */
-const questTitleStyle: React.CSSProperties = {
-  fontVariationSettings: '"SOFT" 50, "WONK" 1, "opsz" 130',
-};
-
-const questTitleClassName =
-  "m-0 max-w-[26ch] font-[family-name:var(--font-display)] font-normal " +
-  "text-[clamp(1.75rem,4.1vw,2.85rem)] leading-[1.08] tracking-[-0.022em] text-balance";
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -270,10 +254,14 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
       />
     )}
 
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
+    {/*
+     * Keine Eintrittsanimation (2026-08-22, Spec §7). Vorher fuhr die
+     * Quest aus opacity 0 / y 16 hoch und war dabei dunkler als die Liste
+     * unter ihr. Umkehrung: die Quest steht bei Ankunft sofort auf voller
+     * Stärke; nur die Peripherie beruhigt sich danach (siehe
+     * quick-wins-section.tsx).
+     */}
+    <div
       data-testid="quest-light"
       className="lichtkegel flex flex-col gap-4"
     >
@@ -281,11 +269,11 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
           has no other h1 in this state, and the design requires exactly one. */}
       {!quest && (
         <div className="flex flex-col gap-3">
-          <h1 data-testid="quest-title" className={`${questTitleClassName} text-[var(--ink)]`} style={questTitleStyle}>
+          <h1 data-testid="quest-title" className={`${stageTitleClassName} text-[var(--ink)]`}>
             {t("quest_no_quest")}
           </h1>
           <p className="m-0 font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
-            <Link href="/tasks" className="font-medium text-[var(--amber)] no-underline">
+            <Link href="/tasks" data-testid="quest-action" className="font-medium text-[var(--amber)]! no-underline!">
               {t("quest_no_quest_hint")}
             </Link>
           </p>
@@ -300,8 +288,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
           </p>
           <h1
             data-testid="quest-title"
-            className={`${questTitleClassName} text-[var(--ink-3)] line-through`}
-            style={questTitleStyle}
+            className={`${stageTitleClassName} text-[var(--ink-3)] line-through`}
           >
             {quest.title}
           </h1>
@@ -357,20 +344,28 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
             {/* Task title — this IS the page's h1. The Daily Quest is the one
                 lit thing today; it reads as a headline, lit from above by
                 the .lichtkegel wash on the container, not boxed. */}
-            <h1 data-testid="quest-title" className={`${questTitleClassName} text-[var(--ink)]`} style={questTitleStyle}>
+            <h1 data-testid="quest-title" className={`${stageTitleClassName} text-[var(--ink)]`}>
               {quest.title}
             </h1>
 
-            {/* Badges row — labels, not the page's action, so none of them
-                carry amber. Priority is dropped entirely here: the daily-quest
-                algorithm already picked the one task that matters today, and
-                a HIGH/NORMAL/SOMEDAY label next to a headline-sized title
+            {/* Labels row — text only, no chip: a filled or bordered pill
+                around a label is the box the box-rule (§2, "keine Chips um
+                Text") forbids, and none of them carry amber either.
+                Priority is dropped entirely here: the daily-quest algorithm
+                already picked the one task that matters today, and a
+                HIGH/NORMAL/SOMEDAY label next to a headline-sized title
                 added noise without adding a decision the user needs to make. */}
             <div className="flex flex-wrap items-center gap-2">
-              {typeLabel && <Badge variant="neutral">{typeLabel}</Badge>}
+              {typeLabel && (
+                <span className="font-[family-name:var(--font-ui)] text-xs text-[var(--ink-3)]">
+                  {typeLabel}
+                </span>
+              )}
 
               {quest.energyLevel && userEnergyToday && quest.energyLevel === userEnergyToday && (
-                <Badge variant="neutral">{t("energy_match_badge")}</Badge>
+                <span className="font-[family-name:var(--font-ui)] text-xs text-[var(--ink-3)]">
+                  {t("energy_match_badge")}
+                </span>
               )}
 
               {/* Coin value + postpone bonus — meta, not amber (--coin-gold
@@ -395,7 +390,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
               action carries amber: the first one, "jetzt anfangen" — it is
               this page's one action, not a label. */}
           <div className="flex flex-wrap items-center gap-6 pt-2 font-[family-name:var(--font-ui)] text-sm">
-            <Link href="/focus" className="font-medium text-[var(--amber)] no-underline">
+            <Link href="/focus" data-testid="quest-action" className="font-medium text-[var(--amber)]! no-underline!">
               {t("quest_start")}
             </Link>
             <button
@@ -429,7 +424,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
           </div>
         </>
       )}
-    </motion.div>
+    </div>
     </>
   );
 }

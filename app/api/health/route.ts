@@ -3,16 +3,44 @@
  * Health check endpoint used by Docker, Kubernetes liveness/readiness probes,
  * and load balancers to determine if the application is running.
  * Requires: no authentication
- * Returns: { status: "ok", timestamp: string, cron: { lastRunAt: string|null, minutesSinceLastRun: number|null } }
+ * Returns: { status: "ok", version: string, commit: string|null, timestamp: string, cron: { lastRunAt: string|null, minutesSinceLastRun: number|null } }
+ * On DB failure: { status: "error", message: string, version: string, commit: string|null }, HTTP 503
  *
  * The `cron` field is informational only — it never affects the HTTP status code.
  * Infrastructure probes must not rely on it.
+ *
+ * `version` ist die Version des laufenden Images (aus package.json). Sie
+ * steht hier, weil ein stehengebliebener Rollout sonst unsichtbar ist: die
+ * einzige Stelle, die eine Version zeigte, lag hinter Admin-Login, und
+ * genau dort stand am 2026-08-22 "Momo ist aktuell" über einer Instanz,
+ * die drei Monate alt war. Eine Version ist kein Geheimnis — sie steht in
+ * jedem veröffentlichten Image-Tag.
+ *
+ * `commit` ist der Git-Commit-SHA, aus dem das laufende Image gebaut wurde
+ * (Build-Arg MOMO_COMMIT, siehe Dockerfile runner-Stufe). Anders als
+ * `version` ändert er sich bei JEDEM Commit — deshalb liest die
+ * Rollout-Prüfung in `.github/workflows/build-and-publish.yml` diesen
+ * Wert und nicht `version`: ein Vergleich gegen `version` wäre bei einem
+ * gewöhnlichen Push auf main sofort grün, weil kein Workflow die Version
+ * automatisch bumpt. Außerhalb eines gebauten Images (lokale Entwicklung)
+ * ist `commit` `null` — das ist ehrlich, kein Fehler.
+ *
+ * Beide Felder stehen auch in der 503-Antwort: eine kaputte Datenbank
+ * braucht keins von beiden, und ohne sie könnte die Rollout-Prüfung einen
+ * DB-Ausfall nicht von einem stehengebliebenen Rollout unterscheiden.
+ * Damit sie den Wert auch tatsächlich sieht, ruft
+ * `.github/workflows/build-and-publish.yml` `curl` dort OHNE `-f` auf —
+ * mit `-f` gibt curl bei HTTP 503 nichts aus und bricht mit Exitcode 22
+ * ab, bevor der Body `sed` erreicht. Ohne `-f` liest die Prüfung `commit`
+ * auch aus der 503-Antwort: stimmt er, hat der Rollout stattgefunden,
+ * auch wenn die Datenbank gerade down ist — das ist ein anderer Alarm.
  */
 
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { cronRuns } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { CURRENT_VERSION } from "@/lib/update-checker";
 
 /**
  * GET /api/health
@@ -49,12 +77,19 @@ export async function GET() {
 
     return Response.json({
       status: "ok",
+      version: CURRENT_VERSION,
+      commit: process.env.MOMO_COMMIT ?? null,
       timestamp: new Date().toISOString(),
       cron: cronInfo,
     });
   } catch {
     return Response.json(
-      { status: "error", message: "Database unavailable" },
+      {
+        status: "error",
+        message: "Database unavailable",
+        version: CURRENT_VERSION,
+        commit: process.env.MOMO_COMMIT ?? null,
+      },
       { status: 503 }
     );
   }

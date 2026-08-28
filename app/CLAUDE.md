@@ -79,7 +79,7 @@ api/
   push/subscribe/route.ts            → POST (register/upsert Web Push subscription), PATCH (update reminder preferences: notificationTime, timezone, dueTodayReminderEnabled, overdueReminderEnabled, recurringDueReminderEnabled, morningBriefingEnabled, morningBriefingTime, dueTodayReminderTime, recurringDueReminderTime, overdueReminderTime, weeklyReviewTime), DELETE (remove subscription by endpoint)
   push/test/route.ts                 → POST (send test push notification)
   cron/route.ts                      → POST (unified cron dispatcher — runs all jobs from lib/cron.ts, protected by CRON_SECRET)
-  health/route.ts                    → GET (liveness probe, returns 200 OK)
+  health/route.ts                    → GET (liveness/readiness probe; returns { status, version, commit, timestamp, cron } — the deploy gate in .github/workflows/build-and-publish.yml reads `commit` to confirm a rollout actually happened)
   admin/seed/route.ts                → POST (seed demo data — dev/staging only)
   alexa/auth/route.ts                → GET (Alexa Account Linking OAuth callback; issues JWT-style API key for the Alexa skill)
   auth/link-request/route.ts         → POST (initiate OAuth account linking flow)

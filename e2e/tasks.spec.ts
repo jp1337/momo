@@ -224,6 +224,37 @@ test.describe("Tasks Page", () => {
 
     await deleteTask(request, task.id);
   });
+
+  // Task-11-Review C3 (finale Fix-Welle): bei 375px teilten sich Titel,
+  // ein bis zu 129px breites `trailing` (z. B. "5 Tage überfällig") und der
+  // Aktionscluster (bis zu drei 32px-Buttons) eine Zeile — der Titel war der
+  // einzige Flex-Kandidat und schrumpfte auf 0px (drei von zwölf gemessenen
+  // Zeilen zeigten nur noch das Trailing, keinen Buchstaben Titel). Diese
+  // Probe erzwingt genau den Worst Case (überfällig, also `trailing` UND
+  // `--danger`-Farbe gesetzt) und misst die tatsächliche Titel-Boxbreite,
+  // statt nur "keine 500er" zu prüfen.
+  test("task title has non-zero width at 375px even with an overdue trailing date", async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    const title = `Overdue mobile title width probe ${Date.now()}`;
+    const overdueDate = new Date();
+    overdueDate.setDate(overdueDate.getDate() - 5);
+    const task = await createTask(request, title, {
+      dueDate: overdueDate.toISOString().split("T")[0],
+    });
+
+    await page.goto("/tasks");
+    await page.waitForLoadState("networkidle");
+
+    const row = page.locator('[data-testid="task-row"]').filter({ hasText: title });
+    await expect(row).toBeVisible({ timeout: 5000 });
+    const titleBox = await row.getByTestId("task-row-title").boundingBox();
+    expect(titleBox?.width ?? 0).toBeGreaterThan(0);
+
+    await deleteTask(request, task.id);
+  });
 });
 
 // ─── Recurring Tasks ──────────────────────────────────────────────────────────

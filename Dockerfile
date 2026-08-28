@@ -121,6 +121,13 @@ USER nextjs
 # Expose the application port
 EXPOSE 3000
 
+# Der Commit, aus dem dieses Image gebaut wurde. Bewusst SPAET in der
+# runner-Stufe: der Wert aendert sich bei jedem Commit, und alles nach
+# dieser Zeile sind Metadaten-Layer — die schweren deps-/builder-Stufen
+# und die COPY-Schichten darueber behalten ihren Cache.
+ARG MOMO_COMMIT=unknown
+ENV MOMO_COMMIT=${MOMO_COMMIT}
+
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 

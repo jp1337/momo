@@ -1,29 +1,43 @@
 /**
- * HabitCard — one card per recurring task on the /habits page.
+ * HabitCard — one habit as a `Row` (title, topic dot, recurrence/pause as
+ * a mono eyebrow, own streak as `trailing`) plus its full-width year
+ * `ContributionGrid` below.
  *
- * Header with topic icon + title + recurrence interval, three stat pills
- * (year / 30d / 7d), and a full-width ContributionGrid below. Pure server
+ * Task 11: was a boxed `<article>` with four stat pills (year/30d/7d/
+ * streak) and a topic-icon badge. Year/30d/7d moved to `/progress`'s
+ * `PageFrame` rail as page-wide sums (see `app/(app)/progress/page.tsx`) —
+ * a per-habit number pill is a filled surface, and the spec forbids a
+ * boxed content surface just as it forbids the dashed empty state this
+ * same task removed. The streak pill came back in review (Task-11-review
+ * I3): it isn't additive like the other three, so the rail can only ever
+ * show ONE page-wide streak — every other habit's own streak would
+ * otherwise be gone from the page entirely, and a streak is the fact a
+ * habit tracker exists to show. It's back as `Row`'s existing `trailing`
+ * text, pre-formatted by the caller (`formatHabitStreakTrailing` in
+ * `progress-tabs.tsx`) — not a new prop on `Row`, not a pill again. The
+ * icon badge stays gone: `Row`'s vocabulary for "this row's colour" is the
+ * 6-px `dotColor` dot (topic colour), not an icon in a framed square — the
+ * icon carried no information the dot and the title don't already carry,
+ * and a framed square is exactly the "Kasten" §6 forbids. Pure server
  * component; receives all data pre-fetched via props.
  */
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRepeat, faFire, faPause } from "@fortawesome/free-solid-svg-icons";
-import { resolveTopicIcon } from "@/lib/topic-icons";
+import { List, Row } from "@/components/ui/list";
 import type { HabitWithHistory } from "@/lib/habits";
 import { ContributionGrid } from "./contribution-grid";
 
 interface HabitCardProps {
   habit: HabitWithHistory;
   year: number;
+  /** Pre-formatted "N Tage in Folge · Rekord: N" text, or `null` if the habit has no streak at all (current and best both 0). */
+  streakTrailing: string | null;
   /** Pre-translated label pack passed through from the page. */
   labels: {
-    statTotalYear: string;
-    statLast30: string;
-    statLast7: string;
-    statStreak: string;
-    statStreakEmpty: string;
     recurrenceEveryDay: string;
     recurrenceEveryNDays: string; // "alle %n% Tage"
+    recurrenceWeekly: string; // WEEKDAY habits — "wöchentlich"
+    recurrenceMonthly: string; // MONTHLY habits — "monatlich"
+    recurrenceYearly: string; // YEARLY habits — "jährlich"
     pausedUntilLabel: string; // "Pausiert bis %date%"
     gridLabels: {
       gridAriaLabel: string;
@@ -37,228 +51,87 @@ interface HabitCardProps {
       weekdayLabels: [string, string, string, string, string, string, string];
     };
   };
-  /**
-   * Pre-formatted current-streak value, e.g. "8 Wochen" or "Noch kein
-   * Streak". Built on the page because it needs `t()` + ICU plurals.
-   */
-  streakValueText: string;
-  /**
-   * Pre-formatted best-streak sub-label, e.g. "Rekord: 12" or "Neuer
-   * Rekord". `null` when the habit has never had a streak.
-   */
-  streakBestText: string | null;
 }
 
 /**
- * Pretty-prints the recurrence interval, e.g. "täglich" or "alle 3 Tage".
+ * Pretty-prints a habit's recurrence, e.g. "täglich", "alle 3 Tage",
+ * "wöchentlich", "monatlich" or "jährlich" — keyed off `recurrenceType`,
+ * not just `recurrenceInterval` (which is `null` for every type except
+ * INTERVAL, and previously made every WEEKDAY/MONTHLY/YEARLY habit fall
+ * through to "täglich" — see F1 in `carried-findings-report.md`).
  *
  * The `%n%` placeholder (not next-intl's `{n}` ICU syntax) is intentional:
  * `recurrenceEveryNDays` is translated ONCE per page render (see
- * progress-tabs.tsx) and reused for every habit card, each with its own
- * interval — so the substitution has to happen here, per-card, not at
- * translation time. Using `{n}` would make next-intl parse it as a required
- * ICU argument; calling `t()` without supplying one throws, and next-intl's
- * fallback renders the raw message key instead of the label (that fallback
- * is exactly the bug this comment is here to prevent someone reintroducing).
+ * `app/(app)/progress/page.tsx`) and reused for every habit card, each with
+ * its own interval — so the substitution has to happen here, per-card, not
+ * at translation time. Using `{n}` would make next-intl parse it as a
+ * required ICU argument; calling `t()` without supplying one throws, and
+ * next-intl's fallback renders the raw message key instead of the label
+ * (that fallback is exactly the bug this comment is here to prevent
+ * someone reintroducing).
  */
 function formatRecurrence(
   interval: number | null,
+  recurrenceType: HabitWithHistory["recurrenceType"],
   labels: HabitCardProps["labels"]
 ): string {
-  const n = interval ?? 1;
-  if (n <= 1) return labels.recurrenceEveryDay;
-  return labels.recurrenceEveryNDays.replace("%n%", String(n));
+  switch (recurrenceType) {
+    case "WEEKDAY":
+      return labels.recurrenceWeekly;
+    case "MONTHLY":
+      return labels.recurrenceMonthly;
+    case "YEARLY":
+      return labels.recurrenceYearly;
+    case "INTERVAL":
+    default: {
+      const n = interval ?? 1;
+      if (n <= 1) return labels.recurrenceEveryDay;
+      return labels.recurrenceEveryNDays.replace("%n%", String(n));
+    }
+  }
 }
 
-export function HabitCard({
-  habit,
-  year,
-  labels,
-  streakValueText,
-  streakBestText,
-}: HabitCardProps) {
-  const topicColor = habit.topicColor ?? "var(--accent-green)";
-  const topicIcon = habit.topicIcon ? resolveTopicIcon(habit.topicIcon) : faRepeat;
-  const hasStreak = habit.streak.current > 0;
+export function HabitCard({ habit, year, labels, streakTrailing }: HabitCardProps) {
+  const eyebrowParts: string[] = [];
+  if (habit.topicTitle) eyebrowParts.push(habit.topicTitle);
+  eyebrowParts.push(
+    formatRecurrence(habit.recurrenceInterval, habit.recurrenceType, labels)
+  );
+  if (habit.paused) {
+    eyebrowParts.push(
+      habit.pausedUntil
+        ? labels.pausedUntilLabel.replace("%date%", habit.pausedUntil)
+        : labels.pausedUntilLabel.replace("%date%", "")
+    );
+  }
+  // JSX, not `eyebrowParts.join(" · ")` (Task-11-review, minor): the old
+  // markup this replaced had `aria-hidden="true"` on each "·" separator —
+  // joining to a plain string dropped that, so a screen reader now reads
+  // the raw dot between every segment. `Row`'s `eyebrow` prop is typed
+  // `React.ReactNode` specifically so JSX is available here; "matches
+  // Row's eyebrow contract" was never a real constraint against using it.
+  const eyebrow = eyebrowParts.map((part, i) => (
+    <span key={i}>
+      {i > 0 && <span aria-hidden="true"> · </span>}
+      {part}
+    </span>
+  ));
 
   return (
-    <article
-      className="rounded-xl p-6 flex flex-col gap-5"
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        border: "1px solid var(--border)",
-        boxShadow: "var(--shadow-sm)",
-      }}
-    >
-      {/* ── Header: icon · title · recurrence ─────────────────────────────── */}
-      <header className="flex items-start gap-3">
-        <div
-          className="flex items-center justify-center rounded-lg flex-shrink-0"
-          style={{
-            width: "40px",
-            height: "40px",
-            backgroundColor: `color-mix(in srgb, ${topicColor} 12%, var(--bg-elevated))`,
-            border: `1px solid color-mix(in srgb, ${topicColor} 30%, var(--border))`,
-          }}
-        >
-          <FontAwesomeIcon
-            icon={topicIcon}
-            aria-hidden="true"
-            style={{ width: "18px", height: "18px", color: topicColor }}
-          />
-        </div>
-        <div className="flex flex-col min-w-0 flex-1">
-          <h2
-            className="text-base truncate"
-            style={{
-              fontFamily: "var(--font-body, 'JetBrains Mono', monospace)",
-              color: "var(--text-primary)",
-              fontWeight: 600,
-            }}
-          >
-            {habit.title}
-          </h2>
-          <p
-            className="text-xs mt-0.5 flex items-center gap-2"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {habit.topicTitle && (
-              <>
-                <span className="truncate">{habit.topicTitle}</span>
-                <span aria-hidden="true">·</span>
-              </>
-            )}
-            <span>{formatRecurrence(habit.recurrenceInterval, labels)}</span>
-            {habit.paused && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
-                  style={{
-                    backgroundColor: "color-mix(in srgb, var(--accent-amber) 15%, transparent)",
-                    color: "var(--accent-amber)",
-                    border: "1px solid color-mix(in srgb, var(--accent-amber) 30%, transparent)",
-                  }}
-                >
-                  <FontAwesomeIcon icon={faPause} style={{ width: "8px", height: "8px" }} />
-                  {habit.pausedUntil
-                    ? labels.pausedUntilLabel.replace("%date%", habit.pausedUntil)
-                    : labels.pausedUntilLabel.replace("%date%", "")}
-                </span>
-              </>
-            )}
-          </p>
-        </div>
-      </header>
-
-      {/* ── Stat pills ────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-2.5">
-        {/* Streak pill — flame icon, current count, optional best sub-label. */}
-        <div
-          className="flex-1 min-w-[110px] flex flex-col gap-0.5 px-3 py-2 rounded-lg"
-          style={{
-            backgroundColor: hasStreak
-              ? "color-mix(in srgb, var(--accent-amber) 14%, var(--bg-elevated))"
-              : "var(--bg-elevated)",
-            border: hasStreak
-              ? "1px solid color-mix(in srgb, var(--accent-amber) 32%, var(--border))"
-              : "1px solid var(--border)",
-          }}
-        >
-          <span
-            className="text-[10px] uppercase tracking-wider flex items-center gap-1.5"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            <FontAwesomeIcon
-              icon={faFire}
-              aria-hidden="true"
-              style={{
-                width: "10px",
-                height: "10px",
-                color: hasStreak
-                  ? "var(--accent-amber)"
-                  : "var(--text-muted)",
-              }}
-            />
-            {labels.statStreak}
-          </span>
-          <span
-            className="text-base font-bold leading-tight"
-            style={{
-              fontFamily: "var(--font-display, 'Lora', serif)",
-              color: hasStreak
-                ? "var(--accent-amber)"
-                : "var(--text-muted)",
-              lineHeight: 1.15,
-            }}
-          >
-            {streakValueText}
-          </span>
-          {streakBestText && (
-            <span
-              className="text-[10px]"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-                marginTop: "1px",
-              }}
-            >
-              {streakBestText}
-            </span>
-          )}
-        </div>
-        {[
-          { label: labels.statTotalYear, value: habit.totalYear, strong: true },
-          { label: labels.statLast30, value: habit.totalLast30, strong: false },
-          { label: labels.statLast7, value: habit.totalLast7, strong: false },
-        ].map((pill) => (
-          <div
-            key={pill.label}
-            className="flex-1 min-w-[90px] flex flex-col gap-0.5 px-3 py-2 rounded-lg"
-            style={{
-              backgroundColor: pill.strong
-                ? "color-mix(in srgb, var(--accent-green) 10%, var(--bg-elevated))"
-                : "var(--bg-elevated)",
-              border: pill.strong
-                ? "1px solid color-mix(in srgb, var(--accent-green) 28%, var(--border))"
-                : "1px solid var(--border)",
-            }}
-          >
-            <span
-              className="text-[10px] uppercase tracking-wider"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-              }}
-            >
-              {pill.label}
-            </span>
-            <span
-              className="text-xl font-bold"
-              style={{
-                fontFamily: "var(--font-display, 'Lora', serif)",
-                color: pill.strong ? "var(--accent-green)" : "var(--text-primary)",
-                lineHeight: 1.1,
-              }}
-            >
-              {pill.value}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Year contribution grid ────────────────────────────────────────── */}
+    <div className="flex flex-col gap-3">
+      <List>
+        <Row
+          title={habit.title}
+          eyebrow={eyebrow}
+          trailing={streakTrailing}
+          dotColor={habit.topicColor}
+        />
+      </List>
       <ContributionGrid
         year={year}
         completions={habit.completions}
         labels={labels.gridLabels}
       />
-    </article>
+    </div>
   );
 }

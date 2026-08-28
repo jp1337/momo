@@ -10,6 +10,7 @@
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faGear,
@@ -39,7 +40,7 @@ const itemBaseStyle: CSSProperties = {
 };
 
 const itemClass =
-  "flex items-center gap-3 px-4 py-2.5 text-sm no-underline outline-none data-[highlighted]:bg-[var(--bg-surface)]";
+  "flex items-center gap-3 px-4 py-2.5 text-sm no-underline! outline-none data-[highlighted]:bg-[var(--bg-surface)]";
 
 interface MenuLinkItemProps {
   href: string;
@@ -77,6 +78,7 @@ function MenuLinkItem({ href, icon, iconColor, textColor, children }: MenuLinkIt
  * Avatar-triggered dropdown menu for user actions.
  */
 export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuProps) {
+  const t = useTranslations("nav");
   const initials = userName
     ? userName
         .split(" ")
@@ -90,13 +92,8 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          aria-label="User menu"
-          className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium flex-shrink-0 transition-opacity hover:opacity-80"
-          style={{
-            backgroundColor: "var(--accent-green)",
-            color: "var(--bg-primary)",
-            border: "2px solid var(--border)",
-          }}
+          aria-label={t("user_menu")}
+          className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-pill)] border border-[var(--hairline)] bg-[var(--raised)] text-sm font-medium text-[var(--ink)] transition-opacity hover:opacity-80"
         >
           {userImage ? (
             <Image
@@ -167,8 +164,8 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
               <MenuLinkItem
                 href="/admin"
                 icon={faShieldHalved}
-                iconColor="var(--accent-amber)"
-                textColor="var(--accent-amber)"
+                iconColor="var(--ink-2)"
+                textColor="var(--ink-2)"
               >
                 Admin
               </MenuLinkItem>

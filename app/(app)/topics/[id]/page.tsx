@@ -72,7 +72,7 @@ export default async function TopicDetailPage({ params }: TopicDetailPageProps) 
       {/* Back link */}
       <Link
         href="/topics"
-        className="inline-flex items-center gap-1.5 text-sm mb-6 no-underline transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm mb-6 no-underline! transition-colors"
         style={{
           fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
           color: "var(--text-muted)",

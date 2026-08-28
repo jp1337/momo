@@ -61,3 +61,6 @@ next-env.d.ts
 
 # superpowers subagent-driven-development scratch state
 .superpowers/
+
+# serena MCP project index/cache
+.serena/

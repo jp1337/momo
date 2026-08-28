@@ -16,7 +16,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { CoinCounter } from "@/components/layout/coin-counter";
 import { LevelBadge } from "@/components/layout/level-badge";
 import { UserMenu } from "@/components/layout/user-menu";
-import Image from "next/image";
+import { FeatherMark } from "@/components/layout/feather-mark";
 import Link from "next/link";
 
 interface NavbarProps {
@@ -58,16 +58,9 @@ export function Navbar({ userName, userImage, userEmail, initialCoins = 0, initi
       {/* App wordmark */}
       <Link
         href="/dashboard"
-        className="flex items-center gap-2 no-underline group"
+        className="flex items-center gap-2 no-underline! group"
       >
-        <Image
-          src="/icon.svg"
-          alt=""
-          width={28}
-          height={28}
-          priority
-          aria-hidden="true"
-        />
+        <FeatherMark className="text-[var(--ink-2)]" />
         <span
           className="text-2xl font-semibold tracking-tight transition-colors duration-150"
           style={{

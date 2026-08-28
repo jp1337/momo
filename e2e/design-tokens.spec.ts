@@ -11,6 +11,7 @@ const REQUIRED = [
   "--amber", "--on-amber", "--done", "--danger",
   "--radius-sm", "--radius-md", "--radius-lg", "--radius-pill",
   "--shadow-overlay",
+  "--measure", "--rail", "--gutter",
 ];
 
 async function readTokens(page: Page) {
@@ -271,5 +272,203 @@ test.describe("Button", () => {
     await expect(page.getByTestId("btn-danger")).toBeVisible();
     await expect(page.getByTestId("btn-success")).toHaveCount(0);
     await expect(page.getByTestId("btn-outline")).toHaveCount(0);
+  });
+});
+
+test.describe("Maß und Rand", () => {
+  test("die drei Layout-Token haben die Werte der Spec", async ({ page }) => {
+    await page.goto("/design-system");
+    const t = await readTokens(page);
+    expect(t["--measure"]).toBe("40rem");
+    expect(t["--rail"]).toBe("13rem");
+    expect(t["--gutter"]).toBe("3rem");
+  });
+
+  test("die Lesespalte ist bei 1440 px genau 640 px breit", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/design-system");
+    const box = await page.getByTestId("frame-with-rail").locator("[data-column]").boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeLessThanOrEqual(641);
+    expect(box!.width).toBeGreaterThanOrEqual(639);
+  });
+
+  test("der Rand steht bei 1440 px neben der Spalte, mit 48 px Rinne", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/design-system");
+    const frame = page.getByTestId("frame-with-rail");
+    const col = (await frame.locator("[data-column]").boundingBox())!;
+    const rail = (await frame.locator("[data-rail]").boundingBox())!;
+    expect(rail.x).toBeGreaterThan(col.x + col.width - 1);
+    expect(rail.x - (col.x + col.width)).toBeGreaterThanOrEqual(47);
+    expect(rail.x - (col.x + col.width)).toBeLessThanOrEqual(49);
+    expect(rail.width).toBeLessThanOrEqual(209);
+  });
+
+  // Der Umbruch der Spec: unter 1100 px fällt der Rand UNTER den Inhalt.
+  // 1024 px ist bewusst gewählt — es ist Tailwinds `lg`, und genau der
+  // Standard-Breakpoint wäre der falsche Umbruchpunkt gewesen.
+  test("unter 1100 px fällt der Rand unter den Inhalt", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await page.goto("/design-system");
+    const frame = page.getByTestId("frame-with-rail");
+    const col = (await frame.locator("[data-column]").boundingBox())!;
+    const rail = (await frame.locator("[data-rail]").boundingBox())!;
+    expect(rail.y).toBeGreaterThan(col.y + col.height - 1);
+  });
+
+  test("ohne Rand ist die Lesespalte eine Spalte breit und im Inhaltsbereich zentriert", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/design-system");
+    const frame = page.getByTestId("frame-no-rail");
+    const wrapper = (await frame.boundingBox())!;
+    const col = (await frame.locator("[data-column]").boundingBox())!;
+    expect(col.width).toBeLessThanOrEqual(641);
+    // Spec §3: der Block wird als GANZES im Inhaltsbereich zentriert — die
+    // Lücke links und rechts der Spalte in ihrem Wrapper muss also gleich
+    // sein (max. 1px Differenz für Rundung), nicht linksbündig.
+    const leftGap = col.x - wrapper.x;
+    const rightGap = wrapper.x + wrapper.width - (col.x + col.width);
+    expect(Math.abs(leftGap - rightGap)).toBeLessThanOrEqual(1);
+  });
+
+  // Spec: unter 640 px entfaellt der Rand ganz und seine Inhalte wandern an
+  // das Seitenende — gleiche Form wie der 1024px-Test oben, nur unterhalb
+  // des sm-Breakpoints statt nur unterhalb von `rail:`.
+  test("unter 640 px steht der Rand ebenfalls unter dem Inhalt", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 900 });
+    await page.goto("/design-system");
+    const frame = page.getByTestId("frame-with-rail");
+    const col = (await frame.locator("[data-column]").boundingBox())!;
+    const rail = (await frame.locator("[data-rail]").boundingBox())!;
+    expect(rail.y).toBeGreaterThan(col.y + col.height - 1);
+  });
+
+  // Die Tests oben messen die Box des `<aside data-rail>` GANZ — nicht seine
+  // eigene innere Fließrichtung. Genau das war der blinde Fleck, durch den
+  // der `rail:` vs. `sm:`-Kaskadenfehler (Task 8) durchrutschte: der Rand
+  // selbst blieb eine zeilenweise gewrappte Reihe statt einer engen Spalte,
+  // ohne dass ein bestehender Test das gesehen hätte (Task 8 Review, F5).
+  test("der Rand selbst ist bei 1440 px eine Spalte, nicht eine Reihe", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/design-system");
+    const rail = page.getByTestId("frame-with-rail").locator("[data-rail]");
+    await expect(rail).toHaveCSS("flex-direction", "column");
+    const first = (await page.getByTestId("rail-fixture-1").boundingBox())!;
+    const second = (await page.getByTestId("rail-fixture-2").boundingBox())!;
+    expect(second.y).toBeGreaterThan(first.y);
+  });
+
+  test("der Rand selbst ist zwischen 640 und 1100 px eine Reihe", async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 900 });
+    await page.goto("/design-system");
+    const rail = page.getByTestId("frame-with-rail").locator("[data-rail]");
+    await expect(rail).toHaveCSS("flex-direction", "row");
+  });
+});
+
+test.describe("List und Row", () => {
+  test("Zeilen sind durch Haarlinien getrennt, nicht durch Kästen", async ({ page }) => {
+    await page.goto("/design-system");
+    const rows = page.getByTestId("demo-row");
+    await expect(rows).toHaveCount(3);
+    const first = await rows.nth(0).evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { top: c.borderTopWidth, bottom: c.borderBottomWidth, bg: c.backgroundColor };
+    });
+    const second = await rows.nth(1).evaluate((n) => {
+      const c = getComputedStyle(n);
+      return { top: c.borderTopWidth, bg: c.backgroundColor, color: c.borderTopColor };
+    });
+    // Erste Zeile ohne Linie oben, jede folgende mit genau einer.
+    expect(first.top).toBe("0px");
+    expect(first.bottom).toBe("0px");
+    expect(second.top).toBe("1px");
+    // Kein Kasten: keine Fläche unter der Zeile.
+    expect(first.bg).toBe("rgba(0, 0, 0, 0)");
+    expect(second.bg).toBe("rgba(0, 0, 0, 0)");
+    // Die Linie ist --hairline, nicht irgendeine Randfarbe (Task-4-Review
+    // R16): "border-t" allein ohne "border-t-[var(--hairline)]" waere eine
+    // sichtbare currentColor-Linie, und die Zeile oben bliebe gruen.
+    const hairlineRgb = await page.evaluate(() => {
+      const probe = document.createElement("div");
+      probe.style.borderTopStyle = "solid";
+      probe.style.borderTopWidth = "1px";
+      probe.style.borderTopColor = "var(--hairline)";
+      document.body.appendChild(probe);
+      const rgb = getComputedStyle(probe).borderTopColor;
+      probe.remove();
+      return rgb;
+    });
+    expect(second.color).toBe(hairlineRgb);
+  });
+
+  test("die Dauer steckt in der Schriftgröße des Titels", async ({ page }) => {
+    await page.goto("/design-system");
+    const sizes: number[] = [];
+    for (const step of ["small", "medium", "large"]) {
+      const px = await page
+        .locator(`[data-testid="demo-row"][data-effort="${step}"] [data-row-title]`)
+        .evaluate((n) => parseFloat(getComputedStyle(n).fontSize));
+      sizes.push(px);
+    }
+    expect(sizes[0]).toBeCloseTo(14, 0);
+    expect(sizes[1]).toBeCloseTo(16, 0);
+    expect(sizes[2]).toBeCloseTo(20, 0);
+  });
+
+  test("die Nutzerfarbe erscheint als 6-px-Punkt, nicht als Fläche", async ({ page }) => {
+    await page.goto("/design-system");
+    const dot = page.getByTestId("row-dot").first();
+    const s = await dot.evaluate((n) => {
+      const c = getComputedStyle(n);
+      return {
+        w: c.width,
+        h: c.height,
+        radius: c.borderTopLeftRadius,
+        border: c.borderTopWidth,
+        bg: c.backgroundColor,
+      };
+    });
+    expect(s.w).toBe("6px");
+    expect(s.h).toBe("6px");
+    expect(s.border).toBe("0px");
+    expect(parseFloat(s.radius)).toBeGreaterThanOrEqual(3);
+    // Die Punktfläche ist tatsaechlich die uebergebene dotColor (Task-4-
+    // Review R16) — ohne diese Zeile bliebe der Test gruen, selbst wenn
+    // style={{ backgroundColor: dotColor }} entfernt wuerde.
+    const doneRgb = await page.evaluate(() => {
+      const probe = document.createElement("div");
+      probe.style.backgroundColor = "var(--done)";
+      document.body.appendChild(probe);
+      const rgb = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return rgb;
+    });
+    expect(s.bg).toBe(doneRgb);
+  });
+
+  test("der leere Zustand ist eine Zeile und eine Handlung, kein Kasten", async ({ page }) => {
+    await page.goto("/design-system");
+    const empty = page.getByTestId("demo-empty");
+    const s = await empty.evaluate((n) => {
+      const c = getComputedStyle(n);
+      return {
+        borderTop: c.borderTopWidth,
+        borderRight: c.borderRightWidth,
+        borderBottom: c.borderBottomWidth,
+        borderLeft: c.borderLeftWidth,
+        bg: c.backgroundColor,
+      };
+    });
+    // Alle vier Rahmenbreiten pruefbar; border-style nicht pruefbar, da
+    // Tailwind-Preflight border: 0 solid auf alle Elemente setzt, also die
+    // berechnete Style ist immer "solid" — ein Test darueber prueft nur
+    // Tailwind, nicht unseren Code.
+    expect(s.borderTop).toBe("0px");
+    expect(s.borderRight).toBe("0px");
+    expect(s.borderBottom).toBe("0px");
+    expect(s.borderLeft).toBe("0px");
+    expect(s.bg).toBe("rgba(0, 0, 0, 0)");
   });
 });

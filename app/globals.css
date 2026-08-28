@@ -64,6 +64,17 @@
   --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
   --space-6: 24px;  --space-8: 32px;  --space-12: 48px; --space-18: 72px;
 
+  /* ─── Maß, Rand, Rinne ───────────────────────────────────────────────────
+     Die Lesespalte gilt auf jeder Seite; der Rand ist optional pro Seite.
+     Der Block aus Spalte + Rinne + Rand wird als GANZES zentriert (siehe
+     components/ui/page-frame.tsx): auf 1440 px sind das 640 + 48 + 208 =
+     896 px und je ~180 px Luft. Der Leerraum verschwindet nicht, er wird
+     verteilt statt rechts geparkt.
+     Bewusst NICHT theme-abhängig — ein Maß ist kein Farbwert. */
+  --measure: 40rem;   /* 640px — die Lesespalte. Jede Seite. */
+  --rail:    13rem;   /* 208px — die Randnotiz. Optional pro Seite. */
+  --gutter:   3rem;   /*  48px — dazwischen */
+
   /* Der einzige verbleibende Schatten: Flächen, die wirklich schweben. */
   --shadow-overlay: 0 12px 40px rgba(0,0,0,.55);
 
@@ -238,6 +249,11 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   /* Alias fuer nicht migrierte Dateien — faellt mit der Ratsche weg. */
   --font-body: var(--font-mono);
+
+  /* Der Umbruchpunkt des Randes. 1100px, nicht Tailwinds lg (1024px):
+     unter 1100 px reichen 640 + 48 + 208 plus Seitenpolster nicht mehr,
+     ohne die Lesespalte zu stauchen. Erzeugt die Variante `rail:`. */
+  --breakpoint-rail: 1100px;
 }
 
 /* ─── Base Styles ───────────────────────────────────────────────────────────── */
@@ -295,15 +311,52 @@ body {
  * lang der Titel war. 30% liegt nah genug am linken Rand, wo jeder Titel
  * beginnt, dass die breite, weiche Streuung ihn traegt, ohne bei sehr
  * kurzen Titeln komplett danebenzuliegen. Verifiziert mit Titel-Laengen von
- * "Call mom" bis zum 26ch-Maximum. Die Breite ueber die Box hinauszuziehen
- * (190% statt vom 64rem-Clamp gekappt) wurde probiert und verworfen: das
- * verbreitert nur die Streuung, verschiebt aber die Mitte nicht — bei
- * Container-Mitte als Anker bleibt sie bei Container-Mitte, egal wie breit
- * die Box ist.
+ * "Call mom" bis zum 26ch-Maximum.
  *
- * Die Opazitaet atmet leicht (6s, 0.85 → 1) statt zu pulsieren — das Licht
- * soll wirken, als stuende es einfach da, nicht als bluepe es. Unter
- * prefers-reduced-motion bleibt das Licht selbst stehen, nur die Animation
+ * **Task 12: der Ueberhang war nie der Fehler — er ist der Mechanismus, der
+ * dem Verlauf ueberhaupt Platz zum Ausklingen gibt.** Der eigentliche
+ * Fehler war nur, dass er mehr Platz wollte (192px links bei 1440px) als
+ * `main` links zwischen `overflow-y: auto`-Kante und Lesespalte hat
+ * (160px) — `overflow-x` wird durch die y-Regel automatisch zu `auto`
+ * statt `visible`, und die Wash-Box wurde 32px vor ihrem eigenen Rand
+ * unsichtbar abgeschnitten. Ein erster Versuch, den Ueberhang ganz zu
+ * streichen (`width: 100%`), war SCHLIMMER, nicht besser: ohne main-Klip
+ * greift stattdessen die BOX selbst als harte Kante — ein
+ * Hintergrundverlauf malt nie ausserhalb seiner eigenen Box, unabhaengig
+ * von jedem `overflow`. Ohne Ueberhang liegt diese Kante viel naeher am
+ * Fokus (bei 30% der jetzt viel schmaleren Box) als main's alte Klip-Linie
+ * es tat — der Schnitt wurde dadurch SICHTBARER, nicht unsichtbar.
+ *
+ * Die eigentliche Invariante: an jeder Stelle, an der die Box (oder ein
+ * klippender Vorfahre) endet, muss Amber vom Grund ununterscheidbar sein —
+ * nicht bloss klein. Verifiziert per Pixelvergleich (nicht per Arithmetik):
+ * an der Kliplinie liegt der Farbunterschied bei ≤ 1 RGB-Stufe, gemessen
+ * bei 1440px UND 375px, dark UND light. Der verfuegbare Platz ist NICHT
+ * symmetrisch und NICHT konstant: bei 1440px sind es 160px links / 416px
+ * rechts von der 640px-Lesespalte, bei 375px nur noch rund 16px auf jeder
+ * Seite (die Spalte fuellt dort fast die ganze verfuegbare Breite). Ein
+ * einzelner symmetrischer Ueberhang, der beides erfuellt, waere auf der
+ * schmaleren Seite winzig — deshalb ist der Ueberhang unterhalb von
+ * 1100px (derselbe `--rail`-Umbruch wie in `page-frame.tsx`, wo ohnehin
+ * garantiert kein Rand mehr neben der Spalte steht) knapp bemessen
+ * (14px/Seite, unter dem 16px-Budget bei 375px verifiziert), und erst ab
+ * 1100px — wo der Rand neben der Spalte definitionsgemaess Platz braucht —
+ * so breit wie ohne sichtbaren Schnitt moeglich (140px/Seite, unter dem
+ * 160px-Budget bei 1440px). Die 30%-Anker-Position bleibt in beiden
+ * Faellen gleich (Ueberschrift ist immer linksbuendig); nur Breite und
+ * Verlaufsradius unterscheiden sich. Unterhalb von 1100px liest die Keule
+ * dadurch enger als das urspruengliche Breite-Ideal — das ist der
+ * akzeptierte Tausch gegen einen wirklich unsichtbaren Rand, nicht ein
+ * unbemerkter Kompromiss. Volle Breite auf JEDER Breite braeuchte einen
+ * Scroll-Container, der nicht `main` selbst ist (`overflow-y` auf einen
+ * inneren Wrapper statt auf `main`) — das aendert Sticky-Positionierung,
+ * die mobile Bottom-Nav-Polsterung und E2E-Scrollannahmen, deshalb hier
+ * nicht angefasst; siehe Task-12-Bericht fuer die Empfehlung.
+ *
+ * Die Opazitaet atmet leicht (6s, 1 → 0.85 in der Mitte) statt zu pulsieren —
+ * das Licht steht bei Ankunft auf voller Staerke, nicht zuletzt (auf einer Seite,
+ * deren These "ein Lichtkegel" ist, muss das Licht schon beim Laden wirken).
+ * Unter prefers-reduced-motion bleibt das Licht selbst stehen, nur die Animation
  * faellt weg: der Kegel ist Inhalt (Beleuchtung), keine Bewegung.
  */
 .lichtkegel {
@@ -313,23 +366,37 @@ body {
 .lichtkegel::before {
   content: "";
   position: absolute;
-  left: 50%;
+  left: -14px;
   top: -6rem;
-  width: min(190%, 64rem);
+  width: calc(100% + 28px);
   height: 30rem;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse 55% 48% at 30% 46%,
+  background: radial-gradient(140px 130px at 30% 46%,
     color-mix(in srgb, var(--amber) 11%, transparent) 0%,
     color-mix(in srgb, var(--amber) 7%,  transparent) 26%,
     color-mix(in srgb, var(--amber) 3%,  transparent) 48%,
-    transparent 84%);
+    transparent 78%);
   pointer-events: none;
   z-index: -1;
   animation: lichtkegel-atmen 6s ease-in-out infinite;
 }
+@media (min-width: 1100px) {
+  .lichtkegel::before {
+    left: -140px;
+    width: calc(100% + 280px);
+    background: radial-gradient(300px 230px at 30% 46%,
+      color-mix(in srgb, var(--amber) 11%, transparent) 0%,
+      color-mix(in srgb, var(--amber) 7%,  transparent) 26%,
+      color-mix(in srgb, var(--amber) 3%,  transparent) 48%,
+      transparent 84%);
+  }
+}
+/* Die Atmung beginnt bei voller Stärke und senkt sich in der Mitte des
+   Zyklus leicht ab — nicht umgekehrt. Vorher stand das Licht bei Ankunft
+   auf 0.85 und erreichte seine Stärke erst nach ~3 s: auf der Seite, deren
+   These "eine Lichtquelle" ist, kam das Licht zuletzt. */
 @keyframes lichtkegel-atmen {
-  0%, 100% { opacity: 0.85; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lichtkegel::before {
@@ -431,6 +498,19 @@ h6 {
 }
 .font-display-axis-soft {
   font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144;
+}
+
+/* The one Fraunces headline's own axis recipe (dashboard quest, /focus
+   stage) — SOFT 50/WONK 1/opsz 130, distinct from the two demo axes above.
+   Tailwind's arbitrary-value class syntax can't carry this: the axis list's
+   quotes and commas don't survive a class name, so a named class in the
+   stylesheet is the only place it reads naturally. That also keeps it out
+   of an inline style object, so `daily-quest-card.tsx` and
+   `focus-mode-view.tsx` don't need one each — and the ratchet's
+   `/style=\{\{/g` check can actually see what inline styles remain
+   (Task-9-Review F2). */
+.font-display-stage {
+  font-variation-settings: "SOFT" 50, "WONK" 1, "opsz" 130;
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
@@ -596,14 +676,24 @@ h6 {
 }
 
 /* ─── Link defaults ─────────────────────────────────────────────────────────── */
+/*
+ * Bis 2026-08-22 war jeder Link auf jeder Seite amberfarben. Damit brach
+ * die Ein-Amber-Regel strukturell auf jeder Seite, die mehr als einen Link
+ * im Inhalt hat — und zwar unabhängig davon, was die Seite selbst tut.
+ * Ein Link im Fließtext ist keine "eine Handlung"; er ist Text, der wohin
+ * führt. Er wird deshalb unterstrichen statt gefärbt. Amber bleibt der
+ * einen Handlung, die es explizit über Button variant="primary" anfordert.
+ */
 a {
-  color: var(--accent-amber);
-  text-decoration: none;
-  transition: color 0.15s ease;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--hairline);
+  text-underline-offset: 0.15em;
+  transition: text-decoration-color 0.15s ease;
 }
 
 a:hover {
-  color: var(--text-primary);
+  text-decoration-color: currentColor;
 }
 
 /* ─── Gamification Animations ───────────────────────────────────────────────── */
