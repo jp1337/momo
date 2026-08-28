@@ -81,7 +81,7 @@ UI components. Dumb by design — receive props, render UI, emit events upward. 
 - `onboarding/steps/create-topic-step.tsx` — Step 2: simplified inline topic creation form (title + IconPicker + color swatches). Calls POST /api/topics, auto-advances to tasks step on success
 - `onboarding/steps/add-tasks-step.tsx` — Step 3: quick-add tasks with Enter shortcut. AnimatePresence for add/remove. Shows "skipped" message if no topic was created
 - `onboarding/steps/notification-step.tsx` — Step 4: timezone auto-detection + web push toggle. Gracefully degrades for unsupported/denied browsers
-- `shared/search-filter-bar.tsx` — Exports `SearchInput` (reading column) and `FilterPills` (rail) separately, used that way by `/tasks` and `/wishlist`; the composed `SearchFilterBar` itself has no callers left since Phase 2 Task 6
+- `shared/search-filter-bar.tsx` — Exports `SearchInput` (reading column) and `FilterPills` (rail) separately, used that way by `/tasks` and `/wishlist`. The composed `SearchFilterBar` had no callers left since Phase 2 Task 6 and was deleted in the Phase 2 close-out
 - `api-keys/api-keys-view.tsx` — API key management (create form, one-time key display, revoke)
 - `animations/confetti.tsx` — Confetti burst on task completion / level-up
 - `animations/achievement-toast.tsx` — Toast overlay when an achievement is unlocked

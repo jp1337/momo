@@ -430,7 +430,10 @@ Das Skript verifiziert *referenziert ⇒ vorhanden*, nie umgekehrt. Beide Gegenr
   Template-Literal konstruiert (`closure.quote_${n}`, `templates.<x>.task_N`,
   `progress.tab_${id}`). Die echte Zahl braucht einen Scan, der Template-Literale versteht, und
   **keine Löschung auf Verdacht**: eine falsche Löschung ist genau das, was `check:i18n` nicht
-  bemerkt.
+  bemerkt. Ein neunzehnter kam im Schlussreview dazu: `quick.empty_title` verlor seine einzige
+  Referenz, als `five-minute-view.tsx`s Leerzustand zu einem `EmptyState` wurde, der nur
+  `empty_subtitle` zeigt — `t("empty_title")` in `components/focus/focus-mode-view.tsx:124` ist ein
+  anderer Namensraum (`focus`, nicht `quick`).
 - **Hartkodiertes Deutsch.** `components/layout/user-menu.tsx` liefert fünf deutsche Labels in
   einer Sieben-Sprachen-App: `Statistiken` (:152), `Wochenrückblick` (:155), `Einstellungen`
   (:158), `Admin` (:170), `Abmelden` (:192). Die Datei importiert `useTranslations("nav")` und ruft
@@ -447,6 +450,49 @@ Das Skript verifiziert *referenziert ⇒ vorhanden*, nie umgekehrt. Beide Gegenr
 | `components/wishlist/wishlist-view.tsx:426-436` | Der Verlaufs-Umschalter zählt nur die gekauften Wünsche (`Verlauf (1)`), klappt aber gekaufte **und** verworfene auf. Vorbestehend, identisch bei `84c4871`. |
 | `components/stats/weekday-chart.tsx:43` | Das `aria-label` ist nicht auf `hasData` gegattert, anders als jeder andere „bester Tag"-Verbraucher derselben Datei. In einer Nullwoche liest ein Screenreader „Bester Tag: Mo — 0 Abschlüsse" vor — einen besten Tag, den die sichtbare Oberfläche absichtlich unterdrückt. Fix: ``aria-label={hasData ? `${bestDayLabel}: ${labels[bestIdx]} — ${bestDayCount}` : bestDayLabel}``. |
 | `app/(app)/wishlist/loading.tsx` | Zentrierte `max-w-[var(--measure)]`-Spalte, während die Seite dahinter ein `PageFrame` mit Rand ist — über 1100 px springt die Überschrift nach links, sobald der Inhalt da ist. `/tasks`' Skeleton ist ebenfalls unmigriert, ein Hausmuster gibt es also noch nicht. |
+
+**Aus dem Schlussreview des ganzen Branches (2026-08-28)** — gefunden, bewusst nicht behoben.
+Details und Begründung stehen in `docs-tech/lichtkegel-phase2/abschluss.md`.
+
+- **Der Seitenkopf springt bei drei von vier Tab-Wechseln.** Zwei Tabs können randlos sein —
+  `habits-tab.tsx` und `review-tab.tsx:94` (`const rail = !hasRail ? undefined : (`) geben
+  `rail={undefined}` zurück, sobald ihre Randsummen 0 sind; `achievements-tab.tsx` und
+  `stats-tab.tsx` bauen ihren Rand dagegen unbedingt und sind immer gerandet. `page-frame.tsx:57-60`
+  zentriert (`mx-auto`) eine `max-w-[var(--measure)]`-Spalte ohne Rand und eine
+  `max-w-[calc(measure+gutter+rail)]`-Spalte mit Rand — auf einem frischen Konto (keine
+  Habit-Abschlüsse, keine Review-Aktivität) trifft das den Standard-Erstlauf durch die Tableiste,
+  nicht nur einen Randfall. Kein Regelverstoß (`countBoxes` sieht keine Fläche), und `PageFrame` auf
+  Seitenebene zu hoisten ist keine dritte Option — jeder Tab holt seine Randdaten inzwischen selbst,
+  ein gemeinsamer `PageFrame` müsste alle vier Datenquellen wieder vorab laden. Entscheidung:
+  festhalten, nicht beheben.
+- **Zwei Geldbeträge mit unterschiedlicher Definition stehen jetzt nebeneinander.**
+  `components/wishlist/budget-bar.tsx:105` zeigt `budget_this_month` aus `getBudgetSummary`
+  (`lib/wishlist.ts:416-424`: `gte(wishlistItems.createdAt, startOfMonth)` — Scope ist *wann
+  angelegt*, nicht *wann gekauft*); `:145` direkt darunter zeigt `budget_total_spent`, das
+  `wishlist-view.tsx:132` korrekt über `status === "BOUGHT"` bildet. Wer einen im Vormonat
+  angelegten Wunsch heute kauft, liest „Budget diesen Monat: €0,00 / €500,00" über „€49,99 insgesamt
+  ausgegeben" direkt darunter. Das `createdAt`-Scoping ist vorbestehend — neu ist, dass die Phase
+  beide Zahlen nebeneinanderstellt und den Widerspruch damit erstmals sichtbar macht. Nicht heute
+  behebbar: `lib/db/schema.ts:638-661` hat weder `boughtAt` noch `updatedAt` auf `wishlistItems` —
+  die fehlende Spalte ist die Voraussetzung für einen Fix.
+- **`/quick` zeigt seit Task 7 keinen Münzwert mehr — bewusst hingenommen.** Der Wechsel von
+  `TaskItem` zu `TaskRow` entfernte `coinValue`/`postponeCount`/`energyLevel` aus der Zeile — auf
+  `/tasks` richtig, dort zieht der Münzwert in `tasks-rail.tsx` (siehe `task-row.tsx:16`).
+  `app/(app)/quick/page.tsx` rendert aber ein randloses `PageFrame`; der Wert wird weiter
+  serialisiert (`components/quick/five-minute-view.tsx:38`) und nur noch vom Undo-Refund-Pfad
+  gelesen (`:133-134`), aber nirgends mehr angezeigt. Entscheidung: der Verlust bleibt bewusst
+  hingenommen und wird nicht per Ad-hoc-Rand am Phasenende nachgerüstet — kein Spec-Auftrag dafür,
+  und die Zahl existiert weiterhin auf `/tasks`. Ein `/quick`-Rand, der die Münzsumme der Session
+  zeigt, wäre die naheliegende Erweiterung.
+
+| Ort | Befund |
+|---|---|
+| `components/progress/tabs/stats-tab.tsx:186,191,194` | `RAIL_LINE` wird in der Lesespalte benutzt (Abschnitt „Fortschritt"), nicht im Rand. Die eigene JSDoc der Konstante (`ui/list.tsx`) nennt sie „eine Zeile im Rand" und rechtfertigt das feste `--ink-3` damit, dass der Rand nie Amber trägt — die Zusicherung, nicht das Rendering, ist gebrochen. Fix: `META_LINE` umbenennen oder die drei Stellen inline setzen. |
+| `components/progress/tabs/review-tab.tsx:106-108` und `stats-tab.tsx:129,134` | Das hartkodierte Tageskürzel `d` sitzt an drei Stellen, nicht einer — beide bauen `{n}d {label}` per JS-Konkatenation statt ICU-Nachricht. Chinesisch rendert „3d 连击 · 最佳连击 12d". Plan-vorgegeben (das Zwei-Key-Budget der Phase verbot einen neuen ICU-Key); Fix ist ein Key für alle drei Stellen. |
+| `components/stats/weekday-chart.tsx:59` und `energy-week-block.tsx:222` | `role="gridcell"` ist ungültig und wirkungslos — kein `role="grid"`/`role="row"`-Elternteil, dazu innerhalb eines `role="img"`-Containers, der Kinder als reine Präsentation markiert. Bei `energy-week-block` sind die Zellen `h-3 w-3` (12px) und liegen ohnehin schon unter `countBoxes`' 12×12px-Freigrenze — die Rolle bringt dort gar nichts. Die Messvorschrift formt hier das Markup, nicht das Design. |
+| `app/(app)/progress/page.tsx:44`, `app/(app)/wishlist/page.tsx:59`, `app/(app)/quick/page.tsx:111` | Kopfzeilen-Idiom driftet über drei Seiten: `gap-4` vs. `gap-2`, Untertitel/Tab-Text `--ink-2` vs. `--ink-3`. Dieselbe Absicht, jede für sich auf der Skala, aber in zwei Eigenschaften uneinheitlich. |
+| `components/stats/streak-sparkline.tsx:58` | Hartkodiert englisches `aria-label="Streak history sparkline"` in einer Sieben-Sprachen-App. Vorbestehend (identisch bei `c4889dd`), aber diese Phase hat dieselbe Datei angefasst und im selben Task das Geschwister-`aria-label` in `weekday-chart.tsx` lokalisiert — die Inkonsistenz ist jetzt auffällig. Braucht einen Key; das Zwei-Key-Budget der Phase ist ausgegeben. |
+| `app/(app)/stats/page.tsx`, `app/(app)/review/page.tsx` | `redirect()` (307) statt `permanentRedirect()` (308) für einen dokumentiert dauerhaften Routenumzug. 307 ist die sicherere Voreinstellung — eine bewusste Abwägung, kein Bug. |
 
 **Erledigt** ✅ — Automerge-Gate (`lint`, `build`, `test` sind seit 2026-08-21 required status checks auf `main`, und die beiden neuen Jobs laufen im PR-Gate-Workflow — vorher berichteten Lint und Build erst *nach* dem Merge, bei `required_status_checks: null`) · Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
 0.4.0) · E2E-Tests (Playwright, 13 Specs, seit 0.4.0) · Dependency-Stau aufgelöst

@@ -23,15 +23,18 @@ import type { HabitStreak, HabitWithHistory } from "@/lib/habits";
 import { HabitCard } from "@/components/habits/habit-card";
 import { YearSelector } from "@/components/habits/year-selector";
 import { PageFrame } from "@/components/ui/page-frame";
-import { GroupHeading, RAIL_LINE } from "@/components/ui/list";
+import { RAIL_LINE } from "@/components/ui/list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 
 /**
- * The habits tab's content column: a mono `GroupHeading` + subtitle, the
- * year selector (only when there's more than one year to pick from and at
- * least one habit), then one `List`+`Row` (via `HabitCard`) plus its
- * `ContributionGrid` per habit — or `EmptyState` when there is none.
+ * The habits tab's content column: a subtitle (no `GroupHeading` — the tab
+ * bar's own active pill already reads "Gewohnheiten"; a second heading below
+ * it repeating the same word was Phase 1 residue from before the tab bar
+ * existed, removed in the Phase 2 close-out), the year selector (only when
+ * there's more than one year to pick from and at least one habit), then one
+ * `List`+`Row` (via `HabitCard`) plus its `ContributionGrid` per habit — or
+ * `EmptyState` when there is none.
  *
  * `habits`/`year`/`yearOptions` are pre-fetched by `HabitsTab` below, which
  * also derives the tab's rail sums from the same `habits` array — one
@@ -84,7 +87,6 @@ async function HabitsList({
 
   return (
     <section className="flex flex-col gap-6">
-      <GroupHeading>{t("page_title")}</GroupHeading>
       <p className="m-0 font-[family-name:var(--font-ui)] text-sm text-[var(--ink-2)]">
         {t("page_subtitle")}
       </p>

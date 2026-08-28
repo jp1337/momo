@@ -91,7 +91,6 @@ export default async function QuickPage() {
     postponeCount: task.postponeCount ?? 0,
     estimatedMinutes: task.estimatedMinutes ?? null,
     energyLevel: task.energyLevel ?? null,
-    snoozedUntil: null,
   }));
 
   const serializedTopics = topics.map((tp) => ({

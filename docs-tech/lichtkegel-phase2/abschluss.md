@@ -102,12 +102,25 @@ gehen — beides eine eigene Aufgabe, nicht dieser Abschluss.
 
 Drei Beobachtungen, keine davon ein Regelverstoß:
 
-- **Der Seitenkopf springt zwischen den Tabs.** `habits-tab` gibt `rail={undefined}`
-  zurück, sobald alle Randsummen 0 sind — bewusst, damit keine leere Randspalte
-  entsteht, an der fünf Designregeln vorbeimessen (dokumentiert in
-  `habits-tab.tsx:279-296`). `PageFrame` zentriert dann die Spalte, und „Progress"
-  samt Tableiste steht 128 px weiter rechts als auf den anderen drei Tabs. Der Preis
-  dieser Entscheidung war nicht mitgewogen.
+- **Der Seitenkopf springt zwischen den Tabs.** Zwei der vier Tabs können randlos
+  sein — `habits-tab.tsx` (`rail={undefined}`, sobald alle Randsummen 0 sind,
+  dokumentiert in `habits-tab.tsx:279-296`) **und** `review-tab.tsx:94`
+  (`const rail = !hasRail ? undefined : (`), aus demselben Grund: keine leere
+  Randspalte, an der fünf Designregeln vorbeimessen. `achievements-tab.tsx` und
+  `stats-tab.tsx` bauen ihren Rand dagegen unbedingt und sind immer gerandet.
+  `page-frame.tsx:57-60` zentriert (`mx-auto`) eine `max-w-[var(--measure)]`-Spalte
+  ohne Rand und eine `max-w-[calc(measure+gutter+rail)]`-Spalte mit Rand — beide
+  für sich korrekt, aber verschieden breit, sodass „Progress" samt Tableiste um
+  ~128 px verspringt. Auf einem frischen Konto (keine Habit-Abschlüsse, keine
+  Review-Aktivität) trifft das **drei von vier Tab-Wechseln** — den
+  Standard-Erstlauf durch die Tableiste, kein Randfall. Der Preis dieser
+  Entscheidung war nicht mitgewogen.
+
+  `PageFrame` je Tab statt auf Seitenebene zu hoisten ist keine dritte Option:
+  jeder Tab holt seine Randdaten inzwischen selbst (siehe `habits-tab.tsx`s
+  eigener Kommentar zur Aufgabe, die diese Trennung erst nötig machte), ein
+  gemeinsamer `PageFrame` auf Seitenebene müsste wieder alle vier Datenquellen
+  vorab laden. Entscheidung bleibt: festhalten, nicht beheben.
 - **Der amber Fokusring ist im Screenshot sichtbar** — das Suchfeld auf `/wishlist`
   trägt ihn deutlich. Fund 1 der Zustandsprüfung, drei Gatter blind dafür.
 - **Der Errungenschaftskatalog ist hartkodiert deutsch.** Bei Locale `en` steht dort
@@ -128,12 +141,32 @@ Drei Beobachtungen, keine davon ein Regelverstoß:
 | `achievement-card.tsx` | 242 Zeilen → `achievement-row.tsx` |
 | neue i18n-Keys | zwei, wie budgetiert |
 
+## Eine bewusst hingenommene Lücke: `/quick` zeigt keinen Münzwert mehr
+
+Task 7 tauschte `TaskItem` gegen `TaskRow`. Auf `/tasks` ist das korrekt: der
+Münzwert zieht in `tasks-rail.tsx` um (siehe `task-row.tsx:16`). `/quick`
+(`app/(app)/quick/page.tsx`) rendert aber ein randloses `PageFrame` — für den
+Münzwert gibt es dort kein Ziel. Er wird weiter serialisiert
+(`components/quick/five-minute-view.tsx:38`) und nur noch vom
+Undo-Refund-Pfad gelesen (`:133-134`), aber nirgends mehr angezeigt: eine
+Zahl, die vor dieser Phase sichtbar war, ist es jetzt auf `/quick` nirgends.
+Sie fiel zwischen Task 7s Zuschnitt („Consumer tauschen") und Task 1/6s
+Zuschnitt („den Rand bauen") — niemand besaß sie.
+
+**Entscheidung: Verlust bewusst hingenommen, kein `/quick`-Rand in dieser
+Phase.** Ein Rand dort wäre neue Entwurfsfläche am Phasenende, ohne
+Spec-Deckung und nach dem letzten Review — und die Zahl existiert weiterhin
+auf `/tasks`. In `ROADMAP.md` nachgetragen: ein `/quick`-Rand mit der
+Münzsumme der Session als naheliegender Ort für die Wiederherstellung.
+
 ## Was offen bleibt
 
 Elf Funde außerhalb jedes Task-Zuschnitts stehen in **`ROADMAP.md`** unter
 „Aus der Lichtkegel-Phase 2" — Testinfrastruktur, drei Löcher in der Messung selbst,
-zwei i18n-Richtungen, drei Kleinigkeiten. Die Messgrundlage dazu steht in
-`zustandspruefung.md`.
+zwei i18n-Richtungen, drei Kleinigkeiten. Der Schlussreview des ganzen Branches hat
+dort denselben Abschnitt um den Kopfzeilen-Sprung (oben), den Budget-Widerspruch, die
+`/quick`-Entscheidung und sechs weitere Kleinigkeiten ergänzt. Die Messgrundlage zu
+den ursprünglichen elf steht in `zustandspruefung.md`.
 
 Der wichtigste davon in einem Satz: **die Ratsche liest kein CSS**, die Suite
 interagiert nie, und die Phasen sind nach Seiten geschnitten, während die Verstöße in
