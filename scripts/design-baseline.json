@@ -481,20 +481,14 @@
   },
   "components/stats/energy-week-block.tsx": {
     "color": 1,
-    "radius": 3,
-    "inline": 20,
-    "spacing": 4
-  },
-  "components/stats/streak-sparkline.tsx": {
-    "color": 0,
-    "radius": 1,
-    "inline": 4,
-    "spacing": 1
+    "radius": 0,
+    "inline": 0,
+    "spacing": 0
   },
   "components/stats/weekday-chart.tsx": {
     "color": 0,
-    "radius": 1,
-    "inline": 8,
+    "radius": 0,
+    "inline": 1,
     "spacing": 0
   },
   "components/tasks/bulk-action-bar.tsx": {

@@ -2,7 +2,9 @@
  * EnergyWeekBlock — 90-day GitHub-style energy heatmap for the Stats page.
  *
  * Renders:
- *   1. Three count pills (HIGH / MEDIUM / LOW) for the last 7 days.
+ *   1. Up to three mono count lines (HIGH / MEDIUM / LOW) for the last 7
+ *      days — a level with zero check-ins is a missing metric and renders
+ *      nothing (see `EmptyState`'s doc comment: leerraum is not a defect).
  *   2. A 13-week × 7-day calendar heatmap coloured by energy level.
  *   3. A compact legend below the grid.
  *
@@ -11,6 +13,8 @@
  */
 
 import { getTranslations, getLocale } from "next-intl/server";
+import { EmptyState } from "@/components/ui/empty-state";
+import { cn } from "@/lib/utils";
 import type { EnergyCheckin, EnergyLevelCounts } from "@/lib/energy";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -35,10 +39,34 @@ interface DaySlot {
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const LEVEL_META: Record<EnergyLevel, { color: string; icon: string; labelKey: "energy_level_high" | "energy_level_medium" | "energy_level_low" }> = {
-  HIGH:   { color: "var(--accent-amber)", icon: "⚡", labelKey: "energy_level_high" },
-  MEDIUM: { color: "var(--accent-green)", icon: "☀",  labelKey: "energy_level_medium" },
-  LOW:    { color: "#818cf8",             icon: "🌙", labelKey: "energy_level_low" },
+/**
+ * Die drei Energiestufen als eine Tinten-Rampe statt dreier Akzentfarben.
+ *
+ * Vorher: HIGH = --accent-amber (ein zweites Licht auf einer Seite, die
+ * schon eins hat), MEDIUM = --accent-green (= --done, das ausschließlich
+ * "erledigt" bedeutet), LOW = #818cf8 (ein roher Hex, der einzige
+ * color-Verstoß dieser Datei). Eine Rampe kodiert eine Ordnung; drei
+ * Akzentfarben behaupten drei Kategorien, die es nicht gibt.
+ */
+const LEVEL_META: Record<EnergyLevel, { color: string; labelKey: "energy_level_high" | "energy_level_medium" | "energy_level_low" }> = {
+  HIGH:   { color: "var(--ink)",   labelKey: "energy_level_high" },
+  MEDIUM: { color: "var(--ink-2)", labelKey: "energy_level_medium" },
+  LOW:    { color: "var(--ink-3)", labelKey: "energy_level_low" },
+};
+
+/**
+ * Literal Tailwind classes for the heatmap cells and legend swatches, keyed
+ * by level. `LEVEL_META.color` is a runtime string ("var(--ink)", …) and
+ * can't be interpolated into an arbitrary-value class — Tailwind's scanner
+ * generates CSS only for class strings that appear literally in the
+ * source, so a template-built `bg-[color-mix(...,${meta.color},...)]`
+ * would render with no matching stylesheet rule at all. This map keeps
+ * the three arbitrary-value classes fully literal.
+ */
+const LEVEL_CELL_BG: Record<EnergyLevel, string> = {
+  HIGH: "bg-[color-mix(in_srgb,var(--ink)_75%,transparent)]",
+  MEDIUM: "bg-[color-mix(in_srgb,var(--ink-2)_75%,transparent)]",
+  LOW: "bg-[color-mix(in_srgb,var(--ink-3)_75%,transparent)]",
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -127,89 +155,45 @@ export async function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWe
   const monthLabels = buildMonthLabels(locale);
 
   if (isEmpty) {
-    return (
-      <div
-        className="rounded-xl p-6"
-        style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
-      >
-        <p
-          className="text-sm"
-          style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
-        >
-          {t("energy_empty_hint")}
-        </p>
-      </div>
-    );
+    return <EmptyState line={t("energy_empty_hint")} />;
   }
 
   const weeks = buildHeatmap(history);
 
   return (
-    <div
-      className="rounded-xl p-6 flex flex-col gap-5"
-      style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}
-    >
-      {/* ── Count pills (last 7 days) ─────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-3">
+    <div className="flex flex-col gap-6">
+      {/* ── Count lines (last 7 days) ─────────────────────────────────────── */}
+      <div className="flex flex-col gap-1">
         {(Object.keys(LEVEL_META) as EnergyLevel[]).map((level) => {
-          const meta = LEVEL_META[level];
           const count = weekCounts[level];
+          if (count === 0) return null;
           return (
-            <div
+            <p
               key={level}
-              className="flex-1 min-w-[110px] flex items-center gap-2.5 px-4 py-3 rounded-lg"
-              style={{
-                backgroundColor: `color-mix(in srgb, ${meta.color} 8%, var(--bg-elevated))`,
-                border: `1px solid color-mix(in srgb, ${meta.color} 25%, var(--border))`,
-              }}
+              className="m-0 font-[family-name:var(--font-mono)] text-[0.8125rem] tabular-nums text-[var(--ink-3)]"
             >
-              <span aria-hidden="true" style={{ fontSize: "1.25rem" }}>{meta.icon}</span>
-              <div className="flex flex-col">
-                <span
-                  className="text-xs uppercase tracking-wider"
-                  style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
-                >
-                  {t(meta.labelKey)}
-                </span>
-                <span
-                  className="text-xl font-bold"
-                  style={{ fontFamily: "var(--font-display, 'Lora', serif)", color: meta.color }}
-                >
-                  {count}d
-                </span>
-              </div>
-            </div>
+              {count} {t(LEVEL_META[level].labelKey)}
+            </p>
           );
         })}
       </div>
 
       {/* ── Heatmap ───────────────────────────────────────────────────────── */}
       <div>
-        <p
-          className="text-xs font-medium uppercase tracking-wider mb-3"
-          style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)", color: "var(--text-muted)" }}
-        >
+        <p className="m-0 mb-3 font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)]">
           {t("energy_heatmap_header")}
         </p>
 
         <div className="flex gap-2 overflow-x-auto pb-1" role="img" aria-label={t("energy_heatmap_aria")}>
           {/* Weekday labels */}
-          <div
-            className="flex flex-col flex-shrink-0"
-            style={{ gap: "3px", paddingTop: "18px" }}
-          >
+          <div className="flex flex-shrink-0 flex-col gap-1 pt-4">
             {weekdayLabels.map((label, i) => (
               <div
                 key={i}
-                style={{
-                  height: "12px",
-                  lineHeight: "12px",
-                  fontSize: "9px",
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: "var(--text-muted)",
-                  visibility: [0, 2, 4, 6].includes(i) ? "visible" : "hidden",
-                  userSelect: "none",
-                }}
+                className={cn(
+                  "h-3 select-none font-[family-name:var(--font-mono)] text-[9px] leading-3 text-[var(--ink-3)]",
+                  [0, 2, 4, 6].includes(i) ? "visible" : "invisible",
+                )}
               >
                 {label}
               </div>
@@ -217,22 +201,13 @@ export async function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWe
           </div>
 
           {/* Week columns */}
-          <div className="flex flex-col" style={{ gap: "3px" }}>
+          <div className="flex flex-col gap-1">
             {/* Month label row */}
-            <div className="flex" style={{ gap: "3px", height: "14px" }}>
+            <div className="flex h-3 gap-1">
               {weeks.map((week, wi) => (
                 <div
                   key={wi}
-                  style={{
-                    width: "12px",
-                    flexShrink: 0,
-                    fontSize: "9px",
-                    fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                    color: "var(--text-muted)",
-                    overflow: "visible",
-                    whiteSpace: "nowrap",
-                    userSelect: "none",
-                  }}
+                  className="w-3 shrink-0 select-none overflow-visible whitespace-nowrap font-[family-name:var(--font-mono)] text-[9px] leading-3 text-[var(--ink-3)]"
                 >
                   {getMonthLabel(weeks, wi, monthLabels)}
                 </div>
@@ -241,32 +216,24 @@ export async function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWe
 
             {/* Day rows (Mon–Sun) */}
             {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
-              <div key={dayIndex} className="flex" style={{ gap: "3px" }}>
+              <div key={dayIndex} className="flex gap-1">
                 {weeks.map((week, wi) => {
                   const slot = week[dayIndex];
-                  const meta = slot.level ? LEVEL_META[slot.level] : null;
+                  const bgClass = !slot.inRange
+                    ? "bg-transparent"
+                    : slot.level
+                    ? LEVEL_CELL_BG[slot.level]
+                    : "bg-[var(--raised)]";
                   return (
                     <div
                       key={wi}
+                      role="gridcell"
                       title={
                         slot.inRange
                           ? `${slot.date}${slot.level ? ` — ${t(LEVEL_META[slot.level].labelKey)}` : ` — ${t("energy_no_checkin")}`}`
                           : undefined
                       }
-                      style={{
-                        width: "12px",
-                        height: "12px",
-                        flexShrink: 0,
-                        borderRadius: "2px",
-                        backgroundColor: !slot.inRange
-                          ? "transparent"
-                          : slot.level
-                          ? `color-mix(in srgb, ${meta!.color} 75%, transparent)`
-                          : "var(--bg-elevated)",
-                        border: slot.inRange && !slot.level
-                          ? "1px solid var(--border)"
-                          : "none",
-                      }}
+                      className={cn("h-3 w-3 shrink-0", bgClass)}
                     />
                   );
                 })}
@@ -276,41 +243,16 @@ export async function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWe
         </div>
 
         {/* Legend */}
-        <div
-          className="flex items-center gap-4 mt-3 flex-wrap"
-          style={{ fontFamily: "var(--font-ui, 'DM Sans', sans-serif)" }}
-        >
-          {(Object.keys(LEVEL_META) as EnergyLevel[]).map((level) => {
-            const meta = LEVEL_META[level];
-            return (
-              <div key={level} className="flex items-center gap-1.5">
-                <div
-                  style={{
-                    width: "10px",
-                    height: "10px",
-                    borderRadius: "2px",
-                    backgroundColor: `color-mix(in srgb, ${meta.color} 75%, transparent)`,
-                    flexShrink: 0,
-                  }}
-                />
-                <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
-                  {meta.icon} {t(meta.labelKey)}
-                </span>
-              </div>
-            );
-          })}
-          <div className="flex items-center gap-1.5">
-            <div
-              style={{
-                width: "10px",
-                height: "10px",
-                borderRadius: "2px",
-                backgroundColor: "var(--bg-elevated)",
-                border: "1px solid var(--border)",
-                flexShrink: 0,
-              }}
-            />
-            <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{t("energy_no_checkin")}</span>
+        <div className="mt-3 flex flex-wrap items-center gap-4 font-[family-name:var(--font-mono)] text-[0.6875rem] text-[var(--ink-3)]">
+          {(Object.keys(LEVEL_META) as EnergyLevel[]).map((level) => (
+            <div key={level} className="flex items-center gap-2">
+              <div className={cn("h-2.5 w-2.5 shrink-0", LEVEL_CELL_BG[level])} />
+              <span>{t(LEVEL_META[level].labelKey)}</span>
+            </div>
+          ))}
+          <div className="flex items-center gap-2">
+            <div className="h-2.5 w-2.5 shrink-0 bg-[var(--raised)]" />
+            <span>{t("energy_no_checkin")}</span>
           </div>
         </div>
       </div>

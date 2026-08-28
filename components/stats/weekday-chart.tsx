@@ -1,8 +1,11 @@
+import { cn } from "@/lib/utils";
+
 /**
  * WeekdayChart — 7-column bar chart showing completions by weekday.
  *
  * Pure server component. Renders CSS grid bars, no chart library.
- * Highlights the best day with the accent color.
+ * Highlights the best day with the ink color scale (no amber — the
+ * page's one amber is `streak-sparkline.tsx`'s "today" label).
  */
 
 interface WeekdayChartProps {
@@ -32,48 +35,33 @@ export function WeekdayChart({
   const hasData = data.some((v) => v > 0);
 
   return (
-    <div
-      className="rounded-xl p-6 flex flex-col gap-4"
-      style={{
-        backgroundColor: "var(--bg-surface)",
-        border: "1px solid var(--border)",
-      }}
-    >
+    <div className="flex flex-col gap-4">
       {/* Bar chart */}
       <div
-        className="grid items-end gap-2"
-        style={{ gridTemplateColumns: "repeat(7, 1fr)", height: "80px" }}
+        className="grid h-[80px] items-end gap-2 [grid-template-columns:repeat(7,1fr)]"
         role="img"
-        aria-label="Completions by weekday"
+        aria-label={bestDayLabel}
       >
         {data.map((value, i) => {
           const pct = max > 0 ? (value / max) * 100 : 0;
           const isBest = i === bestIdx && hasData;
           return (
-            <div key={i} className="flex flex-col items-center gap-1 h-full justify-end">
-              {/* Value label */}
-              <span
-                className="text-xs font-medium"
-                style={{
-                  fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                  color: isBest ? "var(--accent-amber)" : "var(--text-muted)",
-                  fontSize: "0.65rem",
-                }}
-              >
+            <div key={i} className="flex h-full flex-col items-center justify-end gap-1">
+              <span className="font-[family-name:var(--font-mono)] text-[0.6875rem] tabular-nums text-[var(--ink-3)]">
                 {value > 0 ? value : ""}
               </span>
-              {/* Bar */}
+              {/* `role="gridcell"` ist die benannte Diagramm-Ausnahme, die
+                  `countBoxes` prüft: eine Marke IST eine gefüllte Fläche, per
+                  Definition — ihre Höhe kodiert die Abschlusszahl. Ohne sie
+                  zählt jeder der sieben Balken als Kasten. Dieselbe Ausnahme,
+                  die `contribution-grid.tsx` seit Task 11 benutzt. */}
               <div
-                style={{
-                  width: "100%",
-                  maxWidth: "32px",
-                  height: `${Math.max(pct, 4)}%`,
-                  borderRadius: "4px 4px 2px 2px",
-                  backgroundColor: isBest
-                    ? "var(--accent-amber)"
-                    : "color-mix(in srgb, var(--accent-green) 50%, var(--bg-elevated))",
-                  transition: "height 0.3s ease",
-                }}
+                role="gridcell"
+                className={cn(
+                  "w-full max-w-[32px]",
+                  isBest ? "bg-[var(--ink-2)]" : "bg-[var(--hairline)]",
+                )}
+                style={{ height: `${Math.max(pct, 4)}%` }}
               />
             </div>
           );
@@ -81,48 +69,23 @@ export function WeekdayChart({
       </div>
 
       {/* Weekday labels */}
-      <div
-        className="grid gap-2"
-        style={{ gridTemplateColumns: "repeat(7, 1fr)" }}
-      >
-        {labels.map((label, i) => {
-          const isBest = i === bestIdx && hasData;
-          return (
-            <span
-              key={i}
-              className="text-center text-xs font-medium"
-              style={{
-                fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: isBest ? "var(--accent-amber)" : "var(--text-muted)",
-              }}
-            >
-              {label}
-            </span>
-          );
-        })}
+      <div className="grid gap-2 [grid-template-columns:repeat(7,1fr)]">
+        {labels.map((label, i) => (
+          <span
+            key={i}
+            className="text-center font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)]"
+          >
+            {label}
+          </span>
+        ))}
       </div>
 
       {/* Best day annotation */}
       {hasData && (
-        <div className="flex items-center gap-2">
-          <span
-            className="text-xs font-medium"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {bestDayLabel}:
-          </span>
-          <span
-            className="text-xs font-semibold"
-            style={{
-              fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-              color: "var(--accent-amber)",
-            }}
-          >
-            {labels[bestIdx]} — {bestDayCount}
-          </span>
+        <div className="flex items-center gap-2 font-[family-name:var(--font-mono)] text-[0.6875rem] uppercase tracking-[0.16em] text-[var(--ink-3)]">
+          <span>{bestDayLabel}:</span>
+          <span className="text-[var(--ink)]">{labels[bestIdx]}</span>
+          <span>— {bestDayCount}</span>
         </div>
       )}
     </div>
