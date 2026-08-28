@@ -1047,11 +1047,6 @@
     "no_achievements": "Aucun succès trouvé.",
     "achievement_locked": "Verrouillé",
     "achievement_earned_at": "Obtenu le {date}",
-    "section_wishlist": "Liste de souhaits",
-    "wishlist_bought": "Acheté",
-    "wishlist_spent": "Dépensé",
-    "wishlist_open": "Ouvert",
-    "wishlist_discarded": "Écarté",
     "energy_level_high": "Élevée",
     "energy_level_medium": "Moyenne",
     "energy_level_low": "Basse",
@@ -1165,7 +1160,8 @@
     "page_title": "Progrès",
     "tab_habits": "Habitudes",
     "tab_achievements": "Succès",
-    "tab_review": "Bilan hebdomadaire"
+    "tab_review": "Bilan hebdomadaire",
+    "tab_stats": "Statistiques"
   },
   "api_keys": {
     "new_key_created": "Nouvelle clé API créée — visible une seule fois !",

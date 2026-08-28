@@ -46,7 +46,13 @@ export default async function ProgressPage({
       <h1 className="m-0 font-[family-name:var(--font-display)] text-[1.75rem] font-normal text-[var(--ink)]">
         {t("page_title")}
       </h1>
-      <nav className="flex gap-1" aria-label={t("page_title")}>
+      {/* `flex-wrap`, seit der vierte Tab dazukam (Task 4): drei Tabs passten
+          bei 375px in eine Zeile, vier nicht — "Statistiken" lag ausserhalb
+          des Viewports, und der Text des dritten brach innerhalb seiner
+          eigenen Flaeche um. Umbruch statt horizontalem Scrollstreifen: ein
+          Streifen versteckt den letzten Tab hinter einer Geste, die nichts
+          ankuendigt; zwei Zeilen zeigen alle vier. */}
+      <nav className="flex flex-wrap gap-1" aria-label={t("page_title")}>
         {VALID_TABS.map((key) => {
           const isActive = tab === key;
           return (
@@ -60,7 +66,7 @@ export default async function ProgressPage({
                   : "bg-transparent font-medium text-[var(--ink-3)]! hover:text-[var(--ink-2)]!",
               )}
             >
-              {t(`tab_${key}` as "tab_habits" | "tab_achievements" | "tab_review")}
+              {t(`tab_${key}`)}
             </Link>
           );
         })}

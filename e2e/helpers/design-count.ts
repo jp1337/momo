@@ -43,6 +43,7 @@ export const MIGRATED_PAGES: string[] = [
   "/progress", // = ?tab=habits, der Default
   "/progress?tab=achievements",
   "/progress?tab=review",
+  "/progress?tab=stats",
 ];
 
 /**

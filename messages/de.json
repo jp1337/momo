@@ -1047,11 +1047,6 @@
     "no_achievements": "Keine Errungenschaften gefunden.",
     "achievement_locked": "Gesperrt",
     "achievement_earned_at": "Verdient am {date}",
-    "section_wishlist": "Wunschliste",
-    "wishlist_bought": "Gekauft",
-    "wishlist_spent": "Ausgegeben",
-    "wishlist_open": "Offen",
-    "wishlist_discarded": "Verworfen",
     "energy_level_high": "Hoch",
     "energy_level_medium": "Mittel",
     "energy_level_low": "Niedrig",
@@ -1165,7 +1160,8 @@
     "page_title": "Fortschritt",
     "tab_habits": "Gewohnheiten",
     "tab_achievements": "Errungenschaften",
-    "tab_review": "Wochenrückblick"
+    "tab_review": "Wochenrückblick",
+    "tab_stats": "Statistiken"
   },
   "api_keys": {
     "new_key_created": "Neuer API Key erstellt — nur einmal sichtbar!",

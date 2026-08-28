@@ -11,9 +11,10 @@ import type { ReactNode } from "react";
 import { HabitsTab } from "./tabs/habits-tab";
 import { AchievementsTab } from "./tabs/achievements-tab";
 import { ReviewTab } from "./tabs/review-tab";
+import { StatsTab } from "./tabs/stats-tab";
 
-export type Tab = "habits" | "achievements" | "review";
-export const VALID_TABS: Tab[] = ["habits", "achievements", "review"];
+export type Tab = "habits" | "achievements" | "review" | "stats";
+export const VALID_TABS: Tab[] = ["habits", "achievements", "review", "stats"];
 
 export interface ProgressTabsProps {
   tab: Tab;
@@ -36,5 +37,6 @@ export interface ProgressTabsProps {
 export async function ProgressTabs({ tab, userId, header, yearParam }: ProgressTabsProps) {
   if (tab === "achievements") return <AchievementsTab userId={userId} header={header} />;
   if (tab === "review") return <ReviewTab userId={userId} header={header} />;
+  if (tab === "stats") return <StatsTab userId={userId} header={header} />;
   return <HabitsTab userId={userId} header={header} yearParam={yearParam} />;
 }

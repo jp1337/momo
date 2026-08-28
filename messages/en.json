@@ -1047,11 +1047,6 @@
     "no_achievements": "No achievements found.",
     "achievement_locked": "Locked",
     "achievement_earned_at": "Earned on {date}",
-    "section_wishlist": "Wishlist",
-    "wishlist_bought": "Bought",
-    "wishlist_spent": "Spent",
-    "wishlist_open": "Open",
-    "wishlist_discarded": "Discarded",
     "energy_level_high": "High",
     "energy_level_medium": "Medium",
     "energy_level_low": "Low",
@@ -1165,7 +1160,8 @@
     "page_title": "Progress",
     "tab_habits": "Habits",
     "tab_achievements": "Achievements",
-    "tab_review": "Weekly Review"
+    "tab_review": "Weekly Review",
+    "tab_stats": "Statistics"
   },
   "api_keys": {
     "new_key_created": "New API key created — only visible once!",

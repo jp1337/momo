@@ -53,12 +53,6 @@
     "inline": 5,
     "spacing": 0
   },
-  "app/(app)/stats/page.tsx": {
-    "color": 1,
-    "radius": 7,
-    "inline": 55,
-    "spacing": 5
-  },
   "app/(app)/tasks/loading.tsx": {
     "color": 0,
     "radius": 4,
@@ -477,12 +471,6 @@
     "color": 0,
     "radius": 0,
     "inline": 1,
-    "spacing": 0
-  },
-  "components/stats/energy-week-block.tsx": {
-    "color": 1,
-    "radius": 0,
-    "inline": 0,
     "spacing": 0
   },
   "components/stats/weekday-chart.tsx": {

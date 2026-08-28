@@ -31,7 +31,16 @@ export function StreakSparkline({ data, todayLabel, peakLabel }: StreakSparkline
   const chartH = height - padTop - padBottom;
 
   const max = Math.max(...data, 1);
-  const stepX = width / (data.length - 1 || 1);
+  // Rechts bleibt Platz für den Punkt am Ende der Linie (Task 4): sein
+  // Mittelpunkt lag vorher exakt auf `width`, also hing seine halbe Fläche
+  // über der Lesespalte — bei `preserveAspectRatio="none"` und 640px Maß
+  // gemessene 5px. Das ist kein gewollter Ausbruch (der trüge
+  // `data-breakout`), sondern ein Rand, der fehlte; sichtbar wurde er erst,
+  // als /progress?tab=stats in `MIGRATED_PAGES` kam. `padRight` ist größer
+  // als `r`, damit der Punkt auch nach der horizontalen Streckung innen
+  // bleibt.
+  const padRight = 4;
+  const stepX = (width - padRight) / (data.length - 1 || 1);
 
   const points = data.map((v, i) => ({
     x: i * stepX,
