@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils";
-
 /**
  * WeekdayChart — 7-column bar chart showing completions by weekday.
  *
@@ -7,6 +5,8 @@ import { cn } from "@/lib/utils";
  * Highlights the best day with the ink color scale (no amber — the
  * page's one amber is `streak-sparkline.tsx`'s "today" label).
  */
+
+import { cn } from "@/lib/utils";
 
 interface WeekdayChartProps {
   /** Completions per weekday, 7 elements (0=Mon … 6=Sun) */
@@ -40,7 +40,7 @@ export function WeekdayChart({
       <div
         className="grid h-[80px] items-end gap-2 [grid-template-columns:repeat(7,1fr)]"
         role="img"
-        aria-label={bestDayLabel}
+        aria-label={`${bestDayLabel}: ${labels[bestIdx]} — ${bestDayCount}`}
       >
         {data.map((value, i) => {
           const pct = max > 0 ? (value / max) * 100 : 0;

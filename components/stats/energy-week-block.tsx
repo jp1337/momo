@@ -39,29 +39,21 @@ interface DaySlot {
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-/**
- * Die drei Energiestufen als eine Tinten-Rampe statt dreier Akzentfarben.
- *
- * Vorher: HIGH = --accent-amber (ein zweites Licht auf einer Seite, die
- * schon eins hat), MEDIUM = --accent-green (= --done, das ausschließlich
- * "erledigt" bedeutet), LOW = #818cf8 (ein roher Hex, der einzige
- * color-Verstoß dieser Datei). Eine Rampe kodiert eine Ordnung; drei
- * Akzentfarben behaupten drei Kategorien, die es nicht gibt.
- */
-const LEVEL_META: Record<EnergyLevel, { color: string; labelKey: "energy_level_high" | "energy_level_medium" | "energy_level_low" }> = {
-  HIGH:   { color: "var(--ink)",   labelKey: "energy_level_high" },
-  MEDIUM: { color: "var(--ink-2)", labelKey: "energy_level_medium" },
-  LOW:    { color: "var(--ink-3)", labelKey: "energy_level_low" },
+/** Label lookup for the three energy levels. */
+const LEVEL_META: Record<EnergyLevel, { labelKey: "energy_level_high" | "energy_level_medium" | "energy_level_low" }> = {
+  HIGH:   { labelKey: "energy_level_high" },
+  MEDIUM: { labelKey: "energy_level_medium" },
+  LOW:    { labelKey: "energy_level_low" },
 };
 
 /**
- * Literal Tailwind classes for the heatmap cells and legend swatches, keyed
- * by level. `LEVEL_META.color` is a runtime string ("var(--ink)", …) and
- * can't be interpolated into an arbitrary-value class — Tailwind's scanner
- * generates CSS only for class strings that appear literally in the
- * source, so a template-built `bg-[color-mix(...,${meta.color},...)]`
- * would render with no matching stylesheet rule at all. This map keeps
- * the three arbitrary-value classes fully literal.
+ * The three energy levels as one ink ramp instead of three accent colors —
+ * a ramp encodes an ordering; three accent colors would claim three
+ * categories that don't exist. Literal Tailwind classes, keyed by level:
+ * a class built at render time (`` `bg-[color-mix(...,${var},...)]` ``)
+ * would render with no matching stylesheet rule, since Tailwind's scanner
+ * only generates CSS for class strings that appear literally in the
+ * source. This map keeps the three arbitrary-value classes fully literal.
  */
 const LEVEL_CELL_BG: Record<EnergyLevel, string> = {
   HIGH: "bg-[color-mix(in_srgb,var(--ink)_75%,transparent)]",
