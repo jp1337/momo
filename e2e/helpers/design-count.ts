@@ -41,6 +41,7 @@ export const MIGRATED_PAGES: string[] = [
   "/focus",
   "/topics",
   "/progress", // = ?tab=habits, der Default
+  "/progress?tab=achievements",
   "/progress?tab=review",
 ];
 
