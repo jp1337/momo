@@ -246,6 +246,13 @@
       "when": 1777441591490,
       "tag": "0034_add_user_locale",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1788355454510,
+      "tag": "0035_achievements_drop_display_text",
+      "breakpoints": true
     }
   ]
 }
