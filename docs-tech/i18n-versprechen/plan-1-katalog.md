@@ -473,8 +473,25 @@ git commit -m "db(db): achievements.title und .description entfernt"
 **Files:**
 - Modify: `lib/statistics.ts:768-780` (`AchievementWithProgress`), `:793-830`, `:260-261`, `:657-666`, `:804-805`
 - Modify: `lib/export.ts:202-215`
-- Modify: `lib/push.ts:1232`, `:1459`
+- Modify: `lib/push.ts:1232`, `:1449`, `:1459`
+- Modify: `lib/gamification.ts:20`, `:22-32`, `:688` — **die Brücke entfernen** (siehe unten)
+- Modify: `lib/tasks.ts:151`, `:664` — Kaskade aus `UnlockedAchievement.title`
+- Modify: `lib/db/schema.ts:695` — Kommentar der `secret`-Spalte nennt noch `title + description`
 - Test: `__tests__/statistics.test.ts`
+
+> **Nachgetragen 2026-09-02, nach dem Review von Task 3+4.** Task 3+4 hat in
+> `lib/gamification.ts:20` einen statischen `import deMessages from
+> "@/messages/de.json"` eingeführt, der `UnlockedAchievement.title`
+> kompilierbar hält. Der Controller hatte geruled, „Task 5 löscht ihn" — diese
+> Datei stand aber in **keiner** Task-Dateiliste. Das Review hat es gefunden:
+> bliebe die Brücke stehen, lesen fr- und zh-Nutzerinnen dauerhaft deutsche
+> Push-Titel, und `tsc`, `check:i18n` und die gesamte Suite sind grün dabei.
+> Kein Test schlägt an ihrem Überleben fehl.
+>
+> **Task 5 besitzt sie jetzt ausdrücklich.** `UnlockedAchievement` verliert
+> `title`; die Kaskade läuft über `lib/push.ts:1449` und `lib/tasks.ts:151`
+> sowie `:664`. `lib/push.ts:1459` übersetzt ohnehin schon aus dem `key`
+> (Step 6), womit der Titel dort nicht mehr gebraucht wird.
 
 **Interfaces:**
 - Consumes: `achievements` ohne `title`/`description` (Task 4)
@@ -624,6 +641,37 @@ import { DEFAULT_LOCALE } from "@/i18n/locales";
 ```
 
 Die Funktion, in der `:1459` sitzt, wird dadurch `async`, falls sie es nicht schon ist — `npx tsc --noEmit` in Step 7 benennt die Aufrufstelle.
+
+- [ ] **Step 6b: Die Brücke entfernen**
+
+`UnlockedAchievement` verliert `title`:
+
+```ts
+export interface UnlockedAchievement {
+  key: string;
+  icon: string;
+  rarity: string;
+  coinReward: number;
+}
+```
+
+Dann fallen weg: der Import in `:20`, die `achievementTitlesDe`-Konstante in
+`:22-32` und ihre Lesestelle in `:688`. Die Kaskade trifft `lib/push.ts:1449`
+und `lib/tasks.ts:151`/`:664` — `tsc` benennt sie.
+
+Gegenprobe, die diesen Task erst abschließt:
+
+```bash
+grep -n "messages/de.json" lib/ -r && echo "BRUECKE STEHT NOCH" || echo "ok"
+```
+Expected: `ok`
+
+- [ ] **Step 6c: Den veralteten Schema-Kommentar berichtigen**
+
+`lib/db/schema.ts:695` beschreibt bei der `secret`-Spalte noch „title +
+description shown as '???'" — beide Spalten sind seit Migration `0035` weg.
+Auf den Anzeigepfad umschreiben: `achievements.secret_title` /
+`secret_description` in `messages/*.json`.
 
 - [ ] **Step 7: Typecheck und volle Suite**
 
