@@ -364,6 +364,27 @@ git commit -m "refactor(gamification): Katalog traegt keinen Anzeigetext mehr"
 
 ---
 
+> **Zusammengelegt mit Task 3 (Ruling 2026-09-02).** Task 3 und Task 4 sind ein
+> Task, nicht zwei. `achievements.title` ist `text NOT NULL` ohne Default, und
+> `__tests__/helpers/setup.ts:17` ruft `seedAchievements()` im `beforeAll`
+> **jeder** Testdatei. Nimmt Task 3 die Spalten aus dem `INSERT`, ohne dass die
+> Migration existiert, verletzt jeder Seed die NOT-NULL-Bedingung und die
+> **gesamte** Suite ist rot — Task 3 Step 7 „Expected: PASS" wäre unerreichbar.
+> `global-setup.ts:69` fährt die Migration vor der Suite, sie muss also
+> vorhanden sein, bevor irgendein Test läuft.
+>
+> Die ursprüngliche Begründung im Plan („erst Task 3, dann die Migration,
+> sonst läuft ein `seedAchievements()` gegen NOT-NULL-Spalten ohne Wert")
+> beschrieb das Deployment, nicht die Testsuite — und auch dort trägt sie nur
+> bedingt: `scripts/migrate.mjs` läuft beim Start des **neuen** Containers, der
+> den neuen Code enthält. Ein Restrisiko bleibt bei `replicas: 2` während eines
+> Rolling Updates, wenn ein alter Pod nach der Migration noch einen Seed
+> auslöst — `seedAchievements()` läuft aber nur beim Start und über
+> `/api/admin/seed`, nicht pro Request.
+>
+> Reihenfolge innerhalb des zusammengelegten Tasks: Migration und Schema
+> zuerst, dann der Code, dann die Tests.
+
 ### Task 4: Die Migration
 
 **Files:**
@@ -416,8 +437,10 @@ export const achievements = pgTable("achievements", {
 Run:
 ```bash
 docker compose up -d db
-TEST_DATABASE_URL=postgresql://momo:password@localhost:5432/momo_test node scripts/migrate.mjs
+DATABASE_URL=postgresql://momo:password@localhost:5432/momo_test node scripts/migrate.mjs
 ```
+
+`scripts/migrate.mjs:56` liest `DATABASE_URL`, nicht `TEST_DATABASE_URL` — letzteres kennt nur `vitest.config`.
 Expected: `0035_achievements_drop_display_text` angewandt, kein Fehler.
 
 - [ ] **Step 4: Prüfen, daß die Spalten weg sind**
@@ -450,8 +473,25 @@ git commit -m "db(db): achievements.title und .description entfernt"
 **Files:**
 - Modify: `lib/statistics.ts:768-780` (`AchievementWithProgress`), `:793-830`, `:260-261`, `:657-666`, `:804-805`
 - Modify: `lib/export.ts:202-215`
-- Modify: `lib/push.ts:1232`, `:1459`
+- Modify: `lib/push.ts:1232`, `:1449`, `:1459`
+- Modify: `lib/gamification.ts:20`, `:22-32`, `:688` — **die Brücke entfernen** (siehe unten)
+- Modify: `lib/tasks.ts:151`, `:664` — Kaskade aus `UnlockedAchievement.title`
+- Modify: `lib/db/schema.ts:695` — Kommentar der `secret`-Spalte nennt noch `title + description`
 - Test: `__tests__/statistics.test.ts`
+
+> **Nachgetragen 2026-09-02, nach dem Review von Task 3+4.** Task 3+4 hat in
+> `lib/gamification.ts:20` einen statischen `import deMessages from
+> "@/messages/de.json"` eingeführt, der `UnlockedAchievement.title`
+> kompilierbar hält. Der Controller hatte geruled, „Task 5 löscht ihn" — diese
+> Datei stand aber in **keiner** Task-Dateiliste. Das Review hat es gefunden:
+> bliebe die Brücke stehen, lesen fr- und zh-Nutzerinnen dauerhaft deutsche
+> Push-Titel, und `tsc`, `check:i18n` und die gesamte Suite sind grün dabei.
+> Kein Test schlägt an ihrem Überleben fehl.
+>
+> **Task 5 besitzt sie jetzt ausdrücklich.** `UnlockedAchievement` verliert
+> `title`; die Kaskade läuft über `lib/push.ts:1449` und `lib/tasks.ts:151`
+> sowie `:664`. `lib/push.ts:1459` übersetzt ohnehin schon aus dem `key`
+> (Step 6), womit der Titel dort nicht mehr gebraucht wird.
 
 **Interfaces:**
 - Consumes: `achievements` ohne `title`/`description` (Task 4)
@@ -532,9 +572,10 @@ Dann `getTranslations` mit dieser Locale:
 import { getTranslations } from "next-intl/server";
 import { DEFAULT_LOCALE } from "@/i18n/locales";
 
-// … innerhalb der Export-Funktion, nachdem die Nutzerzeile geladen ist:
+// … innerhalb der Export-Funktion. lib/export.ts:112 destrukturiert
+// `userRows` aus einem Promise.all — ein Array, keine Zeile.
 const t = await getTranslations({
-  locale: userRow.locale ?? DEFAULT_LOCALE,
+  locale: userRows[0]?.locale ?? DEFAULT_LOCALE,
   namespace: "achievements",
 });
 ```
@@ -601,6 +642,37 @@ import { DEFAULT_LOCALE } from "@/i18n/locales";
 
 Die Funktion, in der `:1459` sitzt, wird dadurch `async`, falls sie es nicht schon ist — `npx tsc --noEmit` in Step 7 benennt die Aufrufstelle.
 
+- [ ] **Step 6b: Die Brücke entfernen**
+
+`UnlockedAchievement` verliert `title`:
+
+```ts
+export interface UnlockedAchievement {
+  key: string;
+  icon: string;
+  rarity: string;
+  coinReward: number;
+}
+```
+
+Dann fallen weg: der Import in `:20`, die `achievementTitlesDe`-Konstante in
+`:22-32` und ihre Lesestelle in `:688`. Die Kaskade trifft `lib/push.ts:1449`
+und `lib/tasks.ts:151`/`:664` — `tsc` benennt sie.
+
+Gegenprobe, die diesen Task erst abschließt:
+
+```bash
+grep -n "messages/de.json" lib/ -r && echo "BRUECKE STEHT NOCH" || echo "ok"
+```
+Expected: `ok`
+
+- [ ] **Step 6c: Den veralteten Schema-Kommentar berichtigen**
+
+`lib/db/schema.ts:695` beschreibt bei der `secret`-Spalte noch „title +
+description shown as '???'" — beide Spalten sind seit Migration `0035` weg.
+Auf den Anzeigepfad umschreiben: `achievements.secret_title` /
+`secret_description` in `messages/*.json`.
+
 - [ ] **Step 7: Typecheck und volle Suite**
 
 Run: `npx tsc --noEmit && npm test`
@@ -621,62 +693,99 @@ git commit -m "refactor(gamification): sechs Lesestellen liefern key statt Anzei
 - Modify: `components/progress/tabs/achievements-tab.tsx:82`, `:88`
 - Modify: `components/achievements/achievement-row.tsx:81`, `:83`
 - Modify: `components/animations/achievement-toast.tsx:197`
-- Test: `__tests__/achievement-row.test.tsx` (anlegen, falls nicht vorhanden)
+- Test: `__tests__/achievements-i18n.test.ts` (anlegen; **kein** `.tsx` — `vitest.config` sammelt nur `*.test.ts`)
 
 **Interfaces:**
 - Consumes: `AchievementWithProgress` ohne Anzeigetext (Task 5), Keys aus Task 1/2
 
 `achievements-tab.tsx` ist eine **Server**-Komponente (`async`, ruft `getAchievementsWithProgress` direkt) — dort `getTranslations`. `achievement-row.tsx` bindet bereits `useTranslations` (es ruft `t("secret_title")` in Zeile 81) — dort denselben Hook weiterbenutzen.
 
-- [ ] **Step 1: Failing test schreiben**
+- [ ] **Step 1: Failing test schreiben — ohne DOM**
 
-`__tests__/achievement-row.test.tsx`:
+`@testing-library/react` und `jsdom` sind **nicht** installiert, und
+`vitest.config` sammelt nur `__tests__/**/*.test.ts` — eine `.tsx`-Testdatei
+liefe nie, auch nicht stumm rot. Es gibt null Komponententests im Repo.
 
-```tsx
-import { render, screen } from "@testing-library/react";
-import { NextIntlClientProvider } from "next-intl";
-import deMessages from "@/messages/de.json";
-import frMessages from "@/messages/fr.json";
-import { AchievementRow } from "@/components/achievements/achievement-row";
+Zwei neue devDependencies plus eine Config-Änderung, um eine Zeile zu prüfen,
+sind Testinfrastruktur und nicht Teil dieser Migration. Das echte Risiko ist
+ein fehlender Key oder eine vergessene Lesestelle — beides ist ohne DOM
+prüfbar. Das Rendering deckt die vorhandene Playwright-Suite ab, plus der
+Chrome-Blick in Step 7.
 
-const achievement = {
-  id: "00000000-0000-0000-0000-000000000000",
-  key: "first_task",
-  icon: "🌱",
-  rarity: "common",
-  coinReward: 10,
-  secret: false,
-  earnedAt: null,
-};
+`__tests__/achievements-i18n.test.ts`:
 
-function renderIn(locale: string, messages: Record<string, unknown>) {
-  return render(
-    <NextIntlClientProvider locale={locale} messages={messages}>
-      <AchievementRow achievement={achievement} />
-    </NextIntlClientProvider>
+```ts
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, it, expect } from "vitest";
+import { ACHIEVEMENT_DEFINITIONS, LEVELS } from "@/lib/gamification";
+
+const LOCALES = ["de", "en", "es", "fr", "nl", "ru", "zh"] as const;
+
+function messages(loc: string) {
+  return JSON.parse(
+    readFileSync(join(process.cwd(), `messages/${loc}.json`), "utf8")
   );
 }
 
-describe("AchievementRow übersetzt aus dem key", () => {
-  it("zeigt den deutschen Titel bei locale de", () => {
-    renderIn("de", deMessages);
-    expect(screen.getByText("Erster Schritt")).toBeInTheDocument();
+describe("Katalogtexte vollstaendig, Zeile liest sie nicht mehr", () => {
+  it("jeder Katalog-key hat Titel und Beschreibung in allen sieben Locales", () => {
+    for (const loc of LOCALES) {
+      const catalog = messages(loc).achievements.catalog as Record<
+        string,
+        { title?: string; description?: string }
+      >;
+      for (const def of ACHIEVEMENT_DEFINITIONS) {
+        expect(catalog[def.key]?.title, `${loc}: title fehlt fuer ${def.key}`).toBeTruthy();
+        expect(
+          catalog[def.key]?.description,
+          `${loc}: description fehlt fuer ${def.key}`
+        ).toBeTruthy();
+      }
+    }
   });
 
-  it("zeigt den französischen Titel bei locale fr", () => {
-    renderIn("fr", frMessages);
-    expect(screen.queryByText("Erster Schritt")).not.toBeInTheDocument();
-    expect(
-      screen.getByText(frMessages.achievements.catalog.first_task.title)
-    ).toBeInTheDocument();
+  it("jedes Level hat einen Namen in allen sieben Locales", () => {
+    for (const loc of LOCALES) {
+      const levels = messages(loc).achievements.levels as Record<string, string>;
+      for (const lvl of LEVELS) {
+        expect(levels[String(lvl.level)], `${loc}: level ${lvl.level} fehlt`).toBeTruthy();
+      }
+    }
+  });
+
+  it("keine Komponente liest achievement.title oder .description", () => {
+    for (const file of [
+      "components/achievements/achievement-row.tsx",
+      "components/animations/achievement-toast.tsx",
+      "components/progress/tabs/achievements-tab.tsx",
+    ]) {
+      const src = readFileSync(join(process.cwd(), file), "utf8");
+      expect(src, `${file} liest achievement.title`).not.toMatch(
+        /achievement\.(title|description)/
+      );
+      expect(src, `${file} liest einen LevelDef-Titel`).not.toMatch(
+        /LevelDef\.title/
+      );
+    }
+  });
+
+  it("kein Locale hat einen Katalog-Eintrag, den der Code nicht kennt", () => {
+    const known = new Set(ACHIEVEMENT_DEFINITIONS.map((d) => d.key));
+    for (const loc of LOCALES) {
+      const extra = Object.keys(messages(loc).achievements.catalog).filter(
+        (k) => !known.has(k)
+      );
+      expect(extra, `${loc} hat Katalog-Keys ohne Definition`).toEqual([]);
+    }
   });
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [ ] **Step 2: Test laufen lassen, Fehlschlag bestaetigen**
 
-Run: `npx vitest run __tests__/achievement-row.test.tsx`
-Expected: FAIL — die Komponente liest `achievement.title`, das es nicht mehr gibt.
+Run: `npx vitest run __tests__/achievements-i18n.test.ts`
+Expected: FAIL im dritten Fall — die drei Komponenten lesen noch `achievement.title`.
 
 - [ ] **Step 3: `achievement-row.tsx` umstellen**
 
@@ -718,7 +827,7 @@ Bindet die Komponente noch kein `t`, oben ergänzen: `const t = useTranslations(
 
 - [ ] **Step 6: Tests laufen lassen**
 
-Run: `npx vitest run __tests__/achievement-row.test.tsx && npx tsc --noEmit`
+Run: `npx vitest run __tests__/achievements-i18n.test.ts && npx tsc --noEmit`
 Expected: beides grün
 
 - [ ] **Step 7: In Chrome ansehen**
@@ -730,7 +839,7 @@ Grüne Tests sind kein Beleg dafür, daß ein Layout mit längeren französische
 - [ ] **Step 8: Commit**
 
 ```bash
-git add components/ __tests__/achievement-row.test.tsx
+git add components/ __tests__/achievements-i18n.test.ts
 git commit -m "feat(gamification): Errungenschaften und Level rendern in der Nutzersprache"
 ```
 

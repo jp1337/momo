@@ -7,6 +7,42 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Der erste Start nach Migration `0035` waere ein Crashloop gewesen.**
+  `scripts/migrate.mjs` haelt eine zweite, handgepflegte Kopie der
+  Achievement-Definitionen und seedete `title` und `description` — zwei Spalten,
+  die dieselbe Migration ein paar Zeilen vorher droppt. Der Seeder lief nach
+  `migrate()` und starb an `column "title" of relation "achievements" does not
+  exist`; `docker-entrypoint.sh` laeuft mit `set -e`, `exec node server.js` war
+  also nie erreicht. Die Instanz haette die Migration angewandt (irreversibel),
+  0 Errungenschaftszeilen gehabt und bei jedem Neustart dasselbe wiederholt —
+  auch nach einem Image-Rollback, weil der alte Code dieselben Spalten schreibt.
+  Der Seeder schreibt jetzt nur noch `key`, `icon`, `rarity`, `coin_reward` und
+  `secret`, wie `seedAchievements()` in `lib/gamification.ts`.
+  `__tests__/gamification.test.ts` haelt beide Definitionslisten
+  deckungsgleich — ein Key in nur einer der beiden waere eine Errungenschaft,
+  die keine Instanz je verleihen kann.
+
+### Changed
+
+- **Errungenschaften und Level sprechen jetzt sieben Sprachen.** Die 31
+  Errungenschaftstitel und die 10 Levelnamen standen als deutsche Literale in
+  `lib/gamification.ts` und wurden von `seedAchievements()` per Upsert in die
+  Datenbank jeder Instanz geschrieben. Gelesen wurden sie von dort — auch für
+  Nutzerinnen mit `locale = "fr"`, die auf `/progress?tab=achievements`
+  „Erstes Wunschlisten-Item gekauft" lasen. Migration `0035_achievements_drop_display_text.sql`
+  entfernt `achievements.title` und `.description`; Anzeigetext liegt nun in
+  `messages/*.json` unter `achievements.catalog.<key>.title|.description` und
+  `achievements.levels.<n>` in allen sieben Sprachen, die Tabelle hält den `key`.
+  Der DSGVO-Export (`lib/export.ts`) übersetzt `title` und `description` zur
+  Exportzeit aus `users.locale` und bleibt damit lesbar. `lib/i18n-server.ts`
+  exportiert `getServerTranslations(locale, namespace)` für Nutzung außerhalb von
+  Request-Scope (Cron-Jobs, Export). Der Achievement-Toast (`components/animations/achievement-toast.tsx`)
+  liest die Aufschriften von `UnlockedAchievement` statt aus einer Hand-Schrift-Kopie
+  über die JSON-Grenze. `__tests__/achievements-i18n.test.ts` sichert Vollständigkeit
+  über alle Sprachen und verhindert, dass eine Komponente `achievement.title` direkt liest.
+
 ## [0.8.1] - 2026-09-02
 
 ### Fixed

@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -78,6 +79,7 @@ export default async function AppLayout({
 
   const { coins } = await getUserStats(user.id!);
   const currentLevel = getLevelForCoins(coins);
+  const tAchievements = await getTranslations("achievements");
 
   // Admin check: ADMIN_USER_IDS is a comma-separated list of user UUIDs.
   // Optional — if not set, no user is treated as admin.
@@ -99,7 +101,7 @@ export default async function AppLayout({
         userEmail={user.email}
         initialCoins={coins}
         initialLevel={currentLevel.level}
-        levelTitle={currentLevel.title}
+        levelTitle={tAchievements(`levels.${currentLevel.level}`)}
         isAdmin={isAdmin}
       />
 

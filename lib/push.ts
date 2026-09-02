@@ -25,6 +25,8 @@ import { getWeeklyReview } from "@/lib/weekly-review";
 import { sendToAllChannels, type NotificationPayload as ChannelPayload } from "@/lib/notifications";
 import { logNotification } from "@/lib/notification-log";
 import type { UnlockedAchievement } from "@/lib/gamification";
+import { getServerTranslations } from "@/lib/i18n-server";
+import { DEFAULT_LOCALE } from "@/i18n/locales";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1181,7 +1183,7 @@ interface BriefingData {
   questTitle: string | null;
   dueTasks: Array<{ id: string; title: string }>;
   streakCurrent: number;
-  recentAchievements: Array<{ title: string; icon: string }>;
+  recentAchievements: Array<{ key: string; icon: string }>;
 }
 
 /**
@@ -1225,11 +1227,11 @@ export async function sendMorningBriefingNotifications(): Promise<{
   /** Fetch achievements unlocked in the last 24 hours for a user. */
   async function fetchRecentAchievements(
     userId: string
-  ): Promise<Array<{ title: string; icon: string }>> {
+  ): Promise<Array<{ key: string; icon: string }>> {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const rows = await db
       .select({
-        title: achievements.title,
+        key: achievements.key,
         icon: achievements.icon,
       })
       .from(userAchievements)
@@ -1283,6 +1285,11 @@ export async function sendMorningBriefingNotifications(): Promise<{
     return data;
   }
 
+  // Achievement titles come from messages/*.json now. Cron runs outside any
+  // request, so the locale has to be explicit. Schnitt 3 replaces
+  // DEFAULT_LOCALE with the recipient's own locale.
+  const tAch = await getServerTranslations(DEFAULT_LOCALE, "achievements");
+
   /** Build the briefing notification payload. */
   function buildPayload(data: BriefingData): NotificationPayload & ChannelPayload {
     const lines: string[] = [];
@@ -1307,7 +1314,7 @@ export async function sendMorningBriefingNotifications(): Promise<{
 
     if (data.recentAchievements.length > 0) {
       const achievementList = data.recentAchievements
-        .map((a) => `${a.icon} ${a.title}`)
+        .map((a) => `${a.icon} ${tAch(`catalog.${a.key}.title`)}`)
         .join(", ");
       lines.push(`🏆 Neu: ${achievementList}`);
     }
@@ -1453,10 +1460,14 @@ export async function sendAchievementNotifications(
   // Cap at 3 to avoid notification spam
   const toNotify = unlocked.slice(0, 3);
 
+  // Titles come from messages/*.json; no request context here, so the locale
+  // is explicit. Schnitt 3 replaces DEFAULT_LOCALE with the user's locale.
+  const tAch = await getServerTranslations(DEFAULT_LOCALE, "achievements");
+
   for (const achievement of toNotify) {
     const payload: NotificationPayload & ChannelPayload = {
       title: `🏅 Achievement freigeschaltet!`,
-      body: `${achievement.icon} ${achievement.title} (+${achievement.coinReward} Coins)`,
+      body: `${achievement.icon} ${tAch(`catalog.${achievement.key}.title`)} (+${achievement.coinReward} Coins)`,
       icon: "/icon-192.png",
       url: "/achievements",
       tag: `achievement-${achievement.key}`,

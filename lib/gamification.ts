@@ -64,20 +64,21 @@ type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 /**
  * Level definitions for the Momo progression system.
- * Titles are in German to match the app's spirit.
+ * Titles live in messages/*.json under achievements.levels.<n> — a column
+ * can only hold one language.
  * Each level requires a minimum coin total to reach.
  */
 export const LEVELS = [
-  { level: 1, title: "Zeitlehrling", minCoins: 0 },
-  { level: 2, title: "Aufgabenträger", minCoins: 50 },
-  { level: 3, title: "Alltagsmeister", minCoins: 150 },
-  { level: 4, title: "Beständiger", minCoins: 300 },
-  { level: 5, title: "Zeitwächter", minCoins: 500 },
-  { level: 6, title: "Gewohnheitsschmied", minCoins: 800 },
-  { level: 7, title: "Routinier", minCoins: 1200 },
-  { level: 8, title: "Meister der Stunden", minCoins: 1700 },
-  { level: 9, title: "Zeitlenker", minCoins: 2300 },
-  { level: 10, title: "Grauer-Herren-Besieger", minCoins: 3000 },
+  { level: 1, minCoins: 0 },
+  { level: 2, minCoins: 50 },
+  { level: 3, minCoins: 150 },
+  { level: 4, minCoins: 300 },
+  { level: 5, minCoins: 500 },
+  { level: 6, minCoins: 800 },
+  { level: 7, minCoins: 1200 },
+  { level: 8, minCoins: 1700 },
+  { level: 9, minCoins: 2300 },
+  { level: 10, minCoins: 3000 },
 ] as const;
 
 /** Type for a single level entry */
@@ -129,40 +130,30 @@ export const ACHIEVEMENT_DEFINITIONS = [
   // ── Common ────────────────────────────────────────────────────────────────
   {
     key: "first_task",
-    title: "Erster Schritt",
-    description: "Erste Aufgabe erledigt",
     icon: "🌱",
     rarity: "common" as const,
     coinReward: 10,
   },
   {
     key: "daily_quest_complete",
-    title: "Tagessieger",
-    description: "Daily Quest erledigt",
     icon: "🌟",
     rarity: "common" as const,
     coinReward: 10,
   },
   {
     key: "first_topic",
-    title: "Themensetzer",
-    description: "Erstes Topic erstellt",
     icon: "📁",
     rarity: "common" as const,
     coinReward: 10,
   },
   {
     key: "first_high_priority",
-    title: "Volles Risiko",
-    description: "Erste Aufgabe mit hoher Priorität erledigt",
     icon: "❗",
     rarity: "common" as const,
     coinReward: 10,
   },
   {
     key: "first_wishlist_buy",
-    title: "Erster Wunsch",
-    description: "Erstes Wunschlisten-Item gekauft",
     icon: "🛍️",
     rarity: "common" as const,
     coinReward: 10,
@@ -170,72 +161,54 @@ export const ACHIEVEMENT_DEFINITIONS = [
   // ── Rare ─────────────────────────────────────────────────────────────────
   {
     key: "streak_3",
-    title: "Drei am Stück",
-    description: "3-Tage-Streak erreicht",
     icon: "🔥",
     rarity: "rare" as const,
     coinReward: 25,
   },
   {
     key: "streak_7",
-    title: "Eine Woche",
-    description: "7-Tage-Streak erreicht",
     icon: "⚡",
     rarity: "rare" as const,
     coinReward: 25,
   },
   {
     key: "streak_14",
-    title: "Zwei Wochen",
-    description: "14-Tage-Streak erreicht",
     icon: "🌙",
     rarity: "rare" as const,
     coinReward: 25,
   },
   {
     key: "tasks_10",
-    title: "Fleißige Hände",
-    description: "10 Aufgaben erledigt",
     icon: "✋",
     rarity: "rare" as const,
     coinReward: 25,
   },
   {
     key: "tasks_50",
-    title: "Unaufhaltsam",
-    description: "50 Aufgaben erledigt",
     icon: "🚀",
     rarity: "rare" as const,
     coinReward: 25,
   },
   {
     key: "coins_100",
-    title: "Hundert Münzen",
-    description: "100 Coins gesammelt",
     icon: "🪙",
     rarity: "rare" as const,
     coinReward: 25,
   },
   {
     key: "level_5",
-    title: "Zeitwächter",
-    description: "Level 5 erreicht",
     icon: "⭐",
     rarity: "rare" as const,
     coinReward: 25,
   },
   {
     key: "quest_streak_7",
-    title: "Wochensieger",
-    description: "7 Tage Daily Quest in Folge erledigt",
     icon: "🎯",
     rarity: "rare" as const,
     coinReward: 25,
   },
   {
     key: "energy_checkin_7",
-    title: "Im Gleichgewicht",
-    description: "7 Tage in Folge Energie eingecheckt",
     icon: "🧘",
     rarity: "rare" as const,
     coinReward: 25,
@@ -243,72 +216,54 @@ export const ACHIEVEMENT_DEFINITIONS = [
   // ── Epic ──────────────────────────────────────────────────────────────────
   {
     key: "streak_30",
-    title: "Ein Monat",
-    description: "30-Tage-Streak erreicht",
     icon: "💎",
     rarity: "epic" as const,
     coinReward: 50,
   },
   {
     key: "streak_60",
-    title: "Zwei Monate",
-    description: "60-Tage-Streak erreicht",
     icon: "🌊",
     rarity: "epic" as const,
     coinReward: 50,
   },
   {
     key: "tasks_100",
-    title: "Zeitmeister",
-    description: "100 Aufgaben erledigt",
     icon: "🏆",
     rarity: "epic" as const,
     coinReward: 50,
   },
   {
     key: "tasks_200",
-    title: "Beständig",
-    description: "200 Aufgaben erledigt",
     icon: "🎖️",
     rarity: "epic" as const,
     coinReward: 50,
   },
   {
     key: "coins_500",
-    title: "Halbtausend",
-    description: "500 Coins gesammelt",
     icon: "💰",
     rarity: "epic" as const,
     coinReward: 50,
   },
   {
     key: "level_10",
-    title: "Legendär",
-    description: "Level 10 erreicht",
     icon: "👑",
     rarity: "epic" as const,
     coinReward: 50,
   },
   {
     key: "topics_5",
-    title: "Themenmeister",
-    description: "5 Topics erstellt",
     icon: "📚",
     rarity: "epic" as const,
     coinReward: 50,
   },
   {
     key: "quest_streak_30",
-    title: "Monatssieger",
-    description: "30 Tage Daily Quest in Folge erledigt",
     icon: "🏅",
     rarity: "epic" as const,
     coinReward: 50,
   },
   {
     key: "wishlist_10_bought",
-    title: "Wunscherfüller",
-    description: "10 Wunschlisten-Items gekauft",
     icon: "🎁",
     rarity: "epic" as const,
     coinReward: 50,
@@ -316,40 +271,30 @@ export const ACHIEVEMENT_DEFINITIONS = [
   // ── Legendary ─────────────────────────────────────────────────────────────
   {
     key: "streak_100",
-    title: "Unbeugsamkeit",
-    description: "100-Tage-Streak erreicht",
     icon: "💪",
     rarity: "legendary" as const,
     coinReward: 100,
   },
   {
     key: "streak_365",
-    title: "Ein Jahr",
-    description: "365-Tage-Streak erreicht",
     icon: "🌠",
     rarity: "legendary" as const,
     coinReward: 100,
   },
   {
     key: "tasks_500",
-    title: "Ausdauerkämpfer",
-    description: "500 Aufgaben erledigt",
     icon: "⚔️",
     rarity: "legendary" as const,
     coinReward: 100,
   },
   {
     key: "tasks_1000",
-    title: "Tausendster",
-    description: "1000 Aufgaben erledigt",
     icon: "👾",
     rarity: "legendary" as const,
     coinReward: 100,
   },
   {
     key: "first_sequential_topic",
-    title: "Stratege",
-    description: "Erstes sequenzielles Topic erstellt",
     icon: "🧭",
     rarity: "legendary" as const,
     coinReward: 100,
@@ -357,8 +302,6 @@ export const ACHIEVEMENT_DEFINITIONS = [
   // ── Secret ────────────────────────────────────────────────────────────────
   {
     key: "night_owl",
-    title: "Nachtaktiv",
-    description: "Eine Aufgabe nach 23 Uhr erledigt",
     icon: "🦉",
     rarity: "rare" as const,
     coinReward: 25,
@@ -366,8 +309,6 @@ export const ACHIEVEMENT_DEFINITIONS = [
   },
   {
     key: "early_bird",
-    title: "Frühaufsteher",
-    description: "Eine Aufgabe vor 7 Uhr erledigt",
     icon: "🐦",
     rarity: "rare" as const,
     coinReward: 25,
@@ -375,8 +316,6 @@ export const ACHIEVEMENT_DEFINITIONS = [
   },
   {
     key: "double_shift",
-    title: "Doppelschicht",
-    description: "Zwei Daily Quests an einem Tag erledigt",
     icon: "⚡",
     rarity: "epic" as const,
     coinReward: 50,
@@ -387,8 +326,6 @@ export const ACHIEVEMENT_DEFINITIONS = [
 /** Type for a single achievement definition */
 export type AchievementDefinition = {
   key: string;
-  title: string;
-  description: string;
   icon: string;
   rarity: "common" | "rare" | "epic" | "legendary";
   coinReward: number;
@@ -397,8 +334,8 @@ export type AchievementDefinition = {
 
 /** Type for an unlocked achievement notification */
 export interface UnlockedAchievement {
+  /** Stabile Identität; Anzeigetext kommt aus achievements.catalog.<key>. */
   key: string;
-  title: string;
   icon: string;
   rarity: "common" | "rare" | "epic" | "legendary";
   coinReward: number;
@@ -735,7 +672,6 @@ export async function checkAndUnlockAchievements(
     const rarity = (a.rarity as "common" | "rare" | "epic" | "legendary") ?? "common";
     return {
       key: a.key,
-      title: def?.title ?? a.key,
       icon: def?.icon ?? "🏅",
       rarity,
       coinReward: a.coinReward ?? def?.coinReward ?? 10,
@@ -841,8 +777,6 @@ export async function seedAchievements(): Promise<void> {
       .insert(achievements)
       .values({
         key: d.key,
-        title: d.title,
-        description: d.description,
         icon: d.icon,
         rarity: d.rarity,
         coinReward: d.coinReward,
@@ -851,8 +785,6 @@ export async function seedAchievements(): Promise<void> {
       .onConflictDoUpdate({
         target: achievements.key,
         set: {
-          title: d.title,
-          description: d.description,
           icon: d.icon,
           rarity: d.rarity,
           coinReward: d.coinReward,

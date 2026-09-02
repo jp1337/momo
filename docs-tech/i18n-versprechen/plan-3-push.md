@@ -6,7 +6,7 @@
 
 **Architecture:** Die Pipeline existiert bereits vollständig — `/api/locale:49` schreibt `users.locale`, `lib/notifications.ts:461` liest sie und reicht sie als `payload.locale` weiter. Der Defekt ist die **Reihenfolge**: die sieben Payload-Builder in `lib/push.ts` backen ihren Text, bevor der locale-bewußte Dispatcher ihn sieht. Die Eligible-Selects holen `users.timezone` über einen `innerJoin(users, …)`, der `users.locale` direkt daneben stehen hätte.
 
-**Tech Stack:** TypeScript strict, Drizzle ORM, next-intl 4.13.7 (`getTranslations` aus `next-intl/server`), vitest
+**Tech Stack:** TypeScript strict, Drizzle ORM, next-intl 4.13.7 (`getServerTranslations` aus `lib/i18n-server` — **nicht** `getTranslations`, siehe unten), vitest
 
 **Spec:** `docs-tech/i18n-versprechen/design.md` — insbesondere der Abschnitt „Serverseitig" mit der Korrektur vom 2026-09-02.
 
@@ -17,7 +17,7 @@
 - **Nichts an `users.locale`, nichts an `/api/locale`, nichts an `lib/notifications.ts`.** Alle drei sind korrekt. Wer dort etwas ändert, hat den Fehler nicht verstanden.
 - `review.push_title` und `review.push_body` existieren fertig übersetzt in allen sieben Locales. Sie werden **verdrahtet, nicht neu erfunden**.
 - Fallback ist immer `users.locale ?? DEFAULT_LOCALE` aus `@/i18n/locales`. Bestandsnutzer haben `null` — das ist bekannt und gewollt.
-- Cron-Jobs haben keine Request-Locale. `getTranslations({ locale })` mit explizitem `locale`-Argument ist der einzige zulässige Aufruf; `getTranslations("namespace")` ohne Locale zieht die Request-Locale und ist im Cron falsch.
+- **Cron-Jobs dürfen `getTranslations` überhaupt nicht aufrufen** — auch nicht mit explizitem `locale`. `i18n/request.ts:31` ist `getRequestConfig(async () => {`, nimmt keine Parameter und ruft `await cookies()` unbedingt; next-intls `getConfig` ruft den Callback auch bei übergebenem Override. Ohne Request bricht das im echten Next-Runtime, nicht nur im Test. Der einzige zulässige Aufruf ist `getServerTranslations(locale, namespace)` aus `lib/i18n-server` (in Schnitt 1 angelegt).
 - Commit-Format: `<type>(<scope>): <beschreibung>`, Scopes hier: `push`, `i18n`.
 - `main` ist branch-protected. Ein PR. Testlauf ist `npm test` (vitest).
 
@@ -197,8 +197,7 @@ Expected: FAIL in allen drei Fällen
 Am Kopf von `lib/push.ts`:
 
 ```ts
-import { getTranslations } from "next-intl/server";
-import { DEFAULT_LOCALE } from "@/i18n/locales";
+import { getServerTranslations } from "@/lib/i18n-server";
 ```
 
 und, oberhalb der Builder:
@@ -207,17 +206,19 @@ und, oberhalb der Builder:
 /**
  * Uebersetzer fuer einen Cron-Lauf.
  *
- * `getTranslations` OHNE locale-Argument zieht die Request-Locale — die es im
- * Cron nicht gibt, weshalb der Aufruf dort still auf die Voreinstellung faellt.
- * Deshalb nimmt jeder Aufruf in dieser Datei ein explizites `locale`, und
- * `__tests__/push-i18n.test.ts` erzwingt das.
+ * NICHT getTranslations aus next-intl/server: das laeuft nur im Request-Scope.
+ * i18n/request.ts:31 nimmt keine Parameter und ruft cookies() unbedingt, und
+ * next-intls getConfig ruft den Callback auch bei uebergebenem locale-Override.
+ * Ohne Request bricht das auch im echten Next-Runtime.
+ * getServerTranslations (lib/i18n-server, Schnitt 1) laedt die Messages ueber
+ * denselben dynamischen Import wie i18n/request.ts und braucht keinen Request.
  *
  * Bestandsnutzer haben locale = null (der Cookie liegt im Browser, es gibt
  * keine Quelle fuer einen Backfill) und lesen deshalb DEFAULT_LOCALE, bis sie
  * die Sprache einmal umstellen. Bekannt und bewusst, siehe design.md.
  */
 async function pushT(locale: string | null, namespace: string) {
-  return getTranslations({ locale: locale ?? DEFAULT_LOCALE, namespace });
+  return getServerTranslations(locale, namespace);
 }
 ```
 
@@ -282,6 +283,13 @@ Für 1459 kommt der Errungenschaftsname aus dem `achievements`-Namespace, nicht 
 ```
 
 Der `DEFAULT_LOCALE`-Import bleibt — `pushT` benutzt ihn als Fallback.
+
+> **Achtung bei `lib/push.ts:1291` (Morning Briefing).** Schnitt 1 hat dort
+> `tAch` **aus** `buildPayload` herausgezogen (`:1293`), und diese Funktion ist
+> per-Nutzer und **synchron**. Eine Locale pro Empfänger verlangt hier eines von
+> beidem: `buildPayload` async machen und die Aufrufstelle awaiten, oder `t` als
+> Parameter durchreichen. Nur `sendAchievementNotifications:1463` ist der
+> Einzeiler, den dieser Plan ursprünglich für beide Stellen behauptet hat.
 
 - [ ] **Step 5: Die Aufrufstellen nachziehen**
 

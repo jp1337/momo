@@ -20,6 +20,7 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getAdminStatistics, getRecentCronRuns } from "@/lib/statistics";
+import { getTranslations } from "next-intl/server";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faShieldHalved,
@@ -114,6 +115,10 @@ export default async function AdminPage() {
       </div>
     );
   }
+
+  // Achievement titles live in messages/*.json. Loaded after the admin guard —
+  // no reason to build a translator for a visitor who gets the denial page.
+  const tAch = await getTranslations("achievements");
 
   const [stats, cronStatus, updateCheck] = await Promise.all([
     getAdminStatistics(),
@@ -874,7 +879,7 @@ export default async function AdminPage() {
                         color: "var(--text-primary)",
                       }}
                     >
-                      {row.title}
+                      {tAch(`catalog.${row.key}.title`)}
                     </td>
                     <td
                       className="px-4 py-3 font-semibold"

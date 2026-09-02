@@ -83,9 +83,8 @@ export interface UserStatistics {
   /** All achievements, with earnedAt = null for locked ones */
   achievements: Array<{
     id: string;
+    /** Stabile Identität; Anzeigetext kommt aus achievements.catalog.<key>. */
     key: string;
-    title: string;
-    description: string;
     icon: string;
     earnedAt: Date | null;
   }>;
@@ -148,8 +147,8 @@ export interface AdminStatistics {
   }>;
   /** How many users have earned each achievement */
   achievementDistribution: Array<{
+    /** Stabile Identität; Anzeigetext kommt aus achievements.catalog.<key>. */
     key: string;
-    title: string;
     icon: string;
     earnedBy: number;
   }>;
@@ -257,8 +256,6 @@ export async function getUserStatistics(
       .select({
         id: achievements.id,
         key: achievements.key,
-        title: achievements.title,
-        description: achievements.description,
         icon: achievements.icon,
         earnedAt: userAchievements.earnedAt,
       })
@@ -447,8 +444,6 @@ export async function getUserStatistics(
     achievements: achievementRows.map((r) => ({
       id: r.id,
       key: r.key,
-      title: r.title,
-      description: r.description,
       icon: r.icon,
       earnedAt: r.earnedAt ?? null,
     })),
@@ -654,7 +649,6 @@ export async function getAdminStatistics(): Promise<AdminStatistics> {
     db
       .select({
         key: achievements.key,
-        title: achievements.title,
         icon: achievements.icon,
         earnedBy: count(userAchievements.id),
       })
@@ -663,7 +657,7 @@ export async function getAdminStatistics(): Promise<AdminStatistics> {
         userAchievements,
         eq(userAchievements.achievementId, achievements.id)
       )
-      .groupBy(achievements.id, achievements.key, achievements.title, achievements.icon)
+      .groupBy(achievements.id, achievements.key, achievements.icon)
       .orderBy(desc(count(userAchievements.id))),
 
     // Wishlist: bought count and total amount spent
@@ -708,7 +702,6 @@ export async function getAdminStatistics(): Promise<AdminStatistics> {
     })),
     achievementDistribution: achievementDistRows.map((r) => ({
       key: r.key,
-      title: r.title,
       icon: r.icon,
       earnedBy: r.earnedBy,
     })),
@@ -767,9 +760,8 @@ export async function getRecentCronRuns(): Promise<CronStatus> {
 /** An achievement enriched with earned status, progress data, and rarity. */
 export interface AchievementWithProgress {
   id: string;
+  /** Stabile Identität; Anzeigetext kommt aus achievements.catalog.<key>. */
   key: string;
-  title: string;
-  description: string;
   icon: string;
   rarity: string;
   coinReward: number;
@@ -801,8 +793,6 @@ export async function getAchievementsWithProgress(
         .select({
           id: achievements.id,
           key: achievements.key,
-          title: achievements.title,
-          description: achievements.description,
           icon: achievements.icon,
           rarity: achievements.rarity,
           coinReward: achievements.coinReward,
@@ -887,8 +877,6 @@ export async function getAchievementsWithProgress(
     return {
       id: row.id,
       key: row.key,
-      title: row.title,
-      description: row.description,
       icon: row.icon,
       rarity: row.rarity ?? "common",
       coinReward: row.coinReward ?? 10,

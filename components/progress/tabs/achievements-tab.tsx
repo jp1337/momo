@@ -79,13 +79,13 @@ export async function AchievementsTab({
       <p className={RAIL_LINE}>
         {t("level_of_max", { level: currentLevelDef.level, max: maxLevel })}
       </p>
-      <p className={RAIL_LINE}>{currentLevelDef.title}</p>
+      <p className={RAIL_LINE}>{t(`levels.${currentLevelDef.level}`)}</p>
       {nextLevelDef ? (
         <p className={RAIL_LINE}>
           {t("coins_to_next_level", {
             count: nextLevelDef.minCoins - coins,
             level: nextLevelDef.level,
-            title: nextLevelDef.title,
+            title: t(`levels.${nextLevelDef.level}`),
           })}
         </p>
       ) : (

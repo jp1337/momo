@@ -28,6 +28,7 @@
 **Files:**
 - Modify: `messages/de.json`, `en.json`, `es.json`, `fr.json`, `nl.json`, `ru.json`, `zh.json` (Namespace `nav`)
 - Modify: `components/layout/user-menu.tsx:151`, `:154`, `:157`, `:159`, `:170`, `:192`
+- Modify: `components/layout/level-badge.tsx:80` — **nachgetragen 2026-09-02**, siehe unten
 
 **Interfaces:**
 - Produces: `nav.stats`, `nav.weekly_review`, `nav.api_keys`, `nav.admin`, `nav.sign_out`. `nav.settings` existiert bereits und wird nur benutzt.
@@ -35,6 +36,35 @@
 Sechs nackte Textknoten, nicht fünf. Die Roadmap zählt `Statistiken`, `Wochenrückblick`, `Einstellungen`, `Admin`, `Abmelden` — `API Keys` in Zeile 158-160 ist derselbe Fall und fehlt dort. Es bleibt in den meisten Sprachen „API Keys", muß aber durch `t()`, damit `ru` und `zh` es lokalisieren können.
 
 `nav.settings` = „Einstellungen" existiert schon. Fünf neue Keys, nicht sechs.
+
+### Ein siebter Fall, gefunden beim Blick auf Schnitt 1
+
+`components/layout/level-badge.tsx:80` rendert `<span>Lv.</span>` als nackten
+Textknoten — während `achievements.level_label` in allen sieben Locales
+existiert und in **vier von sieben** vom hartkodierten `Lv.` abweicht:
+
+| Locale | `achievements.level_label` |
+| --- | --- |
+| de, en, zh | `Lv.` — stimmt zufällig |
+| es, fr, nl | `Nv.` |
+| ru | `Ур.` |
+
+`components/progress/tabs/stats-tab.tsx:184` benutzt den Key bereits.
+
+Eine französische Nutzerin liest also auf `/progress` `Nv.` und im
+Navbar-Badge daneben `Lv.` — auf jeder Seite der App; im Russischen `Ур.`
+gegen `Lv.`. Betroffen sind vier Locales, nicht eine.
+
+**Dieser Fall belegt die Grenze der Ratsche aus der Spec.** Die Gegenrichtung
+findet ihn *nicht*: der Key **ist** referenziert, nur nicht überall. `ORPHAN`
+schweigt, `MISSING` schweigt, `FAMILY` schweigt. Gefunden hat ihn ein Blick auf
+eine Komponente, nicht ein Test — genau die offene Flanke, die der
+Spec-Abschnitt „Die Grenze der Ratsche“ benennt.
+
+Fix: `useTranslations("achievements")` in `level-badge.tsx`, dann
+`t("level_label")`. `stats-tab.tsx:184` ruft den Key mit einem
+`{level}`-Platzhalter; das Badge rendert die Zahl separat — prüfen, welche
+Form der Key tatsächlich trägt, bevor beide Aufrufstellen ihn teilen.
 
 Warum `nav` und nicht `stats.page_title`: die Komponente bindet `useTranslations("nav")`. Ein zweiter Hook für ein Label wäre Aufwand ohne Gewinn, und `nav.settings` dupliziert `settings.page_title` heute bereits — nav-eigene Labels sind der Hausbrauch.
 

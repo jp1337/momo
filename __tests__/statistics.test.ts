@@ -5,6 +5,8 @@
  * getUserStatistics and getAdminStatistics query the test database.
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
 import { taskCompletions, accounts } from "@/lib/db/schema";
@@ -15,6 +17,7 @@ import {
   getAchievementsWithProgress,
   getRecentCronRuns,
 } from "@/lib/statistics";
+import type { AchievementWithProgress } from "@/lib/statistics";
 import {
   createTestUser,
   createTestTask,
@@ -393,10 +396,20 @@ describe("getAchievementsWithProgress", () => {
 
     expect(result.length).toBeGreaterThan(0);
 
+    // Der Anzeigetext liegt seit Migration 0035 in messages/*.json. Eine Zeile
+    // mit einem key ohne Katalog-Eintrag rendert den rohen key im UI — deshalb
+    // muss jeder gelieferte key im Katalog aufloesen.
+    const catalog = JSON.parse(
+      readFileSync(join(process.cwd(), "messages/de.json"), "utf8")
+    ).achievements.catalog;
+
     for (const item of result) {
       expect(typeof item.id).toBe("string");
       expect(typeof item.key).toBe("string");
-      expect(typeof item.title).toBe("string");
+      expect(catalog, `kein Katalog-Eintrag fuer ${item.key}`).toHaveProperty(
+        item.key
+      );
+      expect(typeof item.icon).toBe("string");
       expect(typeof item.coinReward).toBe("number");
       expect(typeof item.secret).toBe("boolean");
       // earnedAt is null for unearned achievements
@@ -431,5 +444,22 @@ describe("getAchievementsWithProgress", () => {
     const user = await createTestUser({ timezone: TZ });
 
     await expect(getAchievementsWithProgress(user.id, null)).resolves.toBeDefined();
+  });
+});
+
+describe("AchievementWithProgress trägt keinen Anzeigetext", () => {
+  it("hat key, aber weder title noch description", () => {
+    const sample: AchievementWithProgress = {
+      id: "00000000-0000-0000-0000-000000000000",
+      key: "first_task",
+      icon: "🌱",
+      rarity: "common",
+      coinReward: 10,
+      secret: false,
+      earnedAt: null,
+    };
+    expect(sample.key).toBe("first_task");
+    expect(Object.keys(sample)).not.toContain("title");
+    expect(Object.keys(sample)).not.toContain("description");
   });
 });
