@@ -7,6 +7,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Die woechentliche Image-Bereinigung hat die Semver-Tags geloescht, die sie
+  schuetzen sollte.** `actions/delete-package-versions` prueft `ignore-versions`
+  gegen den *Namen* einer Package-Version — bei Container-Paketen ist das der
+  sha256-Digest, nie ein Tag. `^(latest|\d+\.\d+)` konnte also nichts
+  schuetzen: der Schritt behielt schlicht die 10 juengsten Versionen und loeschte
+  alles dahinter. `0.8` und `0.8.0` wurden am 2026-08-28 korrekt veroeffentlicht
+  und waren am 2026-08-30 weg; `latest` und die `sha-`-Tags ueberlebten nur, weil
+  sie auf den juengsten Versionen sitzen. Auf der Deploy-Seite lief damit jedes
+  `docker pull ghcr.io/jp1337/momo:0.8` in ein 404 (`manifest unknown`) — die
+  Instanz lief weiter, liess sich aber aus ihrem eigenen Tag nicht mehr
+  wiederherstellen. Der Schritt waehlt jetzt ueber die **Tags** aus, wie die
+  Docker-Hub- und Quay.io-Schritte daneben: Kandidat ist nur eine Version, deren
+  Tags *alle* mit `sha-` beginnen. Das Alter entscheidet erst danach.
+
 ## [0.8.0] - 2026-08-28
 
 ### Changed
