@@ -20,6 +20,7 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getAdminStatistics, getRecentCronRuns } from "@/lib/statistics";
+import { getTranslations } from "next-intl/server";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faShieldHalved,
@@ -49,6 +50,7 @@ export const dynamic = "force-dynamic";
  * Renders an access denied message if the user is not in ADMIN_USER_IDS.
  */
 export default async function AdminPage() {
+  const tAch = await getTranslations("achievements");
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
@@ -874,7 +876,7 @@ export default async function AdminPage() {
                         color: "var(--text-primary)",
                       }}
                     >
-                      {row.title}
+                      {tAch(`catalog.${row.key}.title`)}
                     </td>
                     <td
                       className="px-4 py-3 font-semibold"

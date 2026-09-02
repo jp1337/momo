@@ -78,9 +78,9 @@ export function AchievementRow({
       }
       title={
         <>
-          {isSecret ? t("secret_title") : achievement.title}
+          {isSecret ? t("secret_title") : t(`catalog.${achievement.key}.title`)}
           <span className="mt-1 block font-[family-name:var(--font-ui)] text-[0.8125rem] font-normal normal-case tracking-normal text-[var(--ink-2)]">
-            {isSecret ? t("secret_description") : achievement.description}
+            {isSecret ? t("secret_description") : t(`catalog.${achievement.key}.description`)}
           </span>
         </>
       }

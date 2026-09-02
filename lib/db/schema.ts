@@ -691,8 +691,10 @@ export const achievements = pgTable("achievements", {
   coinReward: integer("coin_reward").notNull().default(10),
 
   /**
-   * When true, the achievement is hidden (title + description shown as "???")
-   * until the user has actually earned it. Used for surprise/Easter-egg achievements.
+   * When true, the achievement is hidden until the user has actually earned it:
+   * the UI renders achievements.secret_title / secret_description from
+   * messages/*.json instead of the catalog entry for this key.
+   * Used for surprise/Easter-egg achievements.
    */
   secret: boolean("secret").notNull().default(false),
 });

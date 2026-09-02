@@ -17,19 +17,6 @@ import { users, achievements, userAchievements, tasks, taskCompletions, topics, 
 import { eq, and, inArray, count, sql } from "drizzle-orm";
 import { getLocalDateString, getLocalYesterdayString, getLocalDayBeforeYesterdayString } from "@/lib/date-utils";
 import { getEnergyCheckinStreak } from "@/lib/energy";
-import deMessages from "@/messages/de.json";
-
-/**
- * German achievement titles, keyed by ACHIEVEMENT_DEFINITIONS.key.
- * UnlockedAchievement.title still carries display text for push notifications
- * (lib/push.ts) and legacy UI callers, which are not yet locale-aware — those
- * are Task 5. Until then this mirrors the pre-refactor German-only behavior,
- * now sourced from messages/de.json instead of the removed DB columns.
- */
-const achievementTitlesDe = deMessages.achievements.catalog as Record<
-  string,
-  { title: string; description: string }
->;
 
 // ─── User Stats ───────────────────────────────────────────────────────────────
 
@@ -347,8 +334,8 @@ export type AchievementDefinition = {
 
 /** Type for an unlocked achievement notification */
 export interface UnlockedAchievement {
+  /** Stabile Identität; Anzeigetext kommt aus achievements.catalog.<key>. */
   key: string;
-  title: string;
   icon: string;
   rarity: "common" | "rare" | "epic" | "legendary";
   coinReward: number;
@@ -685,7 +672,6 @@ export async function checkAndUnlockAchievements(
     const rarity = (a.rarity as "common" | "rare" | "epic" | "legendary") ?? "common";
     return {
       key: a.key,
-      title: achievementTitlesDe[a.key]?.title ?? a.key,
       icon: def?.icon ?? "🏅",
       rarity,
       coinReward: a.coinReward ?? def?.coinReward ?? 10,

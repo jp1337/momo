@@ -104,7 +104,6 @@ describe("push — sendToAllChannels error paths", () => {
 
     const achievement: UnlockedAchievement = {
       key: "first_task",
-      title: "First Task",
       icon: "🏅",
       rarity: "common",
       coinReward: 10,

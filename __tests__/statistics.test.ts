@@ -15,6 +15,7 @@ import {
   getAchievementsWithProgress,
   getRecentCronRuns,
 } from "@/lib/statistics";
+import type { AchievementWithProgress } from "@/lib/statistics";
 import {
   createTestUser,
   createTestTask,
@@ -396,7 +397,7 @@ describe("getAchievementsWithProgress", () => {
     for (const item of result) {
       expect(typeof item.id).toBe("string");
       expect(typeof item.key).toBe("string");
-      expect(typeof item.title).toBe("string");
+      expect(typeof item.icon).toBe("string");
       expect(typeof item.coinReward).toBe("number");
       expect(typeof item.secret).toBe("boolean");
       // earnedAt is null for unearned achievements
@@ -431,5 +432,22 @@ describe("getAchievementsWithProgress", () => {
     const user = await createTestUser({ timezone: TZ });
 
     await expect(getAchievementsWithProgress(user.id, null)).resolves.toBeDefined();
+  });
+});
+
+describe("AchievementWithProgress trägt keinen Anzeigetext", () => {
+  it("hat key, aber weder title noch description", () => {
+    const sample: AchievementWithProgress = {
+      id: "00000000-0000-0000-0000-000000000000",
+      key: "first_task",
+      icon: "🌱",
+      rarity: "common",
+      coinReward: 10,
+      secret: false,
+      earnedAt: null,
+    };
+    expect(sample.key).toBe("first_task");
+    expect(Object.keys(sample)).not.toContain("title");
+    expect(Object.keys(sample)).not.toContain("description");
   });
 });

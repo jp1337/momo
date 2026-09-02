@@ -6,7 +6,7 @@
  *   task: Task,
  *   coinsEarned: number,
  *   newLevel: { level: number; title: string } | null,
- *   unlockedAchievements: Array<{ key: string; title: string; icon: string }>,
+ *   unlockedAchievements: Array<{ key: string; icon: string; rarity: string; coinReward: number }>,
  *   streakCurrent: number,
  *   shieldUsed: boolean
  * }

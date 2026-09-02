@@ -18,6 +18,7 @@ import {
   notificationLog,
 } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { getServerTranslations } from "@/lib/i18n-server";
 
 /** Shape of the exported data bundle */
 export interface UserDataExport {
@@ -36,6 +37,7 @@ export interface UserDataExport {
     notificationEnabled: boolean;
     notificationTime: string;
     theme: string;
+    locale: string | null;
     createdAt: Date;
   };
   topics: Array<{
@@ -134,6 +136,7 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
         morningBriefingTime: users.morningBriefingTime,
         vacationEndDate: users.vacationEndDate,
         theme: users.theme,
+        locale: users.locale,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -201,8 +204,6 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
     db
       .select({
         key: achievements.key,
-        title: achievements.title,
-        description: achievements.description,
         icon: achievements.icon,
         earnedAt: userAchievements.earnedAt,
       })
@@ -232,6 +233,10 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
     throw new Error("User not found");
   }
 
+  // Achievement display text lives in messages/*.json, no longer in the DB —
+  // resolve it in the exporting user's own language.
+  const t = await getServerTranslations(profile.locale, "achievements");
+
   return {
     exportedAt: new Date().toISOString(),
     version: "1",
@@ -240,7 +245,13 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
     tasks: taskRows,
     taskCompletions: completionRows,
     wishlistItems: wishlistRows,
-    achievements: achievementRows,
+    achievements: achievementRows.map((a) => ({
+      key: a.key,
+      title: t(`catalog.${a.key}.title`),
+      description: t(`catalog.${a.key}.description`),
+      icon: a.icon,
+      earnedAt: a.earnedAt,
+    })),
     notificationLog: notificationLogRows,
   };
 }
