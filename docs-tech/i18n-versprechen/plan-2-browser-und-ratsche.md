@@ -184,10 +184,29 @@ git commit -m "fix(ui): sechs Labels im Nutzermenue gehen durch t()"
 - Modify: `components/progress/tabs/review-tab.tsx:106-108`
 - Modify: `components/progress/tabs/stats-tab.tsx:128-136`
 - Modify: `components/stats/streak-sparkline.tsx:60`
+- Modify: `components/layout/level-badge.tsx:63` — **nachgetragen 2026-09-02**, siehe unten
 - Modify: alle sieben `messages/*.json` (Namespaces `review`, `stats`)
 
 **Interfaces:**
-- Produces: `review.streak_line`, `stats.current_streak_days`, `stats.best_streak_days`, `stats.sparkline_aria`
+- Produces: `review.streak_line`, `stats.current_streak_days`, `stats.best_streak_days`, `stats.sparkline_aria`, `achievements.level_aria`
+
+> **Nachgetragen 2026-09-02, aus Task 1.** `components/layout/level-badge.tsx:63`
+> lautet `aria-label={\`Level ${level}: ${title}\`}` — das englische Wort
+> „Level" hartkodiert, in einer Sieben-Sprachen-App, in einem String, den nur
+> Screenreader-Nutzerinnen hören.
+>
+> Task 1 hat ihn gefunden und bewusst liegen lassen: er ist **nicht** dieselbe
+> Form wie der Textknoten eine Zeile darunter. `achievements.level_label` trägt
+> keinen Platzhalter; dieser hier braucht zwei. Ein Drop-in war es also nie.
+>
+> Er gehört hierher und nicht in einen eigenen Task, weil dieser Task genau
+> diese Sorte String bereits behebt: `streak-sparkline.tsx:60` ist derselbe
+> Defekt — ein hartkodiertes englisches `aria-label`, das einen neuen Key mit
+> eigener Form braucht.
+>
+> `{level}` und `{title}` als Platzhalter. `title` ist der übersetzte
+> Leveltitel, der aus `achievements.levels.<n>` kommt (Schnitt 1) — die
+> Nachricht setzt ihn nur zusammen, sie übersetzt ihn nicht.
 
 Das `d` ist heute per JS-Konkatenation angehängt: `{stats.streakCurrent}d {t("current_streak")}`. Chinesisch rendert dadurch „3d 连击". Die Reihenfolge von Zahl, Einheit und Label ist sprachabhängig — das gehört in **eine** ICU-Nachricht pro Zeile, nicht in einen separaten Einheiten-Key.
 
