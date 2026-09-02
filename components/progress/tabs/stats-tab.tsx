@@ -204,6 +204,7 @@ export async function StatsTab({
             data={stats.streakHistory}
             todayLabel={t("streak_today", { count: stats.streakCurrent })}
             peakLabel={t("streak_peak", { count: streakPeak })}
+            sparklineAriaLabel={t("sparkline_aria")}
           />
         </section>
       )}

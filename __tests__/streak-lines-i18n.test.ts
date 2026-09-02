@@ -66,6 +66,28 @@ describe("Streak-Zeilen tragen die Einheit in der Nachricht", () => {
     expect(src).not.toContain('aria-label="Streak history sparkline"');
   });
 
+  it("StreakSparkline übersetzt nicht selbst — der Aufrufer übergibt das Label als Prop", () => {
+    const componentSrc = readFileSync(
+      join(process.cwd(), "components/stats/streak-sparkline.tsx"),
+      "utf8",
+    );
+    expect(
+      componentSrc,
+      "streak-sparkline.tsx darf kein next-intl importieren — todayLabel/peakLabel sind bereits Props, sparklineAriaLabel gehört zum selben Muster",
+    ).not.toMatch(/next-intl/);
+    expect(componentSrc).toContain("sparklineAriaLabel: string");
+    expect(componentSrc).toContain("aria-label={sparklineAriaLabel}");
+
+    const callerSrc = readFileSync(
+      join(process.cwd(), "components/progress/tabs/stats-tab.tsx"),
+      "utf8",
+    );
+    expect(
+      callerSrc,
+      "stats-tab.tsx muss sparklineAriaLabel an <StreakSparkline> übergeben",
+    ).toMatch(/sparklineAriaLabel=\{t\(["']sparkline_aria["']\)\}/);
+  });
+
   it("level-badge aria-label ist nicht mehr englisch hartkodiert", () => {
     const src = readFileSync(
       join(process.cwd(), "components/layout/level-badge.tsx"),
