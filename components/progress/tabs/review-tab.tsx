@@ -104,8 +104,10 @@ export async function ReviewTab({
       {showDelta && <p className={RAIL_LINE}>{deltaText}</p>}
       {showStreak && (
         <p className={RAIL_LINE}>
-          {review.streakCurrent}d {t("streak")} · {t("streak_max")}{" "}
-          {review.streakMax}d
+          {t("streak_line", {
+            current: review.streakCurrent,
+            max: review.streakMax,
+          })}
         </p>
       )}
     </>

@@ -60,7 +60,7 @@ export function LevelBadge({ level, title }: LevelBadgeProps) {
   return (
     <span
       title={title}
-      aria-label={`Level ${level}: ${title}`}
+      aria-label={t("level_aria", { level, title })}
       style={{
         display: "inline-flex",
         alignItems: "center",

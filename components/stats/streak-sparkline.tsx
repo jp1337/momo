@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 /**
  * StreakSparkline — SVG sparkline showing streak history over time.
  *
@@ -20,6 +22,8 @@ interface StreakSparklineProps {
  * @param props - Streak data and localized labels
  */
 export function StreakSparkline({ data, todayLabel, peakLabel }: StreakSparklineProps) {
+  const t = useTranslations("stats");
+
   if (data.length === 0 || data.every((v) => v === 0)) {
     return null;
   }
@@ -57,7 +61,7 @@ export function StreakSparkline({ data, todayLabel, peakLabel }: StreakSparkline
         viewBox={`0 0 ${width} ${height}`}
         className="w-full h-[52px]"
         role="img"
-        aria-label="Streak history sparkline"
+        aria-label={t("sparkline_aria")}
         preserveAspectRatio="none"
       >
         {/* Filled area */}
