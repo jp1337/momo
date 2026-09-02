@@ -416,8 +416,10 @@ export const achievements = pgTable("achievements", {
 Run:
 ```bash
 docker compose up -d db
-TEST_DATABASE_URL=postgresql://momo:password@localhost:5432/momo_test node scripts/migrate.mjs
+DATABASE_URL=postgresql://momo:password@localhost:5432/momo_test node scripts/migrate.mjs
 ```
+
+`scripts/migrate.mjs:56` liest `DATABASE_URL`, nicht `TEST_DATABASE_URL` — letzteres kennt nur `vitest.config`.
 Expected: `0035_achievements_drop_display_text` angewandt, kein Fehler.
 
 - [ ] **Step 4: Prüfen, daß die Spalten weg sind**
@@ -532,9 +534,10 @@ Dann `getTranslations` mit dieser Locale:
 import { getTranslations } from "next-intl/server";
 import { DEFAULT_LOCALE } from "@/i18n/locales";
 
-// … innerhalb der Export-Funktion, nachdem die Nutzerzeile geladen ist:
+// … innerhalb der Export-Funktion. lib/export.ts:112 destrukturiert
+// `userRows` aus einem Promise.all — ein Array, keine Zeile.
 const t = await getTranslations({
-  locale: userRow.locale ?? DEFAULT_LOCALE,
+  locale: userRows[0]?.locale ?? DEFAULT_LOCALE,
   namespace: "achievements",
 });
 ```
@@ -621,62 +624,99 @@ git commit -m "refactor(gamification): sechs Lesestellen liefern key statt Anzei
 - Modify: `components/progress/tabs/achievements-tab.tsx:82`, `:88`
 - Modify: `components/achievements/achievement-row.tsx:81`, `:83`
 - Modify: `components/animations/achievement-toast.tsx:197`
-- Test: `__tests__/achievement-row.test.tsx` (anlegen, falls nicht vorhanden)
+- Test: `__tests__/achievements-i18n.test.ts` (anlegen; **kein** `.tsx` — `vitest.config` sammelt nur `*.test.ts`)
 
 **Interfaces:**
 - Consumes: `AchievementWithProgress` ohne Anzeigetext (Task 5), Keys aus Task 1/2
 
 `achievements-tab.tsx` ist eine **Server**-Komponente (`async`, ruft `getAchievementsWithProgress` direkt) — dort `getTranslations`. `achievement-row.tsx` bindet bereits `useTranslations` (es ruft `t("secret_title")` in Zeile 81) — dort denselben Hook weiterbenutzen.
 
-- [ ] **Step 1: Failing test schreiben**
+- [ ] **Step 1: Failing test schreiben — ohne DOM**
 
-`__tests__/achievement-row.test.tsx`:
+`@testing-library/react` und `jsdom` sind **nicht** installiert, und
+`vitest.config` sammelt nur `__tests__/**/*.test.ts` — eine `.tsx`-Testdatei
+liefe nie, auch nicht stumm rot. Es gibt null Komponententests im Repo.
 
-```tsx
-import { render, screen } from "@testing-library/react";
-import { NextIntlClientProvider } from "next-intl";
-import deMessages from "@/messages/de.json";
-import frMessages from "@/messages/fr.json";
-import { AchievementRow } from "@/components/achievements/achievement-row";
+Zwei neue devDependencies plus eine Config-Änderung, um eine Zeile zu prüfen,
+sind Testinfrastruktur und nicht Teil dieser Migration. Das echte Risiko ist
+ein fehlender Key oder eine vergessene Lesestelle — beides ist ohne DOM
+prüfbar. Das Rendering deckt die vorhandene Playwright-Suite ab, plus der
+Chrome-Blick in Step 7.
 
-const achievement = {
-  id: "00000000-0000-0000-0000-000000000000",
-  key: "first_task",
-  icon: "🌱",
-  rarity: "common",
-  coinReward: 10,
-  secret: false,
-  earnedAt: null,
-};
+`__tests__/achievements-i18n.test.ts`:
 
-function renderIn(locale: string, messages: Record<string, unknown>) {
-  return render(
-    <NextIntlClientProvider locale={locale} messages={messages}>
-      <AchievementRow achievement={achievement} />
-    </NextIntlClientProvider>
+```ts
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, it, expect } from "vitest";
+import { ACHIEVEMENT_DEFINITIONS, LEVELS } from "@/lib/gamification";
+
+const LOCALES = ["de", "en", "es", "fr", "nl", "ru", "zh"] as const;
+
+function messages(loc: string) {
+  return JSON.parse(
+    readFileSync(join(process.cwd(), `messages/${loc}.json`), "utf8")
   );
 }
 
-describe("AchievementRow übersetzt aus dem key", () => {
-  it("zeigt den deutschen Titel bei locale de", () => {
-    renderIn("de", deMessages);
-    expect(screen.getByText("Erster Schritt")).toBeInTheDocument();
+describe("Katalogtexte vollstaendig, Zeile liest sie nicht mehr", () => {
+  it("jeder Katalog-key hat Titel und Beschreibung in allen sieben Locales", () => {
+    for (const loc of LOCALES) {
+      const catalog = messages(loc).achievements.catalog as Record<
+        string,
+        { title?: string; description?: string }
+      >;
+      for (const def of ACHIEVEMENT_DEFINITIONS) {
+        expect(catalog[def.key]?.title, `${loc}: title fehlt fuer ${def.key}`).toBeTruthy();
+        expect(
+          catalog[def.key]?.description,
+          `${loc}: description fehlt fuer ${def.key}`
+        ).toBeTruthy();
+      }
+    }
   });
 
-  it("zeigt den französischen Titel bei locale fr", () => {
-    renderIn("fr", frMessages);
-    expect(screen.queryByText("Erster Schritt")).not.toBeInTheDocument();
-    expect(
-      screen.getByText(frMessages.achievements.catalog.first_task.title)
-    ).toBeInTheDocument();
+  it("jedes Level hat einen Namen in allen sieben Locales", () => {
+    for (const loc of LOCALES) {
+      const levels = messages(loc).achievements.levels as Record<string, string>;
+      for (const lvl of LEVELS) {
+        expect(levels[String(lvl.level)], `${loc}: level ${lvl.level} fehlt`).toBeTruthy();
+      }
+    }
+  });
+
+  it("keine Komponente liest achievement.title oder .description", () => {
+    for (const file of [
+      "components/achievements/achievement-row.tsx",
+      "components/animations/achievement-toast.tsx",
+      "components/progress/tabs/achievements-tab.tsx",
+    ]) {
+      const src = readFileSync(join(process.cwd(), file), "utf8");
+      expect(src, `${file} liest achievement.title`).not.toMatch(
+        /achievement\.(title|description)/
+      );
+      expect(src, `${file} liest einen LevelDef-Titel`).not.toMatch(
+        /LevelDef\.title/
+      );
+    }
+  });
+
+  it("kein Locale hat einen Katalog-Eintrag, den der Code nicht kennt", () => {
+    const known = new Set(ACHIEVEMENT_DEFINITIONS.map((d) => d.key));
+    for (const loc of LOCALES) {
+      const extra = Object.keys(messages(loc).achievements.catalog).filter(
+        (k) => !known.has(k)
+      );
+      expect(extra, `${loc} hat Katalog-Keys ohne Definition`).toEqual([]);
+    }
   });
 });
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [ ] **Step 2: Test laufen lassen, Fehlschlag bestaetigen**
 
-Run: `npx vitest run __tests__/achievement-row.test.tsx`
-Expected: FAIL — die Komponente liest `achievement.title`, das es nicht mehr gibt.
+Run: `npx vitest run __tests__/achievements-i18n.test.ts`
+Expected: FAIL im dritten Fall — die drei Komponenten lesen noch `achievement.title`.
 
 - [ ] **Step 3: `achievement-row.tsx` umstellen**
 
@@ -718,7 +758,7 @@ Bindet die Komponente noch kein `t`, oben ergänzen: `const t = useTranslations(
 
 - [ ] **Step 6: Tests laufen lassen**
 
-Run: `npx vitest run __tests__/achievement-row.test.tsx && npx tsc --noEmit`
+Run: `npx vitest run __tests__/achievements-i18n.test.ts && npx tsc --noEmit`
 Expected: beides grün
 
 - [ ] **Step 7: In Chrome ansehen**
@@ -730,7 +770,7 @@ Grüne Tests sind kein Beleg dafür, daß ein Layout mit längeren französische
 - [ ] **Step 8: Commit**
 
 ```bash
-git add components/ __tests__/achievement-row.test.tsx
+git add components/ __tests__/achievements-i18n.test.ts
 git commit -m "feat(gamification): Errungenschaften und Level rendern in der Nutzersprache"
 ```
 
