@@ -59,11 +59,13 @@ describe("getLevelForCoins", () => {
     expect(getLevelForCoins(99999).level).toBe(10);
   });
 
-  it("returns correct title for each level", () => {
+  it("returns the matching level for every level's own threshold", () => {
+    // Levels no longer carry a title (moved to messages/*.json under
+    // achievements.levels.<n> — see __tests__/gamification.test.ts), so this
+    // now only exercises the level-matching loop, not display text.
     for (const levelDef of LEVELS) {
       const result = getLevelForCoins(levelDef.minCoins);
       expect(result.level).toBe(levelDef.level);
-      expect(result.title).toBe(levelDef.title);
     }
   });
 });

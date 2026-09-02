@@ -56,13 +56,14 @@ export async function StatsTab({
   userId: string;
   header: React.ReactNode;
 }) {
-  const [stats, energyWeekCounts, energyHistory, energyDayCount, t, locale] =
+  const [stats, energyWeekCounts, energyHistory, energyDayCount, t, tAchievements, locale] =
     await Promise.all([
       getUserStatistics(userId),
       getEnergyLevelCounts(userId, 7),
       getEnergyHistory(userId, 90),
       getEnergyCheckinDayCount(userId),
       getTranslations("stats"),
+      getTranslations("achievements"),
       getLocale(),
     ]);
 
@@ -180,7 +181,7 @@ export async function StatsTab({
         <GroupHeading>{t("section_progress")}</GroupHeading>
         <div className="flex flex-col gap-2">
           <p className="m-0 font-[family-name:var(--font-mono)] text-[1rem] text-[var(--ink)]">
-            {t("level_label", { level: stats.level })} · {currentLevelDef.title}
+            {t("level_label", { level: stats.level })} · {tAchievements(`levels.${currentLevelDef.level}`)}
           </p>
           {nextLevelDef && (
             <p className={RAIL_LINE}>
