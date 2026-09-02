@@ -147,29 +147,73 @@ heutige Skript nicht bemerken würde.
 
 ## Serverseitig: `users.locale` wird echt
 
-Heute widersprechen sich zwei Dokumente über dieselbe Spalte:
+> **Korrektur 2026-09-02.** Eine frühere Fassung dieses Abschnitts behauptete,
+> `users.locale` werde von niemandem geschrieben und von niemandem gelesen.
+> Beides war falsch — der Fehler lag in einem Grep, nicht in der Codebase. Was
+> unten steht, ist gegen `app/api/locale/route.ts`, `lib/notifications.ts` und
+> `lib/push.ts` nachgeprüft.
+
+Die Pipeline existiert vollständig und funktioniert:
+
+```
+/api/locale:49 ──schreibt──▶ users.locale ──liest──▶ dispatchNotification
+                                              notifications.ts:461,471
+                                                        │ payload.locale
+                                                        ▼
+                                              renderEmailTemplate  ✓ lokalisiert
+                                                        │
+                       payload.title / payload.body ────┘  ✗ vom Aufrufer,
+                                                              schon deutsch
+```
 
 | Ort | Aussage | Wahr? |
 | --- | --- | --- |
-| `lib/db/schema.ts:151-156` | „sent in the user's language. Updated whenever the locale cookie is set." | **nein** |
-| `lib/push.ts:402-406` | „no per-user i18n in cron jobs — there's no request locale" | ja |
+| `lib/db/schema.ts:151-156` | „sent in the user's language. Updated whenever the locale cookie is set." | **ja** |
+| `lib/push.ts:402-406` | „no per-user i18n in cron jobs — there's no request locale" | irreführend |
 
-`app/api/locale/route.ts:54` setzt den Cookie und schreibt die Spalte nicht.
-Niemand liest sie. Die Spalte ist tot, und der Schema-Kommentar behauptet das
-Gegenteil — dieselbe Fehlerklasse, die die Roadmap dreimal als schlimmer als
-eine undokumentierte Lücke bezeichnet.
+Der Schema-Kommentar stimmt. Der Kommentar in `lib/push.ts` erklärt eine
+Einschränkung, die so nicht mehr gilt: eine *Request*-Locale gibt es im Cron
+tatsächlich nicht — eine *Nutzer*-Locale steht in der Datenbank und wird von
+`dispatchNotification` schon aufgelöst.
 
-**Entscheidung:** Der Kommentar wird wahr gemacht, nicht gestrichen.
+**Der Defekt ist die Reihenfolge.** Die sieben Payload-Builder in `lib/push.ts`
+backen ihren Text, bevor der locale-bewußte Dispatcher ihn sieht. Die
+Eligible-Selects holen `users.timezone` über einen `innerJoin(users, …)`, der
+`users.locale` direkt daneben stehen hätte.
 
 | Änderung | Ort |
 | --- | --- |
-| `UPDATE users SET locale` beim Cookie-Setzen | `app/api/locale/route.ts` |
-| Payload-Builder nehmen eine Locale | `lib/push.ts` (7 Builder) |
+| `locale: users.locale` in die Eligible-Selects | `lib/push.ts` (je eine Zeile) |
+| Payload-Builder nehmen die Locale als Parameter | `lib/push.ts` (7 Builder) |
 | `getTranslations({locale, namespace})` aus `next-intl/server` | ebenda |
 | Fallback | `users.locale ?? DEFAULT_LOCALE` |
+| Den irreführenden Kommentar berichtigen | `lib/push.ts:402-406` |
+
+Nichts an der Spalte, nichts an `/api/locale`, nichts an `notifications.ts`.
 
 `next-intl` 4.13.7 exportiert `getTranslations` serverseitig — verifiziert, kein
 Neubau.
+
+### Zwei Keys, die es schon gibt und die niemand benutzt
+
+`review.push_title` und `review.push_body` stehen **in allen sieben Locales**,
+ICU-formatiert:
+
+| Locale | `review.push_title` |
+| --- | --- |
+| de | Dein Wochenrückblick |
+| en | Your Weekly Review |
+| fr | Ton bilan de la semaine |
+| zh | 你的周回顾 |
+
+`grep -rn "push_title" app lib components` findet **null** Referenzen.
+`lib/push.ts:1114` hartkodiert stattdessen den deutschen Text. Die Übersetzung
+war gemacht, die Verdrahtung ist nie passiert — und `check:i18n` konnte es nicht
+melden, weil es nur *referenziert ⇒ vorhanden* prüft.
+
+**Die Gegenrichtung aus Schnitt 2 hätte den Defekt aus Schnitt 3 gefunden.** Das
+ist der beste Einzelbeleg für diese Spec, den die Codebase selbst liefert.
+Schnitt 3 verdrahtet diese beiden Keys, er erfindet sie nicht neu.
 
 **Bewusst hingenommen:** Bestandsnutzer haben `locale = null`. Es gibt keine
 Datenquelle für einen Backfill — der Cookie liegt im Browser, nicht in der DB.
@@ -212,7 +256,7 @@ Eine Spec, vier Pläne — weil sie vier unabhängige Rot-Zustände haben.
 ```mermaid
 flowchart LR
     S1["Schnitt 1<br/>Katalog<br/>+ Migration"] --> S2["Schnitt 2<br/>Browser-Rest<br/>+ Ratsche"]
-    S3["Schnitt 3<br/>users.locale<br/>+ Push<br/><i>unabhängig</i>"]
+    S3["Schnitt 3<br/>Push-Builder<br/>hinter die Locale<br/><i>unabhängig</i>"]
     S4["Schnitt 4<br/>Drift-Test<br/><i>unabhängig</i>"]
     S1 -.->|"liefert die Familien,<br/>die Schnitt 2 prüft"| S2
 ```
@@ -221,7 +265,7 @@ flowchart LR
 | --- | --- | --- | --- |
 | 1 | Katalog: Migration, `seedAchievements()`, 6 Lesestellen, 31 Errungenschaften + 10 Level × 7 | **ja** | — |
 | 2 | `user-menu`, Sparkline-aria, `{n}d`-Key, `check:i18n` Gegenrichtung + Familien | nein | 1 (liefert die Familien) |
-| 3 | `users.locale` schreiben/lesen, 22 Push-Payloads × 7 | nein | — |
+| 3 | 7 Payload-Builder in `lib/push.ts` hinter die Locale, ~20 neue Keys × 7, 2 vorhandene verdrahten | nein | — |
 | 4 | `__tests__/openapi-drift.test.ts` | nein | — |
 
 Schnitt 1 zuerst, weil er die einzige Migration trägt und die Key-Familien
@@ -247,6 +291,7 @@ verliert genau die Anspielung, die er trägt.
 | | Grund |
 | --- | --- |
 | Kein Backfill von `users.locale` | keine Datenquelle; der Cookie liegt im Browser |
+| Kein Anfassen von `/api/locale` oder `notifications.ts` | schreiben und lesen die Spalte bereits korrekt |
 | Keine Übersetzung von Aufgaben-/Themen-Inhalten | das sind Nutzerdaten, nicht Oberfläche |
 | Die 30 undokumentierten Operationen werden nicht nachdokumentiert | der Test nagelt sie fest, statt sie zu erzwingen |
 | Kein Anfassen von `lib/notifications.ts` | null deutsche Literale |
