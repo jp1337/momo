@@ -20,8 +20,8 @@ jobs:
   # ── GHCR ──────────────────────────────────────────────────────────────────
   # Step 1: delete untagged versions (intermediate per-platform digests
   #         produced by push-by-digest=true during the multi-arch build).
-  # Step 2: keep only the 10 most recent sha- tagged manifest lists;
-  #         semver tags and `latest` are protected by ignore-versions.
+  # Step 2: keep only the 10 most recent manifest lists that carry nothing
+  #         but sha- tags; semver tags and `latest` are never candidates.
   cleanup-ghcr:
     runs-on: ubuntu-latest
     permissions:
@@ -35,15 +35,52 @@ jobs:
           delete-only-untagged-versions: true
           min-versions-to-keep: 0
 
+      # Deliberately NOT actions/delete-package-versions: its `ignore-versions`
+      # regex is tested against the version *name*, which for container packages
+      # is the sha256 digest, never the tags (src/delete.ts: `info.version`,
+      # populated from `version.name` in src/version/get-versions.ts). No tag can
+      # be protected by it. Until 2026-08-30 this step therefore kept the 10
+      # newest versions by age and deleted every semver tag behind them: `0.8`
+      # and `0.8.0` were published correctly on 2026-08-28 and gone two days
+      # later, so `docker_momo_version: "0.8"` in wdk-ansible 404ed on every
+      # deploy of root01xvp. `latest` and the recent `sha-` tags only survived
+      # because they sit on the newest versions.
+      #
+      # The shell version selects by TAG, like the Docker Hub and Quay.io steps
+      # below: a version is a candidate only if every tag it carries starts with
+      # `sha-`. A version tagged `0.8`, `0.8.0` or `latest` is never selected,
+      # however old it is — age decides only among candidates.
       - name: Keep only 10 most recent sha- versions in GHCR
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: momo
-          package-type: container
-          # Versions whose tag matches this pattern are never deleted.
-          # Covers: latest, 1.2, 1.2.3  (type=semver tags have no 'v' prefix)
-          ignore-versions: '^(latest|\d+\.\d+)'
-          min-versions-to-keep: 10
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          KEEP=10
+
+          # The API returns versions newest-first, so `tail -n +11` is
+          # "everything past the 10 most recent candidates".
+          mapfile -t VICTIMS < <(
+            gh api --paginate \
+              "users/jp1337/packages/container/momo/versions?per_page=100" \
+              --jq '.[]
+                    | select(.metadata.container.tags
+                             | length > 0 and all(startswith("sha-")))
+                    | "\(.id) \(.metadata.container.tags | join(","))"' \
+              | tail -n +$((KEEP + 1))
+          )
+
+          DELETED=0
+          for v in "${VICTIMS[@]}"; do
+            id="${v%% *}"
+            if gh api -X DELETE \
+              "users/jp1337/packages/container/momo/versions/${id}" --silent; then
+              echo "Deleted GHCR: ${v#* } (version ${id})"
+              DELETED=$((DELETED + 1))
+            else
+              echo "Failed to delete GHCR version ${id} (${v#* })" >&2
+            fi
+          done
+          echo "GHCR: kept ${KEEP}, deleted ${DELETED} sha- version(s)."
 
   # ── Docker Hub + Quay.io ──────────────────────────────────────────────────
   # List all sha- tags sorted newest-first, skip the first 10, delete the rest.
