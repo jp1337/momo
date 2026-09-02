@@ -41,11 +41,19 @@ Sechs nackte Textknoten, nicht fünf. Die Roadmap zählt `Statistiken`, `Wochenr
 
 `components/layout/level-badge.tsx:80` rendert `<span>Lv.</span>` als nackten
 Textknoten — während `achievements.level_label` in allen sieben Locales
-existiert und im Russischen bewusst `"Ур."` lautet.
+existiert und in **vier von sieben** vom hartkodierten `Lv.` abweicht:
+
+| Locale | `achievements.level_label` |
+| --- | --- |
+| de, en, zh | `Lv.` — stimmt zufällig |
+| es, fr, nl | `Nv.` |
+| ru | `Ур.` |
+
 `components/progress/tabs/stats-tab.tsx:184` benutzt den Key bereits.
 
-Eine russische Nutzerin liest also auf `/progress` `Ур.` und im
-Navbar-Badge daneben `Lv.` — auf jeder Seite der App.
+Eine französische Nutzerin liest also auf `/progress` `Nv.` und im
+Navbar-Badge daneben `Lv.` — auf jeder Seite der App; im Russischen `Ур.`
+gegen `Lv.`. Betroffen sind vier Locales, nicht eine.
 
 **Dieser Fall belegt die Grenze der Ratsche aus der Spec.** Die Gegenrichtung
 findet ihn *nicht*: der Key **ist** referenziert, nur nicht überall. `ORPHAN`

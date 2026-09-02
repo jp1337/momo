@@ -5,6 +5,8 @@
  * getUserStatistics and getAdminStatistics query the test database.
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
 import { taskCompletions, accounts } from "@/lib/db/schema";
@@ -394,9 +396,19 @@ describe("getAchievementsWithProgress", () => {
 
     expect(result.length).toBeGreaterThan(0);
 
+    // Der Anzeigetext liegt seit Migration 0035 in messages/*.json. Eine Zeile
+    // mit einem key ohne Katalog-Eintrag rendert den rohen key im UI — deshalb
+    // muss jeder gelieferte key im Katalog aufloesen.
+    const catalog = JSON.parse(
+      readFileSync(join(process.cwd(), "messages/de.json"), "utf8")
+    ).achievements.catalog;
+
     for (const item of result) {
       expect(typeof item.id).toBe("string");
       expect(typeof item.key).toBe("string");
+      expect(catalog, `kein Katalog-Eintrag fuer ${item.key}`).toHaveProperty(
+        item.key
+      );
       expect(typeof item.icon).toBe("string");
       expect(typeof item.coinReward).toBe("number");
       expect(typeof item.secret).toBe("boolean");

@@ -192,6 +192,14 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange={false}
         >
+          {/*
+            ponytail: die komplette Locale-Datei geht an jede Seite. Deckel:
+            +3,8 KB (de) bis +5,0 KB (ru) RSC-Payload pro Navigation, davon
+            31 Achievement-Beschreibungen, die nur /progress und /stats
+            brauchen. Upgrade-Pfad: Messages pro Route verengen
+            (NextIntlClientProvider mit einem Teilbaum im jeweiligen
+            layout.tsx statt hier), wenn die Payload messbar stoert.
+          */}
           <NextIntlClientProvider messages={messages}>
             <TooltipProvider delayDuration={300} skipDelayDuration={150}>
               {children}

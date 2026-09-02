@@ -663,17 +663,17 @@ export const wishlistItems = pgTable("wishlist_items", {
 /**
  * Master achievements table.
  * Seeded with all available achievements; users earn them via user_achievements.
+ *
+ * Anzeigetext (Titel, Beschreibung) lebt nicht hier, sondern in
+ * messages/*.json unter `achievements.catalog.<key>`: eine Spalte kann nur
+ * eine Sprache halten. Der `key` ist die stabile Identitaet, gegen die die
+ * Uebersetzung aufloest — siehe Migration 0035.
  */
 export const achievements = pgTable("achievements", {
   id: uuid("id").primaryKey().defaultRandom(),
 
   /** Unique machine-readable key (e.g. "first_task_completed") */
   key: text("key").notNull().unique(),
-
-  /**
-   * Anzeigetext lebt in messages/*.json unter achievements.catalog.<key>,
-   * nicht hier: eine Spalte kann nur eine Sprache halten.
-   */
 
   /** Emoji or icon identifier for display */
   icon: text("icon").notNull(),
