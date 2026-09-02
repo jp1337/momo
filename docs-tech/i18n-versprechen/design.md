@@ -185,14 +185,46 @@ Eligible-Selects holen `users.timezone` über einen `innerJoin(users, …)`, der
 | --- | --- |
 | `locale: users.locale` in die Eligible-Selects | `lib/push.ts` (je eine Zeile) |
 | Payload-Builder nehmen die Locale als Parameter | `lib/push.ts` (7 Builder) |
-| `getTranslations({locale, namespace})` aus `next-intl/server` | ebenda |
+| `getServerTranslations(locale, namespace)` aus `lib/i18n-server` | ebenda |
 | Fallback | `users.locale ?? DEFAULT_LOCALE` |
 | Den irreführenden Kommentar berichtigen | `lib/push.ts:402-406` |
 
 Nichts an der Spalte, nichts an `/api/locale`, nichts an `notifications.ts`.
 
-`next-intl` 4.13.7 exportiert `getTranslations` serverseitig — verifiziert, kein
-Neubau.
+> **Korrektur 2026-09-02, aus der Umsetzung von Schnitt 1.** Dieser Absatz hieß
+> vorher: „`next-intl` 4.13.7 exportiert `getTranslations` serverseitig —
+> verifiziert, kein Neubau." Das war falsch, und zwar nicht knapp.
+
+`getTranslations` aus `next-intl/server` läuft **nur im Request-Scope**. Die
+Ursache liegt nicht in der Testumgebung:
+
+```
+i18n/request.ts:31   getRequestConfig(async () => { … await cookies() … })
+                     ↑ nimmt KEINE Parameter und ruft cookies() unbedingt
+
+next-intl getConfig  ruft diesen Callback auch dann, wenn ein locale-Override
+                     übergeben wird — der Override wird ignoriert
+```
+
+Ein Cron-Job hat keinen Request. `getTranslations({ locale })` bricht dort auch
+im echten Next-Runtime, nicht nur unter vitest.
+
+| Kontext | Aufruf |
+| --- | --- |
+| Server-Komponente, API-Route | `getTranslations` ✓ |
+| Cron-Job, DSGVO-Export | **nur** `getServerTranslations` |
+
+Gegenbeleg, der die Grenze bestätigt: `lib/templates.ts:237` benutzt seit jeher
+`getTranslations({ locale, namespace })` — und wird aus
+`app/api/topics/import-template/route.ts` gerufen, also im Request-Scope. Kein
+Altfehler, sondern dieselbe Regel von der anderen Seite.
+
+Schnitt 1 hat deshalb `lib/i18n-server.ts` gebaut:
+`getServerTranslations(locale, namespace)` über `createTranslator` plus
+denselben dynamischen `../messages/${locale}.json`-Import, den `i18n/request.ts`
+bereits verwendet — kein statisches JSON im Bundle, empirisch geprüft
+(`grep -rl "Erster Schritt" .next/static/chunks/` nach einem echten Build
+findet nichts).
 
 ### Zwei Keys, die es schon gibt und die niemand benutzt
 
