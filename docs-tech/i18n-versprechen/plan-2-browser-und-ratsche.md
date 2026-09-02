@@ -693,6 +693,36 @@ git commit -m "feat(config): check:i18n prueft beide Richtungen und kennt Key-Fa
 - Consumes: die `ORPHAN`-Ausgabe aus Task 3 Step 7
 - Produces: `npm run check:i18n` mit Exit 0
 
+> **Gemessen 2026-09-02, vor der Umsetzung.** Der Plan sagte „die Liste ist die
+> Ausbeute" und nannte keine Zahl. Die Zahl ist:
+>
+> | | |
+> | --- | --- |
+> | Verwaist bei reiner Gegenrichtung | **372** (die Roadmap schätzte ~132) |
+> | davon Blattname irgendwo im Quelltext → Familie, Map oder Template | **278** |
+> | echte Kandidaten | **94** |
+>
+> Die 94 sind eine **Obergrenze**: die Heuristik sucht den Blattnamen wörtlich,
+> übersieht also numerierte Familien (`quote_1` gegen `t(\`quote_${n}\`)`) und
+> zählt sie fälschlich als Kandidat. `closure` steht mit 12 in beiden Spalten
+> und ist genau dieser Fall.
+>
+> **372 Zeilen einzeln zu greppen ist kein Task.** Dieser Task hat deshalb zwei
+> Stufen, und die zweite erbt das Muster aus Schnitt 4:
+>
+> 1. **Familien deklarieren, bevor irgendetwas trockengelegt wird.** Die
+>    generativen Namespaces zuerst — `achievements` (die 72 Keys aus Schnitt 1),
+>    `templates`, `closure`, `progress`. Jede Familie schrumpft die Liste
+>    mechanisch und ohne Urteil.
+> 2. **Was danach übrig ist, wird triagiert — und was ohne sichere Antwort
+>    bleibt, wird GEPINNT, nicht gelöscht.** Wie die 30 undokumentierten
+>    Operationen in Schnitt 4: die Menge wird exakt festgenagelt, die
+>    Gegenrichtung geht nur bei einem **neuen** Verwaisten rot. Die Liste darf
+>    nur schrumpfen.
+>
+> Eine Löschung auf Verdacht bleibt verboten. Das Pinnen ist der Ausweg, der
+> das Verbot bezahlbar macht.
+
 Kein Schritt dieses Tasks löscht auf Verdacht. Jeder Verwaiste bekommt eine von drei Antworten, und die Antwort steht in `verwaiste-keys.md`, bevor irgendetwas gelöscht wird.
 
 | Antwort | Wann | Handlung |
