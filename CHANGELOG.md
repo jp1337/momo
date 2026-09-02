@@ -7,6 +7,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Errungenschaften und Level sprechen jetzt sieben Sprachen.** Die 31
+  Errungenschaftstitel und die 10 Levelnamen standen als deutsche Literale in
+  `lib/gamification.ts` und wurden von `seedAchievements()` per Upsert in die
+  Datenbank jeder Instanz geschrieben. Gelesen wurden sie von dort — auch für
+  Nutzerinnen mit `locale = "fr"`, die auf `/progress?tab=achievements`
+  „Erstes Wunschlisten-Item gekauft" lasen. Migration `0035_achievements_drop_display_text.sql`
+  entfernt `achievements.title` und `.description`; Anzeigetext liegt nun in
+  `messages/*.json` unter `achievements.catalog.<key>.title|.description` und
+  `achievements.levels.<n>` in allen sieben Sprachen, die Tabelle hält den `key`.
+  Der DSGVO-Export (`lib/export.ts`) übersetzt `title` und `description` zur
+  Exportzeit aus `users.locale` und bleibt damit lesbar. `lib/i18n-server.ts`
+  exportiert `getServerTranslations(locale, namespace)` für Nutzung außerhalb von
+  Request-Scope (Cron-Jobs, Export). Der Achievement-Toast (`components/animations/achievement-toast.tsx`)
+  liest die Aufschriften von `UnlockedAchievement` statt aus einer Hand-Schrift-Kopie
+  über die JSON-Grenze. `__tests__/achievements-i18n.test.ts` sichert Vollständigkeit
+  über alle Sprachen und verhindert, dass eine Komponente `achievement.title` direkt liest.
+
 ## [0.8.1] - 2026-09-02
 
 ### Fixed
