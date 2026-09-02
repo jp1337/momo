@@ -364,6 +364,27 @@ git commit -m "refactor(gamification): Katalog traegt keinen Anzeigetext mehr"
 
 ---
 
+> **Zusammengelegt mit Task 3 (Ruling 2026-09-02).** Task 3 und Task 4 sind ein
+> Task, nicht zwei. `achievements.title` ist `text NOT NULL` ohne Default, und
+> `__tests__/helpers/setup.ts:17` ruft `seedAchievements()` im `beforeAll`
+> **jeder** Testdatei. Nimmt Task 3 die Spalten aus dem `INSERT`, ohne dass die
+> Migration existiert, verletzt jeder Seed die NOT-NULL-Bedingung und die
+> **gesamte** Suite ist rot — Task 3 Step 7 „Expected: PASS" wäre unerreichbar.
+> `global-setup.ts:69` fährt die Migration vor der Suite, sie muss also
+> vorhanden sein, bevor irgendein Test läuft.
+>
+> Die ursprüngliche Begründung im Plan („erst Task 3, dann die Migration,
+> sonst läuft ein `seedAchievements()` gegen NOT-NULL-Spalten ohne Wert")
+> beschrieb das Deployment, nicht die Testsuite — und auch dort trägt sie nur
+> bedingt: `scripts/migrate.mjs` läuft beim Start des **neuen** Containers, der
+> den neuen Code enthält. Ein Restrisiko bleibt bei `replicas: 2` während eines
+> Rolling Updates, wenn ein alter Pod nach der Migration noch einen Seed
+> auslöst — `seedAchievements()` läuft aber nur beim Start und über
+> `/api/admin/seed`, nicht pro Request.
+>
+> Reihenfolge innerhalb des zusammengelegten Tasks: Migration und Schema
+> zuerst, dann der Code, dann die Tests.
+
 ### Task 4: Die Migration
 
 **Files:**
