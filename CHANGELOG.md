@@ -7,6 +7,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`npm run check:i18n` prueft jetzt beide Richtungen.** Bisher fiel nur auf,
+  wenn ein referenzierter Key in einer Sprache fehlte — ein Key, den niemand
+  benutzt, war unsichtbar. Der Bericht nennt drei Kategorien, immer, auch mit
+  null Befunden: `MISSING` (referenziert, fehlt in einer Locale), `FAMILY`
+  (aus einer Aufzaehlung erwartet, fehlt in einer Locale) und `ORPHAN`
+  (uebersetzt, von keiner Zeile referenziert). Erster Lauf: **236 verwaiste
+  Keys**. Ein verwaister Key ist entweder toter Text oder eine Uebersetzung,
+  deren Verdrahtung fehlt — `review.push_title` ist der zweite Fall, in sieben
+  Sprachen uebersetzt, waehrend `lib/push.ts` den deutschen Text hartkodiert.
+- **`scripts/i18n-key-families.mjs` — das Familienregister.** Keys, die per
+  Template-Literal gebildet werden (``t(`catalog.${key}.title`)``), sieht kein
+  Literal-Scan. Zwoelf Familien (145 Keys) leiten ihre Sollmenge aus der
+  codeseitigen Aufzaehlung ab — `ACHIEVEMENT_DEFINITIONS`, `LEVELS`,
+  `VALID_TABS`, `TEMPLATES`, den `pgEnum`s des Schemas — nie aus den
+  Locale-Dateien, sonst pruefte die Familie sich selbst.
+  `__tests__/check-i18n.test.ts` beweist genau das: faellt eine Definition aus
+  dem Code, faellt das Mitglied aus der Familie.
+
 ## [0.9.0] - 2026-09-12
 
 ### Fixed

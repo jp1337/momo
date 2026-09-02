@@ -1,13 +1,21 @@
 #!/usr/bin/env node
 /**
- * i18n completeness audit.
+ * i18n completeness audit — beide Richtungen.
  *
- * Scans all TypeScript source files for useTranslations() / getTranslations()
- * calls, extracts the (namespace, key) pairs they reference, and verifies that
- * every pair exists in all language files (messages/*.json).
+ * 1. MISSING  referenziert ⇒ vorhanden. Scannt alle .ts/.tsx nach
+ *             useTranslations()/getTranslations()-Bindungen und den
+ *             Literal-Keys, die darauf aufgerufen werden.
+ * 2. FAMILY   Aufzaehlung ⇒ vorhanden. Keys, die per Template-Literal
+ *             gebildet werden (t(`catalog.${key}.title`)), stehen in
+ *             scripts/i18n-key-families.mjs mit der codeseitigen Aufzaehlung,
+ *             aus der ihre Mitglieder stammen.
+ * 3. ORPHAN   vorhanden ⇒ referenziert. Ein Key in messages/*.json, der weder
+ *             als Literal referenziert noch Familienmitglied ist.
  *
- * Exit code 0 → all keys present in all languages.
- * Exit code 1 → one or more keys are missing.
+ * Alle drei Kategorien werden immer berichtet, auch mit null Befunden — sonst
+ * ist "gruen" nicht von "ungeprueft" zu unterscheiden.
+ *
+ * Exit 0 → alle drei leer. Exit 1 → mindestens ein Befund.
  *
  * Usage:
  *   node scripts/check-i18n.mjs          # run from repo root
@@ -15,6 +23,8 @@
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+
+import { KEY_FAMILIES } from "./i18n-key-families.mjs";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
 const MESSAGES_DIR = join(ROOT, "messages");
@@ -180,22 +190,121 @@ for (const { file, namespace, key } of references) {
   refFiles.get(ref).add(file);
 }
 
-if (missing.size === 0) {
-  console.log("✓ All translation keys are present in every language file.");
-  process.exit(0);
+// ─── Gegenrichtung: vorhanden ⇒ referenziert ─────────────────────────────────
+
+/** Alle im Code als Literal referenzierten "namespace.key". */
+const referenced = new Set(references.map((r) => `${r.namespace}.${r.key}`));
+
+/** Alle von deklarierten Familien erwarteten "namespace.key". */
+const familyExpected = new Set();
+for (const fam of KEY_FAMILIES) {
+  for (const member of fam.members()) {
+    familyExpected.add(`${fam.namespace}.${member}`);
+  }
 }
 
-// ─── Report missing keys ──────────────────────────────────────────────────────
-
-console.error(`✗ ${missing.size} translation key(s) are missing:\n`);
-
-for (const [ref, localeSet] of [...missing.entries()].sort()) {
-  const missingLocales = [...localeSet].sort().join(", ");
-  const files = [...(refFiles.get(ref) ?? [])].join(", ");
-  console.error(`  MISSING  ${ref}`);
-  console.error(`           locales : ${missingLocales}`);
-  console.error(`           used in : ${files}`);
-  console.error("");
+/**
+ * Flacht einen Locale-Baum zu "namespace.pfad.zum.key" auf.
+ *
+ * @param {Record<string, unknown>} messages
+ * @returns {Set<string>}
+ */
+function flattenKeys(messages) {
+  const out = new Set();
+  for (const [ns, value] of Object.entries(messages)) {
+    if (value == null || typeof value !== "object") continue;
+    const walk = (node, prefix) => {
+      for (const [k, v] of Object.entries(node)) {
+        if (v != null && typeof v === "object") walk(v, `${prefix}${k}.`);
+        else out.add(`${prefix}${k}`);
+      }
+    };
+    walk(value, `${ns}.`);
+  }
+  return out;
 }
 
-process.exit(1);
+/** locale → flache Keymenge. Einmal berechnet, nicht je Kandidat. */
+const flatByLocale = new Map(
+  [...locales].map(([locale, messages]) => [locale, flattenKeys(messages)])
+);
+
+/**
+ * Familienmitglieder, die in mindestens einer Locale fehlen.
+ * @type {Map<string, Set<string>>}
+ */
+const familyMissing = new Map();
+for (const expected of familyExpected) {
+  for (const [locale, flat] of flatByLocale) {
+    if (flat.has(expected)) continue;
+    if (!familyMissing.has(expected)) familyMissing.set(expected, new Set());
+    familyMissing.get(expected).add(locale);
+  }
+}
+
+/**
+ * Keys, die in einer Locale stehen, aber weder referenziert noch
+ * Familienmitglied sind.
+ * @type {Map<string, Set<string>>}
+ */
+const orphans = new Map();
+for (const [locale, flat] of flatByLocale) {
+  for (const key of flat) {
+    if (referenced.has(key) || familyExpected.has(key)) continue;
+    if (!orphans.has(key)) orphans.set(key, new Set());
+    orphans.get(key).add(locale);
+  }
+}
+
+// ─── Bericht ─────────────────────────────────────────────────────────────────
+
+console.log(
+  `Familien: ${KEY_FAMILIES.length} deklariert, ${familyExpected.size} erwartete Keys.\n`
+);
+
+let failed = false;
+
+if (missing.size > 0) {
+  failed = true;
+  console.error(`✗ ${missing.size} referenzierte(r) Key fehlt/fehlen:\n`);
+  for (const [ref, localeSet] of [...missing.entries()].sort()) {
+    console.error(`  MISSING  ${ref}`);
+    console.error(`           locales : ${[...localeSet].sort().join(", ")}`);
+    console.error(`           used in : ${[...(refFiles.get(ref) ?? [])].join(", ")}`);
+    console.error("");
+  }
+} else {
+  console.log("✓ MISSING   keine — jeder referenzierte Key steht in allen Sprachen.");
+}
+
+if (familyMissing.size > 0) {
+  failed = true;
+  console.error(`✗ ${familyMissing.size} Familienmitglied(er) fehlt/fehlen:\n`);
+  for (const [ref, localeSet] of [...familyMissing.entries()].sort()) {
+    console.error(`  FAMILY   ${ref}`);
+    console.error(`           locales : ${[...localeSet].sort().join(", ")}`);
+    console.error("");
+  }
+} else {
+  console.log("✓ FAMILY    keine — jede Familie ist in allen Sprachen vollstaendig.");
+}
+
+if (orphans.size > 0) {
+  failed = true;
+  console.error(`✗ ${orphans.size} verwaiste(r) Key:\n`);
+  console.error(
+    "  Ein verwaister Key ist entweder toter Text ODER eine Uebersetzung, deren\n" +
+      "  Verdrahtung fehlt. Vor dem Loeschen pruefen, was von beidem — genau so\n" +
+      "  wurde review.push_title gefunden: in sieben Sprachen uebersetzt, von\n" +
+      "  keiner Zeile benutzt, waehrend lib/push.ts den deutschen Text hartkodierte.\n"
+  );
+  for (const [ref, localeSet] of [...orphans.entries()].sort()) {
+    console.error(`  ORPHAN   ${ref}`);
+    console.error(`           locales : ${[...localeSet].sort().join(", ")}`);
+    console.error("");
+  }
+} else {
+  console.log("✓ ORPHAN    keine — jeder Key ist referenziert oder Familienmitglied.");
+}
+
+process.exit(failed ? 1 : 0);
