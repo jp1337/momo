@@ -96,6 +96,45 @@ jobs:
           DATABASE_URL="postgresql://momo:password@localhost:5432/momo" \
           npm run build
 
+  # Die beiden Ratschen laufen in einem eigenen Job, parallel zu `test`.
+  # Sie standen bis September 2026 als Schritt 4 im Test-Job, vor den
+  # Migrationen — ein einziger unbenutzter Uebersetzungs-Key brach den Job dort
+  # ab, und die 1796 Tests dahinter liefen gar nicht erst an. Rot-wegen-Ratsche
+  # und rot-wegen-Tests waren dasselbe Signal. Kein `continue-on-error`: die
+  # Ratsche soll den PR weiter rot faerben, sie soll nur nichts anderes
+  # verdecken.
+  quality-gates:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Cache node_modules
+        id: nm-cache
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.nm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Check i18n completeness
+        run: npm run check:i18n
+
+      - name: Check design-token ratchet
+        run: |
+          npm run check:design -- --selftest
+          npm run check:design
+
   test:
     runs-on: ubuntu-latest
     permissions:
@@ -137,14 +176,6 @@ jobs:
       - name: Install dependencies
         if: steps.nm-cache.outputs.cache-hit != 'true'
         run: npm ci
-
-      - name: Check i18n completeness
-        run: npm run check:i18n
-
-      - name: Check design-token ratchet
-        run: |
-          npm run check:design -- --selftest
-          npm run check:design
 
       - name: Run migrations on test DB
         run: npx drizzle-kit migrate

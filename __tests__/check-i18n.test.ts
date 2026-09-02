@@ -6,7 +6,9 @@ import {
   KEY_FAMILIES,
   achievementKeys,
   enumValues,
+  keyLiterals,
   levelNumbers,
+  localeCodes,
   progressTabs,
   templateKeys,
 } from "../scripts/i18n-key-families.mjs";
@@ -60,6 +62,36 @@ describe("check-i18n berichtet beide Richtungen", () => {
 
   it("endet mit 0 oder 1, nie mit einem Absturz", () => {
     expect([0, 1], report.out.slice(0, 2000)).toContain(report.code);
+  });
+});
+
+/**
+ * Zwei Fundklassen aus Runde 1, die beide *falsche Anklagen* erzeugten: Keys,
+ * die eine laufende Seite liest, standen unter ORPHAN. In der MISSING-Richtung
+ * war dieselbe Luecke nur still; in der Gegenrichtung haette der naechste
+ * Schritt die Uebersetzungen geloescht. Je ein Wachtposten.
+ */
+// Die Objektform `getTranslations({ locale, namespace })` und die eigene Fabrik
+// `getServerTranslations(locale, ns)` erkennt der Scanner ebenfalls — dafuer
+// gibt es hier bewusst KEINEN Wachtposten: beide binden im ganzen Repository
+// derzeit nur Template-Literale, die schon eine Familie deckt. Es gibt also
+// keinen Key, an dem sich die Erkennung beobachten liesse. Sie steht trotzdem
+// drin, damit der erste literale t("…")-Aufruf in lib/templates.ts nicht
+// stillschweigend als verwaist gemeldet wird.
+describe("der Scanner sieht auch die unbequemen Bindungsformen", () => {
+  const orphans = new Set(
+    [...report.out.matchAll(/^ {2}ORPHAN {3}(\S+)$/gm)].map((m) => m[1])
+  );
+
+  it.each([
+    // const [stats, …, t, tAchievements, locale] = await Promise.all([…])
+    // — stats-tab.tsx band frueher gar nichts, die Datei fiel komplett aus.
+    "stats.priority_high",
+    // t(\n  "topic_completions_30d",\n  { count }) — der Key stand auf einer
+    // anderen Zeile als das t(, der zeilenweise Scan sah ihn nicht.
+    "stats.topic_completions_30d",
+  ])("%s ist referenziert, nicht verwaist", (ref) => {
+    expect(orphans.has(ref), `${ref} steht unter ORPHAN`).toBe(false);
   });
 });
 
@@ -125,10 +157,27 @@ describe("die Familien leiten aus dem Code ab, nicht aus den Locales", () => {
     expect(templateKeys(without)).not.toContain("moving.task_1");
   });
 
+  it("LOCALES ohne zh ⇒ Familie erwartet language.zh nicht mehr", () => {
+    const src = readFileSync(join(process.cwd(), "i18n/locales.ts"), "utf8");
+    const without = src.replace(', "zh"', "");
+    expect(localeCodes(src)).toContain("zh");
+    expect(localeCodes(without)).not.toContain("zh");
+  });
+
+  it("berechnete Keys: THEME_CONFIG ohne theme_system ⇒ Familie schrumpft", () => {
+    const re = () => /key:\s*"(theme_\w+)"/g;
+    const src = readFileSync(join(process.cwd(), "components/theme-toggle.tsx"), "utf8");
+    const without = src.replace('key: "theme_system"', 'key: "theme_dark"');
+    expect(keyLiterals(src, re(), "THEME_CONFIG")).toContain("theme_system");
+    expect(keyLiterals(without, re(), "THEME_CONFIG")).not.toContain("theme_system");
+  });
+
   it("eine fehlende Aufzaehlung wirft, statt still leer zu liefern", () => {
     expect(() => achievementKeys("// nichts hier")).toThrow(
       /ACHIEVEMENT_DEFINITIONS/
     );
     expect(() => enumValues("priorityEnum", "// nichts hier")).toThrow(/pgEnum/);
+    expect(() => localeCodes("// nichts hier")).toThrow(/LOCALES/);
+    expect(() => keyLiterals("// nichts hier", /"(x_\w+)"/g, "leer")).toThrow(/leer/);
   });
 });

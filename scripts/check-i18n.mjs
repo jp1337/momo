@@ -101,17 +101,121 @@ function* walkFiles(dir) {
 
 // ─── Extraction regexes ───────────────────────────────────────────────────────
 
-// Matches:  const t = useTranslations("tasks")
-//           const tSearch = useTranslations("search")
-//           const t = await getTranslations("tasks")
-// Groups:   [1] variable name, [2] namespace
-const BINDING_RE =
-  /const\s+(\w+)\s*=\s*(?:await\s+)?(?:use|get)Translations\s*\(\s*["']([^"']+)["']\s*\)/g;
+// Der Namespace-Ausdruck einer Translator-Fabrik, in allen Formen, die dieses
+// Repository benutzt:
+//   getTranslations("tasks")                        Literal
+//   getTranslations({ locale, namespace: "tasks" }) Objektform (lib/templates.ts)
+//   getServerTranslations(locale, "achievements")   eigene Fabrik, NS ist Arg 2
+// Groups: [1] NS aus der Literalform, [2] NS aus der Objektform,
+//         [3] NS aus getServerTranslations
+const NAMESPACE_ARG =
+  '(?:(?:use|get)Translations\\s*\\(\\s*(?:["\']([^"\']+)["\']|\\{[^}]*?namespace:\\s*["\']([^"\']+)["\'])' +
+  '|getServerTranslations\\s*\\([^,()]+,\\s*["\']([^"\']+)["\'])';
+
+// const t = useTranslations("tasks") — direkte Bindung. Group [1] Variablenname.
+const BINDING_RE = new RegExp(
+  `const\\s+(\\w+)\\s*=\\s*(?:await\\s+)?${NAMESPACE_ARG}`,
+  "g"
+);
+
+// Dieselbe Fabrik als *ein Element* einer Liste — fuer die destrukturierte Form.
+const NAMESPACE_ARG_RE = new RegExp(NAMESPACE_ARG);
+
+// const [stats, …, t, tAchievements, locale] = await Promise.all([ …
+// Group [1] die Namensliste. Der Rest wird geklammert-zaehlend gelesen, weil
+// die Elemente selbst Kommas enthalten (`getEnergyHistory(userId, 90)`).
+const DESTRUCTURE_RE = /const\s*\[([^\]]*)\]\s*=\s*(?:await\s+)?Promise\.all\s*\(\s*\[/g;
 
 // Matches calls like:  t("some_key")  tSearch("key")  t.rich("key")  t.raw("key")
 // We capture [1] variable name, [2] key string literal.
 // Only matches when the first argument is a plain string literal (no template).
 const CALL_RE = /\b(\w+)(?:\.\w+)?\s*\(\s*["']([^"']+)["']/g;
+
+/**
+ * Zerlegt den Inhalt einer Array-Literalliste in ihre Elemente auf oberster
+ * Ebene. `open` ist der Index direkt *hinter* der oeffnenden Klammer.
+ *
+ * ponytail: klammernzaehlend, ohne String-Bewusstsein — eine eckige Klammer
+ * *innerhalb* eines Strings im Argument (`getX("a]b")`) verschoebe die
+ * Zerlegung. Kommt hier nirgends vor; wenn doch, ist ein echter Parser faellig.
+ *
+ * @param {string} src
+ * @param {number} open
+ * @returns {string[] | null} null, wenn die Liste unbalanciert endet
+ */
+function splitTopLevelList(src, open) {
+  const parts = [];
+  let depth = 0;
+  let start = open;
+  for (let i = open; i < src.length; i++) {
+    const c = src[i];
+    if (c === "(" || c === "{" || c === "[") depth++;
+    else if (c === ")" || c === "}") depth--;
+    else if (c === "]") {
+      if (depth === 0) {
+        parts.push(src.slice(start, i));
+        return parts;
+      }
+      depth--;
+    } else if (c === "," && depth === 0) {
+      parts.push(src.slice(start, i));
+      start = i + 1;
+    }
+  }
+  return null;
+}
+
+/**
+ * Zeichen-Offset ⇒ 0-basierte Zeilennummer.
+ *
+ * @param {string} src
+ * @returns {(idx: number) => number}
+ */
+function lineIndexer(src) {
+  const lineStarts = [0];
+  for (let i = 0; i < src.length; i++) if (src[i] === "\n") lineStarts.push(i + 1);
+  return (idx) => {
+    let lo = 0;
+    let hi = lineStarts.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (lineStarts[mid] <= idx) lo = mid;
+      else hi = mid - 1;
+    }
+    return lo;
+  };
+}
+
+/**
+ * Alle Translator-Bindungen einer Datei, mit der Zeile ihrer Deklaration.
+ *
+ * @param {string} src
+ * @param {(idx: number) => number} lineOf
+ * @returns {Array<{line: number, varName: string, namespace: string}>}
+ */
+function collectBindings(src, lineOf) {
+  const bindings = [];
+
+  for (const m of src.matchAll(BINDING_RE)) {
+    const namespace = m[2] ?? m[3] ?? m[4];
+    if (namespace) bindings.push({ line: lineOf(m.index), varName: m[1], namespace });
+  }
+
+  for (const m of src.matchAll(DESTRUCTURE_RE)) {
+    const names = m[1].split(",").map((n) => n.trim());
+    const elements = splitTopLevelList(src, m.index + m[0].length);
+    if (!elements) continue;
+    const line = lineOf(m.index);
+    names.forEach((varName, i) => {
+      if (!/^\w+$/.test(varName) || elements[i] === undefined) return;
+      const hit = elements[i].match(NAMESPACE_ARG_RE);
+      const namespace = hit && (hit[1] ?? hit[2] ?? hit[3]);
+      if (namespace) bindings.push({ line, varName, namespace });
+    });
+  }
+
+  return bindings;
+}
 
 // ─── Scan source files ────────────────────────────────────────────────────────
 
@@ -127,40 +231,37 @@ const references = [];
 for (const scanDir of SCAN_DIRS) {
   for (const filePath of walkFiles(scanDir)) {
     const src = readFileSync(filePath, "utf8");
-    const lines = src.split("\n");
+    const lineOf = lineIndexer(src);
 
-    // Collect binding lines: [{line: N, varName: X, namespace: Y}]
     /** @type {Array<{line: number, varName: string, namespace: string}>} */
-    const bindingLines = [];
-    for (let i = 0; i < lines.length; i++) {
-      for (const match of lines[i].matchAll(BINDING_RE)) {
-        bindingLines.push({ line: i, varName: match[1], namespace: match[2] });
-      }
-    }
+    const bindingLines = collectBindings(src, lineOf);
     if (bindingLines.length === 0) continue;
 
-    // Collect call sites: [{line: N, varName: X, key: Y}]
-    for (let i = 0; i < lines.length; i++) {
-      for (const match of lines[i].matchAll(CALL_RE)) {
-        const varName = match[1];
-        const key = match[2];
+    const boundNames = new Set(bindingLines.map((b) => b.varName));
 
-        // Skip if this var was never used as a translations binding
-        if (!bindingLines.some((b) => b.varName === varName)) continue;
-        // Skip dynamic-looking keys
-        if (/\s|\$\{/.test(key)) continue;
+    // Ueber die ganze Datei, nicht zeilenweise: Prettier bricht lange Aufrufe
+    // um, und `t(\n  "topic_completions_30d",\n  { count })` hat den Key auf
+    // einer anderen Zeile als das `t(`. Zeilenweise gelesen ist das keine
+    // Referenz — und der Key steht danach faelschlich unter ORPHAN.
+    for (const match of src.matchAll(CALL_RE)) {
+      const varName = match[1];
+      const key = match[2];
 
-        // Find the most recent binding for this varName at or before this line
-        let namespace = null;
-        for (const b of bindingLines) {
-          if (b.varName === varName && b.line <= i) {
-            namespace = b.namespace;
-          }
+      if (!boundNames.has(varName)) continue;
+      // Skip dynamic-looking keys
+      if (/\s|\$\{/.test(key)) continue;
+
+      // Find the most recent binding for this varName at or before this line
+      const line = lineOf(match.index);
+      let namespace = null;
+      for (const b of bindingLines) {
+        if (b.varName === varName && b.line <= line) {
+          namespace = b.namespace;
         }
-        if (!namespace) continue;
-
-        references.push({ file: relative(ROOT, filePath), namespace, key });
       }
+      if (!namespace) continue;
+
+      references.push({ file: relative(ROOT, filePath), namespace, key });
     }
   }
 }

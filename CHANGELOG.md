@@ -14,15 +14,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   benutzt, war unsichtbar. Der Bericht nennt drei Kategorien, immer, auch mit
   null Befunden: `MISSING` (referenziert, fehlt in einer Locale), `FAMILY`
   (aus einer Aufzaehlung erwartet, fehlt in einer Locale) und `ORPHAN`
-  (uebersetzt, von keiner Zeile referenziert). Erster Lauf: **236 verwaiste
+  (uebersetzt, von keiner Zeile referenziert). Erster Lauf: **124 verwaiste
   Keys**. Ein verwaister Key ist entweder toter Text oder eine Uebersetzung,
   deren Verdrahtung fehlt — `review.push_title` ist der zweite Fall, in sieben
   Sprachen uebersetzt, waehrend `lib/push.ts` den deutschen Text hartkodiert.
 - **`scripts/i18n-key-families.mjs` — das Familienregister.** Keys, die per
   Template-Literal gebildet werden (``t(`catalog.${key}.title`)``), sieht kein
-  Literal-Scan. Zwoelf Familien (145 Keys) leiten ihre Sollmenge aus der
+  Literal-Scan. 25 Familien (213 Keys) leiten ihre Sollmenge aus der
   codeseitigen Aufzaehlung ab — `ACHIEVEMENT_DEFINITIONS`, `LEVELS`,
-  `VALID_TABS`, `TEMPLATES`, den `pgEnum`s des Schemas — nie aus den
+  `VALID_TABS`, `TEMPLATES`, `LOCALES`, den `pgEnum`s des Schemas und einem
+  Dutzend Konfigtabellen wie `LEVEL_META` oder `RARITY_CONFIG` — nie aus den
   Locale-Dateien, sonst pruefte die Familie sich selbst.
   `__tests__/check-i18n.test.ts` beweist genau das: faellt eine Definition aus
   dem Code, faellt das Mitglied aus der Familie.
@@ -31,6 +32,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Der Key-Scanner uebersah drei Bindungsformen und jeden umbrochenen
+  Aufruf.** `const [stats, …, t, tAchievements] = await Promise.all([…])` band
+  gar nichts — und weil eine Datei ohne Bindung ganz uebersprungen wird, waren
+  sechs Dateien komplett unsichtbar, `components/progress/tabs/stats-tab.tsx`
+  darunter. Ebenso unsichtbar: `getTranslations({ locale, namespace })`,
+  `getServerTranslations(locale, ns)` und jeder Aufruf, den Prettier umgebrochen
+  hat (`t(\n  "topic_completions_30d",\n  { count })`). In der alten Richtung
+  war das eine stille Luecke; in der Gegenrichtung waren es **207 falsche
+  Verwaist-Meldungen** — Keys, die eine laufende Seite liest.
 - **Der erste Start nach Migration `0035` waere ein Crashloop gewesen.**
   `scripts/migrate.mjs` haelt eine zweite, handgepflegte Kopie der
   Achievement-Definitionen und seedete `title` und `description` — zwei Spalten,
