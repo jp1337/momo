@@ -7,6 +7,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Der erste Start nach Migration `0035` waere ein Crashloop gewesen.**
+  `scripts/migrate.mjs` haelt eine zweite, handgepflegte Kopie der
+  Achievement-Definitionen und seedete `title` und `description` — zwei Spalten,
+  die dieselbe Migration ein paar Zeilen vorher droppt. Der Seeder lief nach
+  `migrate()` und starb an `column "title" of relation "achievements" does not
+  exist`; `docker-entrypoint.sh` laeuft mit `set -e`, `exec node server.js` war
+  also nie erreicht. Die Instanz haette die Migration angewandt (irreversibel),
+  0 Errungenschaftszeilen gehabt und bei jedem Neustart dasselbe wiederholt —
+  auch nach einem Image-Rollback, weil der alte Code dieselben Spalten schreibt.
+  Der Seeder schreibt jetzt nur noch `key`, `icon`, `rarity`, `coin_reward` und
+  `secret`, wie `seedAchievements()` in `lib/gamification.ts`.
+  `__tests__/gamification.test.ts` haelt beide Definitionslisten
+  deckungsgleich — ein Key in nur einer der beiden waere eine Errungenschaft,
+  die keine Instanz je verleihen kann.
+
 ### Changed
 
 - **Errungenschaften und Level sprechen jetzt sieben Sprachen.** Die 31
