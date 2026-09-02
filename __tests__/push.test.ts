@@ -83,6 +83,7 @@ import {
 } from "@/lib/push";
 import { createTestUser, createTestTask } from "./helpers/fixtures";
 import { getLocalDateString, getLocalYesterdayString } from "@/lib/date-utils";
+import deMessages from "@/messages/de.json";
 
 const mockSendNotification = vi.mocked(webpush.sendNotification);
 
@@ -292,7 +293,10 @@ describe("sendAchievementNotifications", () => {
       body: string;
     };
     expect(payload.title).toContain("Achievement");
-    expect(payload.body).toContain("Erster Schritt");
+    // Title comes from messages/de.json now, not from the removed DB column.
+    expect(payload.body).toContain(
+      deMessages.achievements.catalog.first_task.title
+    );
   });
 
   it("catches and ignores push errors per-achievement — does not throw", async () => {

@@ -28,6 +28,12 @@ function detectFromHeader(acceptLanguage: string | null): Locale {
   return DEFAULT_LOCALE;
 }
 
+/**
+ * Note: this callback takes no parameters, so an explicit locale passed to
+ * `getTranslations({ locale })` is ignored and `cookies()` runs regardless —
+ * which throws outside a request. Server code without a request scope (cron,
+ * DSGVO export) uses `getServerTranslations` in `lib/i18n-server.ts` instead.
+ */
 export default getRequestConfig(async () => {
   const cookieStore = await cookies();
   const headersList = await headers();

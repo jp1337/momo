@@ -50,7 +50,6 @@ export const dynamic = "force-dynamic";
  * Renders an access denied message if the user is not in ADMIN_USER_IDS.
  */
 export default async function AdminPage() {
-  const tAch = await getTranslations("achievements");
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
@@ -116,6 +115,10 @@ export default async function AdminPage() {
       </div>
     );
   }
+
+  // Achievement titles live in messages/*.json. Loaded after the admin guard —
+  // no reason to build a translator for a visitor who gets the denial page.
+  const tAch = await getTranslations("achievements");
 
   const [stats, cronStatus, updateCheck] = await Promise.all([
     getAdminStatistics(),

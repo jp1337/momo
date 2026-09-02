@@ -1,10 +1,17 @@
 /**
  * Translations for server code that runs without a request.
  *
- * `getTranslations` from `next-intl/server` resolves the locale through
- * `next/headers` and only works inside a request scope. Cron jobs (morning
- * briefing, achievement pushes) and the DSGVO data export have no request —
- * they know the user's locale from the `users.locale` column instead.
+ * Cron jobs (morning briefing, achievement pushes) and the DSGVO data export
+ * run without a request scope. They know the user's locale from the
+ * `users.locale` column — not from a cookie or a header.
+ *
+ * **Do not replace this with `getTranslations({ locale })` from
+ * `next-intl/server`.** It looks like it would work, and it does not:
+ * next-intl's `getConfig` invokes the `i18n/request.ts` callback *even when a
+ * locale override is passed*, and that callback (`i18n/request.ts:31`) takes
+ * no parameters and calls `await cookies()` unconditionally. So the explicit
+ * locale is ignored and `next/headers` runs anyway — which throws outside a
+ * request in a real Next.js runtime, not just under vitest.
  *
  * Messages are loaded with the same dynamic import that `i18n/request.ts`
  * uses, so no `messages/*.json` ends up statically bundled.

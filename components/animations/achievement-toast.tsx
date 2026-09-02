@@ -18,14 +18,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslations } from "next-intl";
+import type { UnlockedAchievement } from "@/lib/gamification";
 
-export interface AchievementItem {
-  key: string;
-  icon: string;
-  title: string;
-  rarity?: "common" | "rare" | "epic" | "legendary";
-  coinReward?: number;
-}
+/**
+ * One newly unlocked achievement, as the completion endpoints return it.
+ *
+ * Derived from `UnlockedAchievement` rather than restated: this type sits on
+ * the far side of a JSON boundary (`fetch` casts the response), so a
+ * hand-written copy lets a field removed on the server pass silently and
+ * render as `undefined`. That is exactly what happened to `title`. Aliasing
+ * makes the next removed field a compile error here.
+ *
+ * The type carries no display text — titles come from
+ * `achievements.catalog.<key>.title` in `messages/*.json`.
+ */
+export type AchievementItem = UnlockedAchievement;
 
 interface AchievementToastProps {
   achievements: AchievementItem[];
@@ -194,7 +201,7 @@ function SingleToast({
                 lineHeight: 1.2,
               }}
             >
-              {achievement.title}
+              {t(`catalog.${achievement.key}.title`)}
             </span>
             {achievement.coinReward != null && (
               <span
