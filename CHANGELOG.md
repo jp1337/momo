@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-09-02
+
 ### Fixed
 
 - **Die woechentliche Image-Bereinigung hat die Semver-Tags geloescht, die sie
@@ -1061,7 +1063,8 @@ Docstring der Route schon immer behauptet hat. `GET` bleibt unverändert.
 - Bought items shown with green left border and "Bought" badge
 - Discarded items shown with 50% opacity and strikethrough title
 
-[Unreleased]: https://github.com/jp1337/momo/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/jp1337/momo/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/jp1337/momo/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/jp1337/momo/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jp1337/momo/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/jp1337/momo/compare/v0.5.0...v0.6.0
