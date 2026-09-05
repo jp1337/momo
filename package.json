@@ -95,7 +95,7 @@
     "eslint-config-next": "16.3.4",
     "npm-check-updates": "^23",
     "tailwindcss": "^4",
-    "typescript": "^6",
+    "typescript": "^7.0.0",
     "vitest": "^4.1.11"
   }
 }
