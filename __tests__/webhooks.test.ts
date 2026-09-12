@@ -438,10 +438,9 @@ describe("fireWebhookEvent", () => {
       await createWebhookEndpoint(user.id, ep({ url, name: "HTTP Test" }));
       await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
 
-      // Give the async fire-and-forget DB write time to settle
-      await new Promise((r) => setTimeout(r, 300));
-
       const [endpoint] = await listWebhookEndpoints(user.id);
+      await waitForEndpointDelivery(endpoint.id);
+
       const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
       expect(deliveries.length).toBeGreaterThan(0);
       // The delivery should be a failure because HTTP is rejected
@@ -544,8 +543,7 @@ describe("testWebhookEndpoint", () => {
       // testWebhookEndpoint calls deliverToEndpoint — even HTTP URLs log to DB
       await testWebhookEndpoint(endpoint.id, user.id);
 
-      // Give the fire-and-forget DB write time to settle
-      await new Promise((r) => setTimeout(r, 300));
+      await waitForEndpointDelivery(endpoint.id);
 
       const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
       expect(deliveries.length).toBeGreaterThan(0);
@@ -578,7 +576,7 @@ describe("fireWebhookEvent — HTTPS delivery", () => {
     await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
 
     // deliverToEndpoint logs via fire-and-forget — wait for the DB write
-    await new Promise((r) => setTimeout(r, 300));
+    await waitForEndpointDelivery(endpoint.id);
 
     const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
     expect(deliveries.length).toBeGreaterThan(0);
@@ -599,7 +597,7 @@ describe("fireWebhookEvent — HTTPS delivery", () => {
     const endpoint = await createWebhookEndpoint(user.id, ep({ name: "HTTPS 500" }));
     await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
 
-    await new Promise((r) => setTimeout(r, 300));
+    await waitForEndpointDelivery(endpoint.id);
 
     const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
     expect(deliveries.length).toBeGreaterThan(0);
@@ -621,7 +619,7 @@ describe("fireWebhookEvent — HTTPS delivery", () => {
     const endpoint = await createWebhookEndpoint(user.id, ep({ name: "Empty Body EP" }));
     await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
 
-    await new Promise((r) => setTimeout(r, 300));
+    await waitForEndpointDelivery(endpoint.id);
 
     const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
     expect(deliveries.length).toBeGreaterThan(0);
@@ -659,7 +657,7 @@ describe("fireWebhookEvent — HTTPS delivery", () => {
     const endpoint = await createWebhookEndpoint(user.id, ep({ name: "Network Fail" }));
     await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
 
-    await new Promise((r) => setTimeout(r, 300));
+    await waitForEndpointDelivery(endpoint.id);
 
     const deliveries = await listWebhookDeliveries(endpoint.id, user.id);
     expect(deliveries.length).toBeGreaterThan(0);
