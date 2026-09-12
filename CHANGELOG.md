@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-12
+
 ### Added
 
 - **`npm run check:i18n` prueft jetzt beide Richtungen.** Bisher fiel nur auf,
