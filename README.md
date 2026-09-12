@@ -81,8 +81,8 @@ When anxiety or overwhelm turns every task into a wall, when the Grey Gentlemen 
 - **PWA** — Install on your phone like a native app. Works offline. The task creation form is fully usable on mobile — a corrected z-index ensures it renders above the bottom navigation bar as a proper full-height modal.
 - **REST API & API Keys** — Full public REST API with personal access tokens (read-only flag, expiry dates). Interactive Swagger UI at `/api-docs`.
 - **Account Linking** — Connect multiple OAuth providers to one account.
-- **Multilingual** — German, English, and French UI with cookie-based locale switching. Add any language by dropping in a `messages/XX.json` file.
-- **Statistics** — Personal stats dashboard with completion-rate per topic (sorted by avoidance), best weekdays bar chart, 90-day streak sparkline, energy trend chart, level progress, achievements, and wishlist overview. Fully localized (de/en/fr).
+- **Multilingual** — German, English, Spanish, French, Dutch, Russian and Chinese UI with cookie-based locale switching. Achievement titles and level names live in the message files too, so the whole surface follows the user's locale. Add any language by dropping in a `messages/XX.json` file.
+- **Statistics** — Personal stats dashboard with completion-rate per topic (sorted by avoidance), best weekdays bar chart, 90-day streak sparkline, energy trend chart, level progress, achievements, and wishlist overview. Fully localized (de/en/es/fr/nl/ru/zh).
 - **Admin Panel** — Platform-wide statistics for operators (user growth, top users, achievement distribution). Protected by `ADMIN_USER_IDS` env var — only listed user UUIDs can access `/admin`.
 - **Procrastination Counter** — Every task tracks how many times it has been postponed. Tasks postponed 3 or more times award double coins on completion.
 - **Daily Quest Postpone Limit** — Configurable per-user daily postpone limit (1–5, default 3) in Settings. Prevents endless deferral of the one thing that matters.
@@ -275,7 +275,7 @@ Full documentation is available at **[jp1337.github.io/momo](https://jp1337.gith
 | Phase 5 – Wishlist | ✅ Done | Wishlist CRUD, Budget tracking, Affordability, Coin-unlock |
 | Phase 6 – PWA & Push | ✅ Done | PWA manifest, Service Worker, VAPID push, Daily quest & streak notifications, Settings page |
 | Phase 7 – Deployment | ✅ Done | Multi-stage Docker, GitHub Actions (GHCR + DockerHub + Quay), Security Headers, Rate Limiting, K8s manifests |
-| Phase 8 – Polish | ✅ Done | Multilingual (DE/EN/FR), DSGVO compliance, Dark mode redesign, self-hosted fonts, data export, account deletion |
+| Phase 8 – Polish | ✅ Done | Multilingual (DE/EN/ES/FR/NL/RU/ZH), DSGVO compliance, Dark mode redesign, self-hosted fonts, data export, account deletion |
 | Phase 9 – API & Keys | ✅ Done | Public REST API, Personal Access Tokens, Swagger UI, Account Linking, Font Awesome icons, SVG Logo |
 | Phase 10 – Statistics & Admin | ✅ Done | Personal stats page, Admin panel, Mobile bottom navigation |
 | Phase 11 – UX & Anti-Procrastination | ✅ Done | Procrastination counter, postpone limit, bonus coins, task breakdown, time estimates, Quick Wins, public landing page, dashboard redesign, FA icon picker |
