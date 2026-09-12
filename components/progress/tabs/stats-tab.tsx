@@ -127,12 +127,12 @@ export async function StatsTab({
       <p className={RAIL_LINE}>{t("coins_label", { count: stats.coins })}</p>
       {stats.streakCurrent > 0 && (
         <p className={RAIL_LINE}>
-          {stats.streakCurrent}d {t("current_streak")}
+          {t("current_streak_days", { count: stats.streakCurrent })}
         </p>
       )}
       {stats.streakMax > 0 && (
         <p className={RAIL_LINE}>
-          {stats.streakMax}d {t("best_streak")}
+          {t("best_streak_days", { count: stats.streakMax })}
         </p>
       )}
       {stats.completionsLast7Days > 0 && (
@@ -204,6 +204,7 @@ export async function StatsTab({
             data={stats.streakHistory}
             todayLabel={t("streak_today", { count: stats.streakCurrent })}
             peakLabel={t("streak_peak", { count: streakPeak })}
+            sparklineAriaLabel={t("sparkline_aria")}
           />
         </section>
       )}

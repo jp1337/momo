@@ -149,16 +149,16 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
 
           <div className="py-1">
             <MenuLinkItem href="/progress?tab=stats" icon={faChartBar}>
-              Statistiken
+              {t("stats")}
             </MenuLinkItem>
             <MenuLinkItem href="/progress?tab=review" icon={faCalendarWeek}>
-              Wochenrückblick
+              {t("weekly_review")}
             </MenuLinkItem>
             <MenuLinkItem href="/settings" icon={faGear}>
-              Einstellungen
+              {t("settings")}
             </MenuLinkItem>
             <MenuLinkItem href="/api-keys" icon={faKey}>
-              API Keys
+              {t("api_keys")}
             </MenuLinkItem>
             {isAdmin && (
               <MenuLinkItem
@@ -167,7 +167,7 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
                 iconColor="var(--ink-2)"
                 textColor="var(--ink-2)"
               >
-                Admin
+                {t("admin")}
               </MenuLinkItem>
             )}
           </div>
@@ -189,7 +189,7 @@ export function UserMenu({ userName, userImage, userEmail, isAdmin }: UserMenuPr
                 style={{ color: "var(--text-muted)" }}
                 aria-hidden="true"
               />
-              Abmelden
+              {t("sign_out")}
             </DropdownMenu.Item>
           </div>
         </DropdownMenu.Content>

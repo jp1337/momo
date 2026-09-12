@@ -184,10 +184,29 @@ git commit -m "fix(ui): sechs Labels im Nutzermenue gehen durch t()"
 - Modify: `components/progress/tabs/review-tab.tsx:106-108`
 - Modify: `components/progress/tabs/stats-tab.tsx:128-136`
 - Modify: `components/stats/streak-sparkline.tsx:60`
+- Modify: `components/layout/level-badge.tsx:63` — **nachgetragen 2026-09-02**, siehe unten
 - Modify: alle sieben `messages/*.json` (Namespaces `review`, `stats`)
 
 **Interfaces:**
-- Produces: `review.streak_line`, `stats.current_streak_days`, `stats.best_streak_days`, `stats.sparkline_aria`
+- Produces: `review.streak_line`, `stats.current_streak_days`, `stats.best_streak_days`, `stats.sparkline_aria`, `achievements.level_aria`
+
+> **Nachgetragen 2026-09-02, aus Task 1.** `components/layout/level-badge.tsx:63`
+> lautet `aria-label={\`Level ${level}: ${title}\`}` — das englische Wort
+> „Level" hartkodiert, in einer Sieben-Sprachen-App, in einem String, den nur
+> Screenreader-Nutzerinnen hören.
+>
+> Task 1 hat ihn gefunden und bewusst liegen lassen: er ist **nicht** dieselbe
+> Form wie der Textknoten eine Zeile darunter. `achievements.level_label` trägt
+> keinen Platzhalter; dieser hier braucht zwei. Ein Drop-in war es also nie.
+>
+> Er gehört hierher und nicht in einen eigenen Task, weil dieser Task genau
+> diese Sorte String bereits behebt: `streak-sparkline.tsx:60` ist derselbe
+> Defekt — ein hartkodiertes englisches `aria-label`, das einen neuen Key mit
+> eigener Form braucht.
+>
+> `{level}` und `{title}` als Platzhalter. `title` ist der übersetzte
+> Leveltitel, der aus `achievements.levels.<n>` kommt (Schnitt 1) — die
+> Nachricht setzt ihn nur zusammen, sie übersetzt ihn nicht.
 
 Das `d` ist heute per JS-Konkatenation angehängt: `{stats.streakCurrent}d {t("current_streak")}`. Chinesisch rendert dadurch „3d 连击". Die Reihenfolge von Zahl, Einheit und Label ist sprachabhängig — das gehört in **eine** ICU-Nachricht pro Zeile, nicht in einen separaten Einheiten-Key.
 
@@ -693,6 +712,36 @@ git commit -m "feat(config): check:i18n prueft beide Richtungen und kennt Key-Fa
 - Consumes: die `ORPHAN`-Ausgabe aus Task 3 Step 7
 - Produces: `npm run check:i18n` mit Exit 0
 
+> **Gemessen 2026-09-02, vor der Umsetzung.** Der Plan sagte „die Liste ist die
+> Ausbeute" und nannte keine Zahl. Die Zahl ist:
+>
+> | | |
+> | --- | --- |
+> | Verwaist bei reiner Gegenrichtung | **372** (die Roadmap schätzte ~132) |
+> | davon Blattname irgendwo im Quelltext → Familie, Map oder Template | **278** |
+> | echte Kandidaten | **94** |
+>
+> Die 94 sind eine **Obergrenze**: die Heuristik sucht den Blattnamen wörtlich,
+> übersieht also numerierte Familien (`quote_1` gegen `t(\`quote_${n}\`)`) und
+> zählt sie fälschlich als Kandidat. `closure` steht mit 12 in beiden Spalten
+> und ist genau dieser Fall.
+>
+> **372 Zeilen einzeln zu greppen ist kein Task.** Dieser Task hat deshalb zwei
+> Stufen, und die zweite erbt das Muster aus Schnitt 4:
+>
+> 1. **Familien deklarieren, bevor irgendetwas trockengelegt wird.** Die
+>    generativen Namespaces zuerst — `achievements` (die 72 Keys aus Schnitt 1),
+>    `templates`, `closure`, `progress`. Jede Familie schrumpft die Liste
+>    mechanisch und ohne Urteil.
+> 2. **Was danach übrig ist, wird triagiert — und was ohne sichere Antwort
+>    bleibt, wird GEPINNT, nicht gelöscht.** Wie die 30 undokumentierten
+>    Operationen in Schnitt 4: die Menge wird exakt festgenagelt, die
+>    Gegenrichtung geht nur bei einem **neuen** Verwaisten rot. Die Liste darf
+>    nur schrumpfen.
+>
+> Eine Löschung auf Verdacht bleibt verboten. Das Pinnen ist der Ausweg, der
+> das Verbot bezahlbar macht.
+
 Kein Schritt dieses Tasks löscht auf Verdacht. Jeder Verwaiste bekommt eine von drei Antworten, und die Antwort steht in `verwaiste-keys.md`, bevor irgendetwas gelöscht wird.
 
 | Antwort | Wann | Handlung |
@@ -701,11 +750,11 @@ Kein Schritt dieses Tasks löscht auf Verdacht. Jeder Verwaiste bekommt eine von
 | **Fehlende Verdrahtung** | Der Text existiert übersetzt, der Code hartkodiert stattdessen | **Nicht löschen** — in `verwaiste-keys.md` als Befund notieren, Fix gehört in seinen eigenen Schnitt |
 | **Toter Text** | Keine Aufrufstelle, keine geplante, kein hartkodiertes Gegenstück | Löschen, in allen sieben Locales |
 
-- [ ] **Step 1: Die Liste erzeugen und ablegen**
+- [x] **Step 1: Die Liste erzeugen und ablegen**
 
 Run: `npm run check:i18n 2>&1 | grep -A2 "^  ORPHAN" > /tmp/orphans.txt; wc -l /tmp/orphans.txt`
 
-- [ ] **Step 2: `verwaiste-keys.md` anlegen**
+- [x] **Step 2: `verwaiste-keys.md` anlegen**
 
 ```markdown
 # Verwaiste Message-Keys — Bestandsaufnahme
@@ -730,7 +779,7 @@ Findet der Grep ein Template-Literal, ist es eine **Familie**. Findet er einen
 hartkodierten deutschen String mit derselben Bedeutung, ist es eine **fehlende
 Verdrahtung**. Findet er nichts, ist es **toter Text**.
 
-- [ ] **Step 3: Familien nachtragen**
+- [x] **Step 3: Familien nachtragen**
 
 Für jeden Verwaisten mit Antwort „Familie" einen Eintrag in `KEY_FAMILIES`. Die Roadmap nennt drei erwartete Fälle: `closure.quote_${n}`, `templates.<x>.task_N`, `progress.tab_${id}`. Muster für `closure`:
 
@@ -753,13 +802,13 @@ Für jeden Verwaisten mit Antwort „Familie" einen Eintrag in `KEY_FAMILIES`. D
 
 Gibt es keine codeseitige Aufzählung, muß eine geschaffen werden (eine exportierte Konstante), statt die Zahl im Familienregister zu erfinden. Eine Familie, deren `members()` aus den Locale-Dateien liest, prüft sich selbst und ist wertlos.
 
-- [ ] **Step 4: Toten Text löschen**
+- [x] **Step 4: Toten Text löschen**
 
 Nur Keys mit Antwort „toter Text", und in **allen sieben** Locales. Nach jeder Löschung:
 
 Run: `npm run check:i18n 2>&1 | tail -20`
 
-- [ ] **Step 5: Grün werden**
+- [x] **Step 5: Grün werden**
 
 Run: `npm run check:i18n`
 Expected: Exit 0, drei Häkchen:
@@ -791,12 +840,12 @@ console.log(`ℹ PENDING   ${PENDING_WIRING.size} Key(s) warten auf Verdrahtung:
 for (const [key, due] of PENDING_WIRING) console.log(`            ${key} → ${due}`);
 ```
 
-- [ ] **Step 6: Volle Suite**
+- [x] **Step 6: Volle Suite**
 
 Run: `npm run check:i18n && npm test && npx tsc --noEmit && npm run lint`
 Expected: alle vier grün
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add messages/ scripts/ docs-tech/i18n-versprechen/verwaiste-keys.md
@@ -812,7 +861,7 @@ git commit -m "chore(config): Verwaisten-Liste abgearbeitet, check:i18n gruen"
 - Modify: `scripts/CLAUDE.md`
 - Modify: `messages/CLAUDE.md`
 
-- [ ] **Step 1: `CHANGELOG.md` ergänzen**
+- [x] **Step 1: `CHANGELOG.md` ergänzen**
 
 ```markdown
 - **Das Nutzermenü war deutsch, in einer Sieben-Sprachen-App.** Sechs Labels
@@ -832,11 +881,11 @@ git commit -m "chore(config): Verwaisten-Liste abgearbeitet, check:i18n gruen"
   benutzt, während `lib/push.ts` den deutschen Text hartkodierte.
 ```
 
-- [ ] **Step 2: `scripts/CLAUDE.md` ergänzen**
+- [x] **Step 2: `scripts/CLAUDE.md` ergänzen**
 
 Eintrag für `i18n-key-families.mjs` mit der Regel, daß `members()` aus dem Code ableiten muß und nie aus den Locale-Dateien.
 
-- [ ] **Step 3: `messages/CLAUDE.md` ergänzen**
+- [x] **Step 3: `messages/CLAUDE.md` ergänzen**
 
 Die Datei schreibt heute vor, daß jeder Key in allen sieben Locales stehen muß. Ergänzen: Keys, die per Template-Literal gebildet werden, gehören in `scripts/i18n-key-families.mjs` — sonst meldet `check:i18n` sie als verwaist.
 

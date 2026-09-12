@@ -12,6 +12,17 @@
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 
+/**
+ * Anzahl der Zitate unter `closure.quote_<n>` in jeder Locale.
+ *
+ * Steht hier und nicht als `closure.quote_count` in den Locale-Dateien: eine
+ * Zahl, die in messages/*.json lebt, kann pro Sprache abweichen, und ein zu
+ * grosser Wert indiziert in einen Key, den es nicht gibt. Die Familie in
+ * `scripts/i18n-key-families.mjs` liest diese Konstante — eine Familie, die
+ * ihre Sollmenge aus den Locale-Dateien ableitet, prueft sich selbst.
+ */
+export const CLOSURE_QUOTE_COUNT = 12;
+
 interface EmotionalClosureProps {
   /** Whether the feature is enabled by the user */
   enabled: boolean;
@@ -36,8 +47,7 @@ export function EmotionalClosure({ enabled }: EmotionalClosureProps) {
 
   if (!enabled) return null;
 
-  const quoteCount = parseInt(t("quote_count"), 10);
-  const index = getDayOfYear(new Date()) % quoteCount;
+  const index = getDayOfYear(new Date()) % CLOSURE_QUOTE_COUNT;
   const quote = t(`quote_${index}` as Parameters<typeof t>[0]);
 
   return (

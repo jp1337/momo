@@ -7,10 +7,74 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`npm run check:i18n` prueft jetzt beide Richtungen.** Bisher fiel nur auf,
+  wenn ein referenzierter Key in einer Sprache fehlte — ein Key, den niemand
+  benutzt, war unsichtbar. Der Bericht nennt drei Kategorien, immer, auch mit
+  null Befunden: `MISSING` (referenziert, fehlt in einer Locale), `FAMILY`
+  (aus einer Aufzaehlung erwartet, fehlt in einer Locale) und `ORPHAN`
+  (uebersetzt, von keiner Zeile referenziert), dazu `PENDING` (verwaist, aber
+  mit faelligem Schnitt daneben). Erster Lauf: **124 verwaiste Keys**, alle
+  abgearbeitet. Ein verwaister Key ist entweder toter Text oder eine Uebersetzung,
+  deren Verdrahtung fehlt — `review.push_title` ist der zweite Fall, in sieben
+  Sprachen uebersetzt, waehrend `lib/push.ts` den deutschen Text hartkodiert.
+- **`scripts/i18n-key-families.mjs` — das Familienregister.** Keys, die per
+  Template-Literal gebildet werden (``t(`catalog.${key}.title`)``), sieht kein
+  Literal-Scan. 26 Familien (225 Keys) leiten ihre Sollmenge aus der
+  codeseitigen Aufzaehlung ab — `ACHIEVEMENT_DEFINITIONS`, `LEVELS`,
+  `VALID_TABS`, `TEMPLATES`, `LOCALES`, den `pgEnum`s des Schemas und einem
+  Dutzend Konfigtabellen wie `LEVEL_META` oder `RARITY_CONFIG` — nie aus den
+  Locale-Dateien, sonst pruefte die Familie sich selbst.
+  `__tests__/check-i18n.test.ts` beweist genau das: faellt eine Definition aus
+  dem Code, faellt das Mitglied aus der Familie.
+- **`docs-tech/i18n-versprechen/verwaiste-keys.md` — die Bestandsaufnahme.**
+  Jeder der 124 Verwaisten hat dort eine Antwort und eine Begruendung, *bevor*
+  geloescht wurde: 12 Familie, 4 fehlende Verdrahtung (behoben), 3 fehlende
+  Verdrahtung (gepinnt), 105 toter Text. Eine Loeschung auf Verdacht gab es
+  nicht.
+- **`PENDING_WIRING` — Schuld mit Faelligkeit.** Drei Keys sind uebersetzt und
+  unbenutzt, weil `lib/push.ts` den deutschen Text hartkodiert und dort kein
+  Request-Kontext liegt, aus dem eine Locale kaeme. Sie werden nicht geloescht
+  und nicht still gefiltert, sondern als eigene Kategorie berichtet, jeder mit
+  dem Schnitt, der ihn entfernt. `__tests__/check-i18n.test.ts` erzwingt beides:
+  ein Eintrag ohne Faelligkeit und Fundstelle ist rot, und ein gepinnter Key,
+  der in einer Locale fehlt, auch.
+
+### Fixed
+
+- **Die vier Dauer-Chips im Aufgabenformular waren auf sieben Sprachen
+  deutsch — beziehungsweise englisch.** `components/tasks/task-form.tsx`
+  schrieb `"5 min"` bis `"60 min"` als Literale, direkt neben einem
+  `t("duration_unknown")`. Die Uebersetzungen lagen seit jeher in allen sieben
+  Locale-Dateien; Russisch sagt `5 мин`, Chinesisch `5 分钟`. Genau dieser Fund
+  ist der Grund, warum die Gegenrichtung existiert: keine Zeile fehlte, kein
+  Test war rot, und trotzdem las eine Haelfte der Sprachen die falsche Einheit.
+- **106 tote Keys aus allen sieben Locale-Dateien entfernt.** `/stats` und
+  `/achievements` sind seit `v0.8.0` Tabs von `/progress`, die Datums-Sektionen
+  der Aufgabenliste sind durch Prioritaetsgruppen ersetzt, und die
+  tageszeitabhaengigen Leerzustaende gibt es nicht mehr — ihre Aufschriften
+  standen weiter in sieben Dateien und wurden bei jeder Sprachaenderung
+  mitgepflegt.
+- **Die Zahl der Zitate stand in den Locale-Dateien.** `closure.quote_count`
+  war ein uebersetzbarer Zaehler: eine Sprache mit einem zu grossen Wert haette
+  in einen Key indiziert, den es nicht gibt. Die Zahl ist jetzt
+  `CLOSURE_QUOTE_COUNT` in `components/animations/emotional-closure.tsx`, und
+  die Familie liest sie von dort.
+
 ## [0.9.0] - 2026-09-12
 
 ### Fixed
 
+- **Der Key-Scanner uebersah drei Bindungsformen und jeden umbrochenen
+  Aufruf.** `const [stats, …, t, tAchievements] = await Promise.all([…])` band
+  gar nichts — und weil eine Datei ohne Bindung ganz uebersprungen wird, waren
+  sechs Dateien komplett unsichtbar, `components/progress/tabs/stats-tab.tsx`
+  darunter. Ebenso unsichtbar: `getTranslations({ locale, namespace })`,
+  `getServerTranslations(locale, ns)` und jeder Aufruf, den Prettier umgebrochen
+  hat (`t(\n  "topic_completions_30d",\n  { count })`). In der alten Richtung
+  war das eine stille Luecke; in der Gegenrichtung waren es **207 falsche
+  Verwaist-Meldungen** — Keys, die eine laufende Seite liest.
 - **Der erste Start nach Migration `0035` waere ein Crashloop gewesen.**
   `scripts/migrate.mjs` haelt eine zweite, handgepflegte Kopie der
   Achievement-Definitionen und seedete `title` und `description` — zwei Spalten,

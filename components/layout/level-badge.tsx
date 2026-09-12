@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 /**
  * LevelBadge — compact level indicator for the navbar.
  *
@@ -50,6 +52,7 @@ function tierBorder(): string {
  * Compact level badge displayed in the navbar alongside the coin counter.
  */
 export function LevelBadge({ level, title }: LevelBadgeProps) {
+  const t = useTranslations("achievements");
   const color = tierColor(level);
   const bg = tierBg();
   const border = tierBorder();
@@ -57,7 +60,7 @@ export function LevelBadge({ level, title }: LevelBadgeProps) {
   return (
     <span
       title={title}
-      aria-label={`Level ${level}: ${title}`}
+      aria-label={t("level_aria", { level, title })}
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -77,7 +80,7 @@ export function LevelBadge({ level, title }: LevelBadgeProps) {
         whiteSpace: "nowrap",
       }}
     >
-      <span style={{ opacity: 0.7, fontSize: "0.65rem" }}>Lv.</span>
+      <span style={{ opacity: 0.7, fontSize: "0.65rem" }}>{t("level_label")}</span>
       <span>{level}</span>
     </span>
   );
