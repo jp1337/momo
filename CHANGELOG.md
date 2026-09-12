@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-12
+
 ### Fixed
 
 - **Der erste Start nach Migration `0035` waere ein Crashloop gewesen.**
@@ -42,6 +44,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   liest die Aufschriften von `UnlockedAchievement` statt aus einer Hand-Schrift-Kopie
   über die JSON-Grenze. `__tests__/achievements-i18n.test.ts` sichert Vollständigkeit
   über alle Sprachen und verhindert, dass eine Komponente `achievement.title` direkt liest.
+
+- **Sechs Major-Abhaengigkeiten gehoben, zwei davon mit Codeaenderung.**
+  `@simplewebauthn/server` und `/browser` auf v14, `nodemailer` auf v10,
+  `vitest` auf v5, dazu React 19.3 und Next 16.3.5. Zwei brauchten mehr als
+  die Versionszeile: simplewebauthn v14 hat `AuthenticatorTransportFuture` in
+  `AuthenticatorTransport` umbenannt und dabei `cable` und `smart-card` aus der
+  Union gestrichen — der Zod-Schema in `lib/validators/passkey.ts` behaelt beide
+  bewusst, weil Browser sie weiterhin melden. Und vitest 5 bringt `vite` nicht
+  mehr selbst mit: ohne den neuen devDependency-Eintrag stirbt `vitest run` vor
+  dem ersten Test an `ERR_MODULE_NOT_FOUND`.
+- **Das README behauptete drei Sprachen.** Momo spricht seit `v0.3.0` mehr,
+  seit diesem Release sieben — die Feature-Liste nannte weiterhin `de/en/fr`.
 
 ## [0.8.1] - 2026-09-02
 
