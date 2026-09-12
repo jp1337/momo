@@ -40,7 +40,7 @@ import {
   type VerifiedAuthenticationResponse,
   type RegistrationResponseJSON,
   type AuthenticationResponseJSON,
-  type AuthenticatorTransportFuture,
+  type AuthenticatorTransport,
 } from "@simplewebauthn/server";
 import { createHmac, timingSafeEqual, randomUUID } from "crypto";
 import { and, eq } from "drizzle-orm";
@@ -533,11 +533,11 @@ export function verifyChallengeToken(
  */
 function parseTransports(
   raw: string | null
-): AuthenticatorTransportFuture[] | undefined {
+): AuthenticatorTransport[] | undefined {
   if (!raw) return undefined;
   const parts = raw
     .split(",")
     .map((s) => s.trim())
-    .filter(Boolean) as AuthenticatorTransportFuture[];
+    .filter(Boolean) as AuthenticatorTransport[];
   return parts.length > 0 ? parts : undefined;
 }

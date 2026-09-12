@@ -21,7 +21,12 @@ const base64url = z
   .max(10_000)
   .regex(/^[A-Za-z0-9_-]*$/, "Must be base64url");
 
-/** Transport values accepted by WebAuthn — mirrors `AuthenticatorTransportFuture`. */
+/**
+ * Transport values accepted by WebAuthn. Deliberately a superset of
+ * simplewebauthn's `AuthenticatorTransport` (v14 dropped `cable` and
+ * `smart-card`): browsers still report both, and rejecting them here would
+ * drop a real credential's transport hint.
+ */
 const TransportSchema = z.enum([
   "ble",
   "cable",
