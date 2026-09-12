@@ -11,8 +11,12 @@
  *             aus der ihre Mitglieder stammen.
  * 3. ORPHAN   vorhanden ⇒ referenziert. Ein Key in messages/*.json, der weder
  *             als Literal referenziert noch Familienmitglied ist.
+ * 4. PENDING  verwaist, aber bekannt: die Uebersetzung existiert, die
+ *             Verdrahtung fehlt, und der Schnitt, der sie nachholt, steht
+ *             daneben. Eigene Kategorie statt stillem Filter — ein Befund,
+ *             den niemand mehr sieht, ist kein Befund.
  *
- * Alle drei Kategorien werden immer berichtet, auch mit null Befunden — sonst
+ * Alle vier Kategorien werden immer berichtet, auch mit null Befunden — sonst
  * ist "gruen" nicht von "ungeprueft" zu unterscheiden.
  *
  * Exit 0 → alle drei leer. Exit 1 → mindestens ein Befund.
@@ -24,7 +28,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
-import { KEY_FAMILIES } from "./i18n-key-families.mjs";
+import { KEY_FAMILIES, PENDING_WIRING } from "./i18n-key-families.mjs";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
 const MESSAGES_DIR = join(ROOT, "messages");
@@ -352,6 +356,7 @@ const orphans = new Map();
 for (const [locale, flat] of flatByLocale) {
   for (const key of flat) {
     if (referenced.has(key) || familyExpected.has(key)) continue;
+    if (PENDING_WIRING.has(key)) continue;
     if (!orphans.has(key)) orphans.set(key, new Set());
     orphans.get(key).add(locale);
   }
@@ -406,6 +411,15 @@ if (orphans.size > 0) {
   }
 } else {
   console.log("✓ ORPHAN    keine — jeder Key ist referenziert oder Familienmitglied.");
+}
+
+if (PENDING_WIRING.size > 0) {
+  console.log(
+    `\nℹ PENDING   ${PENDING_WIRING.size} Key(s) warten auf Verdrahtung — uebersetzt, unbenutzt, faellig:`
+  );
+  for (const [key, due] of PENDING_WIRING) console.log(`            ${key} → ${due}`);
+} else {
+  console.log("✓ PENDING   keine — keine Uebersetzung wartet auf ihre Verdrahtung.");
 }
 
 process.exit(failed ? 1 : 0);

@@ -180,9 +180,10 @@ function streakUnitText(
  *
  * `null` when the habit has neither a running nor a past streak (current
  * and best both 0) — missing metric means show nothing (spec §6), not a
- * "Noch keiner" placeholder (that key, `stat_streak_empty`, stays for the
- * rail's own all-habits line, which the brief explicitly keeps at "line
- * omitted", not "line replaced with placeholder text").
+ * "Noch keiner" placeholder. Der Key `stat_streak_empty` trug diesen Text und
+ * wurde von keiner Zeile aufgerufen — auch nicht von der Rand-Zeile, fuer die
+ * dieser Kommentar ihn bis September 2026 reklamierte. Die Gegenrichtung von
+ * `check:i18n` hat ihn als verwaist gemeldet; er ist geloescht.
  *
  * @param t - this file's own `getTranslations("habits")` binding
  * @param streak - the habit's own current/best/periodDays

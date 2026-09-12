@@ -4,7 +4,9 @@ import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   KEY_FAMILIES,
+  PENDING_WIRING,
   achievementKeys,
+  closureQuotes,
   enumValues,
   keyLiterals,
   levelNumbers,
@@ -180,4 +182,55 @@ describe("die Familien leiten aus dem Code ab, nicht aus den Locales", () => {
     expect(() => localeCodes("// nichts hier")).toThrow(/LOCALES/);
     expect(() => keyLiterals("// nichts hier", /"(x_\w+)"/g, "leer")).toThrow(/leer/);
   });
+  it("CLOSURE_QUOTE_COUNT bestimmt die Familie, nicht die Locale-Datei", () => {
+    const src = readFileSync(
+      join(process.cwd(), "components/animations/emotional-closure.tsx"),
+      "utf8"
+    );
+    expect(closureQuotes(src)).toEqual([
+      "quote_0", "quote_1", "quote_2", "quote_3", "quote_4", "quote_5",
+      "quote_6", "quote_7", "quote_8", "quote_9", "quote_10", "quote_11",
+    ]);
+    const fewer = src.replace(
+      "export const CLOSURE_QUOTE_COUNT = 12",
+      "export const CLOSURE_QUOTE_COUNT = 3"
+    );
+    expect(closureQuotes(fewer)).toEqual(["quote_0", "quote_1", "quote_2"]);
+    expect(() => closureQuotes("// nichts hier")).toThrow(/CLOSURE_QUOTE_COUNT/);
+  });
 });
+
+/**
+ * PENDING_WIRING ist eine Schuld mit Faelligkeit, keine Ausnahmeliste. Ein
+ * Eintrag ohne Faelligkeit waere toter Text, der sich als Befund tarnt — und
+ * ein Eintrag, der laengst verdrahtet ist, versteckt ab dann nichts mehr,
+ * kostet aber weiter eine Zeile im Bericht.
+ */
+describe("PENDING_WIRING nennt fuer jeden Eintrag den faelligen Schnitt", () => {
+  it("jeder Eintrag nennt eine Faelligkeit und eine Fundstelle", () => {
+    expect(PENDING_WIRING.size).toBeGreaterThan(0);
+    for (const [key, due] of PENDING_WIRING) {
+      expect(key, `${key} ist kein Key`).toMatch(/^[a-z_]+\.[a-z_0-9.]+$/);
+      expect(due, `${key} nennt keinen Schnitt`).toMatch(/Schnitt \d/);
+      expect(due, `${key} nennt keine Datei`).toMatch(/\.(ts|tsx)/);
+    }
+  });
+
+  it("jeder gepinnte Key steht in allen sieben Locales", () => {
+    for (const locale of localeCodes()) {
+      const messages = JSON.parse(
+        readFileSync(join(process.cwd(), `messages/${locale}.json`), "utf8")
+      );
+      for (const key of PENDING_WIRING.keys()) {
+        const value = key
+          .split(".")
+          .reduce<unknown>((acc, seg) =>
+            acc && typeof acc === "object" ? (acc as Record<string, unknown>)[seg] : undefined,
+            messages
+          );
+        expect(value, `${key} fehlt in ${locale}`).toBeTypeOf("string");
+      }
+    }
+  });
+});
+

@@ -204,6 +204,45 @@ export function localeCodes(src = read("i18n/locales.ts")) {
   return nonEmpty(quoted(match[1]), "LOCALES");
 }
 
+/**
+ * Liest CLOSURE_QUOTE_COUNT. Der `closure`-Namespace traegt so viele
+ * `quote_<n>`-Keys, 0-basiert, gelesen als t(`quote_${index}`).
+ *
+ * Die Zahl stand bis September 2026 als `closure.quote_count` in den
+ * Locale-Dateien. Dort war sie zweimal falsch: sie konnte pro Sprache
+ * abweichen (ein zu grosser Wert indiziert in einen Key, den es nicht gibt),
+ * und eine Familie, die sie von dort liest, prueft sich selbst.
+ *
+ * @param {string} [src] Quelltext von components/animations/emotional-closure.tsx
+ * @returns {string[]}
+ */
+export function closureQuotes(src = read("components/animations/emotional-closure.tsx")) {
+  const match = src.match(/export const CLOSURE_QUOTE_COUNT\s*=\s*(\d+)/);
+  if (!match) throw new Error("CLOSURE_QUOTE_COUNT nicht gefunden — Familie closure anpassen");
+  const count = Number(match[1]);
+  if (count < 1) throw new Error("CLOSURE_QUOTE_COUNT ist 0 — Familie closure anpassen");
+  return Array.from({ length: count }, (_, i) => `quote_${i}`);
+}
+
+/**
+ * Keys, deren Uebersetzung existiert und deren Verdrahtung fehlt.
+ *
+ * Das ist eine Schuld mit Faelligkeit, keine Ausnahme: jeder Eintrag nennt den
+ * Schnitt, der ihn entfernt. Ein Eintrag ohne Faelligkeit gehoert hier nicht
+ * hin — dann ist es toter Text und wird geloescht.
+ *
+ * Die Liste darf nur schrumpfen. Ein neuer Verwaister landet unter ORPHAN und
+ * faerbt den Lauf rot; hier hineinzuschreiben, statt zu verdrahten, ist genau
+ * die Bewegung, die diese Ratsche verhindern soll.
+ *
+ * @type {Map<string, string>}
+ */
+export const PENDING_WIRING = new Map([
+  ["review.push_title", "Schnitt 3 — lib/push.ts:1116 hartkodiert \"Dein Wochenrueckblick\""],
+  ["review.push_body", "Schnitt 3 — lib/push.ts:1117 hartkodiert die Zusammenfassung"],
+  ["animations.achievement_title", "Schnitt 3 — lib/push.ts:1469 hartkodiert \"Achievement freigeschaltet!\"; Plan 3 loest den Key durch push.achievement_title ab"],
+]);
+
 // ─── Register ────────────────────────────────────────────────────────────────
 
 /**
@@ -231,6 +270,12 @@ export const KEY_FAMILIES = [
     pattern: "levels.<n>",
     members: () => levelNumbers().map((n) => `levels.${n}`),
     why: "components/progress/tabs/achievements-tab.tsx, components/progress/tabs/stats-tab.tsx, app/(app)/layout.tsx",
+  },
+  {
+    namespace: "closure",
+    pattern: "quote_<n>",
+    members: closureQuotes,
+    why: "components/animations/emotional-closure.tsx:51",
   },
   {
     namespace: "progress",

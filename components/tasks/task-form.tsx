@@ -687,10 +687,10 @@ export function TaskForm({
                       >
                         {([
                           { value: "any", label: t("duration_unknown") },
-                          { value: "5", label: "5 min" },
-                          { value: "15", label: "15 min" },
-                          { value: "30", label: "30 min" },
-                          { value: "60", label: "60 min" },
+                          { value: "5", label: t("time_5min") },
+                          { value: "15", label: t("time_15min") },
+                          { value: "30", label: t("time_30min") },
+                          { value: "60", label: t("time_60min") },
                         ] as const).map(({ value, label }) => {
                           const isSelected =
                             (value === "any" && formData.estimatedMinutes === null) ||
