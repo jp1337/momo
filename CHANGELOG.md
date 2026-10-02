@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-10-02
+
 ### Added
 
 - **Datenschutzerklaerung auf Englisch.** `/datenschutz` zeigt die englische
@@ -25,8 +27,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Die Datenschutzerklaerung beschreibt jetzt, was tatsaechlich passiert:**
   Hoster benannt (Hetzner, Deutschland), Server-Log-Felder wie in der
   nginx-Konfiguration, IP nur gekuerzt (IPv4 /16, IPv6 /48), lokal hoechstens
-  15 Tage, im zentralen Log-Speicher hoechstens ein Jahr; Session-Daten (IP, User-Agent) samt Loeschfrist waren
-  gar nicht erwaehnt.
+  15 Tage, im zentralen Log-Speicher (nur Forensik) hoechstens ein Jahr;
+  Session-Daten (IP, User-Agent) samt Loeschfrist waren gar nicht erwaehnt.
+- **`next dev` lieferte auf jeder Seite 500** — Tailwind las eine Klassen-Notiz
+  aus `docs/` als CSS. Nur lokal; das Image war nie betroffen.
+
+### Changed
+
+- 32 Abhaengigkeits-Updates seit 0.10.0, u. a. Next.js 16.3.8, next-intl
+  4.14.8, Vitest 5.0.3, Zod 4.6.5, Drizzle ORM 0.45.3.
 
 ## [0.10.0] - 2026-09-12
 
@@ -1200,7 +1209,10 @@ Docstring der Route schon immer behauptet hat. `GET` bleibt unverändert.
 - Bought items shown with green left border and "Bought" badge
 - Discarded items shown with 50% opacity and strikethrough title
 
-[Unreleased]: https://github.com/jp1337/momo/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/jp1337/momo/compare/v0.10.1...HEAD
+[0.10.1]: https://github.com/jp1337/momo/compare/v0.10.0...v0.10.1
+[0.10.0]: https://github.com/jp1337/momo/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/jp1337/momo/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/jp1337/momo/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/jp1337/momo/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/jp1337/momo/compare/v0.6.0...v0.7.0
