@@ -92,14 +92,14 @@
   "app/(legal)/datenschutz/page.tsx": {
     "color": 0,
     "radius": 1,
-    "inline": 80,
-    "spacing": 3
+    "inline": 2,
+    "spacing": 1
   },
   "app/(legal)/impressum/page.tsx": {
     "color": 0,
     "radius": 1,
-    "inline": 15,
-    "spacing": 1
+    "inline": 7,
+    "spacing": 0
   },
   "app/(legal)/layout.tsx": {
     "color": 0,

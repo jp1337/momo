@@ -196,6 +196,7 @@ Required for publicly accessible deployments in Germany and recommended everywhe
 | `NEXT_PUBLIC_IMPRINT_ADDRESS` | Public deployments | Street address, postcode, city |
 | `NEXT_PUBLIC_IMPRINT_EMAIL` | Public deployments | Contact / data protection email address |
 | `NEXT_PUBLIC_IMPRINT_PHONE` | Optional | Phone number (recommended for § 5 TMG) |
+| `NEXT_PUBLIC_IMPRINT_NOTE` | Optional | Line shown below the address on `/impressum`, e.g. the attribution a c/o address service requires |
 
 ---
 

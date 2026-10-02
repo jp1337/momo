@@ -135,6 +135,7 @@ stringData:
   NEXT_PUBLIC_IMPRINT_ADDRESS: ""
   NEXT_PUBLIC_IMPRINT_EMAIL: ""
   NEXT_PUBLIC_IMPRINT_PHONE: ""
+  NEXT_PUBLIC_IMPRINT_NOTE: ""
 ```
 
 > **Important:** `AUTH_TRUST_HOST: "true"` is required for Kubernetes — Auth.js v5 rejects requests from unrecognised hosts unless this is set.
