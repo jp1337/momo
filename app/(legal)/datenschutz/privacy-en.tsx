@@ -320,8 +320,8 @@ export function PrivacyEn({ name, email, address, phone }: PrivacyProps) {
         <p className="text-[var(--text-muted)]">The web server records every request to this application in server log files:</p>
         <ul className="list-disc list-inside mt-1 flex flex-col gap-1 text-[var(--text-muted)]">
           <li>Time of the request</li>
-          <li>Requested host name, method and path (URL)</li>
-          <li>HTTP status code and amount of data transferred</li>
+          <li>Requested host name, method, path including query parameters, and protocol</li>
+          <li>HTTP status code, amount of data transferred and response times</li>
           <li>Referrer URL</li>
           <li>User agent (browser type, version and operating system)</li>
           <li>
@@ -331,8 +331,11 @@ export function PrivacyEn({ name, email, address, phone }: PrivacyProps) {
           </li>
         </ul>
         <p className="text-[var(--text-muted)]">
-          The log files are rotated daily and deleted after 15 days at the
-          latest.
+          On the server, the log files are rotated daily and deleted after
+          15 days at the latest. They are also transferred, encrypted, to a
+          central log store that the operator runs on their own hardware in
+          Germany (no service provider), where they are deleted after one
+          year at the latest.
         </p>
         <p className="text-[var(--text-muted)]">
           This data is not combined with other data sources. It is collected

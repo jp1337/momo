@@ -406,8 +406,8 @@ export function PrivacyDe({ name, email, address, phone }: PrivacyProps) {
           className="list-disc list-inside mt-1 flex flex-col gap-1 text-[var(--text-muted)]"
         >
           <li>Uhrzeit der Anfrage</li>
-          <li>Aufgerufener Hostname, Methode und Pfad (URL)</li>
-          <li>HTTP-Statuscode und übertragene Datenmenge</li>
+          <li>Aufgerufener Hostname, Methode, Pfad samt Query-Parametern und Protokoll</li>
+          <li>HTTP-Statuscode, übertragene Datenmenge und Antwortzeiten</li>
           <li>Referrer-URL</li>
           <li>User-Agent (Browsertyp, -version und Betriebssystem)</li>
           <li>
@@ -417,8 +417,11 @@ export function PrivacyDe({ name, email, address, phone }: PrivacyProps) {
           </li>
         </ul>
         <p className="text-[var(--text-muted)]">
-          Die Log-Dateien werden täglich rotiert und nach spätestens 15
-          Tagen gelöscht.
+          Auf dem Server werden die Log-Dateien täglich rotiert und nach
+          spätestens 15 Tagen gelöscht. Zusätzlich werden sie verschlüsselt
+          in einen zentralen Log-Speicher übertragen, den der Betreiber auf
+          eigener Hardware in Deutschland betreibt (kein Dienstleister), und
+          dort nach spätestens einem Jahr gelöscht.
         </p>
         <p className="text-[var(--text-muted)]">
           Eine Zusammenführung dieser Daten mit anderen Datenquellen

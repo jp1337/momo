@@ -24,8 +24,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   Neuer taeglicher Cron-Job `expired-session-cleanup`.
 - **Die Datenschutzerklaerung beschreibt jetzt, was tatsaechlich passiert:**
   Hoster benannt (Hetzner, Deutschland), Server-Log-Felder wie in der
-  nginx-Konfiguration, IP nur gekuerzt (IPv4 /16, IPv6 /48), Loeschung nach
-  spaetestens 15 Tagen; Session-Daten (IP, User-Agent) samt Loeschfrist waren
+  nginx-Konfiguration, IP nur gekuerzt (IPv4 /16, IPv6 /48), lokal hoechstens
+  15 Tage, im zentralen Log-Speicher hoechstens ein Jahr; Session-Daten (IP, User-Agent) samt Loeschfrist waren
   gar nicht erwaehnt.
 
 ## [0.10.0] - 2026-09-12
