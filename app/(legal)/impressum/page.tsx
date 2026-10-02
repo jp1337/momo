@@ -13,6 +13,8 @@
  *
  * Optional env vars:
  *   NEXT_PUBLIC_IMPRINT_PHONE    — Phone number
+ *   NEXT_PUBLIC_IMPRINT_NOTE     — Line shown below the address, e.g. the
+ *                                  attribution a c/o address service requires
  */
 
 import type { Metadata } from "next";
@@ -56,6 +58,7 @@ export default function ImpressumPage() {
   const address = process.env.NEXT_PUBLIC_IMPRINT_ADDRESS;
   const email = process.env.NEXT_PUBLIC_IMPRINT_EMAIL;
   const phone = process.env.NEXT_PUBLIC_IMPRINT_PHONE;
+  const note = process.env.NEXT_PUBLIC_IMPRINT_NOTE;
 
   const isConfigured = !!name && !!address && !!email;
 
@@ -100,8 +103,7 @@ export default function ImpressumPage() {
 
       {isConfigured && (
         <div
-          className="flex flex-col gap-8 text-sm leading-relaxed"
-          style={{ color: "var(--text-primary)", fontFamily: "var(--font-ui)" }}
+          className="flex flex-col gap-8 text-sm leading-relaxed text-[var(--text-primary)] font-[family-name:var(--font-ui)]"
         >
           {/* Angaben gemäß § 5 DDG */}
           <section className="flex flex-col gap-3">
@@ -116,12 +118,13 @@ export default function ImpressumPage() {
             >
               Angaben gemäß § 5 DDG
             </h2>
-            <address className="not-italic flex flex-col gap-0.5" style={{ color: "var(--text-muted)" }}>
-              <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{name}</span>
+            <address className="not-italic flex flex-col gap-1 text-[var(--text-muted)]">
+              <span className="text-[var(--text-primary)] font-medium">{name}</span>
               {address.split("\n").map((line, i) => (
                 <span key={i}>{line}</span>
               ))}
             </address>
+            {note && <p className="text-xs text-[var(--text-muted)]">{note}</p>}
           </section>
 
           {/* Kontakt */}
@@ -137,13 +140,12 @@ export default function ImpressumPage() {
             >
               Kontakt
             </h2>
-            <div className="flex flex-col gap-1" style={{ color: "var(--text-muted)" }}>
+            <div className="flex flex-col gap-1 text-[var(--text-muted)]">
               {phone && <p>Telefon: {phone}</p>}
               <p>
                 E-Mail:{" "}
                 <a
                   href={`mailto:${email}`}
-                  style={{ color: "var(--accent-amber)" }}
                 >
                   {email}
                 </a>
@@ -164,7 +166,7 @@ export default function ImpressumPage() {
             >
               Verbraucher&shy;streit&shy;beilegung / Universal&shy;schlichtungs&shy;stelle
             </h2>
-            <p style={{ color: "var(--text-muted)" }}>
+            <p className="text-[var(--text-muted)]">
               Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren
               vor einer Verbraucherschlichtungsstelle teilzunehmen.
             </p>
@@ -183,13 +185,12 @@ export default function ImpressumPage() {
             >
               Hinweis zur Software
             </h2>
-            <p style={{ color: "var(--text-muted)" }}>
+            <p className="text-[var(--text-muted)]">
               Diese Anwendung basiert auf der Open-Source-Software{" "}
               <a
                 href="https://github.com/jp1337/momo"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: "var(--accent-amber)" }}
               >
                 Momo
               </a>

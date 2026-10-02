@@ -9,7 +9,7 @@
  */
 
 import { createHash } from "crypto";
-import { and, eq, gt, isNotNull, isNull, ne } from "drizzle-orm";
+import { and, eq, gt, isNotNull, isNull, lt, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { sessions, users } from "@/lib/db/schema";
 import { sendToAllChannels } from "@/lib/notifications";
@@ -206,6 +206,21 @@ export async function revokeAllOtherSessions(
       )
     );
   return result.rowCount ?? 0;
+}
+
+/**
+ * Deletes expired sessions together with the IP address and User-Agent
+ * they carry. Auth.js only removes an expired row when its token is
+ * presented again, so a browser that never returns would keep its row
+ * forever; the privacy policy promises deletion at expiry.
+ *
+ * Registered as a daily cron job (`expired-session-cleanup`).
+ *
+ * @returns Cron job result (`sent` = rows deleted)
+ */
+export async function cleanupExpiredSessions(): Promise<{ sent: number; failed: number }> {
+  const result = await db.delete(sessions).where(lt(sessions.expires, new Date()));
+  return { sent: result.rowCount ?? 0, failed: 0 };
 }
 
 // ── Session Metadata Updates ───────────────────────────────────────────────────

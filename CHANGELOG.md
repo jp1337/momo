@@ -7,6 +7,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Datenschutzerklaerung auf Englisch.** `/datenschutz` zeigt die englische
+  Fassung fuer jede UI-Sprache ausser Deutsch; `?lang=de|en` und ein Link oben
+  rechts wechseln. Art. 12 DSGVO verlangt die Sprache der Zielgruppe, und die
+  App hat sieben.
+- **`NEXT_PUBLIC_IMPRINT_NOTE`** — optionale Zeile unter der Anschrift im
+  Impressum, z. B. der Quellenhinweis, den ein c/o-Adressdienst verlangt.
+
+### Fixed
+
+- **Abgelaufene Sessions wurden nie geloescht** — mit IP-Adresse und User-Agent.
+  Auth.js entfernt eine Session erst, wenn ihr Token noch einmal vorgezeigt
+  wird; ein Browser, der nicht wiederkommt, blieb fuer immer in der Tabelle.
+  Neuer taeglicher Cron-Job `expired-session-cleanup`.
+- **Die Datenschutzerklaerung beschreibt jetzt, was tatsaechlich passiert:**
+  Hoster benannt (Hetzner, Deutschland), Server-Log-Felder wie in der
+  nginx-Konfiguration, IP nur gekuerzt (IPv4 /16, IPv6 /48), lokal hoechstens
+  15 Tage, im zentralen Log-Speicher hoechstens ein Jahr; Session-Daten (IP, User-Agent) samt Loeschfrist waren
+  gar nicht erwaehnt.
+
 ## [0.10.0] - 2026-09-12
 
 ### Added

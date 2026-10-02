@@ -15,6 +15,10 @@
    no external CDN requests at runtime. */
 
 @import "tailwindcss";
+/* docs/ is prose, not markup: a design spec there quotes a class pattern
+   (`rounded-[var(--radius-sm|md|lg|pill)]`) that is invalid CSS and broke
+   `next dev`. The Docker build never saw it — .dockerignore drops docs/. */
+@source not "../docs";
 
 /* ─── Dark Mode (default) — "Wald nach dem Regen" ──────────────────────────── */
 /*                                                                               */

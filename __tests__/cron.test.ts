@@ -89,6 +89,7 @@ describe("runAllJobs", () => {
       "notification-log-cleanup",
       "vacation-mode-auto-end",
       "webhook-delivery-cleanup",
+      "expired-session-cleanup",
     ];
 
     for (const result of results) {
