@@ -21,6 +21,7 @@ import { sendDailyQuestNotifications, sendStreakReminders, sendWeeklyReviewNotif
 import { cleanupNotificationLog } from "@/lib/notification-log";
 import { autoEndVacations } from "@/lib/vacation";
 import { cleanupWebhookDeliveries } from "@/lib/webhooks";
+import { cleanupExpiredSessions } from "@/lib/sessions";
 
 /** Retain cron run history for this many days — older rows are pruned after each run. */
 const CRON_RETENTION_DAYS = 30;
@@ -164,6 +165,12 @@ const CRON_JOBS: CronJob[] = [
   {
     name: "webhook-delivery-cleanup",
     handler: cleanupWebhookDeliveries,
+    guard: "daily",
+    logToDb: false,
+  },
+  {
+    name: "expired-session-cleanup",
+    handler: cleanupExpiredSessions,
     guard: "daily",
     logToDb: false,
   },

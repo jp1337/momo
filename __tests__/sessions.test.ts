@@ -20,6 +20,7 @@ import {
   revokeAllOtherSessions,
   touchSessionMetadata,
   maybeUpdateSessionMetadata,
+  cleanupExpiredSessions,
 } from "@/lib/sessions";
 import { createTestUser } from "./helpers/fixtures";
 import { createHash } from "crypto";
@@ -585,5 +586,23 @@ describe("notifyIfNewDevice (called from touchSessionMetadata on first touch)", 
     });
     await touchSessionMetadata(currentToken, headers, user.id);
     await new Promise((resolve) => setTimeout(resolve, 200));
+  });
+});
+
+// ─── cleanupExpiredSessions ───────────────────────────────────────────────────
+
+describe("cleanupExpiredSessions", () => {
+  it("deletes expired sessions and keeps live ones", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    await createTestSession(user.id, "expired-token", { ipAddress: "1.2.3.4", expiresInMs: -60_000 });
+    await createTestSession(user.id, "live-token", { ipAddress: "5.6.7.8" });
+
+    await cleanupExpiredSessions();
+
+    const rows = await db
+      .select({ token: sessions.sessionToken })
+      .from(sessions)
+      .where(eq(sessions.userId, user.id));
+    expect(rows.map((r) => r.token)).toEqual(["live-token"]);
   });
 });
