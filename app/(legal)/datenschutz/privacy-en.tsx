@@ -335,13 +335,16 @@ export function PrivacyEn({ name, email, address, phone }: PrivacyProps) {
           15 days at the latest. They are also transferred, encrypted, to a
           central log store that the operator runs on their own hardware in
           Germany (no service provider), where they are deleted after one
-          year at the latest.
+          year at the latest. This store serves solely to investigate
+          security incidents; it is not analysed routinely, only when an
+          incident calls for it.
         </p>
         <p className="text-[var(--text-muted)]">
           This data is not combined with other data sources. It is collected
           on the basis of Art. 6(1)(f) GDPR: the operator has a legitimate
-          interest in the technically error-free presentation and
-          optimisation of the application, which requires server log files.
+          interest in the technically error-free presentation, optimisation
+          and security of the application, including the investigation of
+          attacks, which requires server log files.
         </p>
 
         <Subheading>What data we process</Subheading>

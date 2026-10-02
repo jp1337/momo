@@ -421,14 +421,17 @@ export function PrivacyDe({ name, email, address, phone }: PrivacyProps) {
           spätestens 15 Tagen gelöscht. Zusätzlich werden sie verschlüsselt
           in einen zentralen Log-Speicher übertragen, den der Betreiber auf
           eigener Hardware in Deutschland betreibt (kein Dienstleister), und
-          dort nach spätestens einem Jahr gelöscht.
+          dort nach spätestens einem Jahr gelöscht. Dieser Speicher dient
+          ausschließlich der Aufklärung von Sicherheitsvorfällen; er wird
+          nicht routinemäßig, sondern nur anlassbezogen ausgewertet.
         </p>
         <p className="text-[var(--text-muted)]">
           Eine Zusammenführung dieser Daten mit anderen Datenquellen
           wird nicht vorgenommen. Die Erfassung dieser Daten erfolgt auf
           Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Der Betreiber hat
           ein berechtigtes Interesse an der technisch fehlerfreien
-          Darstellung und der Optimierung seiner Anwendung — hierzu
+          Darstellung und der Optimierung seiner Anwendung sowie an deren
+          Sicherheit, einschließlich der Aufklärung von Angriffen — hierzu
           müssen die Server-Log-Dateien erfasst werden.
         </p>
 
