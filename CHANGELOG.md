@@ -7,6 +7,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Security
+
+- **Vier transitive Abhaengigkeiten gepatcht** (nur Lockfile): serialize-javascript
+  7.1.2 (XSS, GHSA-gfhx-hw2g-v5hg — landet ueber workbox im Service Worker),
+  brace-expansion, fast-uri, dompurify. Offen bleiben braces/micromatch/fast-glob
+  ueber `@ducanh2912/next-pwa` und `eslint-config-next` — beides Build-Zeit, ohne
+  Fix-Version.
+
 ## [0.10.2] - 2026-10-02
 
 ### Changed
