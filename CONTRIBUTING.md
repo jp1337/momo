@@ -75,6 +75,21 @@ Momo uses [Conventional Commits](https://www.conventionalcommits.org/):
 
 Common scopes: `auth`, `tasks`, `topics`, `daily-quest`, `gamification`, `wishlist`, `push`, `ui`, `db`, `api`, `docs`, `config`.
 
+## AI-assisted contributions
+
+Welcome, if they say so. An issue or pull request written by an AI agent begins with:
+
+```markdown
+> [!WARNING]
+> AI-generated
+```
+
+`AGENTS.md` and the templates ask agents for it; `.github/workflows/ai-disclosure.yml` labels what carries it
+`ai-generated`. The label is a signal for review, not a block. Not caught: bots that post via the API without
+reading the repository, and humans pasting LLM text.
+
+Security findings never go into a public issue: see [SECURITY.md](SECURITY.md).
+
 ## Good first issues
 
 The [issues list](https://github.com/jp1337/momo/issues?q=is%3Aopen+label%3A%22good+first+issue%22) is tagged with **`good first issue`** for contributions that don't require deep context. See the Contributing section of the README for a table of easy areas to start with.
