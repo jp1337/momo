@@ -53,6 +53,11 @@ describe("AI disclosure", () => {
     },
   );
 
+  it("does not end the match in a pipe", () => {
+    // run steps use pipefail: grep -q quitting early would fail the writer with SIGPIPE
+    expect(WORKFLOW).not.toMatch(/\|\s*grep\b/);
+  });
+
   it("never checks out or interpolates the event text", () => {
     expect(WORKFLOW).not.toContain("actions/checkout");
     // pull_request_target has a write token: event text reaches the shell only through env
