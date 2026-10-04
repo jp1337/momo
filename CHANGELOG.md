@@ -7,6 +7,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **AI-Kennzeichnung fuer Issues und PRs:** `AGENTS.md`, `CONTRIBUTING.md` und die neuen
+  Issue-/PR-Templates bitten KI-Agenten, die Beschreibung mit `> [!WARNING]` / `> AI-generated`
+  zu beginnen; `.github/workflows/ai-disclosure.yml` setzt dann das Label `ai-generated`.
+  Leere Issues sind abgeschaltet, Sicherheitsmeldungen gehen ueber das private Advisory.
+
 ### Security
 
 - **Vier transitive Abhaengigkeiten gepatcht** (nur Lockfile): serialize-javascript
