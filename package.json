@@ -92,7 +92,7 @@
     "@vitest/ui": "^5.0.0",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "16.4.3",
     "npm-check-updates": "^23",
     "tailwindcss": "^4",
     "typescript": "^6",
