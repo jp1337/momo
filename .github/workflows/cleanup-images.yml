@@ -10,7 +10,7 @@ on:
 
 # Default to the most restrictive permission set for the workflow.
 # Individual jobs grant exactly what they need (cleanup-ghcr needs
-# packages: write to call delete-package-versions; cleanup-registries
+# packages: write to delete package versions; cleanup-registries
 # only talks to external Docker Hub and Quay.io APIs and needs nothing
 # from GitHub).
 permissions:
@@ -18,23 +18,21 @@ permissions:
 
 jobs:
   # ── GHCR ──────────────────────────────────────────────────────────────────
-  # Step 1: delete untagged versions (intermediate per-platform digests
-  #         produced by push-by-digest=true during the multi-arch build).
-  # Step 2: keep only the 10 most recent manifest lists that carry nothing
-  #         but sha- tags; semver tags and `latest` are never candidates.
+  # Keeps only the 10 most recent manifest lists that carry nothing but sha-
+  # tags; semver tags and `latest` are never candidates.
+  #
+  # There used to be a step 1 deleting every UNTAGGED version. On GHCR the
+  # per-platform manifests of a multi-arch tag are exactly such untagged
+  # versions, so it deleted the images behind every tag: on 2026-10-25 the
+  # index of `0.10` (pinned on root01xvp) answered 200 while all four of its
+  # platform manifests were 404, so a pull failed with "manifest unknown".
+  # Same defect as openwhistle's cleanup in September (openwhistle#70).
+  # Do not bring it back.
   cleanup-ghcr:
     runs-on: ubuntu-latest
     permissions:
       packages: write
     steps:
-      - name: Delete untagged GHCR versions
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: momo
-          package-type: container
-          delete-only-untagged-versions: true
-          min-versions-to-keep: 0
-
       # Deliberately NOT actions/delete-package-versions: its `ignore-versions`
       # regex is tested against the version *name*, which for container packages
       # is the sha256 digest, never the tags (src/delete.ts: `info.version`,
