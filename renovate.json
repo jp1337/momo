@@ -96,7 +96,7 @@
     {
       "description": "Stopgap: npm 12 rejects registry tarballs of packages that declare bundleDependencies when it builds a lockfile-only tree (EALLOWREMOTE, npm/cli#9800). @tailwindcss/oxide-wasm32-wasi is one, so every lockfile refresh of the root project failed — lock file maintenance PR #196 shipped only the Alexa and Gemfile locks. npm 11 is not affected. Remove this rule once npm/cli#9800 is fixed in a released npm 12.",
       "matchManagers": ["npm"],
-      "constraints": { "npm": "^11" }
+      "constraints": { "npm": "^12.0.0" }
     }
   ],
   "vulnerabilityAlerts": {
