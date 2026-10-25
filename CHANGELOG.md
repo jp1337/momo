@@ -24,6 +24,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   ueber `@ducanh2912/next-pwa` und `eslint-config-next` — beides Build-Zeit, ohne
   Fix-Version.
 
+### Fixed
+
+- **Renovate-Lockfile-Wartung fuer das Hauptprojekt:** Renovate nutzt fuer npm-Lockfiles
+  vorerst npm 11. npm 12 bricht `package-lock.json`-Updates mit `EALLOWREMOTE` ab, sobald ein
+  Paket `bundleDependencies` hat (hier `@tailwindcss/oxide-wasm32-wasi`, npm/cli#9800).
+  Notloesung — die Regel in `renovate.json` faellt weg, wenn npm 12 den Fehler behebt.
+
 ## [0.10.2] - 2026-10-02
 
 ### Changed
