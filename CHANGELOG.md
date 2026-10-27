@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.10.3] - 2026-10-27
+
 ### Added
 
 - **AI-Kennzeichnung fuer Issues und PRs:** `AGENTS.md`, `CONTRIBUTING.md` und die neuen
@@ -23,9 +25,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   brace-expansion, fast-uri, dompurify. Offen bleiben braces/micromatch/fast-glob
   ueber `@ducanh2912/next-pwa` und `eslint-config-next` — beides Build-Zeit, ohne
   Fix-Version.
+- **next 16.4.1** (#210, Sicherheitsupdate) und zwei Lockfile-Wartungen (#196, #214): schliessen
+  16 Dependabot-Warnungen, darunter 3 kritische (next, dompurify); dazu
+  nodemailer, fast-uri, source-map-js, serialize-javascript. `npm audit`: 0.
+
+### Changed
+
+- **Abhaengigkeiten:** motion 14 (Major, #182/#193), react 19.3.1, Radix UI, swagger-ui-react
+  5.34, drizzle-orm 0.45.4, zod 4.6.7, next-intl 4.14.9 sowie Build-/Test-Werkzeuge.
 
 ### Fixed
 
+- **Container-Images auf GHCR wieder vollstaendig:** der woechentliche Cleanup loeschte alle
+  unmarkierten Paketversionen — auf GHCR sind das die Plattform-Images hinter jedem Multi-Arch-Tag.
+  `0.8` bis `0.10.2` antworteten danach mit „manifest unknown“ (#213). 0.10.3 ist der erste
+  Release danach; aeltere Tags bleiben auf GHCR kaputt, Docker Hub und Quay.io waren nicht betroffen.
 - **Renovate-Lockfile-Wartung fuer das Hauptprojekt:** Renovate nutzt fuer npm-Lockfiles
   vorerst npm 11. npm 12 bricht `package-lock.json`-Updates mit `EALLOWREMOTE` ab, sobald ein
   Paket `bundleDependencies` hat (hier `@tailwindcss/oxide-wasm32-wasi`, npm/cli#9800).
@@ -1240,7 +1254,8 @@ Docstring der Route schon immer behauptet hat. `GET` bleibt unverändert.
 - Bought items shown with green left border and "Bought" badge
 - Discarded items shown with 50% opacity and strikethrough title
 
-[Unreleased]: https://github.com/jp1337/momo/compare/v0.10.2...HEAD
+[Unreleased]: https://github.com/jp1337/momo/compare/v0.10.3...HEAD
+[0.10.3]: https://github.com/jp1337/momo/compare/v0.10.2...v0.10.3
 [0.10.2]: https://github.com/jp1337/momo/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/jp1337/momo/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/jp1337/momo/compare/v0.9.0...v0.10.0
