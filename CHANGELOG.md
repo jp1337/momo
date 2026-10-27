@@ -7,6 +7,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **GHCR-Pruefung nach dem Image-Cleanup:** `cleanup-images.yml` fragt danach fuer `latest` und
+  jeden Release ab 0.10.3 jedes Plattform-Image einzeln ab und wird rot, sobald eines fehlt. Der
+  Index allein beweist nichts — bei `0.10` antwortete er mit 200, waehrend alle Images 404 waren.
+
 ## [0.10.3] - 2026-10-27
 
 ### Added
