@@ -80,6 +80,63 @@ jobs:
           done
           echo "GHCR: kept ${KEEP}, deleted ${DELETED} sha- version(s)."
 
+  # Proves the cleanup left every release pullable. The index of a tag can
+  # answer 200 while its platform manifests are gone — that is exactly how
+  # 0.10 broke on 2026-10-25 — so every child manifest is fetched one by one.
+  # A check right after the release push would not have caught it: the images
+  # were complete for weeks until this workflow deleted their children.
+  verify-ghcr:
+    needs: cleanup-ghcr
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Every child manifest behind latest and each release tag answers 200
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 0.8 … 0.10.2 lost their children on GHCR before this check existed
+          # and were never republished (Docker Hub and Quay.io still have them).
+          # Releases from here on must stay complete.
+          FIRST_CHECKED: 0.10.3
+        run: |
+          set -euo pipefail
+          REPO=jp1337/momo
+          ACCEPT='application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.v2+json'
+          TOKEN=$(curl -sf "https://ghcr.io/token?scope=repository:${REPO}:pull&service=ghcr.io" | jq -r .token)
+          status() {
+            curl -s -o "${2:-/dev/null}" -w '%{http_code}' \
+              -H "Authorization: Bearer ${TOKEN}" -H "Accept: ${ACCEPT}" \
+              "https://ghcr.io/v2/${REPO}/manifests/$1"
+          }
+
+          # Each release vX.Y.Z publishes X.Y.Z and X.Y (build-and-publish.yml).
+          # Assigned first so a failing API call stops the job instead of
+          # leaving only `latest` to check.
+          GIT_TAGS=$(gh api --paginate "repos/${REPO}/tags" --jq '.[].name')
+          TAGS=(latest)
+          for v in $(sed -n 's/^v\([0-9]*\.[0-9]*\.[0-9]*\)$/\1/p' <<<"$GIT_TAGS"); do
+            if [ "$(printf '%s\n%s\n' "$FIRST_CHECKED" "$v" | sort -V | head -n1)" = "$FIRST_CHECKED" ]; then
+              TAGS+=("$v" "${v%.*}")
+            fi
+          done
+          [ "${#TAGS[@]}" -gt 1 ] || { echo "::error::no release tag >= ${FIRST_CHECKED} found"; exit 1; }
+
+          BROKEN=0
+          for tag in $(printf '%s\n' "${TAGS[@]}" | sort -u); do
+            code=$(status "$tag" index.json)
+            if [ "$code" != 200 ]; then
+              echo "::error::${tag}: index ${code}"; BROKEN=1; continue
+            fi
+            line="${tag}: index 200"
+            for d in $(jq -r '.manifests[]?.digest' index.json); do
+              c=$(status "$d")
+              line="${line}, ${d:7:12} ${c}"
+              [ "$c" = 200 ] || { echo "::error::${tag}: child ${d} answers ${c}"; BROKEN=1; }
+            done
+            echo "$line"
+          done
+          exit "$BROKEN"
+
   # ── Docker Hub + Quay.io ──────────────────────────────────────────────────
   # List all sha- tags sorted newest-first, skip the first 10, delete the rest.
   cleanup-registries:
