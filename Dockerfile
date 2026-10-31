@@ -14,7 +14,7 @@
 # Run:   docker run -p 3000:3000 --env-file .env.local momo
 
 # Node 24 LTS — Node 20 went end-of-life on 2026-04-30, supported until April 2028
-FROM node:24-alpine AS base
+FROM node:26-alpine AS base
 
 # ─── Stage 1: Install dependencies ──────────────────────────────────────────
 FROM base AS deps
