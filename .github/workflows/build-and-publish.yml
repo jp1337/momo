@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version: '26'
           cache: 'npm'
 
       # Cache node_modules keyed on package-lock.json — skip npm ci on exact hit.
@@ -62,7 +62,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgres:19-alpine
         env:
           POSTGRES_USER: momo
           POSTGRES_PASSWORD: password
@@ -79,7 +79,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version: '26'
           cache: 'npm'
 
       - name: Cache node_modules
