@@ -15,7 +15,7 @@
 services:
   # ─── PostgreSQL Database ────────────────────────────────────────────────────
   db:
-    image: postgres:18-alpine
+    image: postgres:19-alpine
     container_name: momo-db
     restart: unless-stopped
     environment:
@@ -127,7 +127,7 @@ services:
   #   gunzip -c backups/momo_YYYY-MM-DD_HH-MM.sql.gz | \
   #     docker compose exec -T db psql -U momo momo
   backup:
-    image: postgres:18-alpine
+    image: postgres:19-alpine
     container_name: momo-backup
     restart: unless-stopped
     profiles:
