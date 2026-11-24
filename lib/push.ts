@@ -15,7 +15,7 @@
  * log a warning rather than throwing — the app continues to function without push.
  */
 
-import webpush from "web-push";
+import * as webpush from "web-push"; // v4 is ESM-only with named exports, no default
 import { db } from "@/lib/db";
 import { users, pushSubscriptions, taskCompletions, notificationChannels, tasks, userAchievements, achievements } from "@/lib/db/schema";
 import { eq, and, gt, gte, or, isNull, lte, asc, desc, sql } from "drizzle-orm";
