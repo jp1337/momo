@@ -229,6 +229,35 @@ To rotate the `AUTH_SECRET` (e.g. after a suspected compromise):
 
 ---
 
+## Upgrading PostgreSQL to a new major version
+
+A new major (e.g. 18 → 19) cannot read the old data directory. The database
+container stops with `database files are incompatible with server` — your data
+is untouched, but you have to move it with a dump and a restore:
+
+```bash
+# 1. Still on the old image: dump the database
+docker compose exec -T db pg_dump -U momo momo | gzip > momo-before-pg19.sql.gz
+
+# 2. Stop everything and remove the old volume (the dump is now your only copy)
+docker compose down
+docker volume ls | grep postgres_data      # e.g. momo_momo_postgres_data
+docker volume rm momo_momo_postgres_data
+
+# 3. Start the new database and restore
+docker compose pull db
+docker compose up -d db
+gunzip -c momo-before-pg19.sql.gz | docker compose exec -T db psql -U momo momo
+
+# 4. Start the app
+docker compose up -d
+```
+
+Check that the dump is not empty before step 2 (`gunzip -c … | grep -c "CREATE TABLE"`).
+On Kubernetes the same steps apply with `kubectl exec` and a fresh PVC.
+
+---
+
 ## Kubernetes
 
 For full Kubernetes deployment instructions, see the [Kubernetes guide](/momo/kubernetes).
@@ -242,5 +271,5 @@ The example manifests are in `deploy/examples/` in the repository:
 | `service.yaml` | ClusterIP service for the app |
 | `ingress.yaml` | Ingress with TLS (cert-manager + ingress-nginx) |
 | `secret.example.yaml` | Template for required Kubernetes secrets |
-| `postgres-statefulset.yaml` | PostgreSQL 18 StatefulSet with persistent volume |
+| `postgres-statefulset.yaml` | PostgreSQL 19 StatefulSet with persistent volume |
 | `cronjob.yaml` | Kubernetes CronJob calling `POST /api/cron` for daily quest, streak reminders, and the weekly review |
