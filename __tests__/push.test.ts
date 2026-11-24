@@ -15,10 +15,8 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 
 // Mock web-push before any imports
 vi.mock("web-push", () => ({
-  default: {
-    setVapidDetails: vi.fn(),
-    sendNotification: vi.fn().mockResolvedValue({ statusCode: 201 }),
-  },
+  setVapidDetails: vi.fn(),
+  sendNotification: vi.fn().mockResolvedValue({ statusCode: 201 }),
 }));
 
 // Mock lib/env so serverEnv.VAPID_PRIVATE_KEY is defined (push.ts checks this)
@@ -65,7 +63,7 @@ vi.mock("@/lib/weekly-review", () => ({
 // (push.ts checks process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY directly)
 process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = "test-vapid-public-key";
 
-import webpush from "web-push";
+import * as webpush from "web-push";
 import { db } from "@/lib/db";
 import { pushSubscriptions, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";

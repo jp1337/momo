@@ -19,10 +19,8 @@ vi.mock("@/lib/notifications", () => ({
 }));
 
 vi.mock("web-push", () => ({
-  default: {
-    setVapidDetails: vi.fn(),
-    sendNotification: vi.fn().mockResolvedValue({ statusCode: 201 }),
-  },
+  setVapidDetails: vi.fn(),
+  sendNotification: vi.fn().mockResolvedValue({ statusCode: 201 }),
 }));
 
 vi.mock("@/lib/env", () => ({
@@ -54,7 +52,7 @@ vi.mock("@/lib/notification-log", () => ({
   logNotification: vi.fn(),
 }));
 
-import webpush from "web-push";
+import * as webpush from "web-push";
 import {
   sendStreakShieldNotification,
   sendAchievementNotifications,

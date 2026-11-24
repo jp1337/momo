@@ -37,10 +37,8 @@ vi.mock("@/lib/notifications", () => ({
 }));
 
 vi.mock("web-push", () => ({
-  default: {
-    setVapidDetails: vi.fn(),
-    sendNotification: vi.fn().mockRejectedValue(new Error("push send failed")),
-  },
+  setVapidDetails: vi.fn(),
+  sendNotification: vi.fn().mockRejectedValue(new Error("push send failed")),
 }));
 
 vi.mock("@/lib/env", () => ({
