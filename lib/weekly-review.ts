@@ -18,7 +18,7 @@ import {
   questPostponements,
 } from "@/lib/db/schema";
 import { count, eq, and, gte, lt, sql, desc } from "drizzle-orm";
-import { getLocalDateString } from "@/lib/date-utils";
+import { getLocalDateString, getLocalMidnightUtc } from "@/lib/date-utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,53 +58,42 @@ export interface WeeklyReview {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
- * Returns the Monday (start) and following Monday (exclusive end) of the current
- * ISO week in the user's timezone as Date objects.
+ * Returns the current ISO week's boundaries in the user's timezone.
+ *
+ * The Date bounds are local midnights converted to UTC instants — not UTC
+ * midnights — so a completion at Monday 00:10 Europe/Berlin (Sunday 23:10 UTC)
+ * falls into the new week. Each bound is converted separately, so a DST switch
+ * inside the week does not shift the following Monday by an hour.
  *
  * @param timezone - IANA timezone identifier (e.g. "Europe/Berlin")
- * @returns [weekStartDate, weekEndDate] where weekEndDate is the next Monday 00:00
+ * @returns Start of this week, start of next week (exclusive end), start of the
+ *   previous week, and the Monday/Sunday of this week as YYYY-MM-DD strings
  */
 function getWeekBoundaries(timezone?: string | null): {
   weekStartDate: Date;
   weekEndDate: Date;
+  prevWeekStartDate: Date;
   weekStartStr: string;
   weekEndStr: string;
 } {
-  const todayStr = getLocalDateString(timezone);
-  const [y, m, d] = todayStr.split("-").map(Number);
+  const [y, m, d] = getLocalDateString(timezone).split("-").map(Number);
 
-  // Create a date in UTC that represents today's local date
-  const todayUtc = new Date(Date.UTC(y, m - 1, d));
-
-  // getUTCDay(): 0=Sun, 1=Mon, ..., 6=Sat
-  const dayOfWeek = todayUtc.getUTCDay();
-  // Days since Monday: Mon=0, Tue=1, ..., Sun=6
-  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-  // Monday 00:00 of the current week
-  const mondayUtc = new Date(todayUtc);
-  mondayUtc.setUTCDate(mondayUtc.getUTCDate() - daysSinceMonday);
-
-  // Sunday = Monday + 6 days
-  const sundayUtc = new Date(mondayUtc);
-  sundayUtc.setUTCDate(sundayUtc.getUTCDate() + 6);
-
-  // Next Monday = Monday + 7 (exclusive upper bound for queries)
-  const nextMondayUtc = new Date(mondayUtc);
-  nextMondayUtc.setUTCDate(nextMondayUtc.getUTCDate() + 7);
-
-  const fmt = (dt: Date) => {
-    const yy = dt.getUTCFullYear();
-    const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
-    const dd = String(dt.getUTCDate()).padStart(2, "0");
-    return `${yy}-${mm}-${dd}`;
+  // Calendar arithmetic on the local date, carried in a UTC Date: 0=Sun … 6=Sat
+  const today = new Date(Date.UTC(y, m - 1, d));
+  const daysSinceMonday = (today.getUTCDay() + 6) % 7;
+  const plusDays = (n: number) => {
+    const dt = new Date(today);
+    dt.setUTCDate(dt.getUTCDate() - daysSinceMonday + n);
+    return dt.toISOString().slice(0, 10);
   };
 
+  const mondayStr = plusDays(0);
   return {
-    weekStartDate: mondayUtc,
-    weekEndDate: nextMondayUtc,
-    weekStartStr: fmt(mondayUtc),
-    weekEndStr: fmt(sundayUtc),
+    weekStartDate: getLocalMidnightUtc(mondayStr, timezone),
+    weekEndDate: getLocalMidnightUtc(plusDays(7), timezone),
+    prevWeekStartDate: getLocalMidnightUtc(plusDays(-7), timezone),
+    weekStartStr: mondayStr,
+    weekEndStr: plusDays(6),
   };
 }
 
@@ -127,12 +116,13 @@ export async function getWeeklyReview(
   userId: string,
   timezone?: string | null
 ): Promise<WeeklyReview> {
-  const { weekStartDate, weekEndDate, weekStartStr, weekEndStr } =
-    getWeekBoundaries(timezone);
-
-  // Previous week boundaries for comparison delta
-  const prevWeekStart = new Date(weekStartDate);
-  prevWeekStart.setUTCDate(prevWeekStart.getUTCDate() - 7);
+  const {
+    weekStartDate,
+    weekEndDate,
+    prevWeekStartDate: prevWeekStart,
+    weekStartStr,
+    weekEndStr,
+  } = getWeekBoundaries(timezone);
 
   const [
     completionsThisWeekRows,

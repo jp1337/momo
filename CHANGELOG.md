@@ -7,6 +7,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Wochenrueckblick zaehlt ab Montag 00:00 Ortszeit:** Die Woche begann um Montag 00:00 UTC statt
+  in der Zeitzone des Nutzers. In Berlin landete alles zwischen 00:00 und 01:00 (Sommer: 02:00)
+  am Montag noch in der Vorwoche, westlich von UTC verschob sich die Woche in die andere Richtung.
+  Betraf die Seite „Rueckblick“ und die woechentliche Push-Nachricht.
+
 ## [0.10.4] - 2026-11-24
 
 ### Fixed
