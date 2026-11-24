@@ -7,6 +7,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.10.4] - 2026-11-24
+
+### Fixed
+
+- **`docker-compose.yml` startet wieder mit PostgreSQL 18:** Der Datenbank-Container brach beim
+  Start ab, weil das 18er-Image ein Volume auf `/var/lib/postgresql/data` ohne passendes `PGDATA`
+  ablehnt. `PGDATA` steht jetzt fest auf diesem Pfad. Ein spaeteres Major-Update (z. B. 19)
+  scheitert damit laut, statt still eine leere Datenbank anzulegen.
+
+### Changed
+
+- **Neues Image mit aktuellem Node 24** (24.22.3 statt 24.22.1): Das Basis-Image `node:24-alpine`
+  wird nur bei einem Release neu gezogen.
+
 ### Added
 
 - **GHCR-Pruefung nach dem Image-Cleanup:** `cleanup-images.yml` fragt danach fuer `latest` und
