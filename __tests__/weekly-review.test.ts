@@ -6,7 +6,7 @@
  * taskCompletions table (no gamification side-effects needed).
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { db } from "@/lib/db";
 import { taskCompletions, questPostponements } from "@/lib/db/schema";
 import { getWeeklyReview } from "@/lib/weekly-review";
@@ -15,6 +15,30 @@ import { createTestUser, createTestTopic, createTestTask } from "./helpers/fixtu
 const TZ = "Europe/Berlin";
 
 describe("getWeeklyReview", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("starts the week at local Monday midnight, not UTC midnight", async () => {
+    // Monday 2026-11-23 00:10 in Berlin is still Sunday 23:10 UTC
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-22T23:10:00Z"));
+
+    const user = await createTestUser({ timezone: TZ });
+    const task = await createTestTask(user.id, { title: "Midnight" });
+    await db.insert(taskCompletions).values([
+      { taskId: task.id, userId: user.id, completedAt: new Date() },
+      // Sunday 23:50 Berlin — belongs to the previous week
+      { taskId: task.id, userId: user.id, completedAt: new Date("2026-11-22T22:50:00Z") },
+    ]);
+
+    const review = await getWeeklyReview(user.id, TZ);
+    expect(review.weekStart).toBe("2026-11-23");
+    expect(review.weekEnd).toBe("2026-11-29");
+    expect(review.completionsThisWeek).toBe(1);
+    expect(review.completionsLastWeek).toBe(1);
+  });
+
   it("returns zeroed review when user has no completions", async () => {
     const user = await createTestUser({ timezone: TZ });
     const review = await getWeeklyReview(user.id, TZ);
