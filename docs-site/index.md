@@ -164,7 +164,7 @@ Open [http://localhost:3000](http://localhost:3000) — done. Database migration
 |---|---|
 | Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4 |
 | Auth | Auth.js v5 (GitHub, Discord, Google, Microsoft (private accounts), OIDC, account linking) |
-| Database | PostgreSQL 18 + Drizzle ORM (auto-migrations) |
+| Database | PostgreSQL 19 + Drizzle ORM (auto-migrations) |
 | Notifications | Web Push (VAPID), ntfy.sh, Pushover, Telegram Bot API, SMTP via nodemailer |
 | API | OpenAPI 3.1.0, Personal Access Tokens, Swagger UI at `/api-docs` |
 | Voice | Alexa Skill (AWS Lambda) with automatic Account Linking |

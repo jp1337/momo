@@ -136,7 +136,7 @@ account.
 | **Frontend** | Next.js 16 (App Router) + React 19, TypeScript, Tailwind CSS v4 |
 | **Animations** | Motion |
 | **Auth** | Auth.js v5 (GitHub, Discord, Google, Microsoft (private accounts), OIDC) |
-| **Database** | PostgreSQL 18 + Drizzle ORM |
+| **Database** | PostgreSQL 19 + Drizzle ORM |
 | **i18n** | next-intl — German, English, French (cookie-based, no URL prefix) |
 | **Push Notifications** | Web Push API (VAPID, no third-party) |
 | **API** | OpenAPI 3.1.0 + Personal Access Tokens (Bearer) |

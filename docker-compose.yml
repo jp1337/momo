@@ -1,7 +1,7 @@
 # Docker Compose configuration for Momo
 #
 # Services:
-#   db     — PostgreSQL 18 database
+#   db     — PostgreSQL 19 database
 #   app    — The Next.js application (built from Dockerfile)
 #   cron   — 5-minute cron dispatcher (calls /api/cron)
 #   backup — Daily pg_dump to ./backups/ (opt-in: set BACKUP_ENABLED=true)
@@ -15,7 +15,7 @@
 services:
   # ─── PostgreSQL Database ────────────────────────────────────────────────────
   db:
-    image: postgres:18-alpine
+    image: postgres:19-alpine
     container_name: momo-db
     restart: unless-stopped
     environment:
@@ -132,7 +132,7 @@ services:
   #   gunzip -c backups/momo_YYYY-MM-DD_HH-MM.sql.gz | \
   #     docker compose exec -T db psql -U momo momo
   backup:
-    image: postgres:18-alpine
+    image: postgres:19-alpine
     container_name: momo-backup
     restart: unless-stopped
     profiles:
