@@ -22,6 +22,11 @@ services:
       POSTGRES_DB: momo
       POSTGRES_USER: momo
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      # postgres:18+ defaults PGDATA to /var/lib/postgresql/<major>/docker and refuses
+      # to start with a volume on /var/lib/postgresql/data. Pinning PGDATA keeps the
+      # path version-independent, so a major bump fails loudly ("incompatible with
+      # server") instead of silently starting an empty cluster next to the old one.
+      PGDATA: /var/lib/postgresql/data
     volumes:
       # Named volume — never bind-mount the WSL filesystem
       - momo_postgres_data:/var/lib/postgresql/data
