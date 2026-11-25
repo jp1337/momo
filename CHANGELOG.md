@@ -7,16 +7,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Changed
+## [0.11.0] - 2026-11-25
 
-- **Node.js 26 LTS:** Image (`node:26-alpine`) und CI laufen auf Node 26. Die Alexa-Lambda bleibt
-  auf Node 24, weil AWS Node 26 fuer Lambda noch als Preview ohne SLA fuehrt.
+> **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update
+> einmal Dump und Restore — Anleitung in `docs-site/deployment.md` („Upgrading PostgreSQL").
+> Das App-Image selbst laeuft mit PostgreSQL 18 und 19.
 
 ### Changed
 
 - **PostgreSQL 19:** `docker-compose.yml`, das Kubernetes-Beispiel und die CI laufen auf
   `postgres:19-alpine`. Bestehende 18er-Datenbanken starten damit nicht (die Daten bleiben
   unangetastet): einmal Dump und Restore, Anleitung in `docs-site/deployment.md`.
+- **Node.js 26 LTS:** Image (`node:26-alpine`) und CI laufen auf Node 26. Die Alexa-Lambda bleibt
+  auf Node 24, weil AWS Node 26 fuer Lambda noch als Preview ohne SLA fuehrt.
+- **Abhaengigkeiten:** web-push 4 (nur noch ESM, Import angepasst), glob 14 (Sicherheitsluecke
+  GHSA-3g3m-2fjr-6pw4, kommt ueber workbox), vitest 5.1.1, tailwind-merge 3.7.1, Lockfile-Pflege.
 
 ### Fixed
 
