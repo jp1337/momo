@@ -9,7 +9,7 @@
 [![codecov](https://codecov.io/gh/jp1337/momo/graph/badge.svg)](https://codecov.io/gh/jp1337/momo)
 [![Version](https://img.shields.io/github/package-json/v/jp1337/momo?label=version&color=7c3aed)](https://github.com/jp1337/momo/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?logo=opensourceinitiative&logoColor=white)](https://github.com/jp1337/momo/blob/main/LICENSE)
-[![Node.js](https://img.shields.io/badge/node-22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/node-26-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/Docker-ghcr.io-2496ed?logo=docker&logoColor=white)](https://github.com/jp1337/momo/pkgs/container/momo)
@@ -140,7 +140,7 @@ account.
 | **i18n** | next-intl — German, English, French (cookie-based, no URL prefix) |
 | **Push Notifications** | Web Push API (VAPID, no third-party) |
 | **API** | OpenAPI 3.1.0 + Personal Access Tokens (Bearer) |
-| **Container** | Docker (Node.js 24 LTS) |
+| **Container** | Docker (Node.js 26 LTS) |
 | **Orchestration** | Kubernetes |
 | **CI/CD** | GitHub Actions (native multi-arch: amd64 + arm64) |
 | **Image Registries** | GHCR, Docker Hub, Quay.io |
@@ -165,7 +165,7 @@ Momo is intentionally cozy. Both the dark and light themes use warm, earthy tone
 ### Prerequisites
 
 - Docker & Docker Compose
-- Node.js 24+ (for local development only)
+- Node.js 26+ (for local development only)
 - A GitHub or Discord OAuth App (see [OAuth Setup](docs/oauth-setup.md))
 
 ### 1. Clone the repository
