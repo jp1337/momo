@@ -65,7 +65,7 @@ app:
 ## Dockerfile Notes
 
 - Multi-stage build: `deps` → `builder` → `runner`
-- Base image: `node:24-alpine` (Node.js 24 LTS, supported until April 2028)
+- Base image: `node:26-alpine` (Node.js 26 LTS, supported until April 2029)
 - Runs as non-root user (`nextjs:1001`)
 - Uses `output: standalone` for a minimal production bundle
 - No dev dependencies in the final image

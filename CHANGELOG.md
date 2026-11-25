@@ -9,6 +9,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **Node.js 26 LTS:** Image (`node:26-alpine`) und CI laufen auf Node 26. Die Alexa-Lambda bleibt
+  auf Node 24, weil AWS Node 26 fuer Lambda noch als Preview ohne SLA fuehrt.
+
+### Changed
+
 - **PostgreSQL 19:** `docker-compose.yml`, das Kubernetes-Beispiel und die CI laufen auf
   `postgres:19-alpine`. Bestehende 18er-Datenbanken starten damit nicht (die Daten bleiben
   unangetastet): einmal Dump und Restore, Anleitung in `docs-site/deployment.md`.
