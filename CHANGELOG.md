@@ -85,6 +85,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   push devices, and most newer task and settings fields. It now contains all of it (format version
   2); credentials such as tokens and secrets are still never included. The documentation no longer
   claims that deleted tasks are exported — they are deleted for good.
+- **API:** `PATCH /api/tasks/{id}`, `/api/topics/{id}` and `/api/wishlist/{id}` answered an empty
+  body with `500 Internal server error`. They now answer `422`: at least one field must be sent.
 
 ## [0.11.0] - 2026-11-25
 
