@@ -172,7 +172,11 @@
   --hairline: #6d7860;
 
   --ink:   #1b241e;
-  --ink-2: #55635a;
+  /* --ink-2 nachgedunkelt 2026-11-26 (#55635a -> #515e56, gleicher Farbton,
+     L 36.1% -> 34.3%): #55635a erreichte gegen --raised nur 4.21:1, und
+     --ink-2 traegt dort Text (Sprachauswahl, Anbieter-Badge, axe-Befund).
+     Jetzt 4.53:1 gegen --raised, 5.81:1 gegen --ground. */
+  --ink-2: #515e56;
   /* --ink-3 angehoben 2026-08-21, siehe Dark-Kommentar oben. Der Spec-
      Zielwert #666f68 erreichte nur 4.44:1 gegen --ground, knapp unter der
      AA-Schwelle 4.5:1. #636c65 erreicht 4.64:1. */

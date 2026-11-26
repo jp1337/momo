@@ -225,6 +225,8 @@ test.describe("Kontrast", () => {
     { text: "--done", bg: "--ground" },
     { text: "--danger", bg: "--ground" },
     { text: "--ink", bg: "--raised" },
+    // Language switcher options and the profile's provider badge: --ink-2 on --raised
+    { text: "--ink-2", bg: "--raised" },
   ];
 
   const hexToRgb = (hex: string): [number, number, number] => {
