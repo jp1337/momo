@@ -7,6 +7,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **API:** `PATCH /api/tasks/{id}`, `/api/topics/{id}` and `/api/wishlist/{id}` answered an empty
+  body with `500 Internal server error`. They now answer `422`: at least one field must be sent.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update
