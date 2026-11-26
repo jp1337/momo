@@ -1154,8 +1154,8 @@
     "not_found_text_2": "L'adresse était peut-être erronée — ou la page attend encore son moment.",
     "back_to_app": "Retour à l'app",
     "error_heading": "Quelque chose s'est mal passé",
-    "error_text_1": "Ce n'est pas de ta faute — l'erreur vient de chez nous.",
-    "error_text_2": "Tu peux réessayer tout de suite ou simplement revenir en arrière.",
+    "error_text_1": "Ce n'est pas de votre faute — l'erreur vient de chez nous.",
+    "error_text_2": "Vous pouvez réessayer tout de suite ou simplement revenir en arrière.",
     "retry": "Recharger"
   }
 }
