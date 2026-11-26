@@ -71,6 +71,10 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
     { name: "Notification Channels", description: "Multi-channel notification management (ntfy.sh, etc.)" },
     { name: "Calendar", description: "iCal calendar feed subscription" },
     { name: "Sessions", description: "Active session management (view and revoke login sessions)" },
+    { name: "Push Notifications", description: "Web Push subscriptions and registered devices" },
+    { name: "Webhooks", description: "Outbound webhooks for task lifecycle events" },
+    { name: "Notification History", description: "Log of notification delivery attempts" },
+    { name: "Onboarding", description: "First-run onboarding wizard" },
   ],
   components: {
     securitySchemes: {
@@ -675,6 +679,105 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
         },
       },
 
+      // ─── Push devices & webhooks ─────────────────────────────────────────────
+
+      PushDevice: {
+        type: "object",
+        required: ["id", "name", "enabled", "createdAt", "endpoint"],
+        properties: {
+          id: { type: "string", format: "uuid" },
+          name: { type: "string", nullable: true, description: "User-chosen device label." },
+          enabled: { type: "boolean" },
+          createdAt: { type: "string", format: "date-time" },
+          endpoint: {
+            type: "string",
+            description:
+              "Push service endpoint URL. Returned so a browser can recognise its own " +
+              "subscription; the encryption keys are never returned.",
+          },
+        },
+      },
+
+      WebhookEvent: {
+        type: "string",
+        enum: ["task.created", "task.completed", "task.deleted", "task.updated"],
+      },
+
+      WebhookEndpoint: {
+        type: "object",
+        required: ["id", "name", "url", "hasSecret", "events", "enabled", "createdAt", "updatedAt"],
+        properties: {
+          id: { type: "string", format: "uuid" },
+          name: { type: "string" },
+          url: { type: "string", format: "uri", description: "HTTPS only." },
+          hasSecret: {
+            type: "boolean",
+            description:
+              "true when a signing secret is set. The secret itself is never returned; " +
+              "deliveries then carry `X-Momo-Signature: sha256=<hex>`.",
+          },
+          events: {
+            type: "array",
+            items: { $ref: "#/components/schemas/WebhookEvent" },
+            description: "Subscribed events. Empty array = all events.",
+          },
+          enabled: { type: "boolean" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+      },
+
+      CreateWebhookEndpointInput: {
+        type: "object",
+        required: ["name", "url"],
+        properties: {
+          name: { type: "string", minLength: 1, maxLength: 100 },
+          url: { type: "string", format: "uri", maxLength: 2000, description: "Must start with https://." },
+          secret: { type: "string", maxLength: 200, description: "Optional HMAC-SHA256 signing secret." },
+          events: {
+            type: "array",
+            items: { $ref: "#/components/schemas/WebhookEvent" },
+            maxItems: 4,
+            default: [],
+            description: "Empty or omitted = all events.",
+          },
+          enabled: { type: "boolean", default: true },
+        },
+      },
+
+      UpdateWebhookEndpointInput: {
+        type: "object",
+        properties: {
+          name: { type: "string", minLength: 1, maxLength: 100 },
+          url: { type: "string", format: "uri", maxLength: 2000, description: "Must start with https://." },
+          secret: {
+            type: "string",
+            nullable: true,
+            maxLength: 200,
+            description: "A string replaces the secret, `null` removes it, omitted keeps it.",
+          },
+          events: { type: "array", items: { $ref: "#/components/schemas/WebhookEvent" }, maxItems: 4 },
+          enabled: { type: "boolean" },
+        },
+      },
+
+      WebhookDelivery: {
+        type: "object",
+        required: ["id", "endpointId", "event", "payload", "status", "deliveredAt"],
+        properties: {
+          id: { type: "string", format: "uuid" },
+          endpointId: { type: "string", format: "uuid" },
+          userId: { type: "string", format: "uuid" },
+          event: { type: "string", description: "Event name, or `task.test` for a test delivery." },
+          payload: { type: "object", additionalProperties: true, description: "The JSON body that was sent." },
+          httpStatus: { type: "integer", nullable: true, description: "null on network error or timeout." },
+          status: { type: "string", enum: ["success", "failure"] },
+          errorMessage: { type: "string", nullable: true, description: "First 500 characters of the error or response body." },
+          durationMs: { type: "integer", nullable: true },
+          deliveredAt: { type: "string", format: "date-time" },
+        },
+      },
+
       // ─── Response wrappers ───────────────────────────────────────────────────
 
       Error: {
@@ -837,6 +940,20 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
         required: true,
         schema: { type: "string", format: "uuid" },
         description: "API key UUID.",
+      },
+      pushDeviceId: {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: { type: "string", format: "uuid" },
+        description: "Push device (subscription) UUID.",
+      },
+      webhookEndpointId: {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: { type: "string", format: "uuid" },
+        description: "Webhook endpoint UUID.",
       },
     },
   },
@@ -2329,6 +2446,35 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           "500": { $ref: "#/components/responses/InternalServerError" },
         },
       },
+      delete: {
+        operationId: "undoDiscardWishlistItem",
+        tags: ["Wishlist"],
+        summary: "Undo discard",
+        description: "Restores a discarded wishlist item to status OPEN.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/wishlistItemId" }],
+        responses: {
+          "200": {
+            description: "Item restored.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["item"],
+                  properties: {
+                    item: { $ref: "#/components/schemas/WishlistItem" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
     },
 
     // ─── Settings ─────────────────────────────────────────────────────────────
@@ -3516,6 +3662,112 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
       },
     },
 
+    "/api/push/devices": {
+      get: {
+        operationId: "listPushDevices",
+        tags: ["Push Notifications"],
+        summary: "List push devices",
+        description: "Lists the Web Push devices registered for the authenticated user, newest first.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "Registered devices.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["devices"],
+                  properties: {
+                    devices: { type: "array", items: { $ref: "#/components/schemas/PushDevice" } },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/push/devices/{id}": {
+      patch: {
+        operationId: "updatePushDevice",
+        tags: ["Push Notifications"],
+        summary: "Rename or toggle a push device",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/pushDeviceId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                minProperties: 1,
+                properties: {
+                  name: { type: "string", minLength: 1, maxLength: 80 },
+                  enabled: { type: "boolean" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Device updated.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success"],
+                  properties: { success: { type: "boolean", enum: [true] } },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Request body is not valid JSON.",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+      delete: {
+        operationId: "deletePushDevice",
+        tags: ["Push Notifications"],
+        summary: "Remove a push device",
+        description:
+          "Removes the subscription. When it was the user's last one, push notifications " +
+          "are switched off for the account.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/pushDeviceId" }],
+        responses: {
+          "200": {
+            description: "Device removed.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success"],
+                  properties: { success: { type: "boolean", enum: [true] } },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
     // ─── Notification Channels ─────────────────────────────────────────────────
 
     "/api/settings/notification-channels": {
@@ -3739,6 +3991,202 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
             },
           },
           "401": { $ref: "#/components/responses/Unauthorized" },
+        },
+      },
+    },
+
+    // ─── Webhooks ────────────────────────────────────────────────────────────────
+
+    "/api/settings/webhooks": {
+      get: {
+        operationId: "listWebhookEndpoints",
+        tags: ["Webhooks"],
+        summary: "List webhook endpoints",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "The user's webhook endpoints, oldest first.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["endpoints"],
+                  properties: {
+                    endpoints: { type: "array", items: { $ref: "#/components/schemas/WebhookEndpoint" } },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+      post: {
+        operationId: "createWebhookEndpoint",
+        tags: ["Webhooks"],
+        summary: "Create webhook endpoint",
+        description: "At most 10 endpoints per user. The signing secret is stored encrypted and never returned.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": { schema: { $ref: "#/components/schemas/CreateWebhookEndpointInput" } },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Endpoint created.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["endpoint"],
+                  properties: { endpoint: { $ref: "#/components/schemas/WebhookEndpoint" } },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Request body is not valid JSON.",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "409": {
+            description: "The user already has the maximum of 10 endpoints (`code: limit_exceeded`).",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/settings/webhooks/{id}": {
+      get: {
+        operationId: "listWebhookDeliveries",
+        tags: ["Webhooks"],
+        summary: "Delivery history of an endpoint",
+        description: "The 50 newest delivery attempts, newest first. Deliveries are kept for 30 days.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/webhookEndpointId" }],
+        responses: {
+          "200": {
+            description: "Delivery attempts.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["deliveries"],
+                  properties: {
+                    deliveries: { type: "array", items: { $ref: "#/components/schemas/WebhookDelivery" } },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+      patch: {
+        operationId: "updateWebhookEndpoint",
+        tags: ["Webhooks"],
+        summary: "Update webhook endpoint",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/webhookEndpointId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": { schema: { $ref: "#/components/schemas/UpdateWebhookEndpointInput" } },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Endpoint updated.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["endpoint"],
+                  properties: { endpoint: { $ref: "#/components/schemas/WebhookEndpoint" } },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Request body is not valid JSON.",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "422": { $ref: "#/components/responses/ValidationError" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+      delete: {
+        operationId: "deleteWebhookEndpoint",
+        tags: ["Webhooks"],
+        summary: "Delete webhook endpoint",
+        description: "Deletes the endpoint together with its delivery history.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/webhookEndpointId" }],
+        responses: {
+          "200": {
+            description: "Endpoint deleted.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success"],
+                  properties: { success: { type: "boolean", enum: [true] } },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
+        },
+      },
+    },
+
+    "/api/settings/webhooks/{id}/test": {
+      post: {
+        operationId: "testWebhookEndpoint",
+        tags: ["Webhooks"],
+        summary: "Send a test delivery",
+        description:
+          "Sends a synthetic `task.test` event to the endpoint and logs it in the delivery " +
+          "history. Rate-limited to 5 per minute. A non-2xx answer from the endpoint is not " +
+          "an error here; read the delivery history for its outcome.",
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/webhookEndpointId" }],
+        responses: {
+          "200": {
+            description: "Test event sent.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["success"],
+                  properties: { success: { type: "boolean", enum: [true] } },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/TooManyRequests" },
+          "500": { $ref: "#/components/responses/InternalServerError" },
         },
       },
     },

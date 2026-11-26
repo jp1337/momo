@@ -94,6 +94,8 @@ Add a **Webhook Trigger** node and use {% raw %}`{{ $json.title }}`{% endraw %} 
 
 You can configure up to **10 endpoints**, each with its own signing secret and event filter.
 
+**Via API:** endpoints can also be managed with a personal access token — list, create, update, delete, send a test event, and read the delivery history (the 50 newest attempts, kept for 30 days). Full reference: `/api-docs` on your instance, section *Webhooks*.
+
 ### Events
 
 | Event | Trigger |

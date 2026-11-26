@@ -15,6 +15,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Webhooks:** The delivery history of an endpoint showed the *oldest* 50 attempts of the last 30
   days instead of the newest, so once an endpoint had more than 50 deliveries, recent ones never
   appeared. `GET /api/settings/webhooks/{id}` now returns the 50 newest, newest first.
+### Added
+
+- **API docs:** Swagger UI now lists outbound webhooks (6 operations), push devices (3) and
+  undoing a wishlist discard. A test compares the spec with the route files, so an endpoint can no
+  longer ship undocumented.
 
 ## [0.11.0] - 2026-11-25
 

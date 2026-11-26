@@ -289,7 +289,16 @@ nicht wenn sie Funktionsumfang erhöhen.
 
 ## Offene technische Schulden
 
-**OpenAPI-Spec-Drift, von keinem Test bewacht**
+**OpenAPI-Spec-Drift, von keinem Test bewacht** — *Pfade erledigt (2026-11-26)*
+
+> `__tests__/openapi-drift.test.ts` gleicht Spec und `app/api/**/route.ts` ab: keine Geister-Operation,
+> keine fehlende öffentliche Operation, jeder `$ref` löst auf, jeder Tag ist deklariert. Die zehn
+> fehlenden Bearer-Operationen (Webhooks 6, Push-Geräte 3, Wishlist-Undo-Discard 1) sind dokumentiert.
+> 2FA, Passkeys, Account-Linking und Locale stehen bewusst *nicht* in der Spec — reine
+> Browser-Session-Zeremonien, mit API-Key nicht nutzbar; der Test führt sie mit Begründung.
+> **Offen:** Statuscodes. Eine Messung fand 37 Operationen, deren Handler Codes liefern, die die Spec
+> nicht nennt (meist `400` für ungültiges JSON).
+
 
 `lib/openapi.ts` sind 3715 handgepflegte Zeilen, und **keine einzige Testdatei importiert
 sie**. Dokumentiert sind 42 von 67 API-Routen. Das Gute: null Geister-Endpunkte — es steht
