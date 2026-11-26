@@ -7,6 +7,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Onboarding:** Turning on push notifications in the last onboarding step never worked. Every
+  request was rejected, yet the step could report "Notifications enabled!", and no reminder ever
+  arrived. It now subscribes the same way the settings page does, and says so when the server has
+  no push key configured.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update

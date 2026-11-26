@@ -7,17 +7,19 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { subscribeToPush } from "@/lib/client/push-subscribe";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell, faBellSlash, faGlobe } from "@fortawesome/free-solid-svg-icons";
 
-type PushState = "loading" | "unsupported" | "denied" | "available" | "enabled";
+type PushState = "loading" | "unsupported" | "unconfigured" | "denied" | "available" | "enabled";
 
 /**
  * Simplified notification settings for onboarding.
  * Detects timezone and offers a web push toggle.
  */
-export function NotificationStep() {
+export function NotificationStep({ vapidPublicKey }: { vapidPublicKey?: string }) {
   const t = useTranslations("onboarding");
+  const ts = useTranslations("settings");
 
   const [timezone, setTimezone] = useState<string>("");
   const [pushState, setPushState] = useState<PushState>("loading");
@@ -38,17 +40,24 @@ export function NotificationStep() {
       return;
     }
 
-    if (Notification.permission === "denied") {
+    if (!vapidPublicKey) {
+      setPushState("unconfigured");
+    } else if (Notification.permission === "denied") {
       setPushState("denied");
     } else if (Notification.permission === "granted") {
-      // Already granted in a previous session — check if subscription exists
-      setPushState("enabled");
+      // Permission alone is not a subscription: only "enabled" if one exists
+      navigator.serviceWorker
+        .getRegistration()
+        .then((reg) => reg?.pushManager.getSubscription())
+        .then((sub) => setPushState(sub ? "enabled" : "available"))
+        .catch(() => setPushState("available"));
     } else {
       setPushState("available");
     }
-  }, []);
+  }, [vapidPublicKey]);
 
   async function handleEnablePush() {
+    if (!vapidPublicKey) return;
     setIsEnabling(true);
     try {
       const permission = await Notification.requestPermission();
@@ -57,58 +66,14 @@ export function NotificationStep() {
         setIsEnabling(false);
         return;
       }
-
-      // Get service worker and subscribe
-      const swTimeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("SW timeout")), 5000),
+      // Same request the settings page sends; this step used to post a body
+      // without `subscription`, got a 422 every time and still said "enabled".
+      await subscribeToPush(
+        vapidPublicKey,
+        { noServiceWorker: ts("notif_err_no_sw"), saveFailed: ts("notif_err_save") },
+        "09:00",
       );
-      const registration = await Promise.race([
-        navigator.serviceWorker.ready,
-        swTimeout,
-      ]);
-
-      // Fetch VAPID key from the subscribe endpoint's source
-      // We need it from the server — try a quick fetch
-      const configRes = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          timezone,
-          notificationTime: "09:00",
-          enabled: true,
-        }),
-      });
-
-      // If the server returns an error about missing subscription,
-      // we need VAPID. For simplicity in onboarding, we'll just POST
-      // to mark the user as wanting notifications and let the full
-      // settings page handle the subscription details.
-      if (configRes.ok) {
-        setPushState("enabled");
-      } else {
-        // Try subscribing with PushManager if VAPID is available
-        const existingSub = await registration.pushManager.getSubscription();
-        if (existingSub) {
-          // Already subscribed — just update server
-          const subJSON = existingSub.toJSON();
-          await fetch("/api/push/subscribe", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              endpoint: subJSON.endpoint,
-              keys: subJSON.keys,
-              timezone,
-              notificationTime: "09:00",
-              enabled: true,
-            }),
-          });
-          setPushState("enabled");
-        } else {
-          // Can't subscribe without VAPID key in onboarding
-          // Just mark as available and let settings handle it
-          setPushState("available");
-        }
-      }
+      setPushState("enabled");
     } catch {
       // Non-critical — notifications are optional
       setPushState("available");
@@ -216,6 +181,8 @@ export function NotificationStep() {
                 ? t("notifications_push_denied")
                 : pushState === "unsupported"
                   ? t("notifications_push_unsupported")
+                  : pushState === "unconfigured"
+                    ? ts("notif_err_not_configured")
                   : pushState === "enabled"
                     ? t("notifications_push_enabled")
                     : t("notifications_push_hint")}

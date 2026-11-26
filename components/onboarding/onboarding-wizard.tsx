@@ -26,6 +26,8 @@ type Step = (typeof STEPS)[number];
 
 interface OnboardingWizardProps {
   userName: string | null;
+  /** NEXT_PUBLIC_VAPID_PUBLIC_KEY, read on the server like the settings page does */
+  vapidPublicKey?: string;
 }
 
 /**
@@ -33,7 +35,7 @@ interface OnboardingWizardProps {
  *
  * @param userName - The user's display name for the welcome greeting
  */
-export function OnboardingWizard({ userName }: OnboardingWizardProps) {
+export function OnboardingWizard({ userName, vapidPublicKey }: OnboardingWizardProps) {
   const t = useTranslations("onboarding");
   const router = useRouter();
 
@@ -163,7 +165,7 @@ export function OnboardingWizard({ userName }: OnboardingWizardProps) {
             {currentStep === "tasks" && (
               <AddTasksStep topicId={topicId} topicName={topicName} />
             )}
-            {currentStep === "notifications" && <NotificationStep />}
+            {currentStep === "notifications" && <NotificationStep vapidPublicKey={vapidPublicKey} />}
             {currentStep === "complete" && (
               <CompletionStep onNavigate={() => router.push("/dashboard")} />
             )}
