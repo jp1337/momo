@@ -56,6 +56,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   provider badge) measured 4.21:1, under the 4.5:1 the design system requires; the sidebar section
   labels measured 2.94:1. Secondary ink is a shade darker now, the labels use the muted ink step
   made for this.
+- **Onboarding:** Turning on push notifications in the last onboarding step never worked. Every
+  request was rejected, yet the step could report "Notifications enabled!", and no reminder ever
+  arrived. It now subscribes the same way the settings page does, and says so when the server has
+  no push key configured.
 
 ## [0.11.0] - 2026-11-25
 

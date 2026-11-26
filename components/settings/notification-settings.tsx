@@ -18,6 +18,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
+import { subscribeToPush } from "@/lib/client/push-subscribe";
 
 type NotificationStatus =
   | "unsupported"       // Browser doesn't support Notifications
@@ -164,85 +165,18 @@ export function NotificationSettings({
         return;
       }
 
-      // Step 2: Wait for the service worker to be ready (with timeout)
-      // In development, next-pwa disables the SW — detect this early.
-      const swTimeout = new Promise<never>((_, reject) =>
-        setTimeout(
-          () => reject(new Error(t("notif_err_no_sw"))),
-          5000
-        )
-      );
-      const registration = await Promise.race([
-        navigator.serviceWorker.ready,
-        swTimeout,
-      ]);
-
-      // Step 3: Subscribe to push
+      // Step 2–4: service worker, VAPID key check, subscribe, save
       if (!vapidPublicKey) {
         setMessageType("error");
         setMessage(t("notif_err_not_configured"));
         setIsSaving(false);
         return;
       }
-      // Trim whitespace/newlines that can be introduced by env var storage
-      const vapidKey = vapidPublicKey.trim();
-
-      // Validate VAPID key format before attempting subscription.
-      // A valid P-256 uncompressed public key is 65 bytes = 87–88 base64url chars.
-      // Private keys are only 32 bytes (43 chars) — a common misconfiguration.
-      try {
-        const padding = "=".repeat((4 - (vapidKey.length % 4)) % 4);
-        const decoded = atob(vapidKey.replace(/-/g, "+").replace(/_/g, "/") + padding);
-        if (decoded.length !== 65) {
-          throw new Error(`VAPID public key invalid: ${decoded.length} bytes (expected 65). Check NEXT_PUBLIC_VAPID_PUBLIC_KEY — private key has only 32 bytes.`);
-        }
-        if (decoded.charCodeAt(0) !== 0x04) {
-          throw new Error(`VAPID public key invalid: first byte 0x${decoded.charCodeAt(0).toString(16)} (expected 0x04 for uncompressed EC point).`);
-        }
-      } catch (validationErr) {
-        if (validationErr instanceof Error && validationErr.message.startsWith("VAPID")) {
-          throw validationErr;
-        }
-        throw new Error(`VAPID public key could not be decoded: ${validationErr instanceof Error ? validationErr.message : String(validationErr)}`);
-      }
-
-      // Unsubscribe any stale existing subscription before creating a new one.
-      // A leftover subscription (e.g. from a previous SW registration) can cause
-      // Chrome to throw AbortError: Registration failed - push service error.
-      const existingSubscription = await registration.pushManager.getSubscription();
-      if (existingSubscription) {
-        await existingSubscription.unsubscribe();
-      }
-
-      // Pass the VAPID public key as a base64url string directly (Chrome 67+).
-      // This is the modern recommended approach and avoids Uint8Array conversion
-      // issues that can cause AbortError on some Chrome versions.
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: vapidKey,
-      });
-
-      // Step 4: Serialize and send to server
-      const subscriptionJSON = subscription.toJSON();
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      const res = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subscription: {
-            endpoint: subscriptionJSON.endpoint,
-            keys: subscriptionJSON.keys,
-          },
-          notificationTime,
-          timezone,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json() as { error?: string };
-        throw new Error(data.error ?? t("notif_err_save"));
-      }
+      await subscribeToPush(
+        vapidPublicKey,
+        { noServiceWorker: t("notif_err_no_sw"), saveFailed: t("notif_err_save") },
+        notificationTime,
+      );
 
       setStatus("active");
       setMessageType("success");
