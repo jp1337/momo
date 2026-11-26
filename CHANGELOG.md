@@ -80,6 +80,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   tasks came back a day early or late around midnight (for users west of UTC: every afternoon),
   and the postpone counter and the energy match badge could count the wrong day. They now use the
   timezone in the user's settings, as the daily quest already did.
+- **Data export (GDPR):** The export left out much of what Momo stores: energy check-ins, quest
+  postponements, notification channels, webhooks, API keys, passkeys, linked accounts, sessions,
+  push devices, and most newer task and settings fields. It now contains all of it (format version
+  2); credentials such as tokens and secrets are still never included. The documentation no longer
+  claims that deleted tasks are exported — they are deleted for good.
 
 ## [0.11.0] - 2026-11-25
 

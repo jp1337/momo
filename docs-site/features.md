@@ -854,13 +854,19 @@ Momo gives you full control over your data in compliance with GDPR Articles 15 a
 
 ### Exporting your data
 
-Go to **Settings → Data & Privacy** and click **Download your data**. You will receive a JSON file containing:
+Go to **Settings → Data & Privacy** and click **Download your data**. You will receive a JSON file with everything Momo stores about you:
 
-- All your tasks (including completed and deleted)
-- All your topics
-- Your full completion history
-- Wishlist items
-- Achievements and gamification data
+| Section | Contents |
+|---|---|
+| Profile | Account, settings, reminder times, timezone, streaks, coins |
+| Tasks, topics, completions | All of them, completed ones included (deleted tasks are gone for good) |
+| Energy, quest | Energy check-ins, quest postponements |
+| Wishlist, achievements | Items and earned achievements |
+| Notifications | Channels, notification history, push devices |
+| Integrations | Webhooks and their delivery history, API keys |
+| Security | Linked sign-in providers, passkeys, active sessions (device, IP address) |
+
+Passwords, tokens and keys are never in the file: no API key, session token, sign-in token, webhook or bot secret, two-factor secret.
 
 You can import this file into another system or keep it as a personal archive.
 
