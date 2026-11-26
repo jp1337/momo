@@ -25,6 +25,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Accessibility:** Pinch zoom was disabled on every page (WCAG 1.4.4). It works again; on touch
+  devices form fields render at 16px so iOS still does not zoom into a field on focus.
 - **ntfy:** Notifications to ntfy 2.x servers failed with `400: request body must be valid JSON`
   whenever they carried a tag, the test notification included. Momo sent `tags` as a string;
   ntfy's JSON API expects a list. ([#251](https://github.com/jp1337/momo/issues/251))
