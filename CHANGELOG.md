@@ -7,6 +7,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **API docs:** Swagger UI now lists outbound webhooks (6 operations), push devices (3) and
+  undoing a wishlist discard. A test compares the spec with the route files, so an endpoint can no
+  longer ship undocumented.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update
