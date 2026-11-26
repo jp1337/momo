@@ -11,7 +11,7 @@
  * Validates inputs client-side; closes on success.
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "motion/react";
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
@@ -79,12 +79,6 @@ export function WishlistForm({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMore, setShowMore] = useState(() => hasAdvancedData(initialData ?? {}));
-
-  // Reset form when initialData changes
-  useEffect(() => {
-    setFormData({ ...DEFAULT_FORM, ...initialData });
-    setShowMore(hasAdvancedData(initialData ?? {}));
-  }, [initialData]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

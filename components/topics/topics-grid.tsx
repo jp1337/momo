@@ -232,6 +232,7 @@ export function TopicsGrid({ initialTopics }: TopicsGridProps) {
       {/* Topic form modal (create or edit) */}
       {(showCreateForm || editingTopicId) && (
         <TopicForm
+          key={editingTopicId ?? "new"}
           initialData={
             editingTopic
               ? {

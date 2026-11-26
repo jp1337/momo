@@ -482,6 +482,7 @@ export function WishlistView({
       {/* Create/Edit form modal */}
       {showForm && (
         <WishlistForm
+          key={editingItemId ?? "new"}
           initialData={editingInitialData}
           onSuccess={handleFormSuccess}
           onCancel={() => {
