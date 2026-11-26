@@ -10,7 +10,7 @@
  * @module components/settings/login-notification-settings
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useId } from "react";
 import { useTranslations } from "next-intl";
 
 interface LoginNotificationSettingsProps {
@@ -28,6 +28,7 @@ export function LoginNotificationSettings({
   initialEnabled,
 }: LoginNotificationSettingsProps) {
   const t = useTranslations("settings");
+  const labelId = useId();
 
   const [enabled, setEnabled] = useState(initialEnabled);
   const [saving, setSaving] = useState(false);
@@ -62,6 +63,7 @@ export function LoginNotificationSettings({
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <span
+            id={labelId}
             className="text-sm font-medium"
             style={{ color: "var(--text-primary)", fontFamily: "var(--font-ui)" }}
           >
@@ -79,6 +81,7 @@ export function LoginNotificationSettings({
           type="button"
           role="switch"
           aria-checked={enabled}
+          aria-labelledby={labelId}
           disabled={saving}
           onClick={() => save(!enabled)}
           className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"

@@ -46,6 +46,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **CI:** The Playwright end-to-end suite now runs on every pull request against a production
   build and PostgreSQL 19. It ran nowhere before. Not a required check yet.
+- **Accessibility:** Screen readers announced the new-device login alert switch without a name,
+  and the vacation end date and the profile name and e-mail fields without their labels. They are
+  now connected.
 
 ## [0.11.0] - 2026-11-25
 
