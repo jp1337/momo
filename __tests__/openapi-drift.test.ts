@@ -9,7 +9,8 @@
  * - an exported handler missing from the spec, unless it is listed in
  *   `NOT_PUBLIC_API` with the reason it is not part of the integrator API,
  * - a `$ref` that does not resolve,
- * - an operation tag that the spec's `tags` list does not declare.
+ * - an operation tag that the spec's `tags` list does not declare,
+ * - a status code a handler returns that its operation does not document.
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -49,9 +50,10 @@ const NOT_PUBLIC_API: Record<string, string> = {
   "GET /api/openapi.json": "serves this spec",
 };
 
+type Operation = { tags?: string[]; responses?: Record<string, unknown> };
 type Spec = {
   tags: { name: string }[];
-  paths: Record<string, Record<string, { tags?: string[] }>>;
+  paths: Record<string, Record<string, Operation>>;
 };
 const spec = openApiSpec as Spec;
 
@@ -63,16 +65,21 @@ function routeFiles(dir: string): string[] {
   });
 }
 
+function apiPath(file: string): string {
+  return (
+    "/" +
+    relative(join(process.cwd(), "app"), file)
+      .replace(/\/route\.ts$/, "")
+      // Next's [id] is OpenAPI's {id}; a catch-all keeps its brackets
+      .replace(/\[(?!\.\.\.)([^\]]+)\]/g, "{$1}")
+  );
+}
+
 /** "METHOD /api/path" for every handler exported by a route file. */
 function codeOperations(): Set<string> {
   const ops = new Set<string>();
   for (const file of routeFiles(join(process.cwd(), "app/api"))) {
-    const path =
-      "/" +
-      relative(join(process.cwd(), "app"), file)
-        .replace(/\/route\.ts$/, "")
-        // Next's [id] is OpenAPI's {id}; a catch-all keeps its brackets
-        .replace(/\[(?!\.\.\.)([^\]]+)\]/g, "{$1}");
+    const path = apiPath(file);
     const src = readFileSync(file, "utf8");
     for (const m of METHODS) {
       const direct = new RegExp(`export\\s+(async\\s+)?(function|const)\\s+${m}\\b`);
@@ -81,6 +88,28 @@ function codeOperations(): Set<string> {
     }
   }
   return ops;
+}
+
+/**
+ * Status codes each `export async function METHOD` can return, read from its
+ * own source region (up to the next exported handler) — per handler, not per
+ * file, or one handler's 409 would hide its neighbour's missing one.
+ * Shared helpers count as the code they answer with.
+ */
+function handlerStatusCodes(): Map<string, Set<string>> {
+  const result = new Map<string, Set<string>>();
+  for (const file of routeFiles(join(process.cwd(), "app/api"))) {
+    const src = readFileSync(file, "utf8");
+    const starts = [...src.matchAll(/export\s+(?:async\s+)?function\s+(GET|POST|PUT|PATCH|DELETE)\b/g)];
+    starts.forEach((m, i) => {
+      const body = src.slice(m.index, starts[i + 1]?.index ?? src.length);
+      const codes = new Set([...body.matchAll(/status:\s*(\d{3})/g)].map((c) => c[1]));
+      if (/readonlyKeyResponse\(/.test(body)) codes.add("403");
+      if (/rateLimitResponse\(/.test(body)) codes.add("429");
+      result.set(`${m[1]} ${apiPath(file)}`, codes);
+    });
+  }
+  return result;
 }
 
 function specOperations(): Set<string> {
@@ -130,6 +159,17 @@ describe("OpenAPI spec vs. app/api routes", () => {
         ) === undefined
     );
     expect(dangling).toEqual([]);
+  });
+
+  it("documents every status code a handler returns", () => {
+    const undocumented: string[] = [];
+    for (const [op, codes] of handlerStatusCodes()) {
+      const [method, path] = op.split(" ");
+      const responses = spec.paths[path]?.[method.toLowerCase()]?.responses;
+      if (!responses) continue; // not in the spec at all: the checks above decide
+      for (const code of codes) if (!(code in responses)) undocumented.push(`${op} ${code}`);
+    }
+    expect(undocumented).toEqual([]);
   });
 
   it("declares every tag an operation uses", () => {
