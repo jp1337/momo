@@ -223,6 +223,13 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
   const tSearch = useTranslations("search");
   const tCommon = useTranslations("common");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  // A router.refresh() (e.g. after Quick Add) brings new server data as a new
+  // initialTasks array; adopt it, or a task created elsewhere never shows here.
+  const [seenInitialTasks, setSeenInitialTasks] = useState(initialTasks);
+  if (initialTasks !== seenInitialTasks) {
+    setSeenInitialTasks(initialTasks);
+    setTasks(initialTasks);
+  }
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);

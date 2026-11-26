@@ -33,6 +33,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   bought and discarded ones. It now counts both.
 - **Quick Add:** The topic picker under "More options" only ever offered "No topic". It read the
   topics as a bare list, but the API returns `{ topics: [...] }`. Broken since Quick Add shipped.
+- **Quick Add saves again — it never did.** Since Quick Add (`N` or `/`) shipped in April, every
+  save ended in "Could not save — try again": the modal did not send the task type, which the API
+  requires. It now creates a one-time task.
+- **Tasks page:** a task added with Quick Add while on `/tasks` only appeared after a reload. The
+  list now picks up refreshed server data.
 
 ## [0.11.0] - 2026-11-25
 

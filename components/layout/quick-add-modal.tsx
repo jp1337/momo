@@ -85,7 +85,8 @@ export function QuickAddModal() {
     setSaving(true);
     setError("");
     try {
-      const body: Record<string, unknown> = { title: trimmed, priority };
+      // type is required by POST /api/tasks; without it every save was a 422
+      const body: Record<string, unknown> = { title: trimmed, type: "ONE_TIME", priority };
       if (topicId) body.topicId = topicId;
       if (energyLevel) body.energyLevel = energyLevel;
       const res = await fetch("/api/tasks", {
