@@ -7,6 +7,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **API:** 24 endpoints answered a malformed id in the path (anything that is not a UUID) with
+  `500 Internal server error`, and `GET /api/tasks?topicId=…` did the same for a malformed topic id.
+  They now answer `404` and `400`.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update

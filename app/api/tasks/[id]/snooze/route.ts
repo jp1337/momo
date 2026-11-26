@@ -16,6 +16,7 @@ import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { snoozeTask, unsnoozeTask } from "@/lib/tasks";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { SnoozeTaskInputSchema } from "@/lib/validators";
+import { invalidIdResponse } from "@/lib/api-params";
 
 /**
  * POST /api/tasks/:id/snooze
@@ -34,6 +35,8 @@ export async function POST(
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   let body: unknown;
   try {
@@ -86,6 +89,8 @@ export async function DELETE(
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     const task = await unsnoozeTask(id, user.userId);

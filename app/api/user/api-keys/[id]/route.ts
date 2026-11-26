@@ -8,6 +8,7 @@
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { revokeApiKey } from "@/lib/api-keys";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { invalidIdResponse } from "@/lib/api-params";
 
 /**
  * DELETE /api/user/api-keys/:id
@@ -26,6 +27,8 @@ export async function DELETE(
   if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     await revokeApiKey(user.userId, id);

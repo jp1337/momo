@@ -917,6 +917,10 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
           },
         ],
         responses: {
+          "400": {
+            description: 'topicId is neither a UUID nor "none".',
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
           "200": {
             description: "Array of tasks.",
             content: {

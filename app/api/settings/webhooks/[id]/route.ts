@@ -15,6 +15,7 @@ import {
 import { UpdateWebhookEndpointSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
+import { invalidIdResponse } from "@/lib/api-params";
 
 /**
  * GET — Fetch the last 50 delivery attempts for the given endpoint.
@@ -28,6 +29,8 @@ export async function GET(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
   try {
     const deliveries = await listWebhookDeliveries(id, user.userId);
     return NextResponse.json({ deliveries });
@@ -60,6 +63,8 @@ export async function PATCH(
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt) as NextResponse;
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
   let body: unknown;
   try {
     body = await req.json();
@@ -106,6 +111,8 @@ export async function DELETE(
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt) as NextResponse;
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
   try {
     await deleteWebhookEndpoint(id, user.userId);
     return NextResponse.json({ success: true });

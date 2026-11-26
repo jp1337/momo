@@ -20,6 +20,7 @@ import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { getTopicById, updateTopic, deleteTopic } from "@/lib/topics";
 import { UpdateTopicInputSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { invalidIdResponse } from "@/lib/api-params";
 
 /**
  * GET /api/topics/:id
@@ -33,6 +34,8 @@ export async function GET(
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     const topic = await getTopicById(id, user.userId);
@@ -62,6 +65,8 @@ export async function PATCH(
   if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   let body: unknown;
   try {
@@ -108,6 +113,8 @@ export async function DELETE(
   if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     await deleteTopic(id, user.userId);

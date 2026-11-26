@@ -21,6 +21,7 @@ import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { invalidIdResponse } from "@/lib/api-params";
 
 const patchSchema = z
   .object({
@@ -47,6 +48,8 @@ export async function PATCH(
   if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   let body: unknown;
   try {
@@ -106,6 +109,8 @@ export async function DELETE(
   if (rate.limited) return rateLimitResponse(rate.resetAt) as unknown as NextResponse;
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     const deleted = await db
