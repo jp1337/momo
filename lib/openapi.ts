@@ -3004,9 +3004,12 @@ Mutation routes (POST/PATCH/DELETE) are rate-limited per user. Responses include
         tags: ["User"],
         summary: "Export user data",
         description:
-          "Exports all data belonging to the authenticated user as a JSON file. " +
-          "Includes tasks, topics, wishlist items, completions, and account metadata. " +
-          "Useful for data portability and backups.",
+          "Exports all data Momo stores about the authenticated user as a JSON file " +
+          "(GDPR Art. 15/20, format version 2): profile and settings, tasks, topics, " +
+          "completions, energy check-ins, quest postponements, wishlist, achievements, " +
+          "notification channels and history, push devices, webhooks and deliveries, " +
+          "API keys, linked accounts, passkeys and sessions. Credentials (tokens, " +
+          "key hashes, secrets) are never included.",
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         "x-readonly-safe": true,
         responses: {

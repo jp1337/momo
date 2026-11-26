@@ -7,6 +7,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Data export (GDPR):** The export left out much of what Momo stores: energy check-ins, quest
+  postponements, notification channels, webhooks, API keys, passkeys, linked accounts, sessions,
+  push devices, and most newer task and settings fields. It now contains all of it (format version
+  2); credentials such as tokens and secrets are still never included. The documentation no longer
+  claims that deleted tasks are exported — they are deleted for good.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update
