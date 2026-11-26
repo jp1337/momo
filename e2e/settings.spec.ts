@@ -75,7 +75,7 @@ test.describe("Settings: Account", () => {
     await page.goto("/settings/account");
     await page.waitForLoadState("networkidle");
     // Language options: de, en, fr, es, nl
-    const langSection = page.locator("body").filter({ hasText: /Deutsch|English|Sprache|Language/i });
+    const langSection = page.getByText(/Deutsch|English|Sprache|Language/i);
     await expect(langSection.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -83,9 +83,7 @@ test.describe("Settings: Account", () => {
     await page.goto("/settings/account");
     await page.waitForLoadState("networkidle");
     // Timezone selector or label
-    const tzEl = page
-      .locator("body")
-      .filter({ hasText: /Zeitzone|Timezone|Zeit/i });
+    const tzEl = page.getByText(/Zeitzone|Timezone|Zeit/i);
     await expect(tzEl.first()).toBeVisible({ timeout: 5000 });
   });
 });
@@ -103,10 +101,8 @@ test.describe("Settings: Notifications", () => {
   test("shows push notification toggle area", async ({ page }) => {
     await page.goto("/settings/notifications");
     await page.waitForLoadState("networkidle");
-    // Should have some notification-related content
     await expectNoServerError(page);
-    const body = page.locator("body");
-    await expect(body).toBeVisible();
+    await expect(page.getByText(/Push|Benachrichtigung|Notification/i).first()).toBeVisible();
   });
 
   test("shows notification channels section", async ({ page }) => {
@@ -152,9 +148,7 @@ test.describe("Settings: Quest & Tasks", () => {
     await page.waitForLoadState("networkidle");
     // Vacation mode section
     await expectNoServerError(page);
-    const vacationEl = page
-      .locator("body")
-      .filter({ hasText: /Urlaub|Vacation/i });
+    const vacationEl = page.getByText(/Urlaub|Vacation/i);
     await expect(vacationEl.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -180,9 +174,7 @@ test.describe("Settings: Security", () => {
     await page.goto("/settings/security");
     await page.waitForLoadState("networkidle");
     // 2FA section title or enable button
-    const twoFaEl = page
-      .locator("body")
-      .filter({ hasText: /Zwei-Faktor|2FA|Two-Factor|Authenticator/i });
+    const twoFaEl = page.getByText(/Zwei-Faktor|2FA|Two-Factor|Authenticator/i);
     await expect(twoFaEl.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -190,9 +182,7 @@ test.describe("Settings: Security", () => {
     await page.goto("/settings/security");
     await page.waitForLoadState("networkidle");
     // Passkey section
-    const passkeyEl = page
-      .locator("body")
-      .filter({ hasText: /Passkey|WebAuthn|Passkeys/i });
+    const passkeyEl = page.getByText(/Passkey|WebAuthn|Passkeys/i);
     await expect(passkeyEl.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -200,9 +190,7 @@ test.describe("Settings: Security", () => {
     await page.goto("/settings/security");
     await page.waitForLoadState("networkidle");
     // Active sessions section
-    const sessionsEl = page
-      .locator("body")
-      .filter({ hasText: /Sitzung|Session/i });
+    const sessionsEl = page.getByText(/Sitzung|Session/i);
     await expect(sessionsEl.first()).toBeVisible({ timeout: 5000 });
   });
 });
@@ -220,18 +208,14 @@ test.describe("Settings: Integrations", () => {
   test("shows calendar feed section", async ({ page }) => {
     await page.goto("/settings/integrations");
     await page.waitForLoadState("networkidle");
-    const calEl = page
-      .locator("body")
-      .filter({ hasText: /Kalender|Calendar|iCal/i });
+    const calEl = page.getByText(/Kalender|Calendar|iCal/i);
     await expect(calEl.first()).toBeVisible({ timeout: 5000 });
   });
 
   test("shows webhooks section", async ({ page }) => {
     await page.goto("/settings/integrations");
     await page.waitForLoadState("networkidle");
-    const webhookEl = page
-      .locator("body")
-      .filter({ hasText: /Webhook/i });
+    const webhookEl = page.getByText(/Webhook/i);
     await expect(webhookEl.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -239,9 +223,7 @@ test.describe("Settings: Integrations", () => {
     await page.goto("/settings/integrations");
     await page.waitForLoadState("networkidle");
     // Link to /api-keys page or inline API key mention
-    const apiKeyEl = page
-      .locator("body")
-      .filter({ hasText: /API.Key|API-Key|API Keys/i });
+    const apiKeyEl = page.getByText(/API.Key|API-Key|API Keys/i);
     await expect(apiKeyEl.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -285,9 +267,7 @@ test.describe("Settings: Data & Privacy", () => {
     await page.goto("/settings/data");
     await page.waitForLoadState("networkidle");
     // Danger zone section
-    const dangerEl = page
-      .locator("body")
-      .filter({ hasText: /Konto löschen|Delete Account|Danger/i });
+    const dangerEl = page.getByText(/Konto löschen|Delete Account|Danger/i);
     await expect(dangerEl.first()).toBeVisible({ timeout: 5000 });
   });
 

@@ -151,9 +151,7 @@ test.describe("Stats Page", () => {
     await page.waitForLoadState("networkidle");
     await expectNoServerError(page);
     // Level or coin data should appear
-    const statsEl = page
-      .locator("body")
-      .filter({ hasText: /Level|Münzen|Coins|Streak/i });
+    const statsEl = page.getByText(/Level|Münzen|Coins|Streak/i);
     await expect(statsEl.first()).toBeVisible({ timeout: 5000 });
   });
 });

@@ -88,7 +88,8 @@ test.describe("Focus Mode (/focus)", () => {
     await page.waitForLoadState("networkidle");
     // Focus mode has a heading or the daily quest card
     await expectNoServerError(page);
-    const content = page.locator("main, [role='main'], .max-w-4xl, body > div").first();
+    // Not `body > div`: the app shell is position: fixed, so body and its first div have height 0.
+    const content = page.locator("main").first();
     await expect(content).toBeVisible();
   });
 
