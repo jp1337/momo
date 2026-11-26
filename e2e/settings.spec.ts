@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * Settings pages E2E tests.
@@ -57,7 +58,7 @@ test.describe("Settings: Account", () => {
     await page.goto("/settings/account");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows name field", async ({ page }) => {
@@ -96,14 +97,14 @@ test.describe("Settings: Notifications", () => {
     await page.goto("/settings/notifications");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows push notification toggle area", async ({ page }) => {
     await page.goto("/settings/notifications");
     await page.waitForLoadState("networkidle");
     // Should have some notification-related content
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     const body = page.locator("body");
     await expect(body).toBeVisible();
   });
@@ -112,14 +113,14 @@ test.describe("Settings: Notifications", () => {
     await page.goto("/settings/notifications");
     await page.waitForLoadState("networkidle");
     // Notification channels: ntfy, Pushover, Telegram, Email
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("shows notification history link or section", async ({ page }) => {
     await page.goto("/settings/notifications");
     await page.waitForLoadState("networkidle");
     // Should load the history section
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 });
 
@@ -130,7 +131,7 @@ test.describe("Settings: Quest & Tasks", () => {
     await page.goto("/settings/quest");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows postpone limit slider", async ({ page }) => {
@@ -142,7 +143,7 @@ test.describe("Settings: Quest & Tasks", () => {
       await expect(slider).toBeVisible({ timeout: 5000 });
     } else {
       // May be a custom slider component
-      await expect(page.locator("body")).not.toContainText(/500/i);
+      await expectNoServerError(page);
     }
   });
 
@@ -150,7 +151,7 @@ test.describe("Settings: Quest & Tasks", () => {
     await page.goto("/settings/quest");
     await page.waitForLoadState("networkidle");
     // Vacation mode section
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     const vacationEl = page
       .locator("body")
       .filter({ hasText: /Urlaub|Vacation/i });
@@ -161,7 +162,7 @@ test.describe("Settings: Quest & Tasks", () => {
     await page.goto("/settings/quest");
     await page.waitForLoadState("networkidle");
     // Emotional closure section
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 });
 
@@ -172,7 +173,7 @@ test.describe("Settings: Security", () => {
     await page.goto("/settings/security");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows 2FA section", async ({ page }) => {
@@ -213,7 +214,7 @@ test.describe("Settings: Integrations", () => {
     await page.goto("/settings/integrations");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows calendar feed section", async ({ page }) => {
@@ -254,7 +255,7 @@ test.describe("Settings: Integrations", () => {
       .first();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
-      await expect(page.locator("body")).not.toContainText(/500/i);
+      await expectNoServerError(page);
     }
   });
 });
@@ -266,7 +267,7 @@ test.describe("Settings: Data & Privacy", () => {
     await page.goto("/settings/data");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows data export button", async ({ page }) => {

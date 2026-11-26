@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * API Keys management E2E tests.
@@ -12,7 +13,7 @@ test.describe("API Keys Page", () => {
     await page.goto("/api-keys");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows page heading", async ({ page }) => {
@@ -66,6 +67,6 @@ test.describe("API Keys Page", () => {
     await page.goto("/api-keys");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 });

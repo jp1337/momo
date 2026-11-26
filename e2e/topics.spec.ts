@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { createTopic, deleteTopic, createTask, deleteTask } from "./helpers/api";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * Topics page E2E tests.
@@ -13,7 +14,7 @@ test.describe("Topics Page", () => {
     await page.goto("/topics");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("displays a topic created via API", async ({ page, request }) => {
@@ -42,7 +43,7 @@ test.describe("Topics Page", () => {
       timeout: 5000,
     });
     // Progress text like "0/1 Aufgaben" should appear in the card
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
 
     await deleteTask(request, task.id);
     await deleteTopic(request, topic.id);
@@ -72,7 +73,7 @@ test.describe("Topics Page", () => {
     await page.goto("/topics");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("ein langer Themenname bricht nicht mitten im Wort", async ({ page, request }) => {
@@ -166,7 +167,7 @@ test.describe("Topic Detail Page", () => {
     await page.waitForLoadState("networkidle");
 
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
     // The topic title or task title should appear
     await expect(page.locator("body")).toContainText(topicTitle);
 
@@ -252,6 +253,6 @@ test.describe("Topic Template Import", () => {
     await page.waitForLoadState("networkidle");
     // Template picker might be behind a button (icon or text)
     // Just verify the page doesn't error — template button may not be prominent
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 });
