@@ -9,13 +9,10 @@
 
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
-vi.mock("@/lib/api-auth", () => ({
+vi.mock("@/lib/api-auth", async () => ({
   resolveApiUser: vi.fn(),
-  readonlyKeyResponse: () =>
-    Response.json(
-      { error: "Forbidden", message: "This API key is read-only." },
-      { status: 403 }
-    ),
+  // The real helper, so a regression in its body (e.g. a lost `code`) shows up here
+  readonlyKeyResponse: (await import("@/lib/api-responses")).readonlyKeyResponse,
 }));
 
 vi.mock("next/headers", () => ({
@@ -171,6 +168,7 @@ describe("DELETE /api/auth/sessions/:id", () => {
       { params: Promise.resolve({ id: fakeId }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 400 for invalid session ID format", async () => {
@@ -253,6 +251,7 @@ describe("POST /api/auth/sessions/revoke-others", () => {
     asUser(user.id, true);
     const res = await revokeOthersPOST(req("POST", "/api/auth/sessions/revoke-others"));
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 400 when current session token cannot be identified", async () => {

@@ -338,9 +338,6 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
 
 **Neu auf dieser Liste, aus 0.6.0 heraus**
 
-- **Die 20 Route-Test-Mocks von `readonlyKeyResponse` kennen den neuen `code` nicht.** Sie stubben
-  `{ error, message }` ohne `code: "READONLY_KEY"`, sodass der Code an genau einer Stelle geprüft
-  wird — eine Regression im echten Helper würde kein Route-Test bemerken.
 - **Rate-Limits sind pro Prozess**, und `deploy/examples/deployment.yaml` fährt `replicas: 2`. Jedes
   Limit gilt auf der empfohlenen Topologie faktisch doppelt. Steht so im Header von
   `lib/rate-limit.ts`, aber nicht in der API-Doku.

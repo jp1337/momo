@@ -10,13 +10,10 @@
 
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
-vi.mock("@/lib/api-auth", () => ({
+vi.mock("@/lib/api-auth", async () => ({
   resolveApiUser: vi.fn(),
-  readonlyKeyResponse: () =>
-    Response.json(
-      { error: "Forbidden", message: "This API key is read-only." },
-      { status: 403 }
-    ),
+  // The real helper, so a regression in its body (e.g. a lost `code`) shows up here
+  readonlyKeyResponse: (await import("@/lib/api-responses")).readonlyKeyResponse,
 }));
 
 vi.mock("next/headers", () => ({
@@ -91,6 +88,7 @@ describe("POST /api/push/subscribe", () => {
     asUser(user.id, true);
     const res = await subscribePOST(req("POST", "/api/push/subscribe", VALID_SUBSCRIPTION) as never);
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 when subscription keys are missing", async () => {
@@ -169,6 +167,7 @@ describe("PATCH /api/push/subscribe", () => {
       req("PATCH", "/api/push/subscribe", { notificationTime: "08:00" }) as never
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 when no field is provided", async () => {
@@ -239,6 +238,7 @@ describe("DELETE /api/push/subscribe", () => {
       }) as never
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 when endpoint is missing", async () => {
@@ -357,6 +357,7 @@ describe("PATCH /api/push/devices/:id", () => {
       { params: Promise.resolve({ id: fakeId }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 when no field is provided", async () => {
@@ -476,6 +477,7 @@ describe("DELETE /api/push/devices/:id", () => {
       { params: Promise.resolve({ id: fakeId }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 404 for non-existent device", async () => {
@@ -561,6 +563,7 @@ describe("POST /api/push/test", () => {
     asUser(user.id, true);
     const res = await pushTestPOST(req("POST", "/api/push/test"));
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 400 when user has no subscriptions", async () => {
