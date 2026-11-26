@@ -454,7 +454,6 @@ Details und Begründung stehen in `docs-tech/lichtkegel-phase2/abschluss.md`.
 
 | Befund | Warum offen |
 |---|---|
-| `LevelBadge`: Level 1–3 (`--ink-3` auf 8-%-Ink-Fläche) 3,99:1 im hellen Thema, „Lv." mit `opacity: 0.7` 2,6:1 | Stufenleiter der Badge ist eine Designentscheidung |
 | 11 Kontrastfunde in nicht migrierten Einstellungs-Komponenten (Amber als Füllfläche, fest verdrahtet `#ffffff`/`#1a1a0a`) | Lichtkegel-Migration dieser Komponenten |
 | Hydration-Mismatch in `EnergyCheckinCard` (Server „eingecheckt", Client nicht) im Dev-Log; „heute" wird beim Rendern auf Server und Client getrennt berechnet | Nicht gezielt reproduziert; Kandidat: Server rechnet mit `users.timezone`, statt beide Seiten raten zu lassen |
 | `WeekdayChart`: `aria-label` nicht auf `hasData` gegattert | Unerreichbar, der einzige Aufrufer rendert das Diagramm nur mit Daten |

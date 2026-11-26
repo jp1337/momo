@@ -38,9 +38,13 @@ function tierColor(level: number): string {
   return "var(--ink-3)";
 }
 
-/** Fläche der Badge-Pille — eine Stufe für alle Tiers, die Unterscheidung steckt in `tierColor`. */
+/**
+ * Keine Fläche: auf der 8-%-Ink-Fläche erreichte `--ink-3` (Level 1–3) im
+ * hellen Thema nur 3,99:1, unter der 4,5:1-Regel. Ohne Fläche steht die
+ * Schrift auf `--ground` (4,64:1); die Haarlinie hält die Pillenform.
+ */
 function tierBg(): string {
-  return "color-mix(in srgb, var(--ink) 8%, transparent)";
+  return "transparent";
 }
 
 /** Kante der Badge-Pille — eine Stufe für alle Tiers. */
@@ -80,7 +84,8 @@ export function LevelBadge({ level, title }: LevelBadgeProps) {
         whiteSpace: "nowrap",
       }}
     >
-      <span style={{ opacity: 0.7, fontSize: "0.65rem" }}>{t("level_label")}</span>
+      {/* Kleiner, nicht blasser: opacity 0.7 drückte "Lv." auf 2,6:1 */}
+      <span style={{ fontSize: "0.65rem" }}>{t("level_label")}</span>
       <span>{level}</span>
     </span>
   );
