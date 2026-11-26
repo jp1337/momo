@@ -383,19 +383,9 @@ Elf Funde, jeder außerhalb jedes Task-Zuschnitts der Phase. Der Phasenbericht s
 `docs-tech/lichtkegel-phase2/abschluss.md`, die Messung dahinter in
 `docs-tech/lichtkegel-phase2/zustandspruefung.md`.
 
-*Die Testinfrastruktur beißt sich selbst*
-
-`e2e/wishlist.spec.ts:81-91` legt eine Fixture mit `coinUnlockThreshold: 500` an und löscht sie
-**inline**; die Datei hat kein `afterEach`. Schlägt irgendeine Assertion davor fehl, bleibt die
-Zeile dauerhaft in der Datenbank — und ab da scheitern zehn Assertions in zwei *anderen*
-Spec-Dateien für immer. Während dieser Phase zweimal passiert.
-
-Ein `afterEach` behebt aber nur die Hälfte: die Assertions sind ganzkörperliche
-`not.toContainText(/500/i)`-Prüfungen und kollidieren mit **Produktdaten** —
-`lib/gamification.ts:277` (`coins_500`, „500 Coins gesammelt"), `:334` (`tasks_500`,
-„500 Aufgaben erledigt") und `:75` (`minCoins: 500`). Jede Seite, die die Errungenschaftsliste
-rendert, ist damit für jedes Konto dauerhaft rot. Die Assertion muss eng gezogen oder abgeschafft
-werden.
+*Die Testinfrastruktur beißt sich selbst* — *erledigt*: `e2e/wishlist.spec.ts` räumt in
+`afterEach` auf, und die Body-weiten `/500/`-Prüfungen sind durch `expectNoServerError`
+(`e2e/helpers/errors.ts`) ersetzt, das nur die Fehlerseite liest (2026-11-26).
 
 *Die Messung selbst hat drei Löcher* (Belege in `zustandspruefung.md`)
 
@@ -411,33 +401,14 @@ gleichzeitig: die Ratsche liest die Datei nicht, `countAmber` liest kein `outlin
 fokussiert nie. **Gebaut wurde er als AAA-Kontrastmaßnahme** — ihn zu entfernen verlangt einen
 ebenso sichtbaren Ersatz und ist damit eine Spec-Entscheidung.
 
-*i18n — `check:i18n` prüft nur eine Richtung*
-
-Das Skript verifiziert *referenziert ⇒ vorhanden*, nie umgekehrt. Beide Gegenrichtungen fehlen:
-
-- **Verwaiste Keys.** In der Phase wurden 18 Keys ohne jede Code-Referenz gezählt, in allen sieben
-  Locale-Dateien vorhanden. Ein grober Nachscan listet 132 Kandidaten — die meisten davon aber per
-  Template-Literal konstruiert (`closure.quote_${n}`, `templates.<x>.task_N`,
-  `progress.tab_${id}`). Die echte Zahl braucht einen Scan, der Template-Literale versteht, und
-  **keine Löschung auf Verdacht**: eine falsche Löschung ist genau das, was `check:i18n` nicht
-  bemerkt. Ein neunzehnter kam im Schlussreview dazu: `quick.empty_title` verlor seine einzige
-  Referenz, als `five-minute-view.tsx`s Leerzustand zu einem `EmptyState` wurde, der nur
-  `empty_subtitle` zeigt — `t("empty_title")` in `components/focus/focus-mode-view.tsx:124` ist ein
-  anderer Namensraum (`focus`, nicht `quick`).
-- **Hartkodiertes Deutsch.** `components/layout/user-menu.tsx` liefert fünf deutsche Labels in
-  einer Sieben-Sprachen-App: `Statistiken` (:152), `Wochenrückblick` (:155), `Einstellungen`
-  (:158), `Admin` (:170), `Abmelden` (:192). Die Datei importiert `useTranslations("nav")` und ruft
-  `t(` genau dreimal. Jede nicht-deutsche Nutzerin liest heute ein deutsches Menü. `check:i18n` ist
-  blind dafür, weil diese Strings nie durch `t()` gehen. Kosten: fünf Keys × sieben Locales.
-  Dasselbe eine Ebene tiefer im **Errungenschaftskatalog**: `lib/gamification.ts` hält Titel und
-  Beschreibung jeder Errungenschaft als deutsche Literale, sodass `/progress?tab=achievements`
-  bei Locale `en` „Erstes Wunschlisten-Item gekauft" anzeigt (im Chrome-Review der Phase gesehen).
+*i18n — `check:i18n` prüft nur eine Richtung* — *erledigt*: das Skript meldet inzwischen
+auch verwaiste Keys (`ORPHAN`) und Familien; Nutzermenü und Errungenschaftskatalog laufen über
+`t()`. Neu seit 2026-11-26: `__tests__/i18n-icu-syntax.test.ts` parst jede Nachricht als ICU.
 
 *Drei Kleinigkeiten, jede in einer fremden Datei*
 
 | Ort | Befund |
 |---|---|
-| `components/stats/weekday-chart.tsx:43` | Das `aria-label` ist nicht auf `hasData` gegattert, anders als jeder andere „bester Tag"-Verbraucher derselben Datei. In einer Nullwoche liest ein Screenreader „Bester Tag: Mo — 0 Abschlüsse" vor — einen besten Tag, den die sichtbare Oberfläche absichtlich unterdrückt. Fix: ``aria-label={hasData ? `${bestDayLabel}: ${labels[bestIdx]} — ${bestDayCount}` : bestDayLabel}``. |
 | `app/(app)/wishlist/loading.tsx` | Zentrierte `max-w-[var(--measure)]`-Spalte, während die Seite dahinter ein `PageFrame` mit Rand ist — über 1100 px springt die Überschrift nach links, sobald der Inhalt da ist. `/tasks`' Skeleton ist ebenfalls unmigriert, ein Hausmuster gibt es also noch nicht. |
 
 **Aus dem Schlussreview des ganzen Branches (2026-08-28)** — gefunden, bewusst nicht behoben.
@@ -476,11 +447,18 @@ Details und Begründung stehen in `docs-tech/lichtkegel-phase2/abschluss.md`.
 
 | Ort | Befund |
 |---|---|
-| `components/progress/tabs/stats-tab.tsx:186,191,194` | `RAIL_LINE` wird in der Lesespalte benutzt (Abschnitt „Fortschritt"), nicht im Rand. Die eigene JSDoc der Konstante (`ui/list.tsx`) nennt sie „eine Zeile im Rand" und rechtfertigt das feste `--ink-3` damit, dass der Rand nie Amber trägt — die Zusicherung, nicht das Rendering, ist gebrochen. Fix: `META_LINE` umbenennen oder die drei Stellen inline setzen. |
-| `components/progress/tabs/review-tab.tsx:106-108` und `stats-tab.tsx:129,134` | Das hartkodierte Tageskürzel `d` sitzt an drei Stellen, nicht einer — beide bauen `{n}d {label}` per JS-Konkatenation statt ICU-Nachricht. Chinesisch rendert „3d 连击 · 最佳连击 12d". Plan-vorgegeben (das Zwei-Key-Budget der Phase verbot einen neuen ICU-Key); Fix ist ein Key für alle drei Stellen. |
 | `app/(app)/progress/page.tsx:44`, `app/(app)/wishlist/page.tsx:59`, `app/(app)/quick/page.tsx:111` | Kopfzeilen-Idiom driftet über drei Seiten: `gap-4` vs. `gap-2`, Untertitel/Tab-Text `--ink-2` vs. `--ink-3`. Dieselbe Absicht, jede für sich auf der Skala, aber in zwei Eigenschaften uneinheitlich. |
-| `components/stats/streak-sparkline.tsx:58` | Hartkodiert englisches `aria-label="Streak history sparkline"` in einer Sieben-Sprachen-App. Vorbestehend (identisch bei `c4889dd`), aber diese Phase hat dieselbe Datei angefasst und im selben Task das Geschwister-`aria-label` in `weekday-chart.tsx` lokalisiert — die Inkonsistenz ist jetzt auffällig. Braucht einen Key; das Zwei-Key-Budget der Phase ist ausgegeben. |
 | `app/(app)/stats/page.tsx`, `app/(app)/review/page.tsx` | `redirect()` (307) statt `permanentRedirect()` (308) für einen dokumentiert dauerhaften Routenumzug. 307 ist die sicherere Voreinstellung — eine bewusste Abwägung, kein Bug. |
+
+**Aus der Prüfung vom 2026-11-26 — offen** (axe-core WCAG A/AA über 12 Seiten, E2E lokal und in CI)
+
+| Befund | Warum offen |
+|---|---|
+| Zoom gesperrt: `app/layout.tsx` `maximumScale: 1`, `userScalable: false` (WCAG 1.4.4, alle Seiten) | 2026-04 bewusst für die PWA gesetzt; Rücknahme ist eine Produktentscheidung. Üblicher Ersatz gegen iOS-Auto-Zoom: Eingabefelder ≥ 16 px |
+| `LevelBadge`: Level 1–3 (`--ink-3` auf 8-%-Ink-Fläche) 3,99:1 im hellen Thema, „Lv." mit `opacity: 0.7` 2,6:1 | Stufenleiter der Badge ist eine Designentscheidung |
+| 11 Kontrastfunde in nicht migrierten Einstellungs-Komponenten (Amber als Füllfläche, fest verdrahtet `#ffffff`/`#1a1a0a`) | Lichtkegel-Migration dieser Komponenten |
+| Hydration-Mismatch in `EnergyCheckinCard` (Server „eingecheckt", Client nicht) im Dev-Log; „heute" wird beim Rendern auf Server und Client getrennt berechnet | Nicht gezielt reproduziert; Kandidat: Server rechnet mit `users.timezone`, statt beide Seiten raten zu lassen |
+| `WeekdayChart`: `aria-label` nicht auf `hasData` gegattert | Unerreichbar, der einzige Aufrufer rendert das Diagramm nur mit Daten |
 
 **Erledigt** ✅ — Automerge-Gate (`lint`, `build`, `test` sind seit 2026-08-21 required status checks auf `main`, und die beiden neuen Jobs laufen im PR-Gate-Workflow — vorher berichteten Lint und Build erst *nach* dem Merge, bei `required_status_checks: null`) · Automatische DB-Backups (`pg_dump`-Cronjob, `profiles: [backup]`, seit
 0.4.0) · E2E-Tests (Playwright, 13 Specs, seit 0.4.0) · Dependency-Stau aufgelöst
