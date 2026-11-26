@@ -42,6 +42,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   announce it as a dialog, focus could leave it, and Escape did nothing. It is now a real dialog
   with focus trap, Escape and click-outside to close. Layout unchanged, including the full-screen
   form with pinned save button on phones.
+### Changed
+
+- **CI:** The Playwright end-to-end suite now runs on every pull request against a production
+  build and PostgreSQL 19. It ran nowhere before. Not a required check yet.
 
 ## [0.11.0] - 2026-11-25
 
