@@ -40,6 +40,7 @@ import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
 import type { AchievementItem } from "@/components/animations/achievement-toast";
 import { dispatchCoinsEarned } from "@/lib/client/coin-events";
+import { localMidnight, useLocalToday } from "@/lib/client/local-today";
 
 interface Task {
   id: string;
@@ -91,9 +92,7 @@ interface GroupedTasks {
  * pausierten) Aufgaben, die `groupByPriority` weiterverarbeitet — bereits
  * nach Fälligkeit sortiert (überfällig zuerst), unverändert gegenüber vorher.
  */
-function groupTasks(tasks: Task[]): GroupedTasks {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+function groupTasks(tasks: Task[], today: Date): GroupedTasks {
 
   // Extract snoozed tasks first (uncompleted tasks with a future snooze date)
   const snoozed = tasks.filter((t) => {
@@ -223,6 +222,8 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
   const tSearch = useTranslations("search");
   const tCommon = useTranslations("common");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const todayStr = useLocalToday();
+  const todayDate = useMemo(() => localMidnight(todayStr), [todayStr]);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
@@ -547,7 +548,7 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
   }, [selectedIds, tasks]);
 
   const topicMap = useMemo(() => new Map(topics.map((t) => [t.id, t])), [topics]);
-  const grouped = groupTasks(filteredTasks);
+  const grouped = groupTasks(filteredTasks, todayDate);
   const activeTasks = [...grouped.today, ...grouped.upcoming, ...grouped.noDate, ...grouped.someday];
   const hasAnyTasks = tasks.length > 0;
   const hasFilteredTasks = filteredTasks.length > 0;
@@ -556,15 +557,14 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
 
   /** Aufgaben, deren Fälligkeit bereits verstrichen ist — die Rand-Kennzahl "überfällig". */
   const overdueCount = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = todayDate;
     return filteredTasks.filter((task) => {
       if (task.completedAt !== null) return false;
       const effectiveDate = task.type === "RECURRING" ? task.nextDueDate : task.dueDate;
       if (!effectiveDate) return false;
       return new Date(effectiveDate + "T00:00:00") < today;
     }).length;
-  }, [filteredTasks]);
+  }, [filteredTasks, todayDate]);
 
   /** Summe der Münzbelohnung offener Aufgaben — die Rand-Kennzahl "Münzen möglich". */
   const coinSum = useMemo(
@@ -638,8 +638,7 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
   const topicGroupedData = useMemo(() => {
     if (!groupByTopic) return null;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = todayDate;
 
     const topicLookup = new Map(topics.map((tp) => [tp.id, tp]));
 
@@ -711,7 +710,7 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
     });
 
     return result;
-  }, [filteredTasks, groupByTopic, topics, t]);
+  }, [filteredTasks, groupByTopic, topics, t, todayDate]);
 
   return (
     <div>

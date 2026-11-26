@@ -7,6 +7,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Tasks, topics, vacation mode:** Due labels ("Today", "Tomorrow"), the Today/Upcoming groups and
+  date pickers used the server's date while rendering. When the server's day differed from the
+  user's (Docker runs on UTC), the page failed to hydrate and was rebuilt in the browser, and
+  labels could be off by a day. Snoozing "until tomorrow" between midnight and 01:00 (Berlin)
+  picked today. All of them now use the user's local day.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update

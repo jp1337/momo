@@ -23,6 +23,11 @@ import {
   userHasSecondFactor,
 } from "@/lib/totp";
 import { serverEnv } from "@/lib/env";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { getLocalDateString } from "@/lib/date-utils";
+import { LocalTodayProvider } from "@/lib/client/local-today";
 
 /**
  * App shell layout — requires an authenticated session.
@@ -78,6 +83,10 @@ export default async function AppLayout({
   }
 
   const { coins } = await getUserStats(user.id!);
+  // "Today" in the user's stored timezone, for client components that render
+  // dates on the server too (see lib/client/local-today.tsx)
+  const [tzRow] = await db.select({ timezone: users.timezone }).from(users).where(eq(users.id, user.id!));
+  const serverToday = getLocalDateString(tzRow?.timezone);
   const currentLevel = getLevelForCoins(coins);
   const tAchievements = await getTranslations("achievements");
 
@@ -120,7 +129,7 @@ export default async function AppLayout({
           className="flex-1 overflow-y-auto px-4 pt-6 pb-24 sm:px-6 md:pb-6"
           style={{ backgroundColor: "var(--bg-primary)" }}
         >
-          {children}
+          <LocalTodayProvider serverToday={serverToday}>{children}</LocalTodayProvider>
         </main>
       </div>
 

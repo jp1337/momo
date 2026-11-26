@@ -323,3 +323,22 @@ test.describe("Task Form Modal", () => {
     await deleteTask(request, task.id);
   });
 });
+
+test.describe("Task list hydration", () => {
+  // Due labels and Today/Upcoming groups used to read new Date() during render,
+  // so a browser whose date differs from the server's ("Today" vs "Tomorrow")
+  // failed hydration and React discarded the server HTML.
+  test("hydrates without error when the browser's date differs from the server's", async ({ page, request }) => {
+    const task = await createTask(request, `Due Today ${Date.now()}`, {
+      dueDate: new Date().toISOString().slice(0, 10),
+    });
+    const pageErrors: string[] = [];
+    page.on("pageerror", (e) => pageErrors.push(e.message));
+    await page.clock.setFixedTime(new Date(Date.now() + 24 * 3600 * 1000));
+    await page.goto("/tasks");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByText(task.title)).toBeVisible();
+    expect(pageErrors.filter((m) => /hydrat/i.test(m))).toEqual([]);
+    await deleteTask(request, task.id);
+  });
+});
