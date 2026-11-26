@@ -7,6 +7,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Accessibility:** The task form (new and edit) was a plain overlay: screen readers did not
+  announce it as a dialog, focus could leave it, and Escape did nothing. It is now a real dialog
+  with focus trap, Escape and click-outside to close. Layout unchanged, including the full-screen
+  form with pinned save button on phones.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update

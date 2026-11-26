@@ -16,6 +16,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "motion/react";
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import * as RadixDialog from "@radix-ui/react-dialog";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faRotate, faXmark } from "@fortawesome/free-solid-svg-icons";
 
@@ -305,14 +306,17 @@ export function TaskForm({
     outline: "none",
   };
 
+  // Radix primitives, not the shared DialogContent: this form keeps its own
+  // full-screen mobile layout with a pinned save button. Radix adds the dialog
+  // role, focus trap, Esc and outside-click close the hand-built overlay lacked.
   return (
-    <div
+    <RadixDialog.Root open onOpenChange={(open) => { if (!open) onCancel(); }}>
+    <RadixDialog.Portal>
+    <RadixDialog.Overlay
       // Frosted overlay — same treatment as the Radix Dialog wrapper.
       className="fixed inset-0 z-[60] frosted-overlay sm:flex sm:items-center sm:justify-center sm:p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
     >
+      <RadixDialog.Content asChild aria-describedby={undefined}>
       <form
         onSubmit={handleSubmit}
         className="
@@ -328,7 +332,7 @@ export function TaskForm({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
-          <h2
+          <RadixDialog.Title
             className="text-xl font-semibold"
             style={{
               fontFamily: "var(--font-display, 'Lora', serif)",
@@ -336,7 +340,7 @@ export function TaskForm({
             }}
           >
             {isEditing ? t("form_title_edit") : t("form_title_new")}
-          </h2>
+          </RadixDialog.Title>
           <button
             type="button"
             onClick={onCancel}
@@ -901,6 +905,9 @@ export function TaskForm({
           </button>
         </div>
       </form>
-    </div>
+      </RadixDialog.Content>
+    </RadixDialog.Overlay>
+    </RadixDialog.Portal>
+    </RadixDialog.Root>
   );
 }
