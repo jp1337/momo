@@ -94,8 +94,9 @@ export function Sidebar() {
               className={`text-[10px] font-semibold uppercase tracking-[0.18em] px-3 ${idx === 0 ? "pt-1" : "pt-5"} pb-1.5`}
               style={{
                 fontFamily: "var(--font-ui, 'DM Sans', sans-serif)",
-                color: "var(--text-muted)",
-                opacity: 0.7,
+                // --ink-3 is the muted step that still meets 4.5:1; --ink-2 at
+                // opacity 0.7 measured 2.94:1 on the light ground
+                color: "var(--ink-3)",
               }}
             >
               {section.label}

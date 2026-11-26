@@ -52,6 +52,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Accessibility:** The habit year grid, the energy heatmap and the weekday chart marked every
   cell with an invalid ARIA role, 365 critical findings on the progress page. Removed; the charts
   keep their text description.
+- **Contrast (light theme):** Secondary text on raised surfaces (language switcher, sign-in
+  provider badge) measured 4.21:1, under the 4.5:1 the design system requires; the sidebar section
+  labels measured 2.94:1. Secondary ink is a shade darker now, the labels use the muted ink step
+  made for this.
 
 ## [0.11.0] - 2026-11-25
 
