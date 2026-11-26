@@ -60,6 +60,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   request was rejected, yet the step could report "Notifications enabled!", and no reminder ever
   arrived. It now subscribes the same way the settings page does, and says so when the server has
   no push key configured.
+- **Level-up:** The celebration showed the new level number but an empty line where the level's
+  name belongs ("Task Bearer", …). It now shows the name in the user's language.
 
 ## [0.11.0] - 2026-11-25
 

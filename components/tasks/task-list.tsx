@@ -161,7 +161,7 @@ function groupTasks(tasks: Task[]): GroupedTasks {
 /** Response shape from POST /api/tasks/:id/complete */
 interface CompleteApiResponse {
   coinsEarned?: number;
-  newLevel?: { level: number; title: string } | null;
+  newLevel?: { level: number } | null;
   unlockedAchievements?: AchievementItem[];
   streakCurrent?: number;
 }
@@ -232,7 +232,7 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
   }
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [levelUp, setLevelUp] = useState<{ level: number } | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
   const [snoozedExpanded, setSnoozedExpanded] = useState(false);
   const [completedExpanded, setCompletedExpanded] = useState(false);
@@ -726,7 +726,6 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
       {levelUp && (
         <LevelUpOverlay
           level={levelUp.level}
-          title={levelUp.title}
           onDone={() => setLevelUp(null)}
         />
       )}

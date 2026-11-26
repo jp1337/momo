@@ -91,7 +91,7 @@ interface DailyQuestCardProps {
 /** Response shape from POST /api/tasks/:id/complete */
 interface CompleteResponse {
   coinsEarned?: number;
-  newLevel?: { level: number; title: string } | null;
+  newLevel?: { level: number } | null;
   unlockedAchievements?: AchievementItem[];
   streakCurrent?: number;
 }
@@ -113,7 +113,7 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
     quest?.completedAt !== null && quest?.completedAt !== undefined
   );
   const [coinsEarned, setCoinsEarned] = useState<number | null>(null);
-  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [levelUp, setLevelUp] = useState<{ level: number } | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
   const [showBreakdownModal, setShowBreakdownModal] = useState(false);
 
@@ -232,7 +232,6 @@ export function DailyQuestCard({ quest, postponesToday, postponeLimit, emotional
     {levelUp && (
       <LevelUpOverlay
         level={levelUp.level}
-        title={levelUp.title}
         onDone={() => setLevelUp(null)}
       />
     )}

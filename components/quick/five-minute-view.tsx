@@ -57,7 +57,7 @@ interface FiveMinuteViewProps {
 /** Response shape from POST /api/tasks/:id/complete */
 interface CompleteApiResponse {
   coinsEarned?: number;
-  newLevel?: { level: number; title: string } | null;
+  newLevel?: { level: number } | null;
   unlockedAchievements?: AchievementItem[];
   streakCurrent?: number;
 }
@@ -72,7 +72,7 @@ export function FiveMinuteView({ initialTasks, topics }: FiveMinuteViewProps) {
   const t = useTranslations("quick");
   const tTasks = useTranslations("tasks");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [levelUp, setLevelUp] = useState<{ level: number } | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
 
   const topicMap = new Map(topics.map((tp) => [tp.id, tp]));
@@ -195,7 +195,6 @@ export function FiveMinuteView({ initialTasks, topics }: FiveMinuteViewProps) {
       {levelUp && (
         <LevelUpOverlay
           level={levelUp.level}
-          title={levelUp.title}
           onDone={() => setLevelUp(null)}
         />
       )}
