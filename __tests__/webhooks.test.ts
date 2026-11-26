@@ -303,6 +303,28 @@ describe("listWebhookDeliveries", () => {
     const fakeId = "00000000-0000-0000-0000-000000000001";
     await expect(listWebhookDeliveries(fakeId, user.id)).rejects.toThrow("not_found");
   });
+
+  it("returns the 50 newest deliveries, newest first, once there are more than 50", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const created = await createWebhookEndpoint(user.id, ep({ name: "Busy EP" }));
+    const base = Date.UTC(2026, 10, 1);
+    await db.insert(webhookDeliveries).values(
+      Array.from({ length: 51 }, (_, i) => ({
+        endpointId: created.id,
+        userId: user.id,
+        event: "task.created",
+        payload: { n: i },
+        status: "success",
+        deliveredAt: new Date(base + i * 60_000),
+      }))
+    );
+
+    const deliveries = await listWebhookDeliveries(created.id, user.id);
+
+    expect(deliveries).toHaveLength(50);
+    expect(deliveries[0].payload).toEqual({ n: 50 });
+    expect(deliveries.at(-1)!.payload).toEqual({ n: 1 });
+  });
 });
 
 // ─── cleanupWebhookDeliveries ─────────────────────────────────────────────────
