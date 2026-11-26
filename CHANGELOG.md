@@ -7,14 +7,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Fixed
-
-- **ntfy:** Notifications to ntfy 2.x servers failed with `400: request body must be valid JSON`
-  whenever they carried a tag, the test notification included. Momo sent `tags` as a string;
-  ntfy's JSON API expects a list. ([#251](https://github.com/jp1337/momo/issues/251))
-- **Webhooks:** The delivery history of an endpoint showed the *oldest* 50 attempts of the last 30
-  days instead of the newest, so once an endpoint had more than 50 deliveries, recent ones never
-  appeared. `GET /api/settings/webhooks/{id}` now returns the 50 newest, newest first.
 ### Added
 
 - **API docs:** Swagger UI now lists outbound webhooks (6 operations), push devices (3) and
@@ -23,10 +15,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **API docs:** 37 operations listed only some of the status codes they can return — mostly the
   `400` for a body that is not valid JSON, also `403` for read-only keys and two `409`s. The spec
   now names them, and the same test checks each handler's codes against it.
+
 ### Changed
 
 - **Alexa Skill:** The Lambda now has its own lint config and a CI job (typecheck, lint, build on
   Node 24). Before, its lint fell back to the Next.js rules, and no pull request ever built it.
+- **CI:** The Playwright end-to-end suite now runs on every pull request against a production
+  build and PostgreSQL 19. It ran nowhere before. Not a required check yet.
+
+### Fixed
+
+- **ntfy:** Notifications to ntfy 2.x servers failed with `400: request body must be valid JSON`
+  whenever they carried a tag, the test notification included. Momo sent `tags` as a string;
+  ntfy's JSON API expects a list. ([#251](https://github.com/jp1337/momo/issues/251))
+- **Webhooks:** The delivery history of an endpoint showed the *oldest* 50 attempts of the last 30
+  days instead of the newest, so once an endpoint had more than 50 deliveries, recent ones never
+  appeared. `GET /api/settings/webhooks/{id}` now returns the 50 newest, newest first.
 - **i18n:** The "page not found" and "something went wrong" pages were German in every language.
   They now follow the UI language, like the rest of the app.
 - **Wishlist:** The history toggle showed only the number of bought wishes, although it opens
@@ -42,10 +46,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   announce it as a dialog, focus could leave it, and Escape did nothing. It is now a real dialog
   with focus trap, Escape and click-outside to close. Layout unchanged, including the full-screen
   form with pinned save button on phones.
-### Changed
-
-- **CI:** The Playwright end-to-end suite now runs on every pull request against a production
-  build and PostgreSQL 19. It ran nowhere before. Not a required check yet.
 - **Accessibility:** Screen readers announced the new-device login alert switch without a name,
   and the vacation end date and the profile name and e-mail fields without their labels. They are
   now connected.
