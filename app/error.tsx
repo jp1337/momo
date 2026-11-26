@@ -13,6 +13,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 interface ErrorPageProps {
   error: Error & { digest?: string };
@@ -20,6 +21,7 @@ interface ErrorPageProps {
 }
 
 export default function GlobalError({ error, reset }: ErrorPageProps) {
+  const t = useTranslations("errors");
   useEffect(() => {
     // Log to console in development; in production a proper error tracker
     // (e.g. Sentry) would be wired here.
@@ -40,14 +42,14 @@ export default function GlobalError({ error, reset }: ErrorPageProps) {
 
       {/* Headline */}
       <h1 className="error-heading">
-        Etwas ist schiefgelaufen
+        {t("error_heading")}
       </h1>
 
       {/* Subtext */}
       <p className="error-subtext">
-        Das ist kein Problem von dir — der Fehler liegt auf unserer Seite.
+        {t("error_text_1")}
         <br />
-        Du kannst es gleich nochmal versuchen oder einfach zurückgehen.
+        {t("error_text_2")}
       </p>
 
       {/* Development: show raw error message */}
@@ -65,10 +67,10 @@ export default function GlobalError({ error, reset }: ErrorPageProps) {
           onClick={reset}
           className="error-cta"
         >
-          Neu laden
+          {t("retry")}
         </button>
         <Link href="/" className="error-cta error-cta--ghost">
-          Zurück zur App
+          {t("back_to_app")}
         </Link>
       </div>
     </div>
