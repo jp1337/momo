@@ -58,6 +58,31 @@ jobs:
           wait $PID_LINT || CODE=$((CODE + $?))
           exit $CODE
 
+  # The Alexa Lambda is its own npm project (own lockfile, own eslint config,
+  # Node 24 because that is the Lambda runtime). Before this job nothing ever
+  # typechecked, linted or bundled it on a pull request.
+  alexa-skill:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: alexa-skill
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: alexa-skill/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+
   # The job that would have caught the magic-string v1 override: it broke
   # `next build` while all 1728 tests stayed green. A test suite does not
   # exercise the build toolchain, so the build needs its own gate.

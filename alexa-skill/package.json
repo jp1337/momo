@@ -7,7 +7,7 @@
     "build": "esbuild src/index.ts --bundle --platform=node --target=node24 --outfile=dist/index.js --external:aws-sdk",
     "zip": "npm run build && cd dist && zip -r ../deploy.zip index.js && echo 'deploy.zip ready'",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src"
   },
   "dependencies": {
     "ask-sdk-core": "^2.14.0",
@@ -16,11 +16,10 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.161",
     "@types/node": "^24",
-    "@typescript-eslint/eslint-plugin": "^8",
-    "@typescript-eslint/parser": "^8",
     "esbuild": "^0.28.1",
     "eslint": "^10",
-    "typescript": "^6"
+    "typescript": "^6",
+    "typescript-eslint": "^8"
   },
   "engines": {
     "node": ">=24"

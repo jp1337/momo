@@ -376,16 +376,6 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
   `eslint ^9.7` — dieser Workaround kann also wegfallen, sobald das Plugin nachzieht oder
   `eslint-config-next` es fallen lässt. Bis dahin ist die explizite Version ohnehin die schnellere
   Variante: kein Dateisystem-Probe pro geprüfter Datei.
-- **`alexa-skill/` hat keine eigene eslint-Config, und niemand hat es gemerkt.** `npm run lint`
-  dort fällt auf die Root-`eslint.config.mjs` zurück — die Next.js-Config — und meldet folgerichtig
-  „Pages directory cannot be found". Der Lambda-Code wird also gegen React-/Next-Regeln geprüft
-  statt gegen Node-Regeln. Konsequenz: die beiden devDependencies
-  `@typescript-eslint/eslint-plugin` und `@typescript-eslint/parser`, die das Projekt installiert,
-  werden **von keiner Config referenziert** — Renovate hat sie zuletzt brav auf 8.67.0 gehoben, für
-  einen Linter, der so nicht existiert. Dazu ist `--ext .ts` im Lint-Skript unter eslint 9 Flat
-  Config bedeutungslos. Fix ist eine eigene `alexa-skill/eslint.config.mjs` mit
-  `typescript-eslint` — dann werden die beiden Pakete echt und das Skript prüft, was es zu prüfen
-  behauptet.
 
 **Aus der Lichtkegel-Phase 2 (2026-08-28) — gefunden, bewusst nicht behoben**
 

@@ -7,6 +7,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Alexa Skill:** The Lambda now has its own lint config and a CI job (typecheck, lint, build on
+  Node 24). Before, its lint fell back to the Next.js rules, and no pull request ever built it.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update
