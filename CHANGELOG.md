@@ -21,7 +21,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Alexa Skill:** The Lambda now has its own lint config and a CI job (typecheck, lint, build on
   Node 24). Before, its lint fell back to the Next.js rules, and no pull request ever built it.
 - **CI:** The Playwright end-to-end suite now runs on every pull request against a production
-  build and PostgreSQL 19. It ran nowhere before. Not a required check yet.
+  build and PostgreSQL 19. It ran nowhere before. It and the Alexa job are now required checks.
 
 ### Fixed
 
