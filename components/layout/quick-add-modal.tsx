@@ -43,7 +43,8 @@ export function QuickAddModal() {
     if (!open) return;
     fetch("/api/topics")
       .then((r) => r.json())
-      .then((data) => setTopics(Array.isArray(data) ? data : []))
+      // GET /api/topics answers { topics: [...] }, not a bare array
+      .then((data: { topics?: Topic[] }) => setTopics(Array.isArray(data.topics) ? data.topics : []))
       .catch(() => {});
   }, [open]);
 

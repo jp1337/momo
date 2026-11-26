@@ -7,6 +7,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Quick Add:** The topic picker under "More options" only ever offered "No topic". It read the
+  topics as a bare list, but the API returns `{ topics: [...] }`. Broken since Quick Add shipped.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update

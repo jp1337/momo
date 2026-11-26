@@ -57,6 +57,22 @@ test.describe("Task Quick-Add Modal", () => {
     await expect(titleInput).not.toBeVisible({ timeout: 3000 });
   });
 
+  test("topic dropdown lists the user's topics", async ({ page, request }) => {
+    const topic = await createTopic(request, `Quick Add Topic ${Date.now()}`);
+    try {
+      await page.goto("/dashboard");
+      await page.waitForLoadState("networkidle");
+      await page.keyboard.press("n");
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog.locator("input").first()).toBeVisible({ timeout: 3000 });
+      await dialog.locator("button").filter({ hasText: /mehr|more|options|Optionen/i }).first().click();
+      // The first select is the topic picker; it used to hold only "No topic"
+      await expect(dialog.locator("select").first().locator("option", { hasText: topic.title })).toHaveCount(1);
+    } finally {
+      await deleteTopic(request, topic.id);
+    }
+  });
+
   test("More options expands with topic/priority/energy dropdowns", async ({
     page,
   }) => {
