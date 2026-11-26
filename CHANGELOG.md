@@ -23,6 +23,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **API docs:** 37 operations listed only some of the status codes they can return — mostly the
   `400` for a body that is not valid JSON, also `403` for read-only keys and two `409`s. The spec
   now names them, and the same test checks each handler's codes against it.
+### Changed
+
+- **Alexa Skill:** The Lambda now has its own lint config and a CI job (typecheck, lint, build on
+  Node 24). Before, its lint fell back to the Next.js rules, and no pull request ever built it.
 
 ## [0.11.0] - 2026-11-25
 

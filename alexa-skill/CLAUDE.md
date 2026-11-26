@@ -26,6 +26,7 @@ models/
   de-DE.json          → German interaction model (intents, slots, sample utterances)
   en-US.json          → English interaction model
 skill.json            → Skill manifest (publishing info, account linking config)
+eslint.config.mjs     → Own flat config (typescript-eslint recommended); the root config ignores alexa-skill/**
 deploy.zip            → Output of `npm run build && npm run zip` — uploaded to Lambda
 ```
 
@@ -48,3 +49,6 @@ User-facing setup guide lives at `docs-site/alexa-skill.md` (published at jp1337
 - `node_modules/` — Lambda dependencies
 - `package-lock.json` — auto-managed
 - `deploy.zip` — build artifact
+
+## CI
+The `alexa-skill` job in `.github/workflows/test.yml` runs `npm ci`, `typecheck`, `lint` and `build` here on Node 24 (the Lambda runtime).
