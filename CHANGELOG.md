@@ -31,6 +31,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   They now follow the UI language, like the rest of the app.
 - **Wishlist:** The history toggle showed only the number of bought wishes, although it opens
   bought and discarded ones. It now counts both.
+- **Quick Add:** The topic picker under "More options" only ever offered "No topic". It read the
+  topics as a bare list, but the API returns `{ topics: [...] }`. Broken since Quick Add shipped.
 
 ## [0.11.0] - 2026-11-25
 
