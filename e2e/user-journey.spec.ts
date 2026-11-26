@@ -76,18 +76,12 @@ test.describe("Task lifecycle", () => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
 
-    // If the task appears as a quick win, click its complete button
-    const taskTitle = page.locator("span, div", { hasText: title }).first();
-    const isVisible = await taskTitle.isVisible({ timeout: 3000 }).catch(() => false);
-
-    if (isVisible) {
-      // The complete circle button is the first button in the task row
-      const row = taskTitle.locator("..").locator("..");
-      const completeBtn = row.locator("button").first();
-      await completeBtn.click();
-
+    // The row, not `span, div` with the title: that matched the app shell around everything.
+    const row = page.getByRole("listitem").filter({ hasText: title });
+    if (await row.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await row.getByRole("button", { name: new RegExp(title) }).click();
       // After completion, the task should animate out
-      await expect(taskTitle).not.toBeVisible({ timeout: 5000 });
+      await expect(row).toBeHidden({ timeout: 5000 });
     }
 
     // Dashboard must not error regardless
