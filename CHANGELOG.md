@@ -38,6 +38,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   requires. It now creates a one-time task.
 - **Tasks page:** a task added with Quick Add while on `/tasks` only appeared after a reload. The
   list now picks up refreshed server data.
+- **Accessibility:** The task form (new and edit) was a plain overlay: screen readers did not
+  announce it as a dialog, focus could leave it, and Escape did nothing. It is now a real dialog
+  with focus trap, Escape and click-outside to close. Layout unchanged, including the full-screen
+  form with pinned save button on phones.
 
 ## [0.11.0] - 2026-11-25
 

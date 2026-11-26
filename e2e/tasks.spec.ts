@@ -324,6 +324,18 @@ test.describe("Recurring Tasks", () => {
 // ─── Task Form (Edit/Create Modal) ────────────────────────────────────────────
 
 test.describe("Task Form Modal", () => {
+  test("the task form is an accessible dialog that Escape closes", async ({ page }) => {
+    await page.goto("/tasks");
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: /new task|neue aufgabe/i }).first().click();
+    // Before: a plain <div> overlay — no dialog role, no focus trap, Escape did nothing
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 3000 });
+    await expect(dialog).toHaveAccessibleName(/new task|neue aufgabe/i);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+  });
+
   test("opening edit on a task shows the edit modal", async ({
     page,
     request,
