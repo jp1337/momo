@@ -96,6 +96,92 @@ jobs:
           DATABASE_URL="postgresql://momo:password@localhost:5432/momo" \
           npm run build
 
+  # End-to-end against a production build. Until November 2026 the Playwright
+  # suite ran in no workflow; locally 41 of 322 tests had gone red unnoticed,
+  # and three of them pointed at real bugs (Quick Add never saved a task).
+  # Not a required check yet: make it one once it has stayed green for a while.
+  e2e:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    services:
+      postgres:
+        image: postgres:19-alpine
+        env:
+          POSTGRES_USER: momo
+          POSTGRES_PASSWORD: momo_test_password
+          POSTGRES_DB: momo_e2e
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    # Test-only values for a throwaway database; none of them is a secret.
+    env:
+      DATABASE_URL: postgresql://momo:momo_test_password@localhost:5432/momo_e2e
+      AUTH_SECRET: e2e-only-placeholder-not-a-real-secret-0000
+      AUTH_TRUST_HOST: "true"
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      TOTP_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      DISABLE_UPDATE_CHECK: "true"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+          cache: 'npm'
+
+      - name: Cache node_modules
+        id: nm-cache
+        uses: actions/cache@v6
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.nm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Migrate
+        run: node scripts/migrate.mjs
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start server
+        run: |
+          npm run start > server.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fsS http://localhost:3000/api/health > /dev/null && exit 0
+            sleep 1
+          done
+          cat server.log
+          exit 1
+
+      - name: Run Playwright
+        run: npx playwright test
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            server.log
+          retention-days: 7
+
   # Die beiden Ratschen laufen in einem eigenen Job, parallel zu `test`.
   # Sie standen bis September 2026 als Schritt 4 im Test-Job, vor den
   # Migrationen — ein einziger unbenutzter Uebersetzungs-Key brach den Job dort
