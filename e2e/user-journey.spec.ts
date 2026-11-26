@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { createTask, deleteTask, createTopic, deleteTopic } from "./helpers/api";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * Critical user journey E2E tests.
@@ -43,7 +44,7 @@ test.describe("Task lifecycle", () => {
     }
 
     // Page should not error
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
 
     // Cleanup
     await deleteTask(request, task.id);
@@ -131,7 +132,7 @@ test.describe("Quest lifecycle", () => {
     }
 
     // Page must be functional regardless
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
 
     await deleteTask(request, task.id);
   });
@@ -190,7 +191,7 @@ test.describe("Topic-scoped task journey", () => {
     await page.waitForLoadState("networkidle");
 
     await expect(page.locator("body")).toContainText(task.title);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
 
     // Cleanup
     await deleteTask(request, task.id);

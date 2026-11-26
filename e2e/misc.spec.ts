@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * Miscellaneous page E2E tests.
@@ -22,7 +23,7 @@ test.describe("API Documentation Page", () => {
   test("loads without error", async ({ page }) => {
     await page.goto("/api-docs");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("OpenAPI JSON spec is accessible", async ({ request }) => {
@@ -39,14 +40,14 @@ test.describe("Legal Pages", () => {
   test("Impressum page loads", async ({ page }) => {
     await page.goto("/impressum");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     await expect(page.locator("h1, h2").first()).toBeVisible({ timeout: 5000 });
   });
 
   test("Datenschutz page loads", async ({ page }) => {
     await page.goto("/datenschutz");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     await expect(page.locator("h1, h2").first()).toBeVisible({ timeout: 5000 });
   });
 });
@@ -78,7 +79,7 @@ test.describe("Landing Page", () => {
   test("landing page shows feature cards", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     // Feature section should have content
     const body = page.locator("body");
     await expect(body).toBeVisible();
@@ -87,7 +88,7 @@ test.describe("Landing Page", () => {
   test("login page shows sign-in options", async ({ page }) => {
     await page.goto("/login");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     // Should have some sign-in options (GitHub, Discord, Google, or Test Credentials)
     const signInContent = page.locator("main, form, button").first();
     await expect(signInContent).toBeVisible({ timeout: 5000 });
@@ -153,6 +154,6 @@ test.describe("Theme Toggle", () => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
     // Theme toggle may be an icon-only button — just ensure page doesn't error
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 });

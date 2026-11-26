@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { createTask, deleteTask, createTopic, deleteTopic } from "./helpers/api";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * Tasks page E2E tests.
@@ -88,7 +89,7 @@ test.describe("Tasks Page", () => {
     await page.goto("/tasks");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("displays a task created via API", async ({ page, request }) => {
@@ -220,7 +221,7 @@ test.describe("Tasks Page", () => {
     await page.waitForLoadState("networkidle");
 
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
 
     await deleteTask(request, task.id);
   });

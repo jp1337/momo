@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { gotoWithTheme } from "./helpers/theme";
 import { createTask, deleteTask } from "./helpers/api";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * Daily Quest E2E tests.
@@ -15,7 +16,7 @@ test.describe("Daily Quest on Dashboard", () => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
     // Quest card section heading should be present
     const questSection = page.locator("section").first();
     await expect(questSection).toBeVisible();
@@ -25,7 +26,7 @@ test.describe("Daily Quest on Dashboard", () => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
     // Energy check-in area (3 buttons: HIGH/MEDIUM/LOW or collapsed status bar)
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     // Either the 3-button layout or the collapsed status bar
     const energySection = page.locator("section").first();
     await expect(energySection).toBeVisible();
@@ -46,7 +47,7 @@ test.describe("Daily Quest on Dashboard", () => {
   }) => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     // No JavaScript errors either
     const errors: string[] = [];
     page.on("pageerror", (err) => errors.push(err.message));
@@ -76,7 +77,7 @@ test.describe("Energy Check-in", () => {
     await page.waitForLoadState("networkidle");
     // Either HIGH/MEDIUM/LOW buttons or a "Change" button if already checked in
     // May or may not be visible depending on whether check-in was done today
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 });
 
@@ -103,7 +104,7 @@ test.describe("Quest Postpone", () => {
       await expect(postponeBtn).toBeVisible({ timeout: 5000 });
     } else {
       // Quest may already be completed, or postpone limit reached
-      await expect(page.locator("body")).not.toContainText(/500/i);
+      await expectNoServerError(page);
     }
   });
 });
