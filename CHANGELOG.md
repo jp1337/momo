@@ -7,6 +7,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Webhooks:** The delivery history of an endpoint showed the *oldest* 50 attempts of the last 30
+  days instead of the newest, so once an endpoint had more than 50 deliveries, recent ones never
+  appeared. `GET /api/settings/webhooks/{id}` now returns the 50 newest, newest first.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update

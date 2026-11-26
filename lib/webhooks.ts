@@ -24,7 +24,7 @@
 
 import { db } from "@/lib/db";
 import { webhookEndpoints, webhookDeliveries } from "@/lib/db/schema";
-import { eq, and, count, lt } from "drizzle-orm";
+import { eq, and, count, lt, desc } from "drizzle-orm";
 import { encryptSecret, decryptSecret } from "@/lib/utils/crypto";
 import type {
   CreateWebhookEndpointInput,
@@ -266,7 +266,7 @@ export async function listWebhookDeliveries(
     .select()
     .from(webhookDeliveries)
     .where(eq(webhookDeliveries.endpointId, endpointId))
-    .orderBy(webhookDeliveries.deliveredAt)
+    .orderBy(desc(webhookDeliveries.deliveredAt))
     .limit(50);
 }
 

@@ -255,7 +255,7 @@ export function OutboundWebhooks({ initialEndpoints }: OutboundWebhooksProps) {
       const res = await fetch(`/api/settings/webhooks/${id}`);
       if (res.ok) {
         const data = await res.json() as { deliveries: DeliveryData[] };
-        setDeliveries(data.deliveries.reverse());
+        setDeliveries(data.deliveries);
       }
     } finally {
       setLoadingDeliveries(false);
