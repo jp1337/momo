@@ -65,6 +65,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Settings → Integrations:** Two webhook hints (the payload example and the signing-secret hint)
   threw a translation error in every language, because their literal `{ }` and `< >` were read as
   placeholders. They are escaped now, and a test parses every message in every language.
+- **Topic page:** The drag-and-drop list rendered different accessibility ids on the server and in
+  the browser. React keeps the server's attributes, so the screen-reader drag instructions pointed
+  at an id that did not exist. The ids are stable now.
 
 ## [0.11.0] - 2026-11-25
 
