@@ -12,7 +12,7 @@
  * Validates inputs client-side before submitting; closes on success.
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "motion/react";
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
@@ -139,17 +139,6 @@ export function TaskForm({
   const [showRecurrence, setShowRecurrence] = useState(
     () => initialData?.type === "RECURRING",
   );
-
-  // Reset form when initialData changes
-  useEffect(() => {
-    setFormData({
-      ...DEFAULT_FORM,
-      topicId: defaultTopicId ?? null,
-      ...initialData,
-    });
-    setShowMore(hasAdvancedData(initialData ?? {}));
-    setShowRecurrence(initialData?.type === "RECURRING");
-  }, [initialData, defaultTopicId]);
 
   // Toggling the recurrence switch flips the underlying type field.
   // We default to RECURRING when expanding (the most common reason to expand),

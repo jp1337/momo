@@ -1017,6 +1017,7 @@ export function TaskList({ initialTasks, topics, pageTitle }: TaskListProps) {
       {/* Task form modal */}
       {(showCreateForm || editingTaskId) && (
         <TaskForm
+          key={editingTaskId ?? "new"}
           initialData={
             editingTask
               ? {

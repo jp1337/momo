@@ -590,6 +590,7 @@ export function TopicDetailView({
       {/* Task form modal */}
       {(showCreateForm || editingTaskId) && (
         <TaskForm
+          key={editingTaskId ?? "new"}
           initialData={
             editingTask
               ? {
