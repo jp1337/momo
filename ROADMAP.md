@@ -447,7 +447,6 @@ Das Skript verifiziert *referenziert ⇒ vorhanden*, nie umgekehrt. Beide Gegenr
 
 | Ort | Befund |
 |---|---|
-| `components/wishlist/wishlist-view.tsx:426-436` | Der Verlaufs-Umschalter zählt nur die gekauften Wünsche (`Verlauf (1)`), klappt aber gekaufte **und** verworfene auf. Vorbestehend, identisch bei `84c4871`. |
 | `components/stats/weekday-chart.tsx:43` | Das `aria-label` ist nicht auf `hasData` gegattert, anders als jeder andere „bester Tag"-Verbraucher derselben Datei. In einer Nullwoche liest ein Screenreader „Bester Tag: Mo — 0 Abschlüsse" vor — einen besten Tag, den die sichtbare Oberfläche absichtlich unterdrückt. Fix: ``aria-label={hasData ? `${bestDayLabel}: ${labels[bestIdx]} — ${bestDayCount}` : bestDayLabel}``. |
 | `app/(app)/wishlist/loading.tsx` | Zentrierte `max-w-[var(--measure)]`-Spalte, während die Seite dahinter ein `PageFrame` mit Rand ist — über 1100 px springt die Überschrift nach links, sobald der Inhalt da ist. `/tasks`' Skeleton ist ebenfalls unmigriert, ein Hausmuster gibt es also noch nicht. |
 

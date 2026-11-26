@@ -157,6 +157,32 @@ test.describe("Wishlist Page", () => {
     await expect(page.locator("body")).not.toContainText(/500/i);
   });
 
+  test("history toggle counts bought and discarded wishes", async ({ page, request }) => {
+    const ts = Date.now();
+    const bought = await createWishlistItem(request, `Bought ${ts}`);
+    const discarded = await createWishlistItem(request, `Discarded ${ts}`);
+    created.push(bought.id, discarded.id);
+    expect((await request.post(`/api/wishlist/${bought.id}/buy`)).ok()).toBe(true);
+    expect((await request.post(`/api/wishlist/${discarded.id}/discard`)).ok()).toBe(true);
+
+    await page.goto("/wishlist");
+    await page.waitForLoadState("networkidle");
+    const toggle = page.locator("button").filter({ hasText: /Verlauf|History/i }).first();
+    const label = (await toggle.textContent()) ?? "";
+    const count = Number(/\((\d+)\)/.exec(label)?.[1]);
+
+    // The toggle opens both groups, so its count must include both.
+    const { items } = (await (await request.get("/api/wishlist")).json()) as {
+      items: { status: string }[];
+    };
+    const history = items.filter((i) => i.status === "BOUGHT" || i.status === "DISCARDED").length;
+    expect(count).toBe(history);
+
+    await toggle.click();
+    await expect(page.getByText(`Bought ${ts}`)).toBeVisible();
+    await expect(page.getByText(`Discarded ${ts}`)).toBeVisible();
+  });
+
   test("wishlist history tab loads without error", async ({ page }) => {
     await page.goto("/wishlist");
     await page.waitForLoadState("networkidle");
