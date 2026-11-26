@@ -62,6 +62,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   no push key configured.
 - **Level-up:** The celebration showed the new level number but an empty line where the level's
   name belongs ("Task Bearer", …). It now shows the name in the user's language.
+- **Settings → Integrations:** Two webhook hints (the payload example and the signing-secret hint)
+  threw a translation error in every language, because their literal `{ }` and `< >` were read as
+  placeholders. They are escaped now, and a test parses every message in every language.
 
 ## [0.11.0] - 2026-11-25
 
