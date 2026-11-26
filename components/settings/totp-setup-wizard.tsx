@@ -165,7 +165,7 @@ export function TotpSetupWizard({ onCancel, onComplete }: TotpSetupWizardProps) 
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={setup.qrCodeDataUrl}
-              alt="TOTP QR code"
+              alt={t("totp_qr_alt")}
               width={200}
               height={200}
             />

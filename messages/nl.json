@@ -131,6 +131,7 @@
     "insight_day_sun": "Zondag"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "Stap verwijderen",
     "page_title": "Taken",
     "sequential_label": "Stap voor stap",
     "sequential_progress": "Stap {current} van {total}",
@@ -251,6 +252,7 @@
     "empty_cta": "Taak toevoegen"
   },
   "topics": {
+    "icon_picker_aria": "Kies een pictogram",
     "page_title": "Onderwerpen",
     "page_subtitle": "{count, plural, one {# onderwerp} other {# onderwerpen}}",
     "rail_open_tasks": "{count, plural, one {# open taak} other {# open taken}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "Voer een geldig positief getal in"
   },
   "settings": {
+    "nav_aria": "Navigatie instellingen",
+    "totp_qr_alt": "QR-code voor je authenticator-app",
+    "profile_avatar_preview_alt": "Voorbeeld van de profielfoto",
     "nav_account": "Account",
     "nav_notifications": "Meldingen",
     "nav_quest": "Missie & Taken",

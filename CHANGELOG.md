@@ -90,6 +90,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **API:** 24 endpoints answered a malformed id in the path (anything that is not a UUID) with
   `500 Internal server error`, and `GET /api/tasks?topicId=…` did the same for a malformed topic id.
   They now answer `404` and `400`.
+- **Accessibility, i18n:** Six screen-reader labels were English in every language (settings
+  navigation, icon picker, two-factor QR code, avatar preview, "remove step" in task breakdown).
+  They are translated now; the decorative vacation emoji is hidden from screen readers.
 
 ## [0.11.0] - 2026-11-25
 

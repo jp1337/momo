@@ -11,6 +11,7 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as Popover from "@radix-ui/react-popover";
+import { useTranslations } from "next-intl";
 import { TOPIC_ICONS, resolveTopicIcon } from "@/lib/topic-icons";
 
 interface IconPickerProps {
@@ -23,6 +24,7 @@ interface IconPickerProps {
  * Stores and returns the string key, not the icon object.
  */
 export function IconPicker({ value, onChange }: IconPickerProps) {
+  const t = useTranslations("topics");
   const currentIcon = resolveTopicIcon(value);
   const iconKeys = Object.keys(TOPIC_ICONS);
 
@@ -31,7 +33,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
       <Popover.Trigger asChild>
         <button
           type="button"
-          aria-label="Pick an icon"
+          aria-label={t("icon_picker_aria")}
           style={{
             width: "100%",
             padding: "8px 12px",

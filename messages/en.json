@@ -131,6 +131,7 @@
     "insight_day_sun": "Sunday"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "Remove step",
     "page_title": "Tasks",
     "sequential_label": "Step by step",
     "sequential_progress": "Step {current} of {total}",
@@ -251,6 +252,7 @@
     "empty_cta": "Add a task"
   },
   "topics": {
+    "icon_picker_aria": "Pick an icon",
     "page_title": "Topics",
     "page_subtitle": "{count, plural, one {# topic} other {# topics}}",
     "rail_open_tasks": "{count, plural, one {# task open} other {# tasks open}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "Please enter a valid positive number"
   },
   "settings": {
+    "nav_aria": "Settings navigation",
+    "totp_qr_alt": "QR code for your authenticator app",
+    "profile_avatar_preview_alt": "Profile picture preview",
     "nav_account": "Account",
     "nav_notifications": "Notifications",
     "nav_quest": "Quest & Tasks",

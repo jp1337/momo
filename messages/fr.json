@@ -131,6 +131,7 @@
     "insight_day_sun": "Dimanche"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "Retirer l'étape",
     "page_title": "Tâches",
     "sequential_label": "Étape par étape",
     "sequential_progress": "Étape {current} sur {total}",
@@ -251,6 +252,7 @@
     "empty_cta": "Créer une tâche"
   },
   "topics": {
+    "icon_picker_aria": "Choisir une icône",
     "page_title": "Sujets",
     "page_subtitle": "{count, plural, one {# sujet} other {# sujets}}",
     "rail_open_tasks": "{count, plural, one {# tâche ouverte} other {# tâches ouvertes}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "Veuillez entrer un nombre positif valide"
   },
   "settings": {
+    "nav_aria": "Navigation des paramètres",
+    "totp_qr_alt": "Code QR pour votre application d'authentification",
+    "profile_avatar_preview_alt": "Aperçu de la photo de profil",
     "nav_account": "Compte",
     "nav_notifications": "Notifications",
     "nav_quest": "Quête & Tâches",

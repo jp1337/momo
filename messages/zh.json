@@ -131,6 +131,7 @@
     "insight_day_sun": "周日"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "移除步骤",
     "page_title": "任务",
     "sequential_label": "一步一步",
     "sequential_progress": "第 {current} 步 / 共 {total} 步",
@@ -251,6 +252,7 @@
     "empty_cta": "新建任务"
   },
   "topics": {
+    "icon_picker_aria": "选择图标",
     "page_title": "主题",
     "page_subtitle": "{count, plural, other {# 个主题}}",
     "rail_open_tasks": "{count, plural, other {# 个未完成任务}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "请输入有效的正数"
   },
   "settings": {
+    "nav_aria": "设置导航",
+    "totp_qr_alt": "用于身份验证器应用的二维码",
+    "profile_avatar_preview_alt": "头像预览",
     "nav_account": "账户",
     "nav_notifications": "通知",
     "nav_quest": "任务设置",
