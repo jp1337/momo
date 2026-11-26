@@ -131,6 +131,7 @@
     "insight_day_sun": "Domingo"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "Quitar paso",
     "page_title": "Tareas",
     "sequential_label": "Paso a paso",
     "sequential_progress": "Paso {current} de {total}",
@@ -251,6 +252,7 @@
     "empty_cta": "Crear tarea"
   },
   "topics": {
+    "icon_picker_aria": "Elegir un icono",
     "page_title": "Temas",
     "page_subtitle": "{count, plural, one {# tema} other {# temas}}",
     "rail_open_tasks": "{count, plural, one {# tarea pendiente} other {# tareas pendientes}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "Por favor introduce un número positivo válido"
   },
   "settings": {
+    "nav_aria": "Navegación de ajustes",
+    "totp_qr_alt": "Código QR para tu app de autenticación",
+    "profile_avatar_preview_alt": "Vista previa de la foto de perfil",
     "nav_account": "Cuenta",
     "nav_notifications": "Notificaciones",
     "nav_quest": "Misión & Tareas",

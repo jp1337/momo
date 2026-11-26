@@ -131,6 +131,7 @@
     "insight_day_sun": "Sonntag"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "Schritt entfernen",
     "page_title": "Aufgaben",
     "sequential_label": "Schritt für Schritt",
     "sequential_progress": "Schritt {current} von {total}",
@@ -251,6 +252,7 @@
     "empty_cta": "Aufgabe anlegen"
   },
   "topics": {
+    "icon_picker_aria": "Symbol auswählen",
     "page_title": "Themen",
     "page_subtitle": "{count, plural, one {# Thema} other {# Themen}}",
     "rail_open_tasks": "{count, plural, one {# Aufgabe offen} other {# Aufgaben offen}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "Bitte gib eine gültige positive Zahl ein"
   },
   "settings": {
+    "nav_aria": "Navigation der Einstellungen",
+    "totp_qr_alt": "QR-Code für deine Authenticator-App",
+    "profile_avatar_preview_alt": "Vorschau des Profilbilds",
     "nav_account": "Account",
     "nav_notifications": "Benachrichtigungen",
     "nav_quest": "Quest & Aufgaben",

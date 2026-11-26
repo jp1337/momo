@@ -131,6 +131,7 @@
     "insight_day_sun": "воскресенье"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "Удалить шаг",
     "page_title": "Задачи",
     "sequential_label": "Шаг за шагом",
     "sequential_progress": "Шаг {current} из {total}",
@@ -251,6 +252,7 @@
     "empty_cta": "Создать задачу"
   },
   "topics": {
+    "icon_picker_aria": "Выбрать значок",
     "page_title": "Темы",
     "page_subtitle": "{count, plural, one {# тема} few {# темы} other {# тем}}",
     "rail_open_tasks": "{count, plural, one {# задача в работе} few {# задачи в работе} other {# задач в работе}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "Введите корректное положительное число"
   },
   "settings": {
+    "nav_aria": "Навигация по настройкам",
+    "totp_qr_alt": "QR-код для вашего приложения-аутентификатора",
+    "profile_avatar_preview_alt": "Предпросмотр фото профиля",
     "nav_account": "Учётная запись",
     "nav_notifications": "Уведомления",
     "nav_quest": "Квест и задачи",

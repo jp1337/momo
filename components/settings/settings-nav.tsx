@@ -31,7 +31,7 @@ export function SettingsNav() {
       {/* Desktop: vertical sidebar nav */}
       <nav
         className="hidden md:flex flex-col gap-0.5 w-44 shrink-0 pt-1"
-        aria-label="Settings navigation"
+        aria-label={t("nav_aria")}
       >
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -64,7 +64,7 @@ export function SettingsNav() {
       <div
         className="md:hidden overflow-x-auto flex gap-1 pb-2 mb-2"
         style={{ borderBottom: "1px solid var(--border)" }}
-        aria-label="Settings navigation"
+        aria-label={t("nav_aria")}
       >
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");

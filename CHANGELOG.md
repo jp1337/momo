@@ -7,6 +7,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Accessibility, i18n:** Six screen-reader labels were English in every language (settings
+  navigation, icon picker, two-factor QR code, avatar preview, "remove step" in task breakdown).
+  They are translated now; the decorative vacation emoji is hidden from screen readers.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update

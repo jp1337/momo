@@ -262,7 +262,7 @@ export function ProfileSettings({
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={imagePreview}
-                alt="Avatar preview"
+                alt={t("profile_avatar_preview_alt")}
                 width={56}
                 height={56}
                 className="rounded-full object-cover group-hover:opacity-70 transition-opacity"
@@ -271,7 +271,7 @@ export function ProfileSettings({
             ) : (
               <Image
                 src={imagePreview}
-                alt="Avatar preview"
+                alt={t("profile_avatar_preview_alt")}
                 width={56}
                 height={56}
                 className="rounded-full object-cover group-hover:opacity-70 transition-opacity"

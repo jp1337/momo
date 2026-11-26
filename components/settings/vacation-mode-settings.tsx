@@ -126,8 +126,7 @@ export function VacationModeSettings({
           >
             <span
               className="text-lg"
-              role="img"
-              aria-label="vacation"
+              aria-hidden="true"
             >
               🏖️
             </span>
