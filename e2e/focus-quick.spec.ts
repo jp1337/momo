@@ -104,7 +104,7 @@ test.describe("Focus Mode (/focus)", () => {
     request,
   }) => {
     const title = `Focus Quick Win ${Date.now()}`;
-    const task = await createTask(request, title, { estimatedMinutes: 10 });
+    const task = await createTask(request, title, { estimatedMinutes: 15 }); // 5 | 15 | 30 | 60 only; 10 was a 422
 
     await page.goto("/focus");
     await page.waitForLoadState("networkidle");
