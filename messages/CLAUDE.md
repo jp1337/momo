@@ -17,6 +17,8 @@ next-intl translation files. One JSON file per supported locale.
 - All seven files must have identical key sets — missing keys fall back to the key name
 - When adding a new UI string: add the key to **all seven** locale files simultaneously
 - Never hardcode user-visible strings in components — always use `useTranslations()` / `getTranslations()`
+- Neue Texte übernehmen die **Anrede** ihrer Sprache aus den vorhandenen: de du, es tú, nl je, fr **vous**, ru **вы**, zh neutral. Vor dem Schreiben einen bestehenden Hinweistext derselben Sprache lesen (z. B. `settings.timezone_hint`). Anlass: die Fehlerseiten duzten zuerst auf Französisch und Russisch
+- Literale `{ }` und `< >` in einem Text sind ICU-Syntax und brauchen Apostroph-Quoting (`'{'`, `'<'`); `__tests__/i18n-icu-syntax.test.ts` parst jede Nachricht
 - Russian uses 4-form plurals (one / few / many / other or =0); Chinese has no plural forms (always `other`)
 - `npm run check:i18n` prueft **beide** Richtungen. Ein Key, den keine Zeile referenziert, ist genauso rot wie ein Key, der in einer Locale fehlt — dieses Verzeichnis waechst nicht mehr stillschweigend
 - Keys, die per Template-Literal gebildet werden (``t(`catalog.${key}.title`)``) oder als Variable durchgereicht (`t(config.key)`), sieht der Literal-Scan nicht. Sie gehoeren als Familie in `scripts/i18n-key-families.mjs` — sonst meldet `check:i18n` sie als verwaist

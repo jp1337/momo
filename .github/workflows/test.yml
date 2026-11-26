@@ -124,7 +124,7 @@ jobs:
   # End-to-end against a production build. Until November 2026 the Playwright
   # suite ran in no workflow; locally 41 of 322 tests had gone red unnoticed,
   # and three of them pointed at real bugs (Quick Add never saved a task).
-  # Not a required check yet: make it one once it has stayed green for a while.
+  # Required check on main since 2026-11-26, together with alexa-skill.
   e2e:
     runs-on: ubuntu-latest
     permissions:
