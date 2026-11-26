@@ -7,6 +7,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Accessibility:** The habit year grid, the energy heatmap and the weekday chart marked every
+  cell with an invalid ARIA role, 365 critical findings on the progress page. Removed; the charts
+  keep their text description.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update
