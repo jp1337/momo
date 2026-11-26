@@ -160,7 +160,7 @@ test.describe("Quick-add → task visible on tasks page", () => {
     // Cleanup via API — find and delete the task
     const tasksRes = await page.request.get("/api/tasks");
     if (tasksRes.ok()) {
-      const allTasks = (await tasksRes.json()) as Array<{ id: string; title: string }>;
+      const { tasks: allTasks } = (await tasksRes.json()) as { tasks: Array<{ id: string; title: string }> };
       const created = allTasks.find((t) => t.title === taskTitle);
       if (created) {
         await page.request.delete(`/api/tasks/${created.id}`);
