@@ -213,3 +213,31 @@ test.describe("Die Ankunft", () => {
     expect(style ?? "").not.toContain("translate");
   });
 });
+
+test.describe("Energy line hydration", () => {
+  // The card used to compute "today" during render, so the server (Docker: UTC)
+  // and the browser disagreed whenever their dates differed — every evening for
+  // users west of UTC — and React discarded the server HTML.
+  test("hydrates without error when the browser's date differs from the server's", async ({ page, request }) => {
+    const pageErrors: string[] = [];
+    page.on("pageerror", (e) => pageErrors.push(e.message));
+    await request.post("/api/energy-checkin", { data: { energyLevel: "MEDIUM" } });
+    await page.clock.setFixedTime(new Date(Date.now() + 24 * 3600 * 1000));
+    await page.goto("/dashboard");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("quest-meta")).toBeVisible();
+    expect(pageErrors.filter((m) => /hydrat/i.test(m))).toEqual([]);
+  });
+
+  test("a check-in from today collapses, and the level word reopens the choices", async ({ page, request }) => {
+    await request.post("/api/energy-checkin", { data: { energyLevel: "MEDIUM" } });
+    await page.goto("/dashboard");
+    await page.waitForLoadState("networkidle");
+    const meta = page.getByTestId("quest-meta");
+    await expect(meta.getByRole("button", { name: /high/i })).toHaveCount(0);
+    await expect(async () => {
+      await meta.getByRole("button").first().click();
+      await expect(meta.getByRole("button", { name: /high/i })).toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 10_000 });
+  });
+});

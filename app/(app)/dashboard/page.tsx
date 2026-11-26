@@ -29,6 +29,7 @@ import { taskCompletions, users, tasks, topics } from "@/lib/db/schema";
 import { eq, count, lte, isNull, isNotNull, and, or, min, sql } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { EnergyCheckinCard } from "@/components/dashboard/energy-checkin-card";
+import { getLocalDateString } from "@/lib/date-utils";
 import { QuickWinsSection } from "@/components/dashboard/quick-wins-section";
 import { Button } from "@/components/ui/button";
 import { PageFrame } from "@/components/ui/page-frame";
@@ -337,6 +338,7 @@ export default async function DashboardPage() {
           <EnergyCheckinCard
             energyLevel={cachedEnergyLevel}
             energyLevelDate={cachedEnergyLevelDate}
+            serverToday={getLocalDateString(userTimezone)}
             weekdayLabel={weekdayLabel}
             streakText={null}
             bestDayInsight={bestDayInsight}

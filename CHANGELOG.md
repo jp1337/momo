@@ -7,6 +7,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dashboard:** Whenever the server's date differed from the user's — in Docker the server runs
+  on UTC, so every evening for users west of it — the energy line failed to hydrate and React
+  rebuilt the whole page in the browser. It now hydrates cleanly and then shows the user's own day.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update
