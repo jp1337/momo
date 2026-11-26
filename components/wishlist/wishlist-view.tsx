@@ -426,8 +426,9 @@ export function WishlistView({
             {boughtItems.length > 0 ? (
               <span>
                 {t("view_history")}{" "}
+                {/* Counts what the toggle opens: bought AND discarded. */}
                 <span className="font-semibold text-[var(--done)]">
-                  ({boughtItems.length})
+                  ({boughtItems.length + discardedItems.length})
                 </span>
               </span>
             ) : (

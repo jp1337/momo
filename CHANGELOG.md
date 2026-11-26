@@ -29,6 +29,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   Node 24). Before, its lint fell back to the Next.js rules, and no pull request ever built it.
 - **i18n:** The "page not found" and "something went wrong" pages were German in every language.
   They now follow the UI language, like the rest of the app.
+- **Wishlist:** The history toggle showed only the number of bought wishes, although it opens
+  bought and discarded ones. It now counts both.
 
 ## [0.11.0] - 2026-11-25
 
