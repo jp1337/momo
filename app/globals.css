@@ -306,6 +306,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* iOS Safari zooms into a focused field whose text is under 16px. The app used
+   to stop that by disabling pinch zoom altogether (maximumScale: 1,
+   userScalable: false in app/layout.tsx), which fails WCAG 1.4.4 for everyone.
+   Zoom is allowed again; on touch devices fields render at 16px instead.
+   !important because several forms set font-size inline (14px), which beats
+   any stylesheet rule — and one field left under 16px brings the zoom back. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
 /* ─── Der Lichtkegel ────────────────────────────────────────────────────────
  * Die eine Lichtquelle pro Seite. Kein Rahmen, keine Flaeche — ein weiter,
  * weicher Wash von oben. Die Keule ist absichtlich breit: eine engere

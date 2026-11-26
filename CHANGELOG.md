@@ -28,6 +28,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Contrast:** The level badge in the header ("Lv. 1") was under 4.5:1 for levels 1–3 in the light
   theme, and its "Lv." label under 3:1 in both themes. The badge drops its tinted fill and the
   label is no longer faded.
+- **Accessibility:** Pinch zoom was disabled on every page (WCAG 1.4.4). It works again; on touch
+  devices form fields render at 16px so iOS still does not zoom into a field on focus.
 - **ntfy:** Notifications to ntfy 2.x servers failed with `400: request body must be valid JSON`
   whenever they carried a tag, the test notification included. Momo sent `tags` as a string;
   ntfy's JSON API expects a list. ([#251](https://github.com/jp1337/momo/issues/251))
