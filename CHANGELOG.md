@@ -76,6 +76,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   user's (Docker runs on UTC), the page failed to hydrate and was rebuilt in the browser, and
   labels could be off by a day. Snoozing "until tomorrow" between midnight and 01:00 (Berlin)
   picked today. All of them now use the user's local day.
+- **Focus, 5-minute mode, dashboard:** "Today" was the UTC date there, not the user's. Snoozed
+  tasks came back a day early or late around midnight (for users west of UTC: every afternoon),
+  and the postpone counter and the energy match badge could count the wrong day. They now use the
+  timezone in the user's settings, as the daily quest already did.
 
 ## [0.11.0] - 2026-11-25
 
