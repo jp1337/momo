@@ -60,7 +60,9 @@ test.describe("Landing Page", () => {
 
   test("renders the hero section with app name", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toContainText(/momo/i);
+    // The hero headline is a claim, not the app name; the name is the header brand
+    await expect(page.locator("h1")).toBeVisible();
+    await expect(page.getByText(/momo/i).first()).toBeVisible();
   });
 
   test("has a login/sign-in link", async ({ page }) => {
@@ -121,21 +123,21 @@ test.describe("Tasks API Smoke Tests", () => {
     const res = await request.get("/api/tasks");
     expect(res.status()).toBe(200);
     const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
+    expect(Array.isArray(body.tasks)).toBe(true);
   });
 
   test("GET /api/topics returns array", async ({ request }) => {
     const res = await request.get("/api/topics");
     expect(res.status()).toBe(200);
     const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
+    expect(Array.isArray(body.topics)).toBe(true);
   });
 
   test("GET /api/wishlist returns array", async ({ request }) => {
     const res = await request.get("/api/wishlist");
     expect(res.status()).toBe(200);
     const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
+    expect(Array.isArray(body.items)).toBe(true);
   });
 
   test("GET /api/daily-quest returns quest data or null", async ({ request }) => {

@@ -83,12 +83,9 @@ test.describe("Habits Page", () => {
   test("shows page heading", async ({ page }) => {
     await page.goto("/habits");
     await page.waitForLoadState("networkidle");
-    // "Gewohnheiten" / "Habits" heading
-    const heading = page
-      .locator("h1, h2")
-      .filter({ hasText: /Gewohnheiten|Habits/i })
-      .first();
-    await expect(heading).toBeVisible({ timeout: 5000 });
+    // /habits redirects to the habits tab of /progress
+    await expect(page).toHaveURL(/\/progress\?tab=habits/);
+    await expect(page.getByText(/Gewohnheiten|Habits/i).first()).toBeVisible({ timeout: 5000 });
   });
 
   test("shows contribution grid or empty state", async ({ page }) => {
@@ -151,9 +148,7 @@ test.describe("Stats Page", () => {
     await page.waitForLoadState("networkidle");
     await expectNoServerError(page);
     // Level or coin data should appear
-    const statsEl = page
-      .locator("body")
-      .filter({ hasText: /Level|Münzen|Coins|Streak/i });
+    const statsEl = page.getByText(/Level|Münzen|Coins|Streak/i);
     await expect(statsEl.first()).toBeVisible({ timeout: 5000 });
   });
 });

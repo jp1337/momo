@@ -48,7 +48,8 @@ test.describe("API Keys Page", () => {
       data: { name: `E2E Key ${Date.now()}` },
     });
     if (res.ok()) {
-      const key = await res.json() as { id: string; name: string };
+      // { key: plaintext, record: { id, name, … } }
+      const { record: key } = await res.json() as { record: { id: string; name: string } };
       await page.reload();
       await page.waitForLoadState("networkidle");
 
