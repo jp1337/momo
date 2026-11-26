@@ -7,6 +7,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Focus, 5-minute mode, dashboard:** "Today" was the UTC date there, not the user's. Snoozed
+  tasks came back a day early or late around midnight (for users west of UTC: every afternoon),
+  and the postpone counter and the energy match badge could count the wrong day. They now use the
+  timezone in the user's settings, as the daily quest already did.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update

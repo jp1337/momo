@@ -29,6 +29,7 @@ import { taskCompletions, users, tasks, topics } from "@/lib/db/schema";
 import { eq, count, lte, isNull, isNotNull, and, or, min, sql } from "drizzle-orm";
 import { DailyQuestCard } from "@/components/dashboard/daily-quest-card";
 import { EnergyCheckinCard } from "@/components/dashboard/energy-checkin-card";
+import { getLocalDateString } from "@/lib/date-utils";
 import { QuickWinsSection } from "@/components/dashboard/quick-wins-section";
 import { Button } from "@/components/ui/button";
 import { PageFrame } from "@/components/ui/page-frame";
@@ -67,8 +68,6 @@ export default async function DashboardPage() {
 
   const t = await getTranslations("dashboard");
 
-  const todayStr = new Date().toISOString().split("T")[0];
-
   // Fetch timezone first — selectDailyQuest uses it to compute "today" correctly.
   // Without this, the UTC-based fallback can clear the quest set by the briefing
   // for users in non-UTC timezones who open the app after midnight UTC.
@@ -78,6 +77,9 @@ export default async function DashboardPage() {
     .where(eq(users.id, userId))
     .limit(1);
   const userTimezone = tzRow[0]?.timezone ?? null;
+  // The user's day, not UTC: snoozedUntil, the postpone date and the energy
+  // check-in date are all stored as the user's local dates
+  const todayStr = getLocalDateString(userTimezone);
 
   // Fetch quest, stats, completion count, postpone data, quick wins, sequential group minimums,
   // weekday completion pattern and topic count in parallel.
@@ -166,17 +168,16 @@ export default async function DashboardPage() {
   const postponeLimit = postponeData?.questPostponeLimit ?? 3;
   const emotionalClosureEnabled = postponeData?.emotionalClosureEnabled ?? true;
 
-  // Energy state — we deliberately do NOT compare against todayStr (which is
-  // UTC) here. The raw level + date are passed to EnergyCheckinCard, which
+  // Energy state — we deliberately do NOT compare against todayStr (the
+  // server's view of the user's day) here. The raw level + date are passed to EnergyCheckinCard, which
   // does the comparison in the browser using the user's actual local date.
   // This is the structural fix for the timezone bug that hid the prompt for
   // users east or west of UTC around midnight.
   const cachedEnergyLevel = postponeData?.energyLevel ?? null;
   const cachedEnergyLevelDate = postponeData?.energyLevelDate ?? null;
   // For the "matches your energy" badge on DailyQuestCard we still need a
-  // best-effort server-side decision — accept the cached value when its
-  // date string equals the SSR-computed UTC today (close enough for the
-  // badge; the canonical render happens client-side after refresh).
+  // server-side decision — accept the cached value when its date equals the
+  // user's today (stored timezone).
   const userEnergyToday = cachedEnergyLevelDate === todayStr ? cachedEnergyLevel : null;
 
   // Serialize Date fields — Next.js cannot pass Date objects from Server to Client Components
