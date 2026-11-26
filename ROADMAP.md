@@ -289,15 +289,16 @@ nicht wenn sie Funktionsumfang erhöhen.
 
 ## Offene technische Schulden
 
-**OpenAPI-Spec-Drift, von keinem Test bewacht** — *Pfade erledigt (2026-11-26)*
+**OpenAPI-Spec-Drift, von keinem Test bewacht** — *erledigt (2026-11-26)*
 
 > `__tests__/openapi-drift.test.ts` gleicht Spec und `app/api/**/route.ts` ab: keine Geister-Operation,
 > keine fehlende öffentliche Operation, jeder `$ref` löst auf, jeder Tag ist deklariert. Die zehn
 > fehlenden Bearer-Operationen (Webhooks 6, Push-Geräte 3, Wishlist-Undo-Discard 1) sind dokumentiert.
 > 2FA, Passkeys, Account-Linking und Locale stehen bewusst *nicht* in der Spec — reine
 > Browser-Session-Zeremonien, mit API-Key nicht nutzbar; der Test führt sie mit Begründung.
-> **Offen:** Statuscodes. Eine Messung fand 37 Operationen, deren Handler Codes liefern, die die Spec
-> nicht nennt (meist `400` für ungültiges JSON).
+> Seit dem Folge-PR prüft er auch pro Handler die Statuscodes (Literale plus `readonlyKeyResponse` →
+> 403, `rateLimitResponse` → 429). Er fand 37 Operationen mit undokumentierten Codes, meist `400` für
+> ungültiges JSON; alle nachgetragen, `400` über die neue Komponente `BadRequest`.
 
 
 `lib/openapi.ts` sind 3715 handgepflegte Zeilen, und **keine einzige Testdatei importiert
@@ -340,9 +341,6 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
 - **Die 20 Route-Test-Mocks von `readonlyKeyResponse` kennen den neuen `code` nicht.** Sie stubben
   `{ error, message }` ohne `code: "READONLY_KEY"`, sodass der Code an genau einer Stelle geprüft
   wird — eine Regression im echten Helper würde kein Route-Test bemerken.
-- **Drei Handler liefern 403, ohne es in der Spec zu dokumentieren**: `POST /api/auth/sessions/revoke-others`,
-  `DELETE /api/auth/sessions/{id}`, `PATCH /api/settings/vacation-mode`. Fällt weg, sobald der
-  Drift-Test oben existiert.
 - **Sechs Tests in `__tests__/webhooks.test.ts`** warten mit festem `setTimeout(r, 300)` auf denselben
   fire-and-forget-Insert, für den es seit 0.6.0 einen sauberen Helper gibt (`waitForEndpointDelivery`).
   Nie rot gesehen, aber dasselbe Rennen mit großzügigerem Puffer — und der Umbau spart ~2 s Laufzeit.

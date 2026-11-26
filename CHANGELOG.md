@@ -12,6 +12,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **API docs:** Swagger UI now lists outbound webhooks (6 operations), push devices (3) and
   undoing a wishlist discard. A test compares the spec with the route files, so an endpoint can no
   longer ship undocumented.
+- **API docs:** 37 operations listed only some of the status codes they can return — mostly the
+  `400` for a body that is not valid JSON, also `403` for read-only keys and two `409`s. The spec
+  now names them, and the same test checks each handler's codes against it.
 
 ## [0.11.0] - 2026-11-25
 
