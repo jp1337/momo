@@ -49,6 +49,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Accessibility:** Screen readers announced the new-device login alert switch without a name,
   and the vacation end date and the profile name and e-mail fields without their labels. They are
   now connected.
+- **Accessibility:** The habit year grid, the energy heatmap and the weekday chart marked every
+  cell with an invalid ARIA role, 365 critical findings on the progress page. Removed; the charts
+  keep their text description.
 
 ## [0.11.0] - 2026-11-25
 

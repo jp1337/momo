@@ -312,9 +312,11 @@ export async function countBoxes(page: Page): Promise<Hit[]> {
     const PROGRESS = 'progress, meter, [role="progressbar"]';
     const FLOATING = '[role="dialog"], [role="menu"], [role="tooltip"], [data-radix-popper-content-wrapper]';
     /**
-     * Diagramm-Zellen (Task-11-Review I1): `role="gridcell"` markiert die
-     * Tage eines `ContributionGrid`-Jahresrasters — momentan der einzige
-     * Ort im Code, der diese Rolle vergibt. Wie bei `PROGRESS` ist die
+     * Diagramm-Zellen (Task-11-Review I1): `data-chart-cell` markiert die
+     * Marken der Diagramme (Jahresraster, Energie-Heatmap, Wochentagsbalken).
+     * Bis November 2026 war das `role="gridcell"` — eine ARIA-Rolle ohne
+     * `grid`/`row`-Eltern, die axe 365-mal als kritisch meldete und
+     * Screenreadern nichts brachte (die Diagramme sind `role="img"`). Wie bei `PROGRESS` ist die
      * Regel für sie unerfüllbar, nicht unwichtig: eine Zelle IST eine
      * gefüllte Fläche, per Definition (ihre Füllung kodiert die
      * Abschlusszahl des Tages), nicht ein Kasten, der eine Handlung
@@ -324,7 +326,7 @@ export async function countBoxes(page: Page): Promise<Hit[]> {
      * sie wachsen, also braucht es jetzt eine eigene, benannte Ausnahme
      * statt eines Zufallstreffers auf die Punkt-Schwelle.
      */
-    const CHART = '[role="gridcell"]';
+    const CHART = "[data-chart-cell]";
     /** Punkt-Schwelle in px — siehe JSDoc oben. */
     const DOT_MAX_PX = 12;
 

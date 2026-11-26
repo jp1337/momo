@@ -219,7 +219,7 @@ export async function EnergyWeekBlock({ weekCounts, history, isEmpty }: EnergyWe
                   return (
                     <div
                       key={wi}
-                      role="gridcell"
+                      data-chart-cell
                       title={
                         slot.inRange
                           ? `${slot.date}${slot.level ? ` — ${t(LEVEL_META[slot.level].labelKey)}` : ` — ${t("energy_no_checkin")}`}`
