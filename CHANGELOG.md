@@ -7,6 +7,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Quick Add saves again — it never did.** Since Quick Add (`N` or `/`) shipped in April, every
+  save ended in "Could not save — try again": the modal did not send the task type, which the API
+  requires. It now creates a one-time task.
+- **Tasks page:** a task added with Quick Add while on `/tasks` only appeared after a reload. The
+  list now picks up refreshed server data.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update

@@ -31,18 +31,21 @@ test.describe("Task Quick-Add Modal", () => {
     await expect(titleInput).toBeVisible({ timeout: 3000 });
   });
 
-  test("can create a task via the quick-add modal", async ({ page }) => {
+  test("can create a task via the quick-add modal", async ({ page, request }) => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
     await page.keyboard.press("n");
-    const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
-      .first();
+    const titleInput = page.locator('[role="dialog"] input').first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
     const taskTitle = `E2E Quick Task ${Date.now()}`;
     await titleInput.fill(taskTitle);
     await page.keyboard.press("Enter");
     await expect(titleInput).not.toBeVisible({ timeout: 5000 });
+    // The modal closing is not enough: the task must exist
+    const { tasks } = (await (await request.get("/api/tasks")).json()) as { tasks: { id: string; title: string }[] };
+    const created = tasks.find((t) => t.title === taskTitle);
+    expect(created).toBeDefined();
+    await deleteTask(request, created!.id);
   });
 
   test("Escape closes the quick-add modal without saving", async ({ page }) => {
@@ -55,6 +58,20 @@ test.describe("Task Quick-Add Modal", () => {
     await expect(titleInput).toBeVisible({ timeout: 3000 });
     await page.keyboard.press("Escape");
     await expect(titleInput).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test("a task added with Quick Add on /tasks shows up without a reload", async ({ page, request }) => {
+    await page.goto("/tasks");
+    await page.waitForLoadState("networkidle");
+    await page.keyboard.press("n");
+    const titleInput = page.locator('[role="dialog"] input').first();
+    await expect(titleInput).toBeVisible({ timeout: 3000 });
+    const taskTitle = `E2E Quick On Tasks ${Date.now()}`;
+    await titleInput.fill(taskTitle);
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("listitem").filter({ hasText: taskTitle })).toBeVisible({ timeout: 5000 });
+    const { tasks } = (await (await request.get("/api/tasks")).json()) as { tasks: { id: string; title: string }[] };
+    await deleteTask(request, tasks.find((t) => t.title === taskTitle)!.id);
   });
 
   test("More options expands with topic/priority/energy dropdowns", async ({
