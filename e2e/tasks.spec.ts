@@ -17,7 +17,7 @@ test.describe("Task Quick-Add Modal", () => {
     await page.waitForLoadState("networkidle");
     await page.keyboard.press("n");
     const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
+      .locator('[role="dialog"] input')
       .first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
   });
@@ -27,7 +27,7 @@ test.describe("Task Quick-Add Modal", () => {
     await page.waitForLoadState("networkidle");
     await page.keyboard.press("/");
     const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
+      .locator('[role="dialog"] input')
       .first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
   });
@@ -37,7 +37,7 @@ test.describe("Task Quick-Add Modal", () => {
     await page.waitForLoadState("networkidle");
     await page.keyboard.press("n");
     const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
+      .locator('[role="dialog"] input')
       .first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
     const taskTitle = `E2E Quick Task ${Date.now()}`;
@@ -51,7 +51,7 @@ test.describe("Task Quick-Add Modal", () => {
     await page.waitForLoadState("networkidle");
     await page.keyboard.press("n");
     const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
+      .locator('[role="dialog"] input')
       .first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
     await page.keyboard.press("Escape");
@@ -65,7 +65,7 @@ test.describe("Task Quick-Add Modal", () => {
     await page.waitForLoadState("networkidle");
     await page.keyboard.press("n");
     const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
+      .locator('[role="dialog"] input')
       .first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
     // Click "More options" toggle
@@ -186,8 +186,8 @@ test.describe("Tasks Page", () => {
     await page.goto("/tasks");
     await page.waitForLoadState("networkidle");
 
-    // Topic title should appear somewhere on the page as a tag
-    await expect(page.locator(`text="${topic.title}"`)).toBeVisible({
+    // Topic title appears as the row's eyebrow (and in the rail's topic filter)
+    await expect(page.locator(`text="${topic.title}"`).first()).toBeVisible({
       timeout: 5000,
     });
 
@@ -275,7 +275,7 @@ test.describe("Recurring Tasks", () => {
       },
     });
     expect(res.ok()).toBe(true);
-    const task = await res.json() as { id: string; title: string };
+    const { task } = await res.json() as { task: { id: string; title: string } };
 
     await page.goto("/tasks");
     await page.waitForLoadState("networkidle");
@@ -301,25 +301,13 @@ test.describe("Task Form Modal", () => {
     await page.goto("/tasks");
     await page.waitForLoadState("networkidle");
 
-    // Find the task and look for an edit button (pencil icon area)
-    const taskText = page.locator(`text="${title}"`);
-    if ((await taskText.count()) > 0) {
-      // Hover over the task row to make edit button visible
-      await taskText.hover();
-      // Look for edit button near the task
-      const editBtn = page
-        .locator(`text="${title}"`)
-        .locator("xpath=ancestor::*[4]")
-        .locator('button[aria-label*="edit" i], button[aria-label*="bearbeiten" i]')
-        .first();
-      if ((await editBtn.count()) > 0) {
-        await editBtn.click();
-        // Modal should appear
-        const modal = page.locator('[role="dialog"]');
-        await expect(modal).toBeVisible({ timeout: 3000 });
-        await page.keyboard.press("Escape");
-      }
-    }
+    const row = page.getByRole("listitem").filter({ hasText: title });
+    await row.hover();
+    await row.getByRole("button", { name: /edit task|aufgabe bearbeiten/i }).click();
+    const modal = page.locator('[role="dialog"]');
+    await expect(modal).toBeVisible({ timeout: 3000 });
+    await expect(modal.locator("input").first()).toHaveValue(title);
+    await page.keyboard.press("Escape");
 
     await deleteTask(request, task.id);
   });

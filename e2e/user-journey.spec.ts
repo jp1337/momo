@@ -147,7 +147,7 @@ test.describe("Quick-add → task visible on tasks page", () => {
 
     await page.keyboard.press("n");
     const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
+      .locator('[role="dialog"] input')
       .first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
 

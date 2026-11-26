@@ -83,12 +83,9 @@ test.describe("Habits Page", () => {
   test("shows page heading", async ({ page }) => {
     await page.goto("/habits");
     await page.waitForLoadState("networkidle");
-    // "Gewohnheiten" / "Habits" heading
-    const heading = page
-      .locator("h1, h2")
-      .filter({ hasText: /Gewohnheiten|Habits/i })
-      .first();
-    await expect(heading).toBeVisible({ timeout: 5000 });
+    // /habits redirects to the habits tab of /progress
+    await expect(page).toHaveURL(/\/progress\?tab=habits/);
+    await expect(page.getByText(/Gewohnheiten|Habits/i).first()).toBeVisible({ timeout: 5000 });
   });
 
   test("shows contribution grid or empty state", async ({ page }) => {

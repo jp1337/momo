@@ -8,7 +8,9 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test.describe("Landing Page", () => {
   test("renders the hero section with app name", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toContainText(/momo/i);
+    // The hero headline is a claim, not the app name; the name is the header brand
+    await expect(page.locator("h1")).toBeVisible();
+    await expect(page.getByText(/momo/i).first()).toBeVisible();
   });
 
   test("has a login/sign-in link", async ({ page }) => {

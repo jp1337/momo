@@ -65,9 +65,9 @@ test.describe("Settings: Account", () => {
     await page.goto("/settings/account");
     await page.waitForLoadState("networkidle");
     // Name input should be visible
-    const nameInput = page
-      .locator('input[name="name"], input[placeholder*="Name"]')
-      .first();
+    // The profile is read-only until its edit button is pressed
+    await page.getByRole("button", { name: /bearbeiten|edit/i }).first().click();
+    const nameInput = page.locator('input[type="text"]').first();
     await expect(nameInput).toBeVisible({ timeout: 5000 });
   });
 

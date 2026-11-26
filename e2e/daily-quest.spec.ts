@@ -35,10 +35,11 @@ test.describe("Daily Quest on Dashboard", () => {
   test("GET /api/daily-quest returns expected shape", async ({ request }) => {
     const res = await request.get("/api/daily-quest");
     expect(res.status()).toBe(200);
-    const body = await res.json() as Record<string, unknown> | null;
-    if (body !== null) {
-      expect(typeof body.id).toBe("string");
-      expect(typeof body.title).toBe("string");
+    // { quest: Task | null }
+    const { quest } = await res.json() as { quest: Record<string, unknown> | null };
+    if (quest !== null) {
+      expect(typeof quest.id).toBe("string");
+      expect(typeof quest.title).toBe("string");
     }
   });
 
