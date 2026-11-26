@@ -7,6 +7,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **ntfy:** Notifications to ntfy 2.x servers failed with `400: request body must be valid JSON`
+  whenever they carried a tag, the test notification included. Momo sent `tags` as a string;
+  ntfy's JSON API expects a list. ([#251](https://github.com/jp1337/momo/issues/251))
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update
@@ -1297,7 +1303,9 @@ Docstring der Route schon immer behauptet hat. `GET` bleibt unverändert.
 - Bought items shown with green left border and "Bought" badge
 - Discarded items shown with 50% opacity and strikethrough title
 
-[Unreleased]: https://github.com/jp1337/momo/compare/v0.10.3...HEAD
+[Unreleased]: https://github.com/jp1337/momo/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/jp1337/momo/compare/v0.10.4...v0.11.0
+[0.10.4]: https://github.com/jp1337/momo/compare/v0.10.3...v0.10.4
 [0.10.3]: https://github.com/jp1337/momo/compare/v0.10.2...v0.10.3
 [0.10.2]: https://github.com/jp1337/momo/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/jp1337/momo/compare/v0.10.0...v0.10.1
