@@ -11,7 +11,7 @@
  * @module components/settings/vacation-mode-settings
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useId } from "react";
 import { useTranslations } from "next-intl";
 
 interface VacationModeSettingsProps {
@@ -32,6 +32,7 @@ export function VacationModeSettings({
   initialEndDate,
 }: VacationModeSettingsProps) {
   const t = useTranslations("settings");
+  const endDateId = useId();
 
   const [active, setActive] = useState(initialActive);
   const [endDate, setEndDate] = useState(initialEndDate ?? "");
@@ -183,6 +184,7 @@ export function VacationModeSettings({
           <div className="flex items-end gap-3 flex-wrap">
             <div className="flex flex-col gap-1">
               <label
+                htmlFor={endDateId}
                 className="text-xs font-medium"
                 style={{
                   color: "var(--text-secondary)",
@@ -192,6 +194,7 @@ export function VacationModeSettings({
                 {t("vacation_mode_end_date")}
               </label>
               <input
+                id={endDateId}
                 type="date"
                 value={endDate}
                 min={getTodayStr()}
