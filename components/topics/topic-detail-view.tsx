@@ -69,7 +69,7 @@ export function TopicDetailView({
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [levelUp, setLevelUp] = useState<{ level: number } | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
 
   const editingTask = tasks.find((task) => task.id === editingTaskId);
@@ -99,7 +99,7 @@ export function TopicDetailView({
         if (res.ok) {
           const data = await res.json() as {
             coinsEarned?: number;
-            newLevel?: { level: number; title: string } | null;
+            newLevel?: { level: number } | null;
             unlockedAchievements?: AchievementItem[];
           };
 
@@ -312,7 +312,6 @@ export function TopicDetailView({
       {levelUp && (
         <LevelUpOverlay
           level={levelUp.level}
-          title={levelUp.title}
           onDone={() => setLevelUp(null)}
         />
       )}

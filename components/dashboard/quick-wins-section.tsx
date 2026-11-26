@@ -42,7 +42,7 @@ export interface QuickWinTask {
 
 interface CompleteApiResponse {
   coinsEarned?: number;
-  newLevel?: { level: number; title: string } | null;
+  newLevel?: { level: number } | null;
   unlockedAchievements?: AchievementItem[];
 }
 
@@ -55,7 +55,7 @@ export function QuickWinsSection({ tasks: initialTasks }: QuickWinsSectionProps)
   const reduceMotion = useReducedMotion();
   const [tasks, setTasks] = useState<QuickWinTask[]>(initialTasks);
   const [completing, setCompleting] = useState<Set<string>>(new Set());
-  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [levelUp, setLevelUp] = useState<{ level: number } | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
 
   const handleComplete = async (id: string) => {
@@ -101,7 +101,6 @@ export function QuickWinsSection({ tasks: initialTasks }: QuickWinsSectionProps)
       {levelUp && (
         <LevelUpOverlay
           level={levelUp.level}
-          title={levelUp.title}
           onDone={() => setLevelUp(null)}
         />
       )}
