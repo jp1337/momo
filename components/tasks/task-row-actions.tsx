@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { ACTION_BTN } from "@/components/ui/list";
+import { addDays, localMidnight, useLocalToday } from "@/lib/client/local-today";
 
 export interface TaskRowActionsProps {
   id: string;
@@ -47,12 +48,6 @@ export interface TaskRowActionsProps {
   onUnsnooze?: (id: string) => void;
 }
 
-/** Computes a YYYY-MM-DD date string N days from now. */
-function daysFromNow(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split("T")[0];
-}
 
 /**
  * Der Aktionscluster einer Zeile: Verschieben/Zum-Thema, Aufteilen,
@@ -78,12 +73,15 @@ export function TaskRowActions({
   onUnsnooze,
 }: TaskRowActionsProps) {
   const t = useTranslations("tasks");
+  const today = useLocalToday();
+  /** YYYY-MM-DD, N days after the user's local today */
+  const daysFromNow = (days: number) => addDays(today, days);
   const [showBreakdownModal, setShowBreakdownModal] = useState(false);
   const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
 
   const isSnoozed =
     snoozedUntil != null &&
-    new Date(snoozedUntil + "T00:00:00") > new Date(new Date().toDateString());
+    new Date(snoozedUntil + "T00:00:00") > localMidnight(today);
 
   const hasSecondary = Boolean(
     (topicId === null && onPromote) ||

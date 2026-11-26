@@ -13,6 +13,7 @@
 
 import { useState, useCallback, useId } from "react";
 import { useTranslations } from "next-intl";
+import { useLocalToday } from "@/lib/client/local-today";
 
 interface VacationModeSettingsProps {
   /** Whether vacation mode is currently active (from DB) */
@@ -46,9 +47,9 @@ export function VacationModeSettings({
   const getTimezone = () =>
     Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  /** Returns today's date as YYYY-MM-DD in local timezone. */
-  const getTodayStr = () =>
-    new Date().toLocaleDateString("en-CA");
+  /** Today as YYYY-MM-DD in local time, hydration-safe (lib/client/local-today). */
+  const todayStr = useLocalToday();
+  const getTodayStr = () => todayStr;
 
   /** Persist a vacation mode change to the server. */
   const save = useCallback(

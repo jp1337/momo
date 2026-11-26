@@ -71,6 +71,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Dashboard:** Whenever the server's date differed from the user's — in Docker the server runs
   on UTC, so every evening for users west of it — the energy line failed to hydrate and React
   rebuilt the whole page in the browser. It now hydrates cleanly and then shows the user's own day.
+- **Tasks, topics, vacation mode:** Due labels ("Today", "Tomorrow"), the Today/Upcoming groups and
+  date pickers used the server's date while rendering. When the server's day differed from the
+  user's (Docker runs on UTC), the page failed to hydrate and was rebuilt in the browser, and
+  labels could be off by a day. Snoozing "until tomorrow" between midnight and 01:00 (Berlin)
+  picked today. All of them now use the user's local day.
 
 ## [0.11.0] - 2026-11-25
 

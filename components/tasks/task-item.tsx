@@ -22,6 +22,7 @@ import { faCoins, faLayerGroup, faClock } from "@fortawesome/free-solid-svg-icon
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { TaskBreakdownModal } from "@/components/tasks/task-breakdown-modal";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { addDays, localMidnight, useLocalToday } from "@/lib/client/local-today";
 
 interface TaskItemProps {
   id: string;
@@ -102,6 +103,7 @@ export function TaskItem({
   isBlocked = false,
 }: TaskItemProps) {
   const t = useTranslations("tasks");
+  const todayStr = useLocalToday();
   const locale = useLocale();
 
   const [isAnimating, setIsAnimating] = useState(false);
@@ -157,8 +159,7 @@ export function TaskItem({
    * Defined inside the component so it can use t() for translated labels.
    */
   function formatDueDate(dateStr: string): { text: string; overdue: boolean } {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = localMidnight(todayStr);
     const due = new Date(dateStr + "T00:00:00");
 
     if (due < today) {
@@ -270,13 +271,11 @@ export function TaskItem({
     }
   };
 
-  const isSnoozed = snoozedUntil != null && new Date(snoozedUntil + "T00:00:00") > new Date(new Date().toDateString());
+  const isSnoozed = snoozedUntil != null && new Date(snoozedUntil + "T00:00:00") > localMidnight(todayStr);
 
   /** Computes a YYYY-MM-DD date string N days from now */
   function daysFromNow(days: number): string {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    return d.toISOString().split("T")[0];
+    return addDays(todayStr, days);
   }
 
   /** Format a YYYY-MM-DD string as a short localized date for the badge */
