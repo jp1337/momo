@@ -13,13 +13,10 @@
 
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
-vi.mock("@/lib/api-auth", () => ({
+vi.mock("@/lib/api-auth", async () => ({
   resolveApiUser: vi.fn(),
-  readonlyKeyResponse: () =>
-    Response.json(
-      { error: "Forbidden", message: "This API key is read-only." },
-      { status: 403 }
-    ),
+  // The real helper, so a regression in its body (e.g. a lost `code`) shows up here
+  readonlyKeyResponse: (await import("@/lib/api-responses")).readonlyKeyResponse,
 }));
 
 vi.mock("next/headers", () => ({
@@ -122,6 +119,7 @@ describe("DELETE /api/user", () => {
     authAs(user.id, true);
     const res = await DELETEUser(req("DELETE", "/api/user"));
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 200 and deletes the user account", async () => {
@@ -184,6 +182,7 @@ describe("PATCH /api/user/profile", () => {
       req("PATCH", "/api/user/profile", { name: "Alice" }) as never
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 when body is empty (no fields provided)", async () => {
@@ -293,6 +292,7 @@ describe("POST /api/user/api-keys", () => {
       req("POST", "/api/user/api-keys", { name: "My Key", readonly: false, expiresIn: null })
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 when name is missing", async () => {
@@ -418,6 +418,7 @@ describe("DELETE /api/user/api-keys/:id", () => {
       { params: Promise.resolve({ id: FAKE_ID }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 });
 

@@ -10,13 +10,10 @@
 
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
-vi.mock("@/lib/api-auth", () => ({
+vi.mock("@/lib/api-auth", async () => ({
   resolveApiUser: vi.fn(),
-  readonlyKeyResponse: () =>
-    Response.json(
-      { error: "Forbidden", message: "This API key is read-only." },
-      { status: 403 }
-    ),
+  // The real helper, so a regression in its body (e.g. a lost `code`) shows up here
+  readonlyKeyResponse: (await import("@/lib/api-responses")).readonlyKeyResponse,
 }));
 
 // next/headers is imported transitively — stub it so the import graph resolves
@@ -167,6 +164,7 @@ describe("POST /api/tasks", () => {
       req("POST", "/api/tasks", { title: "X", type: "ONE_TIME", priority: "NORMAL" })
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 400 for invalid JSON", async () => {
@@ -288,6 +286,7 @@ describe("PATCH /api/tasks/:id", () => {
       { params: Promise.resolve({ id: FAKE_ID }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 200 with updated task title", async () => {
@@ -332,6 +331,7 @@ describe("DELETE /api/tasks/:id", () => {
       params: Promise.resolve({ id: FAKE_ID }),
     });
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 200 with { success: true } after deleting", async () => {
@@ -431,6 +431,7 @@ describe("POST /api/tasks/:id/complete", () => {
       params: Promise.resolve({ id: FAKE_ID }),
     });
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 200 with completion result shape", async () => {
@@ -511,6 +512,7 @@ describe("DELETE /api/tasks/:id/complete", () => {
       params: Promise.resolve({ id: FAKE_ID }),
     });
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 200 and task is open again after uncomplete", async () => {

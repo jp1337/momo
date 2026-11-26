@@ -328,9 +328,6 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
 
 **Neu auf dieser Liste, aus 0.6.0 heraus**
 
-- **Die 20 Route-Test-Mocks von `readonlyKeyResponse` kennen den neuen `code` nicht.** Sie stubben
-  `{ error, message }` ohne `code: "READONLY_KEY"`, sodass der Code an genau einer Stelle geprüft
-  wird — eine Regression im echten Helper würde kein Route-Test bemerken.
 - **Drei Handler liefern 403, ohne es in der Spec zu dokumentieren**: `POST /api/auth/sessions/revoke-others`,
   `DELETE /api/auth/sessions/{id}`, `PATCH /api/settings/vacation-mode`. Fällt weg, sobald der
   Drift-Test oben existiert.

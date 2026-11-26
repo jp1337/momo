@@ -18,15 +18,12 @@
 
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
-vi.mock("@/lib/api-auth", () => ({
+vi.mock("@/lib/api-auth", async () => ({
   resolveApiUser: vi.fn(),
   resolveVerifiedApiUser: vi.fn(),
   resolveSessionOnlyApiUser: vi.fn(),
-  readonlyKeyResponse: () =>
-    Response.json(
-      { error: "Forbidden", message: "This API key is read-only." },
-      { status: 403 }
-    ),
+  // The real helper, so a regression in its body (e.g. a lost `code`) shows up here
+  readonlyKeyResponse: (await import("@/lib/api-responses")).readonlyKeyResponse,
   // Mirrors the real helper's per-reason status codes closely enough for
   // route-level tests: BEARER_SESSION_REQUIRED is a 403 (the caller is
   // refused because of *how* it authenticated, not because credentials are
@@ -197,6 +194,7 @@ describe("PATCH /api/settings/quest", () => {
       req("PATCH", "/api/settings/quest", { postponeLimit: 3 }) as never
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 for invalid postponeLimit", async () => {
@@ -311,6 +309,7 @@ describe("PATCH /api/settings/timezone", () => {
       req("PATCH", "/api/settings/timezone", { timezone: "Europe/Berlin" })
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 for invalid timezone", async () => {
@@ -405,6 +404,7 @@ describe("PATCH /api/settings/vacation-mode", () => {
       req("PATCH", "/api/settings/vacation-mode", { active: false })
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 when active=true but no endDate", async () => {
@@ -484,6 +484,7 @@ describe("PATCH /api/settings/budget", () => {
       req("PATCH", "/api/settings/budget", { budget: 100 })
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 for invalid budget value", async () => {
@@ -593,6 +594,7 @@ describe("PATCH /api/settings/login-notification", () => {
       req("PATCH", "/api/settings/login-notification", { enabled: true })
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 when enabled is not a boolean", async () => {
@@ -857,6 +859,7 @@ describe("PUT /api/settings/notification-channels", () => {
       }) as never
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 for invalid channel type", async () => {
@@ -927,6 +930,7 @@ describe("DELETE /api/settings/notification-channels/:type", () => {
       { params: Promise.resolve({ type: "ntfy" }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 404 when channel does not exist", async () => {
@@ -981,6 +985,7 @@ describe("POST /api/settings/notification-channels/:type/test", () => {
       { params: Promise.resolve({ type: "ntfy" }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 200 when test notification is sent successfully", async () => {
@@ -1073,6 +1078,7 @@ describe("POST /api/settings/webhooks", () => {
       }) as never
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 429 when rate limit is exceeded", async () => {
@@ -1208,6 +1214,7 @@ describe("PATCH /api/settings/webhooks/:id", () => {
       { params: Promise.resolve({ id: fakeId }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 404 for non-existent webhook", async () => {
@@ -1265,6 +1272,7 @@ describe("DELETE /api/settings/webhooks/:id", () => {
       { params: Promise.resolve({ id: fakeId }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 404 for non-existent webhook", async () => {
