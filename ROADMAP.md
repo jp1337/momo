@@ -454,7 +454,6 @@ Details und Begründung stehen in `docs-tech/lichtkegel-phase2/abschluss.md`.
 
 | Befund | Warum offen |
 |---|---|
-| Zoom gesperrt: `app/layout.tsx` `maximumScale: 1`, `userScalable: false` (WCAG 1.4.4, alle Seiten) | 2026-04 bewusst für die PWA gesetzt; Rücknahme ist eine Produktentscheidung. Üblicher Ersatz gegen iOS-Auto-Zoom: Eingabefelder ≥ 16 px |
 | `LevelBadge`: Level 1–3 (`--ink-3` auf 8-%-Ink-Fläche) 3,99:1 im hellen Thema, „Lv." mit `opacity: 0.7` 2,6:1 | Stufenleiter der Badge ist eine Designentscheidung |
 | 11 Kontrastfunde in nicht migrierten Einstellungs-Komponenten (Amber als Füllfläche, fest verdrahtet `#ffffff`/`#1a1a0a`) | Lichtkegel-Migration dieser Komponenten |
 | Hydration-Mismatch in `EnergyCheckinCard` (Server „eingecheckt", Client nicht) im Dev-Log; „heute" wird beim Rendern auf Server und Client getrennt berechnet | Nicht gezielt reproduziert; Kandidat: Server rechnet mit `users.timezone`, statt beide Seiten raten zu lassen |

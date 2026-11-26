@@ -149,8 +149,8 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // No maximumScale / userScalable: blocking pinch zoom fails WCAG 1.4.4.
+  // iOS focus zoom is prevented by 16px fields on touch devices (globals.css).
 };
 
 /**
