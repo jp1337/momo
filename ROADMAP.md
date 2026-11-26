@@ -341,9 +341,6 @@ einfällt — auch im Funkloch), ist aber echte Arbeit und kein Quick Win.
 - **Die 20 Route-Test-Mocks von `readonlyKeyResponse` kennen den neuen `code` nicht.** Sie stubben
   `{ error, message }` ohne `code: "READONLY_KEY"`, sodass der Code an genau einer Stelle geprüft
   wird — eine Regression im echten Helper würde kein Route-Test bemerken.
-- **Sechs Tests in `__tests__/webhooks.test.ts`** warten mit festem `setTimeout(r, 300)` auf denselben
-  fire-and-forget-Insert, für den es seit 0.6.0 einen sauberen Helper gibt (`waitForEndpointDelivery`).
-  Nie rot gesehen, aber dasselbe Rennen mit großzügigerem Puffer — und der Umbau spart ~2 s Laufzeit.
 - **Rate-Limits sind pro Prozess**, und `deploy/examples/deployment.yaml` fährt `replicas: 2`. Jedes
   Limit gilt auf der empfohlenen Topologie faktisch doppelt. Steht so im Header von
   `lib/rate-limit.ts`, aber nicht in der API-Doku.
