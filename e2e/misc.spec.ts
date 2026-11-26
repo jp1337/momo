@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * Miscellaneous page E2E tests.
@@ -22,7 +23,7 @@ test.describe("API Documentation Page", () => {
   test("loads without error", async ({ page }) => {
     await page.goto("/api-docs");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("OpenAPI JSON spec is accessible", async ({ request }) => {
@@ -39,14 +40,14 @@ test.describe("Legal Pages", () => {
   test("Impressum page loads", async ({ page }) => {
     await page.goto("/impressum");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     await expect(page.locator("h1, h2").first()).toBeVisible({ timeout: 5000 });
   });
 
   test("Datenschutz page loads", async ({ page }) => {
     await page.goto("/datenschutz");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     await expect(page.locator("h1, h2").first()).toBeVisible({ timeout: 5000 });
   });
 });
@@ -59,7 +60,9 @@ test.describe("Landing Page", () => {
 
   test("renders the hero section with app name", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toContainText(/momo/i);
+    // The hero headline is a claim, not the app name; the name is the header brand
+    await expect(page.locator("h1")).toBeVisible();
+    await expect(page.getByText(/momo/i).first()).toBeVisible();
   });
 
   test("has a login/sign-in link", async ({ page }) => {
@@ -78,7 +81,7 @@ test.describe("Landing Page", () => {
   test("landing page shows feature cards", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     // Feature section should have content
     const body = page.locator("body");
     await expect(body).toBeVisible();
@@ -87,7 +90,7 @@ test.describe("Landing Page", () => {
   test("login page shows sign-in options", async ({ page }) => {
     await page.goto("/login");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     // Should have some sign-in options (GitHub, Discord, Google, or Test Credentials)
     const signInContent = page.locator("main, form, button").first();
     await expect(signInContent).toBeVisible({ timeout: 5000 });
@@ -120,21 +123,21 @@ test.describe("Tasks API Smoke Tests", () => {
     const res = await request.get("/api/tasks");
     expect(res.status()).toBe(200);
     const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
+    expect(Array.isArray(body.tasks)).toBe(true);
   });
 
   test("GET /api/topics returns array", async ({ request }) => {
     const res = await request.get("/api/topics");
     expect(res.status()).toBe(200);
     const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
+    expect(Array.isArray(body.topics)).toBe(true);
   });
 
   test("GET /api/wishlist returns array", async ({ request }) => {
     const res = await request.get("/api/wishlist");
     expect(res.status()).toBe(200);
     const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
+    expect(Array.isArray(body.items)).toBe(true);
   });
 
   test("GET /api/daily-quest returns quest data or null", async ({ request }) => {
@@ -153,6 +156,6 @@ test.describe("Theme Toggle", () => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
     // Theme toggle may be an icon-only button — just ensure page doesn't error
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 });

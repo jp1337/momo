@@ -14,6 +14,7 @@
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { discardWishlistItem, restoreWishlistItem } from "@/lib/wishlist";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { invalidIdResponse } from "@/lib/api-params";
 
 /**
  * POST /api/wishlist/:id/discard
@@ -31,6 +32,8 @@ export async function POST(
   if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     const item = await discardWishlistItem(id, user.userId);
@@ -61,6 +64,8 @@ export async function DELETE(
   if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     const item = await restoreWishlistItem(id, user.userId);

@@ -231,8 +231,9 @@ describe("CreateTaskInputSchema", () => {
 // ─── UpdateTaskInputSchema ────────────────────────────────────────────────────
 
 describe("UpdateTaskInputSchema", () => {
-  it("accepts an empty object (all optional)", () => {
-    parseSucceeds(UpdateTaskInputSchema, {});
+  it("rejects an empty object: a PATCH must change something (it used to reach .set({}) and 500)", () => {
+    expect(UpdateTaskInputSchema.safeParse({}).success).toBe(false);
+    expect(UpdateTaskInputSchema.safeParse({ unknownField: 1 }).success).toBe(false);
   });
 
   it("accepts a partial update with just title", () => {
@@ -458,8 +459,8 @@ describe("CreateTopicInputSchema", () => {
 // ─── UpdateTopicInputSchema ───────────────────────────────────────────────────
 
 describe("UpdateTopicInputSchema", () => {
-  it("accepts an empty object (all optional)", () => {
-    parseSucceeds(UpdateTopicInputSchema, {});
+  it("rejects an empty object: a PATCH must change something", () => {
+    expect(UpdateTopicInputSchema.safeParse({}).success).toBe(false);
   });
 
   it("accepts partial update with title only", () => {
@@ -528,8 +529,8 @@ describe("CreateWishlistItemInputSchema", () => {
 // ─── UpdateWishlistItemInputSchema ────────────────────────────────────────────
 
 describe("UpdateWishlistItemInputSchema", () => {
-  it("accepts an empty object", () => {
-    parseSucceeds(UpdateWishlistItemInputSchema, {});
+  it("rejects an empty object: a PATCH must change something", () => {
+    expect(UpdateWishlistItemInputSchema.safeParse({}).success).toBe(false);
   });
 
   it("accepts partial update with price only", () => {
@@ -545,7 +546,7 @@ describe("UpdateWishlistItemInputSchema", () => {
   });
 
   it("coerces empty string URL to undefined (treated as absent)", () => {
-    const result = UpdateWishlistItemInputSchema.safeParse({ url: "" });
+    const result = UpdateWishlistItemInputSchema.safeParse({ title: "Kept", url: "" });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.url).toBeUndefined();

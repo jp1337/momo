@@ -50,13 +50,13 @@ export function WeekdayChart({
               <span className="font-[family-name:var(--font-mono)] text-[0.6875rem] tabular-nums text-[var(--ink-3)]">
                 {value > 0 ? value : ""}
               </span>
-              {/* `role="gridcell"` ist die benannte Diagramm-Ausnahme, die
+              {/* `data-chart-cell` ist die benannte Diagramm-Ausnahme, die
                   `countBoxes` prüft: eine Marke IST eine gefüllte Fläche, per
                   Definition — ihre Höhe kodiert die Abschlusszahl. Ohne sie
                   zählt jeder der sieben Balken als Kasten. Dieselbe Ausnahme,
                   die `contribution-grid.tsx` seit Task 11 benutzt. */}
               <div
-                role="gridcell"
+                data-chart-cell
                 className={cn(
                   "w-full max-w-[32px]",
                   isBest ? "bg-[var(--ink-2)]" : "bg-[var(--hairline)]",

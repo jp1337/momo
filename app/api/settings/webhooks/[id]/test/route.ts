@@ -13,6 +13,7 @@ import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { testWebhookEndpoint } from "@/lib/webhooks";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
+import { invalidIdResponse } from "@/lib/api-params";
 
 /**
  * POST — Send a test delivery to the given endpoint.
@@ -31,6 +32,8 @@ export async function POST(
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt) as NextResponse;
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
   try {
     await testWebhookEndpoint(id, user.userId);
     return NextResponse.json({ success: true });

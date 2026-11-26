@@ -18,14 +18,11 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 
-vi.mock("@/lib/api-auth", () => ({
+vi.mock("@/lib/api-auth", async () => ({
   resolveApiUser: vi.fn(),
   resolveVerifiedApiUser: vi.fn(),
-  readonlyKeyResponse: () =>
-    Response.json(
-      { error: "Forbidden", message: "This API key is read-only." },
-      { status: 403 }
-    ),
+  // The real helper, so a regression in its body (e.g. a lost `code`) shows up here
+  readonlyKeyResponse: (await import("@/lib/api-responses")).readonlyKeyResponse,
   verifiedAuthErrorResponse: (reason: string) =>
     Response.json({ error: reason, code: reason }, { status: 401 }),
 }));

@@ -35,6 +35,14 @@ import {
  */
 async function gotoSettled(page: Page, theme: "dark" | "light", path: string) {
   await gotoWithTheme(page, theme, path);
+  // goto resolves on `load`, but a streamed page can still show its loading.tsx
+  // skeleton (the only `animate-pulse` on these routes). Measuring then counted
+  // the skeleton: no Fraunces, bordered boxes, "Lichtkegel not seen".
+  await expect(page.locator(".animate-pulse")).toHaveCount(0);
+  // An immediate count() raced the stream too; where a light is expected, wait for it.
+  if (WITH_LIGHT.has(path)) {
+    await expect(page.locator(".lichtkegel").first()).toBeAttached();
+  }
   for (const selector of [".lichtkegel", '[data-testid="quick-wins-section"]']) {
     const el = page.locator(selector).first();
     if ((await el.count()) > 0) {

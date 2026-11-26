@@ -135,7 +135,7 @@ export function TaskBreakdownModal({ task, onCancel, onSuccess }: TaskBreakdownM
                   type="button"
                   onClick={() => removeStep(index)}
                   className="flex-shrink-0 text-lg leading-none text-[var(--ink-2)] opacity-60 hover:opacity-100 transition-opacity"
-                  aria-label="Remove step"
+                  aria-label={t("breakdown_remove_step_aria")}
                 >
                   ×
                 </button>

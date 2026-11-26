@@ -131,6 +131,7 @@
     "insight_day_sun": "Dimanche"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "Retirer l'étape",
     "page_title": "Tâches",
     "sequential_label": "Étape par étape",
     "sequential_progress": "Étape {current} sur {total}",
@@ -251,6 +252,7 @@
     "empty_cta": "Créer une tâche"
   },
   "topics": {
+    "icon_picker_aria": "Choisir une icône",
     "page_title": "Sujets",
     "page_subtitle": "{count, plural, one {# sujet} other {# sujets}}",
     "rail_open_tasks": "{count, plural, one {# tâche ouverte} other {# tâches ouvertes}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "Veuillez entrer un nombre positif valide"
   },
   "settings": {
+    "nav_aria": "Navigation des paramètres",
+    "totp_qr_alt": "Code QR pour votre application d'authentification",
+    "profile_avatar_preview_alt": "Aperçu de la photo de profil",
     "nav_account": "Compte",
     "nav_notifications": "Notifications",
     "nav_quest": "Quête & Tâches",
@@ -418,7 +423,7 @@
     "webhook_secret_label": "Secret de signature",
     "webhook_secret_placeholder": "optionnel",
     "webhook_secret_hint": "Si renseigné, chaque requête inclut un en-tête X-Momo-Signature pour vérifier l'authenticité.",
-    "webhook_payload_note": "Payload : { event: \"task.created\", timestamp, task: { id, title, type, ... } }",
+    "webhook_payload_note": "Payload : '{' event: \"task.created\", timestamp, task: '{' id, title, type, ... '}' '}'",
     "channel_active": "Actif",
     "channel_not_configured": "Non configuré",
     "section_notification_history": "Historique des notifications",
@@ -535,7 +540,7 @@
     "webhook_endpoint_secret_label": "Secret de signature (optionnel)",
     "webhook_endpoint_secret_placeholder": "Laisser vide pour désactiver la signature",
     "webhook_endpoint_secret_replace_placeholder": "Nouveau secret ou laisser vide pour conserver",
-    "webhook_endpoint_secret_hint": "Lorsqu'il est défini, chaque requête contient un en-tête X-Momo-Signature: sha256=<hex>.",
+    "webhook_endpoint_secret_hint": "Lorsqu'il est défini, chaque requête contient un en-tête X-Momo-Signature: sha256='<'hex'>'.",
     "webhook_endpoint_secret_remove": "Supprimer la signature",
     "webhook_endpoint_events_label": "S'abonner aux événements",
     "webhook_endpoint_events_hint": "Tout décoché = recevoir tous les événements.",
@@ -1146,5 +1151,16 @@
     "docs_link": "Documentation API →",
     "error_create": "Échec de la création — veuillez réessayer.",
     "error_network": "Erreur réseau — veuillez réessayer."
+  },
+  "errors": {
+    "not_found_title": "Page introuvable",
+    "not_found_heading": "Cette page n'existe pas (encore)",
+    "not_found_text_1": "Parfois, on arrive à des endroits qui ne sont pas encore prêts. Nous connaissons ça.",
+    "not_found_text_2": "L'adresse était peut-être erronée — ou la page attend encore son moment.",
+    "back_to_app": "Retour à l'app",
+    "error_heading": "Quelque chose s'est mal passé",
+    "error_text_1": "Ce n'est pas de votre faute — l'erreur vient de chez nous.",
+    "error_text_2": "Vous pouvez réessayer tout de suite ou simplement revenir en arrière.",
+    "retry": "Recharger"
   }
 }

@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { tasks, users } from "@/lib/db/schema";
 import { eq, isNull, and, or, lte } from "drizzle-orm";
+import { getLocalDateString } from "@/lib/date-utils";
 import { getUserTopics } from "@/lib/topics";
 import { FiveMinuteView } from "@/components/quick/five-minute-view";
 import { PageFrame } from "@/components/ui/page-frame";
@@ -35,7 +36,9 @@ export default async function QuickPage() {
 
   const userId = session.user.id;
   const t = await getTranslations("quick");
-  const todayStr = new Date().toISOString().split("T")[0];
+  // The user's day, not UTC: snoozed-until and the energy check-in are local dates
+  const [tzRow] = await db.select({ timezone: users.timezone }).from(users).where(eq(users.id, userId));
+  const todayStr = getLocalDateString(tzRow?.timezone);
 
   const [quickTasks, topics, userRows] = await Promise.all([
     db

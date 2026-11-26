@@ -18,6 +18,7 @@ import { LevelUpOverlay } from "@/components/animations/level-up-overlay";
 import { AchievementToast } from "@/components/animations/achievement-toast";
 import type { AchievementItem } from "@/components/animations/achievement-toast";
 import { dispatchCoinsEarned } from "@/lib/client/coin-events";
+import { localMidnight, useLocalToday } from "@/lib/client/local-today";
 
 interface Task {
   id: string;
@@ -65,11 +66,12 @@ export function TopicDetailView({
   topicSequential = false,
 }: TopicDetailViewProps) {
   const t = useTranslations("topics");
+  const todayStr = useLocalToday();
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [levelUp, setLevelUp] = useState<{ level: number } | null>(null);
   const [pendingAchievements, setPendingAchievements] = useState<AchievementItem[]>([]);
 
   const editingTask = tasks.find((task) => task.id === editingTaskId);
@@ -99,7 +101,7 @@ export function TopicDetailView({
         if (res.ok) {
           const data = await res.json() as {
             coinsEarned?: number;
-            newLevel?: { level: number; title: string } | null;
+            newLevel?: { level: number } | null;
             unlockedAchievements?: AchievementItem[];
           };
 
@@ -227,8 +229,7 @@ export function TopicDetailView({
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const accentColor = topicColor ?? "var(--accent-amber)";
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = localMidnight(todayStr);
   const snoozedTasks = tasks.filter((task) => {
     if (!task.snoozedUntil || task.completedAt !== null) return false;
     return new Date(task.snoozedUntil + "T00:00:00") > today;
@@ -312,7 +313,6 @@ export function TopicDetailView({
       {levelUp && (
         <LevelUpOverlay
           level={levelUp.level}
-          title={levelUp.title}
           onDone={() => setLevelUp(null)}
         />
       )}
@@ -590,6 +590,7 @@ export function TopicDetailView({
       {/* Task form modal */}
       {(showCreateForm || editingTaskId) && (
         <TaskForm
+          key={editingTaskId ?? "new"}
           initialData={
             editingTask
               ? {

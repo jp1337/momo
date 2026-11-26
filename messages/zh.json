@@ -131,6 +131,7 @@
     "insight_day_sun": "周日"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "移除步骤",
     "page_title": "任务",
     "sequential_label": "一步一步",
     "sequential_progress": "第 {current} 步 / 共 {total} 步",
@@ -251,6 +252,7 @@
     "empty_cta": "新建任务"
   },
   "topics": {
+    "icon_picker_aria": "选择图标",
     "page_title": "主题",
     "page_subtitle": "{count, plural, other {# 个主题}}",
     "rail_open_tasks": "{count, plural, other {# 个未完成任务}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "请输入有效的正数"
   },
   "settings": {
+    "nav_aria": "设置导航",
+    "totp_qr_alt": "用于身份验证器应用的二维码",
+    "profile_avatar_preview_alt": "头像预览",
     "nav_account": "账户",
     "nav_notifications": "通知",
     "nav_quest": "任务设置",
@@ -418,7 +423,7 @@
     "webhook_secret_label": "签名密钥",
     "webhook_secret_placeholder": "可选",
     "webhook_secret_hint": "设置后,每个请求都会包含 X-Momo-Signature 头用于验证真实性。",
-    "webhook_payload_note": "Payload: { event: \"task.created\", timestamp, task: { id, title, type, ... } }",
+    "webhook_payload_note": "Payload: '{' event: \"task.created\", timestamp, task: '{' id, title, type, ... '}' '}'",
     "channel_active": "启用中",
     "channel_not_configured": "未配置",
     "section_notification_history": "通知历史",
@@ -535,7 +540,7 @@
     "webhook_endpoint_secret_label": "签名密钥(可选)",
     "webhook_endpoint_secret_placeholder": "留空表示不签名",
     "webhook_endpoint_secret_replace_placeholder": "输入新密钥替换,或留空保持不变",
-    "webhook_endpoint_secret_hint": "设置后,每个请求都会包含 X-Momo-Signature: sha256=<hex> 头用于验证。",
+    "webhook_endpoint_secret_hint": "设置后,每个请求都会包含 X-Momo-Signature: sha256='<'hex'>' 头用于验证。",
     "webhook_endpoint_secret_remove": "移除签名",
     "webhook_endpoint_events_label": "订阅事件",
     "webhook_endpoint_events_hint": "全部不勾选则接收所有事件。",
@@ -1146,5 +1151,16 @@
     "docs_link": "API 文档 →",
     "error_create": "创建密钥失败 — 请重试。",
     "error_network": "网络错误 — 请重试。"
+  },
+  "errors": {
+    "not_found_title": "页面未找到",
+    "not_found_heading": "这个页面（还）不存在",
+    "not_found_text_1": "有时你会来到一些还没完成的地方。我们懂这种感觉。",
+    "not_found_text_2": "也许地址有误——也许这个页面还在等待它的时机。",
+    "back_to_app": "返回应用",
+    "error_heading": "出了点问题",
+    "error_text_1": "这不是你的问题——错误出在我们这边。",
+    "error_text_2": "你可以马上再试一次，或者直接返回。",
+    "retry": "重新加载"
   }
 }

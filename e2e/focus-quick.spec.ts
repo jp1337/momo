@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { createTask, deleteTask } from "./helpers/api";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * Focus Mode and 5-Minute Mode E2E tests.
@@ -15,7 +16,7 @@ test.describe("5-Minute Mode (/quick)", () => {
     await page.goto("/quick");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows heading", async ({ page }) => {
@@ -59,7 +60,7 @@ test.describe("5-Minute Mode (/quick)", () => {
   test("shows empty state when no quick tasks exist", async ({ page }) => {
     await page.goto("/quick");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     // May show empty state or task list — either is fine
   });
 
@@ -68,7 +69,7 @@ test.describe("5-Minute Mode (/quick)", () => {
     await page.goto("/quick");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 });
 
@@ -79,22 +80,23 @@ test.describe("Focus Mode (/focus)", () => {
     await page.goto("/focus");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows heading or content", async ({ page }) => {
     await page.goto("/focus");
     await page.waitForLoadState("networkidle");
     // Focus mode has a heading or the daily quest card
-    await expect(page.locator("body")).not.toContainText(/500/i);
-    const content = page.locator("main, [role='main'], .max-w-4xl, body > div").first();
+    await expectNoServerError(page);
+    // Not `body > div`: the app shell is position: fixed, so body and its first div have height 0.
+    const content = page.locator("main").first();
     await expect(content).toBeVisible();
   });
 
   test("shows daily quest section", async ({ page }) => {
     await page.goto("/focus");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("shows quick wins section when tasks ≤ 15 min exist", async ({
@@ -102,12 +104,12 @@ test.describe("Focus Mode (/focus)", () => {
     request,
   }) => {
     const title = `Focus Quick Win ${Date.now()}`;
-    const task = await createTask(request, title, { estimatedMinutes: 10 });
+    const task = await createTask(request, title, { estimatedMinutes: 15 }); // 5 | 15 | 30 | 60 only; 10 was a 422
 
     await page.goto("/focus");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
 
     await deleteTask(request, task.id);
   });
@@ -117,7 +119,7 @@ test.describe("Focus Mode (/focus)", () => {
     await page.goto("/focus");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("back navigation works from focus mode", async ({ page }) => {
@@ -132,7 +134,7 @@ test.describe("Focus Mode (/focus)", () => {
     if ((await exitLink.count()) > 0) {
       await exitLink.click();
       await page.waitForLoadState("networkidle");
-      await expect(page.locator("body")).not.toContainText(/500/i);
+      await expectNoServerError(page);
     }
   });
 });

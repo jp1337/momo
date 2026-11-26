@@ -131,6 +131,7 @@
     "insight_day_sun": "Zondag"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "Stap verwijderen",
     "page_title": "Taken",
     "sequential_label": "Stap voor stap",
     "sequential_progress": "Stap {current} van {total}",
@@ -251,6 +252,7 @@
     "empty_cta": "Taak toevoegen"
   },
   "topics": {
+    "icon_picker_aria": "Kies een pictogram",
     "page_title": "Onderwerpen",
     "page_subtitle": "{count, plural, one {# onderwerp} other {# onderwerpen}}",
     "rail_open_tasks": "{count, plural, one {# open taak} other {# open taken}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "Voer een geldig positief getal in"
   },
   "settings": {
+    "nav_aria": "Navigatie instellingen",
+    "totp_qr_alt": "QR-code voor je authenticator-app",
+    "profile_avatar_preview_alt": "Voorbeeld van de profielfoto",
     "nav_account": "Account",
     "nav_notifications": "Meldingen",
     "nav_quest": "Missie & Taken",
@@ -418,7 +423,7 @@
     "webhook_secret_label": "Ondertekeningsgeheim",
     "webhook_secret_placeholder": "optioneel",
     "webhook_secret_hint": "Wanneer ingesteld, bevat elk verzoek een X-Momo-Signature-header voor echtheidsverificatie.",
-    "webhook_payload_note": "Payload: { event: \"task.created\", timestamp, task: { id, title, type, ... } }",
+    "webhook_payload_note": "Payload: '{' event: \"task.created\", timestamp, task: '{' id, title, type, ... '}' '}'",
     "channel_active": "Actief",
     "channel_not_configured": "Niet geconfigureerd",
     "section_notification_history": "Meldingsgeschiedenis",
@@ -535,7 +540,7 @@
     "webhook_endpoint_secret_label": "Handtekeninggeheim (optioneel)",
     "webhook_endpoint_secret_placeholder": "Leeg laten voor geen handtekening",
     "webhook_endpoint_secret_replace_placeholder": "Nieuw geheim of leeg laten om te bewaren",
-    "webhook_endpoint_secret_hint": "Indien ingesteld bevat elk verzoek een X-Momo-Signature: sha256=<hex> header voor verificatie.",
+    "webhook_endpoint_secret_hint": "Indien ingesteld bevat elk verzoek een X-Momo-Signature: sha256='<'hex'>' header voor verificatie.",
     "webhook_endpoint_secret_remove": "Handtekening verwijderen",
     "webhook_endpoint_events_label": "Abonneren op events",
     "webhook_endpoint_events_hint": "Alles uitgeschakeld = alle events ontvangen.",
@@ -1146,5 +1151,16 @@
     "docs_link": "API-documentatie →",
     "error_create": "Aanmaken mislukt — probeer het opnieuw.",
     "error_network": "Netwerkfout — probeer het opnieuw."
+  },
+  "errors": {
+    "not_found_title": "Pagina niet gevonden",
+    "not_found_heading": "Deze pagina bestaat (nog) niet",
+    "not_found_text_1": "Soms kom je op plekken die nog niet af zijn. Dat kennen we.",
+    "not_found_text_2": "Misschien was het adres verkeerd — of wacht de pagina nog op haar moment.",
+    "back_to_app": "Terug naar de app",
+    "error_heading": "Er is iets misgegaan",
+    "error_text_1": "Dit ligt niet aan jou — de fout zit aan onze kant.",
+    "error_text_2": "Je kunt het meteen opnieuw proberen of gewoon teruggaan.",
+    "retry": "Opnieuw laden"
   }
 }

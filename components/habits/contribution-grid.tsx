@@ -287,7 +287,7 @@ export function ContributionGrid({ year, completions, labels }: ContributionGrid
               <div
                 key={i}
                 title={tooltip}
-                role="gridcell"
+                data-chart-cell
                 aria-hidden={isPlaceholder}
                 style={{
                   aspectRatio: "1",

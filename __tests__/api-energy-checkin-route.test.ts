@@ -7,13 +7,10 @@
 
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
-vi.mock("@/lib/api-auth", () => ({
+vi.mock("@/lib/api-auth", async () => ({
   resolveApiUser: vi.fn(),
-  readonlyKeyResponse: () =>
-    Response.json(
-      { error: "Forbidden", message: "This API key is read-only." },
-      { status: 403 }
-    ),
+  // The real helper, so a regression in its body (e.g. a lost `code`) shows up here
+  readonlyKeyResponse: (await import("@/lib/api-responses")).readonlyKeyResponse,
 }));
 
 vi.mock("next/headers", () => ({
@@ -106,6 +103,7 @@ describe("POST /api/energy-checkin", () => {
     authAs(user.id, true);
     const res = await POST(req({ energyLevel: "HIGH" }) as never);
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 400 for a malformed JSON body", async () => {

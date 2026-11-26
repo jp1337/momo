@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { createTask, deleteTask, createTopic, deleteTopic } from "./helpers/api";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * Tasks page E2E tests.
@@ -16,7 +17,7 @@ test.describe("Task Quick-Add Modal", () => {
     await page.waitForLoadState("networkidle");
     await page.keyboard.press("n");
     const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
+      .locator('[role="dialog"] input')
       .first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
   });
@@ -26,23 +27,26 @@ test.describe("Task Quick-Add Modal", () => {
     await page.waitForLoadState("networkidle");
     await page.keyboard.press("/");
     const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
+      .locator('[role="dialog"] input')
       .first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
   });
 
-  test("can create a task via the quick-add modal", async ({ page }) => {
+  test("can create a task via the quick-add modal", async ({ page, request }) => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
     await page.keyboard.press("n");
-    const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
-      .first();
+    const titleInput = page.locator('[role="dialog"] input').first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
     const taskTitle = `E2E Quick Task ${Date.now()}`;
     await titleInput.fill(taskTitle);
     await page.keyboard.press("Enter");
     await expect(titleInput).not.toBeVisible({ timeout: 5000 });
+    // The modal closing is not enough: the task must exist
+    const { tasks } = (await (await request.get("/api/tasks")).json()) as { tasks: { id: string; title: string }[] };
+    const created = tasks.find((t) => t.title === taskTitle);
+    expect(created).toBeDefined();
+    await deleteTask(request, created!.id);
   });
 
   test("Escape closes the quick-add modal without saving", async ({ page }) => {
@@ -50,11 +54,41 @@ test.describe("Task Quick-Add Modal", () => {
     await page.waitForLoadState("networkidle");
     await page.keyboard.press("n");
     const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
+      .locator('[role="dialog"] input')
       .first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
     await page.keyboard.press("Escape");
     await expect(titleInput).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test("topic dropdown lists the user's topics", async ({ page, request }) => {
+    const topic = await createTopic(request, `Quick Add Topic ${Date.now()}`);
+    try {
+      await page.goto("/dashboard");
+      await page.waitForLoadState("networkidle");
+      await page.keyboard.press("n");
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog.locator("input").first()).toBeVisible({ timeout: 3000 });
+      await dialog.locator("button").filter({ hasText: /mehr|more|options|Optionen/i }).first().click();
+      // The first select is the topic picker; it used to hold only "No topic"
+      await expect(dialog.locator("select").first().locator("option", { hasText: topic.title })).toHaveCount(1);
+    } finally {
+      await deleteTopic(request, topic.id);
+    }
+  });
+
+  test("a task added with Quick Add on /tasks shows up without a reload", async ({ page, request }) => {
+    await page.goto("/tasks");
+    await page.waitForLoadState("networkidle");
+    await page.keyboard.press("n");
+    const titleInput = page.locator('[role="dialog"] input').first();
+    await expect(titleInput).toBeVisible({ timeout: 3000 });
+    const taskTitle = `E2E Quick On Tasks ${Date.now()}`;
+    await titleInput.fill(taskTitle);
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("listitem").filter({ hasText: taskTitle })).toBeVisible({ timeout: 5000 });
+    const { tasks } = (await (await request.get("/api/tasks")).json()) as { tasks: { id: string; title: string }[] };
+    await deleteTask(request, tasks.find((t) => t.title === taskTitle)!.id);
   });
 
   test("More options expands with topic/priority/energy dropdowns", async ({
@@ -64,7 +98,7 @@ test.describe("Task Quick-Add Modal", () => {
     await page.waitForLoadState("networkidle");
     await page.keyboard.press("n");
     const titleInput = page
-      .locator('input[placeholder*="Titel"], input[name="title"]')
+      .locator('[role="dialog"] input')
       .first();
     await expect(titleInput).toBeVisible({ timeout: 3000 });
     // Click "More options" toggle
@@ -88,7 +122,7 @@ test.describe("Tasks Page", () => {
     await page.goto("/tasks");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("displays a task created via API", async ({ page, request }) => {
@@ -185,8 +219,8 @@ test.describe("Tasks Page", () => {
     await page.goto("/tasks");
     await page.waitForLoadState("networkidle");
 
-    // Topic title should appear somewhere on the page as a tag
-    await expect(page.locator(`text="${topic.title}"`)).toBeVisible({
+    // Topic title appears as the row's eyebrow (and in the rail's topic filter)
+    await expect(page.locator(`text="${topic.title}"`).first()).toBeVisible({
       timeout: 5000,
     });
 
@@ -220,7 +254,7 @@ test.describe("Tasks Page", () => {
     await page.waitForLoadState("networkidle");
 
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
 
     await deleteTask(request, task.id);
   });
@@ -274,7 +308,7 @@ test.describe("Recurring Tasks", () => {
       },
     });
     expect(res.ok()).toBe(true);
-    const task = await res.json() as { id: string; title: string };
+    const { task } = await res.json() as { task: { id: string; title: string } };
 
     await page.goto("/tasks");
     await page.waitForLoadState("networkidle");
@@ -290,6 +324,18 @@ test.describe("Recurring Tasks", () => {
 // ─── Task Form (Edit/Create Modal) ────────────────────────────────────────────
 
 test.describe("Task Form Modal", () => {
+  test("the task form is an accessible dialog that Escape closes", async ({ page }) => {
+    await page.goto("/tasks");
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: /new task|neue aufgabe/i }).first().click();
+    // Before: a plain <div> overlay — no dialog role, no focus trap, Escape did nothing
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 3000 });
+    await expect(dialog).toHaveAccessibleName(/new task|neue aufgabe/i);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+  });
+
   test("opening edit on a task shows the edit modal", async ({
     page,
     request,
@@ -300,26 +346,33 @@ test.describe("Task Form Modal", () => {
     await page.goto("/tasks");
     await page.waitForLoadState("networkidle");
 
-    // Find the task and look for an edit button (pencil icon area)
-    const taskText = page.locator(`text="${title}"`);
-    if ((await taskText.count()) > 0) {
-      // Hover over the task row to make edit button visible
-      await taskText.hover();
-      // Look for edit button near the task
-      const editBtn = page
-        .locator(`text="${title}"`)
-        .locator("xpath=ancestor::*[4]")
-        .locator('button[aria-label*="edit" i], button[aria-label*="bearbeiten" i]')
-        .first();
-      if ((await editBtn.count()) > 0) {
-        await editBtn.click();
-        // Modal should appear
-        const modal = page.locator('[role="dialog"]');
-        await expect(modal).toBeVisible({ timeout: 3000 });
-        await page.keyboard.press("Escape");
-      }
-    }
+    const row = page.getByRole("listitem").filter({ hasText: title });
+    await row.hover();
+    await row.getByRole("button", { name: /edit task|aufgabe bearbeiten/i }).click();
+    const modal = page.locator('[role="dialog"]');
+    await expect(modal).toBeVisible({ timeout: 3000 });
+    await expect(modal.locator("input").first()).toHaveValue(title);
+    await page.keyboard.press("Escape");
 
+    await deleteTask(request, task.id);
+  });
+});
+
+test.describe("Task list hydration", () => {
+  // Due labels and Today/Upcoming groups used to read new Date() during render,
+  // so a browser whose date differs from the server's ("Today" vs "Tomorrow")
+  // failed hydration and React discarded the server HTML.
+  test("hydrates without error when the browser's date differs from the server's", async ({ page, request }) => {
+    const task = await createTask(request, `Due Today ${Date.now()}`, {
+      dueDate: new Date().toISOString().slice(0, 10),
+    });
+    const pageErrors: string[] = [];
+    page.on("pageerror", (e) => pageErrors.push(e.message));
+    await page.clock.setFixedTime(new Date(Date.now() + 24 * 3600 * 1000));
+    await page.goto("/tasks");
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByText(task.title)).toBeVisible();
+    expect(pageErrors.filter((m) => /hydrat/i.test(m))).toEqual([]);
     await deleteTask(request, task.id);
   });
 });

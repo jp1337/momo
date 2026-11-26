@@ -440,7 +440,7 @@ export function FocusModeView({ initialTasks, topics }: FocusModeViewProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [totalCoins, setTotalCoins] = useState(0);
-  const [levelUp, setLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const [levelUp, setLevelUp] = useState<{ level: number } | null>(null);
   const [achievements, setAchievements] = useState<AchievementItem[]>([]);
   const [isCompleting, setIsCompleting] = useState(false);
   const [completionError, setCompletionError] = useState(false);
@@ -482,7 +482,7 @@ export function FocusModeView({ initialTasks, topics }: FocusModeViewProps) {
       if (res.ok) {
         const data = (await res.json()) as {
           coinsEarned?: number;
-          newLevel?: { level: number; title: string } | null;
+          newLevel?: { level: number } | null;
           unlockedAchievements?: AchievementItem[];
         };
         triggerSmallConfetti();
@@ -516,7 +516,6 @@ export function FocusModeView({ initialTasks, topics }: FocusModeViewProps) {
       {levelUp && (
         <LevelUpOverlay
           level={levelUp.level}
-          title={levelUp.title}
           onDone={() => setLevelUp(null)}
         />
       )}

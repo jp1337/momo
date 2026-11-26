@@ -11,6 +11,7 @@ import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { reorderTasks } from "@/lib/tasks";
 import { ReorderTasksInputSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { invalidIdResponse } from "@/lib/api-params";
 
 /**
  * PUT /api/topics/:id/reorder
@@ -28,6 +29,8 @@ export async function PUT(
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   let body: unknown;
   try {

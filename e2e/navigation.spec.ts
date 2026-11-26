@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * App Navigation E2E tests.
@@ -34,49 +35,49 @@ test.describe("App Navigation", () => {
   test("can navigate to wishlist page", async ({ page }) => {
     await page.goto("/wishlist");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("can navigate to habits page", async ({ page }) => {
     await page.goto("/habits");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("can navigate to achievements page", async ({ page }) => {
     await page.goto("/achievements");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("can navigate to stats page", async ({ page }) => {
     await page.goto("/stats");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("can navigate to review page", async ({ page }) => {
     await page.goto("/review");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("can navigate to quick mode page", async ({ page }) => {
     await page.goto("/quick");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("can navigate to focus mode page", async ({ page }) => {
     await page.goto("/focus");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("can navigate to api-keys page", async ({ page }) => {
     await page.goto("/api-keys");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("sidebar is visible on desktop", async ({ page }) => {
@@ -93,14 +94,14 @@ test.describe("App Navigation", () => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
     // Bottom navigation bar should appear
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("navbar shows coin counter for authenticated user", async ({ page }) => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
     // Coin counter in navbar
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("all main navigation links from sidebar work", async ({ page }) => {
@@ -120,7 +121,7 @@ test.describe("App Navigation", () => {
         await link.click();
         await page.waitForLoadState("networkidle");
         await expect(page).toHaveURL(new RegExp(href.replace("/", "")));
-        await expect(page.locator("body")).not.toContainText(/500/i);
+        await expectNoServerError(page);
         await page.goto("/dashboard");
         await page.waitForLoadState("networkidle");
       }

@@ -56,7 +56,7 @@
  * already set for today?".
  */
 
-import { useState, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "motion/react";
@@ -73,6 +73,10 @@ interface EnergyCheckinCardProps {
   energyLevel: EnergyLevel | null;
   /** Cached date `users.energyLevelDate` — raw "YYYY-MM-DD" string. */
   energyLevelDate: string | null;
+  /** "Today" as the server sees it, in the user's stored timezone (UTC if none).
+   *  Used only for the server render and hydration; the browser's own date
+   *  takes over right after. */
+  serverToday: string;
   /** Pre-translated weekday word, e.g. "friday" / "freitag". */
   weekdayLabel: string;
   /** Pre-formatted streak fragment, e.g. "5 Tage Serie" — omit (null) at a
@@ -102,6 +106,11 @@ function clientLocalToday(): string {
   return new Date().toLocaleDateString("en-CA");
 }
 
+/** The local date has no change event to subscribe to; a re-render picks it up. */
+function subscribeToNothing(): () => void {
+  return () => {};
+}
+
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 /**
@@ -116,6 +125,7 @@ function clientLocalToday(): string {
 export function EnergyCheckinCard({
   energyLevel,
   energyLevelDate,
+  serverToday,
   weekdayLabel,
   streakText,
   bestDayInsight,
@@ -125,11 +135,19 @@ export function EnergyCheckinCard({
 
   // Compute "is today" in the browser's local timezone — this is the
   // fix for the SSR UTC-vs-local mismatch that caused the previous bug.
-  const today = clientLocalToday();
+  // useSyncExternalStore renders `serverToday` on the server and while
+  // hydrating, then switches to the browser's date without a mismatch.
+  // Calling clientLocalToday() during render ran it on the server too: in any
+  // hour where the server's date differs from the user's (Docker runs UTC),
+  // hydration failed and React threw away the server HTML.
+  const today = useSyncExternalStore(subscribeToNothing, clientLocalToday, () => serverToday);
   const isCheckedInToday = energyLevelDate === today && energyLevel !== null;
 
   // UI state
-  const [expanded, setExpanded] = useState(!isCheckedInToday);
+  // Only "the user asked to change today's level"; not checked in shows the
+  // choices anyway (showChoices below). Seeding it from isCheckedInToday would
+  // freeze the hydration-time value.
+  const [expanded, setExpanded] = useState(false);
   const [pending, startTransition] = useTransition();
   const [submitting, setSubmitting] = useState<EnergyLevel | null>(null);
   const [swapNotice, setSwapNotice] = useState<{
@@ -165,6 +183,7 @@ export function EnergyCheckinCard({
           previousTitle: data.previousQuestTitle,
         });
         // keep expanded so the user can see the swap notice and hit Undo
+        setExpanded(true);
       } else {
         setSwapNotice(null);
         setExpanded(false);

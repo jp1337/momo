@@ -132,6 +132,16 @@ export type CreateTaskInput = z.infer<typeof CreateTaskInputSchema>;
  * Schema for updating an existing task.
  * All fields are optional — only provided fields are updated.
  */
+/**
+ * PATCH bodies must change something. An empty object (or one whose keys are
+ * all unknown and stripped) reached Drizzle as `.set({})`, which throws
+ * "No values to set" — a 500 for a client mistake.
+ */
+const AT_LEAST_ONE_FIELD = {
+  check: (data: object) => Object.values(data).some((v) => v !== undefined),
+  message: "At least one field must be provided",
+} as const;
+
 export const UpdateTaskInputSchema = z
   .object({
     title: z
@@ -196,7 +206,8 @@ export const UpdateTaskInputSchema = z
       message: "Recurring tasks must have a valid recurrence configuration",
       path: ["recurrenceInterval"],
     }
-  );
+  )
+  .refine(AT_LEAST_ONE_FIELD.check, { message: AT_LEAST_ONE_FIELD.message });
 
 export type UpdateTaskInput = z.infer<typeof UpdateTaskInputSchema>;
 
@@ -316,7 +327,7 @@ export const UpdateTopicInputSchema = z.object({
   sequential: z.boolean().optional(),
   /** Archive or unarchive the topic. */
   archived: z.boolean().optional(),
-});
+}).refine(AT_LEAST_ONE_FIELD.check, { message: AT_LEAST_ONE_FIELD.message });
 
 export type UpdateTopicInput = z.infer<typeof UpdateTopicInputSchema>;
 
@@ -406,7 +417,7 @@ export const UpdateWishlistItemInputSchema = z.object({
     .min(0, "Coin threshold cannot be negative")
     .nullable()
     .optional(),
-});
+}).refine(AT_LEAST_ONE_FIELD.check, { message: AT_LEAST_ONE_FIELD.message });
 
 export type UpdateWishlistItemInput = z.infer<
   typeof UpdateWishlistItemInputSchema

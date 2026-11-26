@@ -131,6 +131,7 @@
     "insight_day_sun": "воскресенье"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "Удалить шаг",
     "page_title": "Задачи",
     "sequential_label": "Шаг за шагом",
     "sequential_progress": "Шаг {current} из {total}",
@@ -251,6 +252,7 @@
     "empty_cta": "Создать задачу"
   },
   "topics": {
+    "icon_picker_aria": "Выбрать значок",
     "page_title": "Темы",
     "page_subtitle": "{count, plural, one {# тема} few {# темы} other {# тем}}",
     "rail_open_tasks": "{count, plural, one {# задача в работе} few {# задачи в работе} other {# задач в работе}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "Введите корректное положительное число"
   },
   "settings": {
+    "nav_aria": "Навигация по настройкам",
+    "totp_qr_alt": "QR-код для вашего приложения-аутентификатора",
+    "profile_avatar_preview_alt": "Предпросмотр фото профиля",
     "nav_account": "Учётная запись",
     "nav_notifications": "Уведомления",
     "nav_quest": "Квест и задачи",
@@ -418,7 +423,7 @@
     "webhook_secret_label": "Секрет подписи",
     "webhook_secret_placeholder": "необязательно",
     "webhook_secret_hint": "Если задан, каждый запрос содержит заголовок X-Momo-Signature для проверки подлинности.",
-    "webhook_payload_note": "Payload: { event: \"task.created\", timestamp, task: { id, title, type, ... } }",
+    "webhook_payload_note": "Payload: '{' event: \"task.created\", timestamp, task: '{' id, title, type, ... '}' '}'",
     "channel_active": "Активно",
     "channel_not_configured": "Не настроено",
     "section_notification_history": "История уведомлений",
@@ -535,7 +540,7 @@
     "webhook_endpoint_secret_label": "Секрет подписи (необязательно)",
     "webhook_endpoint_secret_placeholder": "Оставьте пустым для отказа от подписи",
     "webhook_endpoint_secret_replace_placeholder": "Введите новый секрет для замены или оставьте пустым",
-    "webhook_endpoint_secret_hint": "Если задан, каждый запрос содержит заголовок X-Momo-Signature: sha256=<hex> для проверки.",
+    "webhook_endpoint_secret_hint": "Если задан, каждый запрос содержит заголовок X-Momo-Signature: sha256='<'hex'>' для проверки.",
     "webhook_endpoint_secret_remove": "Убрать подпись",
     "webhook_endpoint_events_label": "Подписаться на события",
     "webhook_endpoint_events_hint": "Не выбирайте ничего, чтобы получать все события.",
@@ -1146,5 +1151,16 @@
     "docs_link": "Документация API →",
     "error_create": "Не удалось создать ключ — повторите попытку.",
     "error_network": "Сетевая ошибка — повторите попытку."
+  },
+  "errors": {
+    "not_found_title": "Страница не найдена",
+    "not_found_heading": "Этой страницы (пока) нет",
+    "not_found_text_1": "Иногда можно попасть туда, где ещё не всё готово. Нам это знакомо.",
+    "not_found_text_2": "Возможно, адрес был неверным — или страница ещё ждёт своего часа.",
+    "back_to_app": "Вернуться в приложение",
+    "error_heading": "Что-то пошло не так",
+    "error_text_1": "Это не ваша вина — ошибка на нашей стороне.",
+    "error_text_2": "Можно попробовать ещё раз прямо сейчас или просто вернуться назад.",
+    "retry": "Перезагрузить"
   }
 }

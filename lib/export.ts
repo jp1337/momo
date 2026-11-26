@@ -1,249 +1,163 @@
 /**
  * User data export — DSGVO Art. 15/20 (right of access / data portability).
  *
- * Aggregates all personal data belonging to a user into a single structured
- * JSON object suitable for download. OAuth tokens, sessions, and push
- * subscription objects are deliberately excluded (internal/sensitive).
+ * Exports whole rows of every table that holds the user's data and removes
+ * only credentials (see SECRET_COLUMNS). Until version 2 the export picked
+ * fields by hand; it did not grow with the schema and left out energy
+ * check-ins, quest postponements, notification channels, webhooks, API keys,
+ * passkeys, linked accounts, sessions and push devices, plus most newer task
+ * and settings columns. `EXPORT_COVERAGE` names every user-owned table and a
+ * test fails when a new one is neither exported nor excluded with a reason.
  */
 
 import { db } from "@/lib/db";
 import {
   users,
+  accounts,
+  sessions,
   topics,
   tasks,
   taskCompletions,
+  energyCheckins,
   wishlistItems,
   userAchievements,
   achievements,
+  apiKeys,
+  pushSubscriptions,
+  questPostponements,
+  notificationChannels,
   notificationLog,
+  authenticators,
+  webhookEndpoints,
+  webhookDeliveries,
 } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { getServerTranslations } from "@/lib/i18n-server";
 
-/** Shape of the exported data bundle */
-export interface UserDataExport {
-  exportedAt: string;
-  version: "1";
-  profile: {
-    id: string;
-    name: string | null;
-    email: string | null;
-    image: string | null;
-    coins: number;
-    level: number;
-    streakCurrent: number;
-    streakMax: number;
-    monthlyBudget: string | null;
-    notificationEnabled: boolean;
-    notificationTime: string;
-    theme: string;
-    locale: string | null;
-    createdAt: Date;
-  };
-  topics: Array<{
-    id: string;
-    title: string;
-    description: string | null;
-    color: string | null;
-    icon: string | null;
-    priority: string;
-    archived: boolean;
-    createdAt: Date;
-  }>;
-  tasks: Array<{
-    id: string;
-    topicId: string | null;
-    title: string;
-    notes: string | null;
-    type: string;
-    priority: string;
-    recurrenceInterval: number | null;
-    dueDate: string | null;
-    nextDueDate: string | null;
-    completedAt: Date | null;
-    coinValue: number;
-    isDailyQuest: boolean;
-    createdAt: Date;
-  }>;
-  taskCompletions: Array<{
-    id: string;
-    taskId: string;
-    completedAt: Date;
-  }>;
-  wishlistItems: Array<{
-    id: string;
-    title: string;
-    price: string | null;
-    url: string | null;
-    priority: string;
-    status: string;
-    coinUnlockThreshold: number | null;
-    createdAt: Date;
-  }>;
-  achievements: Array<{
-    key: string;
-    title: string;
-    description: string;
-    icon: string;
-    earnedAt: Date;
-  }>;
-  notificationLog: Array<{
-    channel: string;
-    title: string;
-    body: string | null;
-    status: string;
-    error: string | null;
-    sentAt: Date;
-  }>;
+/**
+ * Every table with a user_id column (by SQL name), and whether the export
+ * includes it or why not. Checked by __tests__/export.test.ts.
+ */
+export const EXPORT_COVERAGE: Record<string, "exported" | string> = {
+  users: "exported",
+  accounts: "exported",
+  sessions: "exported",
+  topics: "exported",
+  tasks: "exported",
+  task_completions: "exported",
+  energy_checkins: "exported",
+  wishlist_items: "exported",
+  user_achievements: "exported",
+  api_keys: "exported",
+  push_subscriptions: "exported",
+  quest_postponements: "exported",
+  notification_channels: "exported",
+  notification_log: "exported",
+  authenticators: "exported",
+  webhook_endpoints: "exported",
+  webhook_deliveries: "exported",
+  linking_requests: "transient: a 5-minute account-linking handshake, deleted after use",
+  totp_backup_codes: "credentials only: hashed one-time codes",
+};
+
+/** Keys inside notification channel configs that are credentials, not data. */
+const CHANNEL_CONFIG_SECRETS = new Set(["botToken", "appToken", "secret", "token", "password"]);
+
+/** Returns `row` without the listed keys. */
+function omit<T extends object, K extends keyof T>(row: T, keys: readonly K[]): Omit<T, K> {
+  const copy = { ...row };
+  for (const k of keys) delete copy[k];
+  return copy;
 }
+
+/** Credential columns removed from each exported row. */
+const SECRET_COLUMNS = {
+  users: ["totpSecret", "calendarFeedTokenHash"],
+  accounts: ["refresh_token", "access_token", "id_token", "session_state"],
+  sessions: ["sessionToken"],
+  apiKeys: ["keyHash"],
+  pushSubscriptions: ["endpoint", "subscription"],
+  authenticators: ["credentialID", "credentialPublicKey"],
+  webhookEndpoints: ["secretEncrypted"],
+} as const;
 
 /**
  * Exports all personal data for a given user.
  *
- * Deliberately excludes:
- *  - pushSubscription (browser-side endpoint, not portable personal data)
- *  - OAuth access/refresh tokens (sensitive, rotated externally)
- *  - Session tokens (transient internal state)
- *
  * @param userId - The authenticated user's UUID
- * @returns A structured UserDataExport object ready for JSON serialization
+ * @returns A JSON-serializable bundle, version "2"
+ * @throws Error("User not found") for an unknown id
  */
-export async function exportUserData(userId: string): Promise<UserDataExport> {
-  // Run all queries in parallel for performance
+export async function exportUserData(userId: string) {
   const [
     userRows,
+    accountRows,
+    sessionRows,
     topicRows,
     taskRows,
     completionRows,
+    energyRows,
     wishlistRows,
     achievementRows,
+    apiKeyRows,
+    pushRows,
+    postponementRows,
+    channelRows,
     notificationLogRows,
+    passkeyRows,
+    webhookRows,
+    deliveryRows,
   ] = await Promise.all([
+    db.select().from(users).where(eq(users.id, userId)).limit(1),
+    db.select().from(accounts).where(eq(accounts.userId, userId)),
+    db.select().from(sessions).where(eq(sessions.userId, userId)),
+    db.select().from(topics).where(eq(topics.userId, userId)),
+    db.select().from(tasks).where(eq(tasks.userId, userId)),
+    db.select().from(taskCompletions).where(eq(taskCompletions.userId, userId)),
+    db.select().from(energyCheckins).where(eq(energyCheckins.userId, userId)),
+    db.select().from(wishlistItems).where(eq(wishlistItems.userId, userId)),
     db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        image: users.image,
-        coins: users.coins,
-        level: users.level,
-        streakCurrent: users.streakCurrent,
-        streakMax: users.streakMax,
-        monthlyBudget: users.monthlyBudget,
-        notificationEnabled: users.notificationEnabled,
-        notificationTime: users.notificationTime,
-        morningBriefingEnabled: users.morningBriefingEnabled,
-        morningBriefingTime: users.morningBriefingTime,
-        vacationEndDate: users.vacationEndDate,
-        theme: users.theme,
-        locale: users.locale,
-        createdAt: users.createdAt,
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1),
-
-    db
-      .select({
-        id: topics.id,
-        title: topics.title,
-        description: topics.description,
-        color: topics.color,
-        icon: topics.icon,
-        priority: topics.priority,
-        archived: topics.archived,
-        createdAt: topics.createdAt,
-      })
-      .from(topics)
-      .where(eq(topics.userId, userId)),
-
-    db
-      .select({
-        id: tasks.id,
-        topicId: tasks.topicId,
-        title: tasks.title,
-        notes: tasks.notes,
-        type: tasks.type,
-        priority: tasks.priority,
-        recurrenceInterval: tasks.recurrenceInterval,
-        dueDate: tasks.dueDate,
-        nextDueDate: tasks.nextDueDate,
-        completedAt: tasks.completedAt,
-        coinValue: tasks.coinValue,
-        isDailyQuest: tasks.isDailyQuest,
-        pausedAt: tasks.pausedAt,
-        pausedUntil: tasks.pausedUntil,
-        createdAt: tasks.createdAt,
-      })
-      .from(tasks)
-      .where(eq(tasks.userId, userId)),
-
-    db
-      .select({
-        id: taskCompletions.id,
-        taskId: taskCompletions.taskId,
-        completedAt: taskCompletions.completedAt,
-      })
-      .from(taskCompletions)
-      .where(eq(taskCompletions.userId, userId)),
-
-    db
-      .select({
-        id: wishlistItems.id,
-        title: wishlistItems.title,
-        price: wishlistItems.price,
-        url: wishlistItems.url,
-        priority: wishlistItems.priority,
-        status: wishlistItems.status,
-        coinUnlockThreshold: wishlistItems.coinUnlockThreshold,
-        createdAt: wishlistItems.createdAt,
-      })
-      .from(wishlistItems)
-      .where(eq(wishlistItems.userId, userId)),
-
-    db
-      .select({
-        key: achievements.key,
-        icon: achievements.icon,
-        earnedAt: userAchievements.earnedAt,
-      })
+      .select({ key: achievements.key, icon: achievements.icon, earnedAt: userAchievements.earnedAt })
       .from(userAchievements)
-      .innerJoin(
-        achievements,
-        eq(userAchievements.achievementId, achievements.id)
-      )
+      .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
       .where(eq(userAchievements.userId, userId)),
-
+    db.select().from(apiKeys).where(eq(apiKeys.userId, userId)),
+    db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId)),
+    db.select().from(questPostponements).where(eq(questPostponements.userId, userId)),
+    db.select().from(notificationChannels).where(eq(notificationChannels.userId, userId)),
     db
-      .select({
-        channel: notificationLog.channel,
-        title: notificationLog.title,
-        body: notificationLog.body,
-        status: notificationLog.status,
-        error: notificationLog.error,
-        sentAt: notificationLog.sentAt,
-      })
+      .select()
       .from(notificationLog)
       .where(eq(notificationLog.userId, userId))
       .orderBy(desc(notificationLog.sentAt)),
+    db.select().from(authenticators).where(eq(authenticators.userId, userId)),
+    db.select().from(webhookEndpoints).where(eq(webhookEndpoints.userId, userId)),
+    db.select().from(webhookDeliveries).where(eq(webhookDeliveries.userId, userId)),
   ]);
 
-  const profile = userRows[0];
-  if (!profile) {
+  const user = userRows[0];
+  if (!user) {
     throw new Error("User not found");
   }
 
   // Achievement display text lives in messages/*.json, no longer in the DB —
   // resolve it in the exporting user's own language.
-  const t = await getServerTranslations(profile.locale, "achievements");
+  const t = await getServerTranslations(user.locale, "achievements");
 
   return {
     exportedAt: new Date().toISOString(),
-    version: "1",
-    profile,
+    version: "2" as const,
+    profile: {
+      ...omit(user, SECRET_COLUMNS.users),
+      calendarFeedActive: user.calendarFeedTokenHash !== null,
+    },
+    linkedAccounts: accountRows.map((r) => omit(r, SECRET_COLUMNS.accounts)),
+    sessions: sessionRows.map((r) => omit(r, SECRET_COLUMNS.sessions)),
     topics: topicRows,
     tasks: taskRows,
     taskCompletions: completionRows,
+    energyCheckins: energyRows,
+    questPostponements: postponementRows,
     wishlistItems: wishlistRows,
     achievements: achievementRows.map((a) => ({
       key: a.key,
@@ -252,6 +166,25 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
       icon: a.icon,
       earnedAt: a.earnedAt,
     })),
+    apiKeys: apiKeyRows.map((r) => omit(r, SECRET_COLUMNS.apiKeys)),
+    passkeys: passkeyRows.map((r) => omit(r, SECRET_COLUMNS.authenticators)),
+    pushDevices: pushRows.map((r) => omit(r, SECRET_COLUMNS.pushSubscriptions)),
+    notificationChannels: channelRows.map((r) => ({
+      ...r,
+      config: Object.fromEntries(
+        Object.entries((r.config ?? {}) as Record<string, unknown>).filter(
+          ([k]) => !CHANNEL_CONFIG_SECRETS.has(k),
+        ),
+      ),
+    })),
     notificationLog: notificationLogRows,
+    webhookEndpoints: webhookRows.map((r) => ({
+      ...omit(r, SECRET_COLUMNS.webhookEndpoints),
+      hasSecret: r.secretEncrypted !== null,
+    })),
+    webhookDeliveries: deliveryRows,
   };
 }
+
+/** Shape of the exported data bundle */
+export type UserDataExport = Awaited<ReturnType<typeof exportUserData>>;

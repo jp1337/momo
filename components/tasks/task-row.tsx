@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { Row, effortStep } from "@/components/ui/list";
 import { TaskRowActions } from "@/components/tasks/task-row-actions";
 import { useTaskSwipe } from "@/components/tasks/use-task-swipe";
+import { localMidnight, useLocalToday } from "@/lib/client/local-today";
 
 export interface TaskRowProps {
   id: string;
@@ -109,6 +110,7 @@ export function TaskRow(props: TaskRowProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const isCompletingRef = useRef(false);
 
+  const todayStr = useLocalToday();
   const isCompleted = props.completedAt !== null;
   const displayDate = props.type === "RECURRING" ? props.nextDueDate : props.dueDate;
 
@@ -117,8 +119,7 @@ export function TaskRow(props: TaskRowProps) {
    * Wörtlich die Logik aus task-item.tsx formatDueDate().
    */
   function formatDueDate(dateStr: string): { text: string; overdue: boolean } {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = localMidnight(todayStr);
     const due = new Date(dateStr + "T00:00:00");
     if (due < today) {
       const diffDays = Math.floor((today.getTime() - due.getTime()) / 86_400_000);

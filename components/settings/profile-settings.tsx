@@ -7,7 +7,7 @@
  * PATCHes /api/user/profile on save.
  */
 
-import { useState, useRef } from "react";
+import { useState, useRef, useId } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -38,6 +38,8 @@ export function ProfileSettings({
   providerBadgeLabel,
 }: ProfileSettingsProps) {
   const t = useTranslations("settings");
+  const nameId = useId();
+  const emailId = useId();
   const tc = useTranslations("common");
   const router = useRouter();
 
@@ -262,7 +264,7 @@ export function ProfileSettings({
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={imagePreview}
-                alt="Avatar preview"
+                alt={t("profile_avatar_preview_alt")}
                 width={56}
                 height={56}
                 className="rounded-full object-cover group-hover:opacity-70 transition-opacity"
@@ -271,7 +273,7 @@ export function ProfileSettings({
             ) : (
               <Image
                 src={imagePreview}
-                alt="Avatar preview"
+                alt={t("profile_avatar_preview_alt")}
                 width={56}
                 height={56}
                 className="rounded-full object-cover group-hover:opacity-70 transition-opacity"
@@ -335,12 +337,14 @@ export function ProfileSettings({
       {/* Name field */}
       <div className="flex flex-col gap-1">
         <label
+          htmlFor={nameId}
           className="text-sm font-medium"
           style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
         >
           {t("profile_name_label")}
         </label>
         <input
+          id={nameId}
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -360,12 +364,14 @@ export function ProfileSettings({
       {/* Email field */}
       <div className="flex flex-col gap-1">
         <label
+          htmlFor={emailId}
           className="text-sm font-medium"
           style={{ color: "var(--text-muted)", fontFamily: "var(--font-ui)" }}
         >
           {t("profile_email_label")}
         </label>
         <input
+          id={emailId}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}

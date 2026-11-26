@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { Client } from "pg";
 import { randomUUID } from "crypto";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * Progress, Habits, and Achievements E2E tests.
@@ -16,7 +17,7 @@ test.describe("Progress Page", () => {
     await page.goto("/progress");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
     const tabs = page.locator('[role="tab"], a[href*="tab="]');
     await expect(tabs.first()).toBeVisible();
   });
@@ -25,14 +26,14 @@ test.describe("Progress Page", () => {
     await page.goto("/progress?tab=achievements");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("can switch to habits tab", async ({ page }) => {
     await page.goto("/progress?tab=habits");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("achievements tab shows achievement cards or empty state", async ({
@@ -41,7 +42,7 @@ test.describe("Progress Page", () => {
     await page.goto("/progress?tab=achievements");
     await page.waitForLoadState("networkidle");
     // Either achievement cards or an empty state message
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     // Should have some content
     const main = page.locator("main, [role='main'], .max-w-4xl").first();
     await expect(main).toBeVisible({ timeout: 5000 });
@@ -52,7 +53,7 @@ test.describe("Progress Page", () => {
   }) => {
     await page.goto("/progress?tab=habits");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 
   test("clicking between tabs does not show errors", async ({ page }) => {
@@ -64,7 +65,7 @@ test.describe("Progress Page", () => {
     if (tabCount > 1) {
       await tabs.nth(1).click();
       await page.waitForLoadState("networkidle");
-      await expect(page.locator("body")).not.toContainText(/500/i);
+      await expectNoServerError(page);
     }
   });
 });
@@ -76,24 +77,21 @@ test.describe("Habits Page", () => {
     await page.goto("/habits");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows page heading", async ({ page }) => {
     await page.goto("/habits");
     await page.waitForLoadState("networkidle");
-    // "Gewohnheiten" / "Habits" heading
-    const heading = page
-      .locator("h1, h2")
-      .filter({ hasText: /Gewohnheiten|Habits/i })
-      .first();
-    await expect(heading).toBeVisible({ timeout: 5000 });
+    // /habits redirects to the habits tab of /progress
+    await expect(page).toHaveURL(/\/progress\?tab=habits/);
+    await expect(page.getByText(/Gewohnheiten|Habits/i).first()).toBeVisible({ timeout: 5000 });
   });
 
   test("shows contribution grid or empty state", async ({ page }) => {
     await page.goto("/habits");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     // Either a habit grid (svg cells) or empty state message
     const content = page.locator("main, [role='main'], .max-w-4xl").first();
     await expect(content).toBeVisible();
@@ -104,7 +102,7 @@ test.describe("Habits Page", () => {
     await page.goto("/habits");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
   });
 });
 
@@ -115,13 +113,13 @@ test.describe("Achievements Page", () => {
     await page.goto("/achievements");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows achievement cards", async ({ page }) => {
     await page.goto("/achievements");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     // Achievement page has content
     const content = page.locator("main, [role='main'], .max-w-4xl").first();
     await expect(content).toBeVisible();
@@ -135,7 +133,7 @@ test.describe("Stats Page", () => {
     await page.goto("/stats");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows stats content", async ({ page }) => {
@@ -148,11 +146,9 @@ test.describe("Stats Page", () => {
   test("shows level and coin information", async ({ page }) => {
     await page.goto("/stats");
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     // Level or coin data should appear
-    const statsEl = page
-      .locator("body")
-      .filter({ hasText: /Level|Münzen|Coins|Streak/i });
+    const statsEl = page.getByText(/Level|Münzen|Coins|Streak/i);
     await expect(statsEl.first()).toBeVisible({ timeout: 5000 });
   });
 });
@@ -164,14 +160,14 @@ test.describe("Weekly Review Page", () => {
     await page.goto("/review");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows weekly review content", async ({ page }) => {
     await page.goto("/review");
     await page.waitForLoadState("networkidle");
     // Review has some kind of heading or summary section
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
     const content = page.locator("main, [role='main'], .max-w-4xl").first();
     await expect(content).toBeVisible({ timeout: 5000 });
   });

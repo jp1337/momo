@@ -240,19 +240,6 @@ export function verifiedAuthErrorResponse(
   );
 }
 
-/**
- * Returns a standard 403 response for read-only API key violations.
- *
- * @returns Response with 403 status, a descriptive error message, and
- *   `code: "READONLY_KEY"` so clients can detect this refusal programmatically.
- */
-export function readonlyKeyResponse(): Response {
-  return Response.json(
-    {
-      error: "Forbidden",
-      message: "This API key is read-only. Use a read-write key to modify data.",
-      code: "READONLY_KEY",
-    },
-    { status: 403 }
-  );
-}
+// Lives in its own dependency-free module so route tests can use the real
+// response instead of a hand-written stub (this module pulls in next-auth).
+export { readonlyKeyResponse } from "@/lib/api-responses";

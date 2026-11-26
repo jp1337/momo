@@ -19,8 +19,6 @@ import { useTranslations } from "next-intl";
 interface LevelUpOverlayProps {
   /** The new level number (e.g. 3) */
   level: number;
-  /** The new level title in German (e.g. "Alltagsmeister") */
-  title: string;
   /** Called after the overlay has fully animated out */
   onDone: () => void;
 }
@@ -29,8 +27,12 @@ interface LevelUpOverlayProps {
  * Full-screen level-up celebration overlay.
  * Auto-dismisses after 3 seconds.
  */
-export function LevelUpOverlay({ level, title, onDone }: LevelUpOverlayProps) {
+export function LevelUpOverlay({ level, onDone }: LevelUpOverlayProps) {
   const t = useTranslations("animations");
+  // POST /api/tasks/:id/complete returns { level, minCoins } only; titles live in
+  // the locale files. Callers used to pass a `title` the API never sent: blank line.
+  const tAch = useTranslations("achievements");
+  const title = tAch(`levels.${level}`);
 
   useEffect(() => {
     const timer = setTimeout(onDone, 3200);

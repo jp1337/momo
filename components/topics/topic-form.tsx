@@ -7,7 +7,7 @@
  * Submits to POST /api/topics or PATCH /api/topics/:id.
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "motion/react";
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
@@ -92,11 +92,6 @@ export function TopicForm({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMore, setShowMore] = useState(() => hasAdvancedData(initialData ?? {}));
-
-  useEffect(() => {
-    setFormData({ ...DEFAULT_FORM, ...initialData });
-    setShowMore(hasAdvancedData(initialData ?? {}));
-  }, [initialData]);
 
   const handleChange = (
     e: React.ChangeEvent<

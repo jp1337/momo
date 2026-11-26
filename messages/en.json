@@ -131,6 +131,7 @@
     "insight_day_sun": "Sunday"
   },
   "tasks": {
+    "breakdown_remove_step_aria": "Remove step",
     "page_title": "Tasks",
     "sequential_label": "Step by step",
     "sequential_progress": "Step {current} of {total}",
@@ -251,6 +252,7 @@
     "empty_cta": "Add a task"
   },
   "topics": {
+    "icon_picker_aria": "Pick an icon",
     "page_title": "Topics",
     "page_subtitle": "{count, plural, one {# topic} other {# topics}}",
     "rail_open_tasks": "{count, plural, one {# task open} other {# tasks open}}",
@@ -359,6 +361,9 @@
     "budget_error_invalid": "Please enter a valid positive number"
   },
   "settings": {
+    "nav_aria": "Settings navigation",
+    "totp_qr_alt": "QR code for your authenticator app",
+    "profile_avatar_preview_alt": "Profile picture preview",
     "nav_account": "Account",
     "nav_notifications": "Notifications",
     "nav_quest": "Quest & Tasks",
@@ -418,7 +423,7 @@
     "webhook_secret_label": "Signing secret",
     "webhook_secret_placeholder": "optional",
     "webhook_secret_hint": "When set, every request includes an X-Momo-Signature header for authenticity verification.",
-    "webhook_payload_note": "Payload: { event: \"task.created\", timestamp, task: { id, title, type, ... } }",
+    "webhook_payload_note": "Payload: '{' event: \"task.created\", timestamp, task: '{' id, title, type, ... '}' '}'",
     "channel_active": "Active",
     "channel_not_configured": "Not configured",
     "section_notification_history": "Notification History",
@@ -535,7 +540,7 @@
     "webhook_endpoint_secret_label": "Signing secret (optional)",
     "webhook_endpoint_secret_placeholder": "Leave empty for no signing",
     "webhook_endpoint_secret_replace_placeholder": "Enter new secret to replace, or leave empty to keep",
-    "webhook_endpoint_secret_hint": "When set, each request includes an X-Momo-Signature: sha256=<hex> header for verification.",
+    "webhook_endpoint_secret_hint": "When set, each request includes an X-Momo-Signature: sha256='<'hex'>' header for verification.",
     "webhook_endpoint_secret_remove": "Remove signing",
     "webhook_endpoint_events_label": "Subscribe to events",
     "webhook_endpoint_events_hint": "Leave all unchecked to receive all events.",
@@ -1146,5 +1151,16 @@
     "docs_link": "API documentation →",
     "error_create": "Failed to create key — please try again.",
     "error_network": "Network error — please try again."
+  },
+  "errors": {
+    "not_found_title": "Page not found",
+    "not_found_heading": "This page doesn't exist (yet)",
+    "not_found_text_1": "Sometimes you end up somewhere that isn't finished yet. We know the feeling.",
+    "not_found_text_2": "Maybe the address was wrong — or the page is still waiting for its moment.",
+    "back_to_app": "Back to the app",
+    "error_heading": "Something went wrong",
+    "error_text_1": "This isn't your fault — the error is on our side.",
+    "error_text_2": "You can try again right away or just go back.",
+    "retry": "Reload"
   }
 }

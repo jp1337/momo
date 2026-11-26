@@ -7,6 +7,93 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **API docs:** Swagger UI now lists outbound webhooks (6 operations), push devices (3) and
+  undoing a wishlist discard. A test compares the spec with the route files, so an endpoint can no
+  longer ship undocumented.
+- **API docs:** 37 operations listed only some of the status codes they can return — mostly the
+  `400` for a body that is not valid JSON, also `403` for read-only keys and two `409`s. The spec
+  now names them, and the same test checks each handler's codes against it.
+
+### Changed
+
+- **Alexa Skill:** The Lambda now has its own lint config and a CI job (typecheck, lint, build on
+  Node 24). Before, its lint fell back to the Next.js rules, and no pull request ever built it.
+- **CI:** The Playwright end-to-end suite now runs on every pull request against a production
+  build and PostgreSQL 19. It ran nowhere before. Not a required check yet.
+
+### Fixed
+
+- **ntfy:** Notifications to ntfy 2.x servers failed with `400: request body must be valid JSON`
+  whenever they carried a tag, the test notification included. Momo sent `tags` as a string;
+  ntfy's JSON API expects a list. ([#251](https://github.com/jp1337/momo/issues/251))
+- **Webhooks:** The delivery history of an endpoint showed the *oldest* 50 attempts of the last 30
+  days instead of the newest, so once an endpoint had more than 50 deliveries, recent ones never
+  appeared. `GET /api/settings/webhooks/{id}` now returns the 50 newest, newest first.
+- **i18n:** The "page not found" and "something went wrong" pages were German in every language.
+  They now follow the UI language, like the rest of the app.
+- **Wishlist:** The history toggle showed only the number of bought wishes, although it opens
+  bought and discarded ones. It now counts both.
+- **Quick Add:** The topic picker under "More options" only ever offered "No topic". It read the
+  topics as a bare list, but the API returns `{ topics: [...] }`. Broken since Quick Add shipped.
+- **Quick Add saves again — it never did.** Since Quick Add (`N` or `/`) shipped in April, every
+  save ended in "Could not save — try again": the modal did not send the task type, which the API
+  requires. It now creates a one-time task.
+- **Tasks page:** a task added with Quick Add while on `/tasks` only appeared after a reload. The
+  list now picks up refreshed server data.
+- **Accessibility:** The task form (new and edit) was a plain overlay: screen readers did not
+  announce it as a dialog, focus could leave it, and Escape did nothing. It is now a real dialog
+  with focus trap, Escape and click-outside to close. Layout unchanged, including the full-screen
+  form with pinned save button on phones.
+- **Accessibility:** Screen readers announced the new-device login alert switch without a name,
+  and the vacation end date and the profile name and e-mail fields without their labels. They are
+  now connected.
+- **Accessibility:** The habit year grid, the energy heatmap and the weekday chart marked every
+  cell with an invalid ARIA role, 365 critical findings on the progress page. Removed; the charts
+  keep their text description.
+- **Contrast (light theme):** Secondary text on raised surfaces (language switcher, sign-in
+  provider badge) measured 4.21:1, under the 4.5:1 the design system requires; the sidebar section
+  labels measured 2.94:1. Secondary ink is a shade darker now, the labels use the muted ink step
+  made for this.
+- **Onboarding:** Turning on push notifications in the last onboarding step never worked. Every
+  request was rejected, yet the step could report "Notifications enabled!", and no reminder ever
+  arrived. It now subscribes the same way the settings page does, and says so when the server has
+  no push key configured.
+- **Level-up:** The celebration showed the new level number but an empty line where the level's
+  name belongs ("Task Bearer", …). It now shows the name in the user's language.
+- **Settings → Integrations:** Two webhook hints (the payload example and the signing-secret hint)
+  threw a translation error in every language, because their literal `{ }` and `< >` were read as
+  placeholders. They are escaped now, and a test parses every message in every language.
+- **Topic page:** The drag-and-drop list rendered different accessibility ids on the server and in
+  the browser. React keeps the server's attributes, so the screen-reader drag instructions pointed
+  at an id that did not exist. The ids are stable now.
+- **Dashboard:** Whenever the server's date differed from the user's — in Docker the server runs
+  on UTC, so every evening for users west of it — the energy line failed to hydrate and React
+  rebuilt the whole page in the browser. It now hydrates cleanly and then shows the user's own day.
+- **Tasks, topics, vacation mode:** Due labels ("Today", "Tomorrow"), the Today/Upcoming groups and
+  date pickers used the server's date while rendering. When the server's day differed from the
+  user's (Docker runs on UTC), the page failed to hydrate and was rebuilt in the browser, and
+  labels could be off by a day. Snoozing "until tomorrow" between midnight and 01:00 (Berlin)
+  picked today. All of them now use the user's local day.
+- **Focus, 5-minute mode, dashboard:** "Today" was the UTC date there, not the user's. Snoozed
+  tasks came back a day early or late around midnight (for users west of UTC: every afternoon),
+  and the postpone counter and the energy match badge could count the wrong day. They now use the
+  timezone in the user's settings, as the daily quest already did.
+- **Data export (GDPR):** The export left out much of what Momo stores: energy check-ins, quest
+  postponements, notification channels, webhooks, API keys, passkeys, linked accounts, sessions,
+  push devices, and most newer task and settings fields. It now contains all of it (format version
+  2); credentials such as tokens and secrets are still never included. The documentation no longer
+  claims that deleted tasks are exported — they are deleted for good.
+- **API:** `PATCH /api/tasks/{id}`, `/api/topics/{id}` and `/api/wishlist/{id}` answered an empty
+  body with `500 Internal server error`. They now answer `422`: at least one field must be sent.
+- **API:** 24 endpoints answered a malformed id in the path (anything that is not a UUID) with
+  `500 Internal server error`, and `GET /api/tasks?topicId=…` did the same for a malformed topic id.
+  They now answer `404` and `400`.
+- **Accessibility, i18n:** Six screen-reader labels were English in every language (settings
+  navigation, icon picker, two-factor QR code, avatar preview, "remove step" in task breakdown).
+  They are translated now; the decorative vacation emoji is hidden from screen readers.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update
@@ -1297,7 +1384,9 @@ Docstring der Route schon immer behauptet hat. `GET` bleibt unverändert.
 - Bought items shown with green left border and "Bought" badge
 - Discarded items shown with 50% opacity and strikethrough title
 
-[Unreleased]: https://github.com/jp1337/momo/compare/v0.10.3...HEAD
+[Unreleased]: https://github.com/jp1337/momo/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/jp1337/momo/compare/v0.10.4...v0.11.0
+[0.10.4]: https://github.com/jp1337/momo/compare/v0.10.3...v0.10.4
 [0.10.3]: https://github.com/jp1337/momo/compare/v0.10.2...v0.10.3
 [0.10.2]: https://github.com/jp1337/momo/compare/v0.10.1...v0.10.2
 [0.10.1]: https://github.com/jp1337/momo/compare/v0.10.0...v0.10.1

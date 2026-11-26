@@ -303,6 +303,28 @@ describe("listWebhookDeliveries", () => {
     const fakeId = "00000000-0000-0000-0000-000000000001";
     await expect(listWebhookDeliveries(fakeId, user.id)).rejects.toThrow("not_found");
   });
+
+  it("returns the 50 newest deliveries, newest first, once there are more than 50", async () => {
+    const user = await createTestUser({ timezone: TZ });
+    const created = await createWebhookEndpoint(user.id, ep({ name: "Busy EP" }));
+    const base = Date.UTC(2026, 10, 1);
+    await db.insert(webhookDeliveries).values(
+      Array.from({ length: 51 }, (_, i) => ({
+        endpointId: created.id,
+        userId: user.id,
+        event: "task.created",
+        payload: { n: i },
+        status: "success",
+        deliveredAt: new Date(base + i * 60_000),
+      }))
+    );
+
+    const deliveries = await listWebhookDeliveries(created.id, user.id);
+
+    expect(deliveries).toHaveLength(50);
+    expect(deliveries[0].payload).toEqual({ n: 50 });
+    expect(deliveries.at(-1)!.payload).toEqual({ n: 1 });
+  });
 });
 
 // ─── cleanupWebhookDeliveries ─────────────────────────────────────────────────
@@ -427,6 +449,10 @@ async function startLocalServer(
 }
 
 describe("fireWebhookEvent", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("logs a failure delivery when endpoint URL is HTTP (HTTPS enforced at runtime)", async () => {
     const user = await createTestUser({ timezone: TZ });
     const { url, stop } = await startLocalServer((_method, _body, respond) => {
@@ -451,52 +477,32 @@ describe("fireWebhookEvent", () => {
     }
   });
 
+  // These two use an HTTPS URL and a stubbed fetch, not the local HTTP server:
+  // deliverToEndpoint refuses plain HTTP before it fetches, so a server hit
+  // count would stay 0 even if the filter were broken.
+  // fireWebhookEvent awaits every delivery it starts, so no wait is needed.
   it("only sends to endpoints subscribed to the event", async () => {
     const user = await createTestUser({ timezone: TZ });
-    let hitCount = 0;
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, status: 200, text: () => Promise.resolve("") });
+    vi.stubGlobal("fetch", mockFetch);
 
-    const { url, stop } = await startLocalServer((_method, _body, respond) => {
-      hitCount++;
-      respond(200);
-    });
+    await createWebhookEndpoint(user.id, ep({ name: "Selective EP", events: ["task.completed"] }));
+    await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
+    expect(mockFetch).not.toHaveBeenCalled();
 
-    try {
-      // Endpoint subscribes only to task.completed — should NOT fire on task.created
-      await createWebhookEndpoint(
-        user.id,
-        ep({ url, name: "Selective EP", events: ["task.completed"] })
-      );
-      await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
-      await new Promise((r) => setTimeout(r, 200));
-
-      // The HTTP server should never have been reached
-      expect(hitCount).toBe(0);
-    } finally {
-      await stop();
-    }
+    await fireWebhookEvent(user.id, "task.completed", makeTaskPayload());
+    expect(mockFetch).toHaveBeenCalledOnce();
   });
 
   it("does not fire when endpoint is disabled", async () => {
     const user = await createTestUser({ timezone: TZ });
-    let hitCount = 0;
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, status: 200, text: () => Promise.resolve("") });
+    vi.stubGlobal("fetch", mockFetch);
 
-    const { url, stop } = await startLocalServer((_method, _body, respond) => {
-      hitCount++;
-      respond(200);
-    });
+    await createWebhookEndpoint(user.id, ep({ name: "Disabled EP", enabled: false }));
+    await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
 
-    try {
-      await createWebhookEndpoint(
-        user.id,
-        ep({ url, name: "Disabled EP", enabled: false })
-      );
-      await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
-      await new Promise((r) => setTimeout(r, 200));
-
-      expect(hitCount).toBe(0);
-    } finally {
-      await stop();
-    }
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("returns without error when user has no endpoints", async () => {
@@ -638,9 +644,8 @@ describe("fireWebhookEvent — HTTPS delivery", () => {
     vi.stubGlobal("fetch", mockFetch);
 
     await createWebhookEndpoint(user.id, ep({ name: "Signed EP", secret: "super-secret-key" }));
+    // fireWebhookEvent awaits the fetch itself; only the delivery-log insert is fire-and-forget.
     await fireWebhookEvent(user.id, "task.created", makeTaskPayload());
-
-    await new Promise((r) => setTimeout(r, 300));
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [, callOptions] = mockFetch.mock.calls[0] as [string, { headers: Record<string, string> }];

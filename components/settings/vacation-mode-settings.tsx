@@ -11,8 +11,9 @@
  * @module components/settings/vacation-mode-settings
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useId } from "react";
 import { useTranslations } from "next-intl";
+import { useLocalToday } from "@/lib/client/local-today";
 
 interface VacationModeSettingsProps {
   /** Whether vacation mode is currently active (from DB) */
@@ -32,6 +33,7 @@ export function VacationModeSettings({
   initialEndDate,
 }: VacationModeSettingsProps) {
   const t = useTranslations("settings");
+  const endDateId = useId();
 
   const [active, setActive] = useState(initialActive);
   const [endDate, setEndDate] = useState(initialEndDate ?? "");
@@ -45,9 +47,9 @@ export function VacationModeSettings({
   const getTimezone = () =>
     Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  /** Returns today's date as YYYY-MM-DD in local timezone. */
-  const getTodayStr = () =>
-    new Date().toLocaleDateString("en-CA");
+  /** Today as YYYY-MM-DD in local time, hydration-safe (lib/client/local-today). */
+  const todayStr = useLocalToday();
+  const getTodayStr = () => todayStr;
 
   /** Persist a vacation mode change to the server. */
   const save = useCallback(
@@ -126,8 +128,7 @@ export function VacationModeSettings({
           >
             <span
               className="text-lg"
-              role="img"
-              aria-label="vacation"
+              aria-hidden="true"
             >
               🏖️
             </span>
@@ -183,6 +184,7 @@ export function VacationModeSettings({
           <div className="flex items-end gap-3 flex-wrap">
             <div className="flex flex-col gap-1">
               <label
+                htmlFor={endDateId}
                 className="text-xs font-medium"
                 style={{
                   color: "var(--text-secondary)",
@@ -192,6 +194,7 @@ export function VacationModeSettings({
                 {t("vacation_mode_end_date")}
               </label>
               <input
+                id={endDateId}
                 type="date"
                 value={endDate}
                 min={getTodayStr()}

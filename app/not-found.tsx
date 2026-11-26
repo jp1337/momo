@@ -10,12 +10,15 @@
 
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = {
-  title: "Seite nicht gefunden",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("errors");
+  return { title: t("not_found_title") };
+}
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getTranslations("errors");
   return (
     <div className="error-page">
       {/* Floating error code */}
@@ -28,19 +31,19 @@ export default function NotFound() {
 
       {/* Headline */}
       <h1 className="error-heading">
-        Diese Seite existiert (noch) nicht
+        {t("not_found_heading")}
       </h1>
 
       {/* Subtext */}
       <p className="error-subtext">
-        Manchmal kommt man an Orte, die noch nicht fertig sind. Das kennen wir.
+        {t("not_found_text_1")}
         <br />
-        Vielleicht war die Adresse falsch — oder die Seite wartet noch auf ihren Moment.
+        {t("not_found_text_2")}
       </p>
 
       {/* CTA */}
       <Link href="/" className="error-cta">
-        Zurück zur App
+        {t("back_to_app")}
       </Link>
     </div>
   );

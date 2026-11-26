@@ -11,13 +11,10 @@
 
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
-vi.mock("@/lib/api-auth", () => ({
+vi.mock("@/lib/api-auth", async () => ({
   resolveApiUser: vi.fn(),
-  readonlyKeyResponse: () =>
-    Response.json(
-      { error: "Forbidden", message: "This API key is read-only." },
-      { status: 403 }
-    ),
+  // The real helper, so a regression in its body (e.g. a lost `code`) shows up here
+  readonlyKeyResponse: (await import("@/lib/api-responses")).readonlyKeyResponse,
 }));
 
 vi.mock("next/headers", () => ({
@@ -78,6 +75,7 @@ describe("POST /api/tasks/:id/snooze", () => {
       { params: Promise.resolve({ id: FAKE_ID }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 for a missing snoozedUntil", async () => {
@@ -157,6 +155,7 @@ describe("DELETE /api/tasks/:id/snooze", () => {
       { params: Promise.resolve({ id: FAKE_ID }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 200 with the unsnoozed task", async () => {
@@ -204,6 +203,7 @@ describe("PATCH /api/tasks/bulk", () => {
       req("PATCH", "/api/tasks/bulk", { action: "delete", taskIds: [] })
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 for an invalid action", async () => {
@@ -280,6 +280,7 @@ describe("POST /api/tasks/:id/breakdown", () => {
       { params: Promise.resolve({ id: FAKE_ID }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 422 when fewer than 2 subtasks are provided", async () => {
@@ -377,6 +378,7 @@ describe("POST /api/tasks/:id/promote-to-topic", () => {
       { params: Promise.resolve({ id: FAKE_ID }) }
     );
     expect(res.status).toBe(403);
+    expect((await res.clone().json()).code).toBe("READONLY_KEY");
   });
 
   it("returns 404 for a non-existent task", async () => {

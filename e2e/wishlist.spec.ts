@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { createWishlistItem, deleteWishlistItem } from "./helpers/api";
+import { expectNoServerError } from "./helpers/errors";
 
 /**
  * Wishlist E2E tests.
@@ -50,7 +51,7 @@ test.describe("Wishlist Page", () => {
     await page.goto("/wishlist");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500|Interner Fehler/i);
+    await expectNoServerError(page);
   });
 
   test("shows page heading", async ({ page }) => {
@@ -93,7 +94,7 @@ test.describe("Wishlist Page", () => {
       await page.keyboard.press("Escape");
     } else {
       // Empty state might have a different CTA
-      await expect(page.locator("body")).not.toContainText(/500/i);
+      await expectNoServerError(page);
     }
   });
 
@@ -154,7 +155,33 @@ test.describe("Wishlist Page", () => {
     await page.goto("/wishlist");
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/login/);
-    await expect(page.locator("body")).not.toContainText(/500/i);
+    await expectNoServerError(page);
+  });
+
+  test("history toggle counts bought and discarded wishes", async ({ page, request }) => {
+    const ts = Date.now();
+    const bought = await createWishlistItem(request, `Bought ${ts}`);
+    const discarded = await createWishlistItem(request, `Discarded ${ts}`);
+    created.push(bought.id, discarded.id);
+    expect((await request.post(`/api/wishlist/${bought.id}/buy`)).ok()).toBe(true);
+    expect((await request.post(`/api/wishlist/${discarded.id}/discard`)).ok()).toBe(true);
+
+    await page.goto("/wishlist");
+    await page.waitForLoadState("networkidle");
+    const toggle = page.locator("button").filter({ hasText: /Verlauf|History/i }).first();
+    const label = (await toggle.textContent()) ?? "";
+    const count = Number(/\((\d+)\)/.exec(label)?.[1]);
+
+    // The toggle opens both groups, so its count must include both.
+    const { items } = (await (await request.get("/api/wishlist")).json()) as {
+      items: { status: string }[];
+    };
+    const history = items.filter((i) => i.status === "BOUGHT" || i.status === "DISCARDED").length;
+    expect(count).toBe(history);
+
+    await toggle.click();
+    await expect(page.getByText(`Bought ${ts}`)).toBeVisible();
+    await expect(page.getByText(`Discarded ${ts}`)).toBeVisible();
   });
 
   test("wishlist history tab loads without error", async ({ page }) => {
@@ -167,7 +194,7 @@ test.describe("Wishlist Page", () => {
       .first();
     if ((await historyTab.count()) > 0) {
       await historyTab.click();
-      await expect(page.locator("body")).not.toContainText(/500/i);
+      await expectNoServerError(page);
     }
   });
 });

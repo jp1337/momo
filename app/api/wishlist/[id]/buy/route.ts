@@ -20,6 +20,7 @@ import { wishlistItems, users } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { checkAndUnlockAchievements } from "@/lib/gamification";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { invalidIdResponse } from "@/lib/api-params";
 
 /**
  * POST /api/wishlist/:id/buy
@@ -37,6 +38,8 @@ export async function POST(
   if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     const { item, coinsSpent } = await markAsBought(id, user.userId);
@@ -98,6 +101,8 @@ export async function DELETE(
   if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     const { item, coinsRefunded } = await unmarkAsBought(id, user.userId);

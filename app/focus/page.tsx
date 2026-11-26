@@ -15,8 +15,9 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { tasks, topics } from "@/lib/db/schema";
+import { tasks, topics, users } from "@/lib/db/schema";
 import { eq, isNull, and, or, lte, asc, desc } from "drizzle-orm";
+import { getLocalDateString } from "@/lib/date-utils";
 import { FocusModeView } from "@/components/focus/focus-mode-view";
 
 export const metadata: Metadata = {
@@ -32,7 +33,9 @@ export default async function FocusPage() {
   if (!session?.user?.id) redirect("/login");
 
   const userId = session.user.id;
-  const todayStr = new Date().toISOString().split("T")[0];
+  // The user's day, not UTC: snoozedUntil is a local date
+  const [tzRow] = await db.select({ timezone: users.timezone }).from(users).where(eq(users.id, userId));
+  const todayStr = getLocalDateString(tzRow?.timezone);
 
   const [openTasks, allTopics] = await Promise.all([
     db

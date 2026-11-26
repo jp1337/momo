@@ -39,7 +39,10 @@ export default async function OnboardingPage() {
 
   return (
     <div className="w-full max-w-2xl flex flex-col gap-4">
-      <OnboardingWizard userName={session.user.name ?? null} />
+      <OnboardingWizard
+        userName={session.user.name ?? null}
+        vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY}
+      />
 
       <form action={doSignOut} className="self-end">
         <button
