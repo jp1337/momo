@@ -16,6 +16,7 @@
 import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { promoteTaskToTopic } from "@/lib/tasks";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { invalidIdResponse } from "@/lib/api-params";
 
 /**
  * POST /api/tasks/:id/promote-to-topic
@@ -34,6 +35,8 @@ export async function POST(
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     const result = await promoteTaskToTopic(id, user.userId);

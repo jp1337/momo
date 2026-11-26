@@ -15,6 +15,7 @@ import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { updateWishlistItem, deleteWishlistItem } from "@/lib/wishlist";
 import { UpdateWishlistItemInputSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { invalidIdResponse } from "@/lib/api-params";
 
 /**
  * PATCH /api/wishlist/:id
@@ -32,6 +33,8 @@ export async function PATCH(
   if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   let body: unknown;
   try {
@@ -81,6 +84,8 @@ export async function DELETE(
   if (rate.limited) return rateLimitResponse(rate.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     await deleteWishlistItem(id, user.userId);

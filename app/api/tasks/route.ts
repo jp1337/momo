@@ -16,6 +16,7 @@ import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { getUserTasks, createTask } from "@/lib/tasks";
 import { CreateTaskInputSchema, TimezoneSchema } from "@/lib/validators";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { isUuid } from "@/lib/api-params";
 
 /**
  * GET /api/tasks
@@ -37,6 +38,10 @@ export async function GET(request: Request) {
   } = {};
 
   if (topicIdParam !== null) {
+    if (topicIdParam !== "none" && !isUuid(topicIdParam)) {
+      // Reached Postgres as a uuid and failed with a 500
+      return Response.json({ error: "topicId must be a UUID or \"none\"" }, { status: 400 });
+    }
     filters.topicId = topicIdParam === "none" ? null : topicIdParam;
   }
 

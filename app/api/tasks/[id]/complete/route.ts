@@ -22,6 +22,7 @@ import { resolveApiUser, readonlyKeyResponse } from "@/lib/api-auth";
 import { completeTask, uncompleteTask } from "@/lib/tasks";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { TimezoneSchema } from "@/lib/validators";
+import { invalidIdResponse } from "@/lib/api-params";
 
 /**
  * POST /api/tasks/:id/complete
@@ -40,6 +41,8 @@ export async function POST(
   if (rateCheck.limited) return rateLimitResponse(rateCheck.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   let timezone: string | null = null;
   try {
@@ -91,6 +94,8 @@ export async function DELETE(
   if (uncompRateCheck.limited) return rateLimitResponse(uncompRateCheck.resetAt);
 
   const { id } = await params;
+  const invalidId = invalidIdResponse(id);
+  if (invalidId) return invalidId;
 
   try {
     const task = await uncompleteTask(id, user.userId);
