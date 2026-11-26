@@ -8,7 +8,7 @@
  * are reorderable.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -80,6 +80,7 @@ export function SortableTaskList({
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeTask = activeId ? tasks.find((t) => t.id === activeId) : null;
 
+  const dndId = useId();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
@@ -118,6 +119,9 @@ export function SortableTaskList({
 
   return (
     <DndContext
+      // Without an id dnd-kit numbers its aria-describedby targets with a
+      // module counter, so server and client render different ids: hydration mismatch.
+      id={dndId}
       sensors={sensors}
       collisionDetection={closestCenter}
       modifiers={[restrictToVerticalAxis]}
