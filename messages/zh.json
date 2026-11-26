@@ -1146,5 +1146,16 @@
     "docs_link": "API 文档 →",
     "error_create": "创建密钥失败 — 请重试。",
     "error_network": "网络错误 — 请重试。"
+  },
+  "errors": {
+    "not_found_title": "页面未找到",
+    "not_found_heading": "这个页面（还）不存在",
+    "not_found_text_1": "有时你会来到一些还没完成的地方。我们懂这种感觉。",
+    "not_found_text_2": "也许地址有误——也许这个页面还在等待它的时机。",
+    "back_to_app": "返回应用",
+    "error_heading": "出了点问题",
+    "error_text_1": "这不是你的问题——错误出在我们这边。",
+    "error_text_2": "你可以马上再试一次，或者直接返回。",
+    "retry": "重新加载"
   }
 }

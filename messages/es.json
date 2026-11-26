@@ -1146,5 +1146,16 @@
     "docs_link": "Documentación API →",
     "error_create": "Error al crear la clave — inténtalo de nuevo.",
     "error_network": "Error de red — inténtalo de nuevo."
+  },
+  "errors": {
+    "not_found_title": "Página no encontrada",
+    "not_found_heading": "Esta página no existe (todavía)",
+    "not_found_text_1": "A veces uno llega a lugares que aún no están terminados. Nos pasa también.",
+    "not_found_text_2": "Quizá la dirección era incorrecta, o la página todavía espera su momento.",
+    "back_to_app": "Volver a la app",
+    "error_heading": "Algo salió mal",
+    "error_text_1": "No es culpa tuya: el error está de nuestro lado.",
+    "error_text_2": "Puedes intentarlo de nuevo ahora mismo o simplemente volver.",
+    "retry": "Recargar"
   }
 }

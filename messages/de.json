@@ -1146,5 +1146,16 @@
     "docs_link": "API-Dokumentation →",
     "error_create": "Fehler beim Erstellen des Keys — bitte erneut versuchen.",
     "error_network": "Netzwerkfehler — bitte erneut versuchen."
+  },
+  "errors": {
+    "not_found_title": "Seite nicht gefunden",
+    "not_found_heading": "Diese Seite existiert (noch) nicht",
+    "not_found_text_1": "Manchmal kommt man an Orte, die noch nicht fertig sind. Das kennen wir.",
+    "not_found_text_2": "Vielleicht war die Adresse falsch — oder die Seite wartet noch auf ihren Moment.",
+    "back_to_app": "Zurück zur App",
+    "error_heading": "Etwas ist schiefgelaufen",
+    "error_text_1": "Das ist kein Problem von dir — der Fehler liegt auf unserer Seite.",
+    "error_text_2": "Du kannst es gleich nochmal versuchen oder einfach zurückgehen.",
+    "retry": "Neu laden"
   }
 }

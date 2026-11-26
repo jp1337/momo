@@ -1146,5 +1146,16 @@
     "docs_link": "API-documentatie →",
     "error_create": "Aanmaken mislukt — probeer het opnieuw.",
     "error_network": "Netwerkfout — probeer het opnieuw."
+  },
+  "errors": {
+    "not_found_title": "Pagina niet gevonden",
+    "not_found_heading": "Deze pagina bestaat (nog) niet",
+    "not_found_text_1": "Soms kom je op plekken die nog niet af zijn. Dat kennen we.",
+    "not_found_text_2": "Misschien was het adres verkeerd — of wacht de pagina nog op haar moment.",
+    "back_to_app": "Terug naar de app",
+    "error_heading": "Er is iets misgegaan",
+    "error_text_1": "Dit ligt niet aan jou — de fout zit aan onze kant.",
+    "error_text_2": "Je kunt het meteen opnieuw proberen of gewoon teruggaan.",
+    "retry": "Opnieuw laden"
   }
 }

@@ -7,6 +7,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **i18n:** The "page not found" and "something went wrong" pages were German in every language.
+  They now follow the UI language, like the rest of the app.
+
 ## [0.11.0] - 2026-11-25
 
 > **Upgrade mit Docker Compose:** PostgreSQL 19 kann die Daten von 18 nicht lesen. Vor dem Update
