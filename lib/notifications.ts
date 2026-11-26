@@ -81,7 +81,7 @@ class NtfyChannel implements NotificationChannel {
   }
 
   async send(payload: NotificationPayload): Promise<void> {
-    const body: Record<string, string> = {
+    const body: Record<string, string | string[]> = {
       topic: this.topic,
       title: payload.title,
       message: payload.body,
@@ -90,7 +90,8 @@ class NtfyChannel implements NotificationChannel {
       body.click = payload.url;
     }
     if (payload.tag) {
-      body.tags = payload.tag;
+      // ntfy's JSON API types tags as string[]; a bare string is a 400 (#251)
+      body.tags = [payload.tag];
     }
 
     const response = await fetch(this.serverUrl, {

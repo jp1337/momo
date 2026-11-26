@@ -173,15 +173,16 @@ describe("NtfyChannel.send", () => {
     expect(body.click).toBe(basePayload.url);
   });
 
-  it("includes tags in JSON body when tag is present", async () => {
+  it("sends tags as an array of strings, as the ntfy JSON API requires (#251)", async () => {
     fetchMock.mockResolvedValueOnce(okResponse());
     const channel = createChannel("ntfy", { topic: "alerts" }) as NotificationChannel;
 
     await channel.send(basePayload);
 
     const [, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const body = JSON.parse(options.body as string) as Record<string, string>;
-    expect(body.tags).toBe(basePayload.tag);
+    const body = JSON.parse(options.body as string) as Record<string, unknown>;
+    // ntfy >= 2.x rejects a string with 400 "request body must be valid JSON"
+    expect(body.tags).toEqual([basePayload.tag]);
   });
 
   it("omits click field when url is absent", async () => {
